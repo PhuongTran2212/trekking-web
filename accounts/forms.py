@@ -87,25 +87,23 @@ class UserUpdateForm(forms.ModelForm):
         model = User
         fields = ['first_name', 'last_name']
 
+# === THAY ĐỔI TẠI ĐÂY: Sửa lại ProfileUpdateForm ===
 class ProfileUpdateForm(forms.ModelForm):
-    # ImageField sẽ tự động được tạo, không cần khai báo lại
     class Meta:
         model = TaiKhoanHoSo
-        fields = ['anh_dai_dien', 'sdt', 'gioi_thieu', 'tinh_thanh']
+        # Thêm 'ngay_sinh' và 'gioi_tinh' vào danh sách fields
+        fields = ['anh_dai_dien', 'sdt', 'ngay_sinh', 'gioi_tinh', 'gioi_thieu', 'tinh_thanh']
         widgets = {
             'gioi_thieu': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ về kinh nghiệm trekking của bạn...'}),
-        }
-
-    class Meta:
-        model = TaiKhoanHoSo
-        fields = ['anh_dai_dien', 'sdt', 'gioi_thieu', 'tinh_thanh']
-        widgets = {
-            'gioi_thieu': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ về kinh nghiệm trekking của bạn...'}),
+            # Thêm widgets cho các trường mới để có giao diện tốt hơn
+            'ngay_sinh': forms.DateInput(attrs={'type': 'date'}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['tinh_thanh'].empty_label = "--- Chọn Tỉnh/Thành phố ---"
+# === KẾT THÚC THAY ĐỔI ===
+
 
 # === THAY ĐỔI TẠI ĐÂY: Form sở thích sẽ nhận chuỗi JSON từ Tagify ===
 class InterestsUpdateForm(forms.Form):

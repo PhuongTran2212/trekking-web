@@ -964,6 +964,31 @@
         width: 16px;
         height: 16px;
     }
+       /* === THÊM MỚI: CSS để style cho RadioSelect === */
+    .radio-select-group ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: center;
+        /* Canh chỉnh chiều cao cho khớp với các input khác */
+        min-height: calc(0.75rem * 2 + 0.95rem * 1.5 + 4px);
+    }
+    .radio-select-group li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .radio-select-group input[type="radio"] {
+        width: auto; /* Ghi đè class form-control */
+        flex-shrink: 0;
+        margin-top: -2px;
+    }
+    .radio-select-group label {
+        font-weight: normal; /* Ghi đè style của form-label */
+    }
 </style>
 {% endblock %}
 
@@ -1051,7 +1076,7 @@
                         </div>
                     </div>
 
-                    <!-- Form Fields -->
+                   <!-- === THAY ĐỔI: Thêm các trường mới vào Form Fields === -->
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">Họ</label>
@@ -1069,8 +1094,17 @@
                             <label class="form-label">{{ profile_form.tinh_thanh.label }}</label>
                             {{ profile_form.tinh_thanh }}
                         </div>
+                        <div class="form-group">
+                            <label class="form-label">{{ profile_form.ngay_sinh.label }}</label>
+                            {{ profile_form.ngay_sinh }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">{{ profile_form.gioi_tinh.label }}</label>
+                            <div class="radio-select-group">
+                                {{ profile_form.gioi_tinh }}
+                            </div>
+                        </div>
                     </div>
-
                     <div class="form-group">
                         <label class="form-label">Giới thiệu / Kinh nghiệm</label>
                         {{ profile_form.gioi_thieu }}
