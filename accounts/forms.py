@@ -102,6 +102,7 @@ class ProfileUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['tinh_thanh'].empty_label = "--- Chọn Tỉnh/Thành phố ---"
+        self.fields['gioi_tinh'].empty_label = "--- Chọn giới tính ---"
 # === KẾT THÚC THAY ĐỔI ===
 
 
