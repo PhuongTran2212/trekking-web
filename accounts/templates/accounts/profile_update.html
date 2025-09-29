@@ -937,13 +937,49 @@
             background-color: #5c636a;
             border-color: #565e64;
         }
+            /* === MỚI: CSS CHO NÚT QUAY VỀ === */
+    .settings-header .back-to-profile {
+        position: absolute;
+        top: 1.5rem;
+        left: 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: rgba(255, 255, 255, 0.7);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .settings-header .back-to-profile:hover {
+        background-color: white;
+        color: var(--text-primary);
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-2px);
+    }
+    .settings-header .back-to-profile svg {
+        width: 16px;
+        height: 16px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="settings-container">
     {# ... Giữ nguyên Header và Sidebar ... #}
+    
     <div class="settings-header">
+                <!-- === MỚI: NÚT QUAY VỀ PROFILE === -->
+        <a href="{% url 'accounts:profile-detail' username=user.username %}" class="back-to-profile">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+            </svg>
+            Quay về
+        </a>
+        <!-- === KẾT THÚC NÚT MỚI === -->
         <h1>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"/>
