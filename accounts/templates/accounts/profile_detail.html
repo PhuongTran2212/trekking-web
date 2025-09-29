@@ -17,7 +17,7 @@
         --primary-700: #15803d;
         --primary-800: #166534;
         --primary-900: #14532d;
-        
+
         /* Neutrals */
         --neutral-50: #fafafa;
         --neutral-100: #f5f5f5;
@@ -29,17 +29,17 @@
         --neutral-700: #404040;
         --neutral-800: #262626;
         --neutral-900: #171717;
-        
+
         /* Semantic Colors */
         --success: #22c55e;
         --warning: #f59e0b;
         --danger: #ef4444;
         --info: #3b82f6;
-        
+
         /* Typography */
         --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
         --font-heading: 'Montserrat', system-ui, -apple-system, sans-serif;
-        
+
         /* Spacing */
         --spacing-xs: 0.25rem;
         --spacing-sm: 0.5rem;
@@ -47,13 +47,13 @@
         --spacing-lg: 1.5rem;
         --spacing-xl: 2rem;
         --spacing-2xl: 3rem;
-        
+
         /* Radius */
         --radius-sm: 0.375rem;
         --radius-md: 0.5rem;
         --radius-lg: 0.75rem;
         --radius-xl: 1rem;
-        
+
         /* Shadows */
         --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -85,6 +85,7 @@
             grid-template-columns: 1fr;
             gap: var(--spacing-lg);
         }
+
         .container {
             padding: var(--spacing-md);
         }
@@ -288,6 +289,7 @@
             opacity: 0;
             transform: translateY(10px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -523,23 +525,23 @@
         .profile-tabs {
             flex-direction: column;
         }
-        
+
         .tab-link {
             text-align: center;
             border-radius: var(--radius-md);
             border-bottom: none;
             margin-bottom: var(--spacing-xs);
         }
-        
+
         .tab-link.active {
             background: var(--primary-100);
             border: 1px solid var(--primary-300);
         }
-        
+
         .badge-grid {
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         }
-        
+
         .profile-stats {
             grid-template-columns: 1fr;
             gap: var(--spacing-sm);
@@ -555,48 +557,91 @@
         <aside class="profile-sidebar">
             <div class="card">
                 <div class="card-body">
-                    <img src="{{ profile_user.taikhoanhoso.avatar_url }}" alt="Avatar of {{ profile_user.username }}" class="profile-avatar">
-                    
+                    <img src="{{ profile_user.taikhoanhoso.avatar_url }}" alt="Avatar of {{ profile_user.username }}"
+                        class="profile-avatar">
+
                     <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
                     <p class="profile-username">@{{ profile_user.username }}</p>
 
+                    <!-- === THÊM HIỂN THỊ GIỚI TÍNH === -->
+                    <!-- === HIỂN THỊ GIỚI TÍNH === -->
+                    {% if profile_user.taikhoanhoso.get_gioi_tinh_display %}
+                    <div class="profile-location"
+                        style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem;">
+                        {% if profile_user.taikhoanhoso.gioi_tinh == "M" %}
+                        <!-- Nam -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2" style="width: 12px; height: 12px; opacity: 0.85; color: #2563eb;">
+                            <circle cx="11" cy="11" r="6" />
+                            <path d="M21 3h-6m6 0v6m0-6l-9 9" />
+                        </svg>
+                        {% elif profile_user.taikhoanhoso.gioi_tinh == "F" %}
+                        <!-- Nữ -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2" style="width: 12px; height: 12px; opacity: 0.85; color: #db2777;">
+                            <circle cx="12" cy="8" r="5" />
+                            <path d="M12 13v7m-3-3h6" />
+                        </svg>
+                        {% else %}
+                        <!-- Khác -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2" style="width: 12px; height: 12px; opacity: 0.85; color: #9333ea;">
+                            <circle cx="12" cy="12" r="5" />
+                            <path d="M12 7v10M7 12h10" />
+                        </svg>
+                        {% endif %}
+                        <span>{{ profile_user.taikhoanhoso.get_gioi_tinh_display }}</span>
+                    </div>
+                    {% endif %}
+
                     {% if profile_user.taikhoanhoso.tinh_thanh %}
                     <div class="profile-location">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 14px; height: 14px;">
-                            <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.1.4-.223.654-.369.254-.145.532-.3.81-.468.277-.17.566-.35.85-.546l.122-.087a35.33 35.33 0 001.291-1.011c.424-.38.815-.792 1.158-1.245.343-.453.64-1. .886-1.465A9.416 9.416 0 0015 8.5a5 5 0 00-10 0c0 .98.22 1.923.622 2.774.246.465.543.912.886 1.465.343.453.734.865 1.158 1.245a35.33 35.33 0 001.291 1.011l.122.087c.285.196.573.375.85.546.278.168.556.323.81.468.254.146.468.269.654.369a5.741 5.741 0 00.28.14l.019.008.006.003zM10 11.25a2.75 2.75 0 100-5.5 2.75 2.75 0 000 5.5z" clip-rule="evenodd" />
-                        </svg>                          
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            style="width: 14px; height: 14px;">
+                            <path fill-rule="evenodd"
+                                d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.1.4-.223.654-.369.254-.145.532-.3.81-.468.277-.17.566-.35.85-.546l.122-.087a35.33 35.33 0 001.291-1.011c.424-.38.815-.792 1.158-1.245.343-.453.64-1. .886-1.465A9.416 9.416 0 0015 8.5a5 5 0 00-10 0c0 .98.22 1.923.622 2.774.246.465.543.912.886 1.465.343.453.734.865 1.158 1.245a35.33 35.33 0 001.291 1.011l.122.087c.285.196.573.375.85.546.278.168.556.323.81.468.254.146.468.269.654.369a5.741 5.741 0 00.28.14l.019.008.006.003zM10 11.25a2.75 2.75 0 100-5.5 2.75 2.75 0 000 5.5z"
+                                clip-rule="evenodd" />
+                        </svg>
                         {{ profile_user.taikhoanhoso.tinh_thanh.ten }}
                     </div>
                     {% endif %}
-                    
+
                     {% if is_own_profile and profile_user.taikhoanhoso.sdt %}
                     <div class="profile-phone">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 14px; height: 14px;">
-                            <path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5h-1.5A13.5 13.5 0 012 3.5z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            style="width: 14px; height: 14px;">
+                            <path
+                                d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5h-1.5A13.5 13.5 0 012 3.5z" />
                         </svg>
                         {{ profile_user.taikhoanhoso.sdt }}
                     </div>
                     {% endif %}
-                    
-                    <p class="profile-bio">{{ profile_user.taikhoanhoso.gioi_thieu|default:"Chưa có giới thiệu."|linebreaksbr }}</p>
+
+                    <p class="profile-bio">{{ profile_user.taikhoanhoso.gioi_thieu|default:"Chưa có giới
+                        thiệu."|linebreaksbr }}</p>
 
                     {% if is_own_profile %}
-                        <a href="{% url 'accounts:profile-update' %}" class="btn btn-outline" style="width: 100%;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px;">
-                                <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
-                            </svg>
-                            Chỉnh sửa hồ sơ
-                        </a>
+                    <a href="{% url 'accounts:profile-update' %}" class="btn btn-outline" style="width: 100%;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            style="width: 16px; height: 16px;">
+                            <path
+                                d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                        </svg>
+                        Chỉnh sửa hồ sơ
+                    </a>
                     {% else %}
-                        <a href="#" class="btn btn-primary" style="width: 100%;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px;">
-                                <path d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 011.118 0L19 7.162V6a2 2 0 002-2H3z" />
-                                <path d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
-                            </svg>
-                            Nhắn tin
-                        </a>
+                    <a href="#" class="btn btn-primary" style="width: 100%;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            style="width: 16px; height: 16px;">
+                            <path
+                                d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 011.118 0L19 7.162V6a2 2 0 002-2H3z" />
+                            <path
+                                d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
+                        </svg>
+                        Nhắn tin
+                    </a>
                     {% endif %}
-                    
+
                     <div class="profile-stats">
                         <div class="stat-item">
                             <span class="value">{{ trips_joined.count }}</span>
@@ -621,26 +666,37 @@
                 <div class="card-body">
                     <nav class="profile-tabs">
                         <div class="tab-link active" data-tab="cv">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px; margin-right: 4px;">
-                                <path d="M15.5 2A1.5 1.5 0 0014 3.5v13a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0016.5 2h-1zM9.5 6A1.5 1.5 0 008 7.5v9A1.5 1.5 0 009.5 18h1a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0010.5 6h-1zM3.5 10A1.5 1.5 0 002 11.5v5A1.5 1.5 0 003.5 18h1A1.5 1.5 0 006 16.5v-5A1.5 1.5 0 004.5 10h-1z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                style="width: 16px; height: 16px; margin-right: 4px;">
+                                <path
+                                    d="M15.5 2A1.5 1.5 0 0014 3.5v13a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0016.5 2h-1zM9.5 6A1.5 1.5 0 008 7.5v9A1.5 1.5 0 009.5 18h1a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0010.5 6h-1zM3.5 10A1.5 1.5 0 002 11.5v5A1.5 1.5 0 003.5 18h1A1.5 1.5 0 006 16.5v-5A1.5 1.5 0 004.5 10h-1z" />
                             </svg>
                             Thiết bị & Sở thích
                         </div>
                         <div class="tab-link" data-tab="trips">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px; margin-right: 4px;">
-                                <path fill-rule="evenodd" d="M6.5 2.5A1.5 1.5 0 018 1h4a1.5 1.5 0 011.5 1.5v1.25h2.25A1.5 1.5 0 0117.25 5v11.25A1.5 1.5 0 0115.75 17.75H4.25A1.5 1.5 0 012.75 16.25V5A1.5 1.5 0 014.25 3.75H6.5V2.5zM8.5 2.5v1.25h3V2.5h-3z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                style="width: 16px; height: 16px; margin-right: 4px;">
+                                <path fill-rule="evenodd"
+                                    d="M6.5 2.5A1.5 1.5 0 018 1h4a1.5 1.5 0 011.5 1.5v1.25h2.25A1.5 1.5 0 0117.25 5v11.25A1.5 1.5 0 0115.75 17.75H4.25A1.5 1.5 0 012.75 16.25V5A1.5 1.5 0 014.25 3.75H6.5V2.5zM8.5 2.5v1.25h3V2.5h-3z"
+                                    clip-rule="evenodd" />
                             </svg>
                             Lịch sử Chuyến đi
                         </div>
                         <div class="tab-link" data-tab="posts">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px; margin-right: 4px;">
-                                <path fill-rule="evenodd" d="M4.25 2A2.25 2.25 0 002 4.25v11.5A2.25 2.25 0 004.25 18h11.5A2.25 2.25 0 0018 15.75V4.25A2.25 2.25 0 0015.75 2H4.25zm4.03 6.28a.75.75 0 00-1.06-1.06L4.97 9.47a.75.75 0 000 1.06l2.25 2.25a.75.75 0 001.06-1.06L6.56 10l1.72-1.72zm4.5-1.06a.75.75 0 10-1.06 1.06L13.44 10l-1.72 1.72a.75.75 0 101.06 1.06l2.25-2.25a.75.75 0 000-1.06l-2.25-2.25z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                style="width: 16px; height: 16px; margin-right: 4px;">
+                                <path fill-rule="evenodd"
+                                    d="M4.25 2A2.25 2.25 0 002 4.25v11.5A2.25 2.25 0 004.25 18h11.5A2.25 2.25 0 0018 15.75V4.25A2.25 2.25 0 0015.75 2H4.25zm4.03 6.28a.75.75 0 00-1.06-1.06L4.97 9.47a.75.75 0 000 1.06l2.25 2.25a.75.75 0 001.06-1.06L6.56 10l1.72-1.72zm4.5-1.06a.75.75 0 10-1.06 1.06L13.44 10l-1.72 1.72a.75.75 0 101.06 1.06l2.25-2.25a.75.75 0 000-1.06l-2.25-2.25z"
+                                    clip-rule="evenodd" />
                             </svg>
                             Bài viết đã đăng
                         </div>
                         <div class="tab-link" data-tab="badges">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px; margin-right: 4px;">
-                                <path fill-rule="evenodd" d="M10 1l3 6 6 .75-4.5 4.25L15.5 18 10 15l-5.5 3 1-6.75L1 7.75 7 7l3-6z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                style="width: 16px; height: 16px; margin-right: 4px;">
+                                <path fill-rule="evenodd"
+                                    d="M10 1l3 6 6 .75-4.5 4.25L15.5 18 10 15l-5.5 3 1-6.75L1 7.75 7 7l3-6z"
+                                    clip-rule="evenodd" />
                             </svg>
                             Huy hiệu & Thành tích
                         </div>
@@ -650,51 +706,51 @@
                     <div id="cv" class="tab-content active">
                         <h4 class="section-title">Thiết bị cá nhân</h4>
                         {% if personal_equipment %}
-                            <div class="equipment-list">
-                                {% for item in personal_equipment %}
-                                <div class="item">
-                                    <div class="item-name">
-                                        {{ item.vat_dung.ten }} 
-                                        {% if item.so_luong > 1 %}
-                                            <span class="badge badge-primary">x{{ item.so_luong }}</span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="item-note">{{ item.ghi_chu }}</div>
+                        <div class="equipment-list">
+                            {% for item in personal_equipment %}
+                            <div class="item">
+                                <div class="item-name">
+                                    {{ item.vat_dung.ten }}
+                                    {% if item.so_luong > 1 %}
+                                    <span class="badge badge-primary">x{{ item.so_luong }}</span>
+                                    {% endif %}
                                 </div>
-                                {% endfor %}
+                                <div class="item-note">{{ item.ghi_chu }}</div>
                             </div>
+                            {% endfor %}
+                        </div>
                         {% else %}
-                            <p class="text-muted">Chưa cập nhật danh sách thiết bị.</p>
+                        <p class="text-muted">Chưa cập nhật danh sách thiết bị.</p>
                         {% endif %}
-                        
+
                         <hr class="my-4">
-                        
+
                         <h4 class="section-title">Sở thích</h4>
                         {% if user_interests %}
-                            <div class="interests-list">
-                                {% for interest in user_interests %}
-                                    <span class="badge badge-success">{{ interest.the.ten }}</span>
-                                {% endfor %}
-                            </div>
+                        <div class="interests-list">
+                            {% for interest in user_interests %}
+                            <span class="badge badge-success">{{ interest.the.ten }}</span>
+                            {% endfor %}
+                        </div>
                         {% else %}
-                            <p class="text-muted">Chưa cập nhật sở thích.</p>
+                        <p class="text-muted">Chưa cập nhật sở thích.</p>
                         {% endif %}
                     </div>
 
                     <div id="trips" class="tab-content">
                         <div class="activity-list">
                             {% for membership in trips_joined %}
-                                <div class="activity-item">
-                                    <h5 class="card-title mb-1">
-                                        <a href="#">{{ membership.chuyen_di.ten_chuyen_di }}</a>
-                                    </h5>
-                                    <p class="text-sm text-muted mb-0">
-                                        Khởi hành: {{ membership.chuyen_di.ngay_bat_dau|date:"d/m/Y" }} - 
-                                        Cung đường: {{ membership.chuyen_di.cung_duong.ten }}
-                                    </p>
-                                </div>
+                            <div class="activity-item">
+                                <h5 class="card-title mb-1">
+                                    <a href="#">{{ membership.chuyen_di.ten_chuyen_di }}</a>
+                                </h5>
+                                <p class="text-sm text-muted mb-0">
+                                    Khởi hành: {{ membership.chuyen_di.ngay_bat_dau|date:"d/m/Y" }} -
+                                    Cung đường: {{ membership.chuyen_di.cung_duong.ten }}
+                                </p>
+                            </div>
                             {% empty %}
-                                <p class="text-muted text-center py-5">Chưa tham gia chuyến đi nào.</p>
+                            <p class="text-muted text-center py-5">Chưa tham gia chuyến đi nào.</p>
                             {% endfor %}
                         </div>
                     </div>
@@ -702,16 +758,16 @@
                     <div id="posts" class="tab-content">
                         <div class="activity-list">
                             {% for post in posts_created %}
-                                <div class="activity-item">
-                                    <h5 class="card-title mb-1">
-                                        <a href="#">{{ post.tieu_de }}</a>
-                                    </h5>
-                                    <p class="text-sm text-muted mb-0">
-                                        Đã đăng vào {{ post.ngay_dang|date:"d/m/Y" }}
-                                    </p>
-                                </div>
+                            <div class="activity-item">
+                                <h5 class="card-title mb-1">
+                                    <a href="#">{{ post.tieu_de }}</a>
+                                </h5>
+                                <p class="text-sm text-muted mb-0">
+                                    Đã đăng vào {{ post.ngay_dang|date:"d/m/Y" }}
+                                </p>
+                            </div>
                             {% empty %}
-                                <p class="text-muted text-center py-5">Chưa đăng bài viết nào.</p>
+                            <p class="text-muted text-center py-5">Chưa đăng bài viết nào.</p>
                             {% endfor %}
                         </div>
                     </div>
@@ -719,23 +775,23 @@
                     <div id="badges" class="tab-content">
                         <div class="badge-grid">
                             {% for user_badge in badges_earned %}
-                                <div class="badge-item">
-                                    <img src="{{ user_badge.huy_hieu.anh_huy_hieu|default:'/static/images/default_badge.png' }}" 
-                                         alt="{{ user_badge.huy_hieu.ten }}">
-                                    <div class="name">{{ user_badge.huy_hieu.ten }}</div>
-                                    <div class="date">{{ user_badge.ngay_dat_duoc|date:"d/m/Y" }}</div>
-                                </div>
+                            <div class="badge-item">
+                                <img src="{{ user_badge.huy_hieu.anh_huy_hieu|default:'/static/images/default_badge.png' }}"
+                                    alt="{{ user_badge.huy_hieu.ten }}">
+                                <div class="name">{{ user_badge.huy_hieu.ten }}</div>
+                                <div class="date">{{ user_badge.ngay_dat_duoc|date:"d/m/Y" }}</div>
+                            </div>
                             {% empty %}
-                                <p class="text-muted text-center py-5" style="grid-column: 1 / -1;">
-                                    Chưa đạt được huy hiệu nào.
-                                </p>
+                            <p class="text-muted text-center py-5" style="grid-column: 1 / -1;">
+                                Chưa đạt được huy hiệu nào.
+                            </p>
                             {% endfor %}
                         </div>
-                        
+
                         <hr class="my-4">
-                        
+
                         <h5 class="text-center">
-                            Điểm thưởng: 
+                            Điểm thưởng:
                             <span class="text-primary font-bold text-xl">
                                 {{ profile_user.taikhoanhoso.diem_thuong }}
                             </span>
@@ -748,16 +804,16 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.tab-link').forEach(link => {
-        link.addEventListener('click', () => {
-            const tabId = link.getAttribute('data-tab');
-            document.querySelectorAll('.tab-link').forEach(item => item.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(item => item.classList.remove('active'));
-            link.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.tab-link').forEach(link => {
+            link.addEventListener('click', () => {
+                const tabId = link.getAttribute('data-tab');
+                document.querySelectorAll('.tab-link').forEach(item => item.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(item => item.classList.remove('active'));
+                link.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
         });
     });
-});
 </script>
 {% endblock %}

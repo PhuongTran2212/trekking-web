@@ -4,30 +4,49 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db import transaction
-from .models import TaiKhoanHoSo, TaiKhoanThietBiCaNhan
-from core.models import The, VatDung
 
+# === THAY ĐỔI: Import 'GioiTinh' trực tiếp để tái sử dụng ===
+from .models import TaiKhoanHoSo, TaiKhoanThietBiCaNhan, GioiTinh
+from core.models import The # Giả định bạn sẽ cần cho InterestsForm sau này
+
+# ==============================================================================
+# FORM ĐĂNG KÝ TÀI KHOẢN MỚI
+# ==============================================================================
 class DangKyForm(UserCreationForm):
-    # Định nghĩa lại thứ tự các trường sẽ hiển thị trên form
+    """
+    Form tùy chỉnh để đăng ký người dùng mới, bao gồm các thông tin
+    mở rộng cho hồ sơ (TaiKhoanHoSo) ngay từ đầu.
+    """
     email = forms.EmailField(
         required=True,
         help_text='Bắt buộc. Dùng để xác thực và khôi phục tài khoản.'
     )
-    # <-- Di chuyển trường sdt lên đây, ngay sau email
     sdt = forms.CharField(
         label='Số điện thoại',
         max_length=15,
         required=True
     )
+    ngay_sinh = forms.DateField(
+        label='Ngày sinh',
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    gioi_tinh = forms.ChoiceField(
+        label='Giới tính',
+        required=False,
+        # === TINH CHỈNH: Tham chiếu trực tiếp tới class GioiTinh ===
+        choices=GioiTinh.choices, 
+        widget=forms.RadioSelect
+    )
     first_name = forms.CharField(
         label='Tên',
         max_length=150,
-        required=False
+        required=True
     )
     last_name = forms.CharField(
         label='Họ',
         max_length=150,
-        required=False
+        required=True
     )
 
     class Meta(UserCreationForm.Meta):
@@ -36,14 +55,14 @@ class DangKyForm(UserCreationForm):
 
     def clean_sdt(self):
         sdt_data = self.cleaned_data.get('sdt')
-        if TaiKhoanHoSo.objects.filter(sdt=sdt_data).exists():
-            raise forms.ValidationError("Số điện thoại này đã được sử dụng bởi một tài khoản khác.")
+        if sdt_data and TaiKhoanHoSo.objects.filter(sdt=sdt_data).exists():
+            raise forms.ValidationError("Số điện thoại này đã được sử dụng.")
         return sdt_data
 
     def clean_email(self):
         email_data = self.cleaned_data.get('email')
         if User.objects.filter(email=email_data).exists():
-            raise forms.ValidationError("Địa chỉ email này đã được sử dụng bởi một tài khoản khác.")
+            raise forms.ValidationError("Địa chỉ email này đã được sử dụng.")
         return email_data
 
     @transaction.atomic
@@ -55,12 +74,11 @@ class DangKyForm(UserCreationForm):
         
         if commit:
             user.save()
-
-        sdt = self.cleaned_data.get('sdt')
-        if sdt:
-            user.taikhoanhoso.sdt = sdt
-            user.taikhoanhoso.save()
-
+            profile = user.taikhoanhoso
+            profile.sdt = self.cleaned_data.get('sdt')
+            profile.ngay_sinh = self.cleaned_data.get('ngay_sinh')
+            profile.gioi_tinh = self.cleaned_data.get('gioi_tinh')
+            profile.save()
         return user
 # --- CÁC FORM MỚI CHO VIỆC CẬP NHẬT PROFILE ---
 

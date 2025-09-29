@@ -1,5 +1,12 @@
-
-       
+:root{
+            /* === NEW: Thêm biến màu cho giới tính === */
+    --gender-male: #2563eb;       /* Xanh dương */
+    --gender-female: #db2777;     /* Hồng */
+    --gender-other: #7c3aed;      /* Tím */
+    
+    --gender-male-bg: #dbeafe;
+    --gender-female-bg: #fce7f3;
+    --gender-other-bg: #ede9fe;}
        /* Main Container */
         .auth-container {
             width: 100%;
@@ -451,4 +458,71 @@
     border: solid white; /* Màu của dấu tích */
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
+}
+
+/* === PHẦN GIỚI TÍNH - PHIÊN BẢN ĐƠN GIẢN HÓA (MỘT MÀU DUY NHẤT) === */
+
+.gender-group-wrapper {
+    display: flex;
+    gap: var(--spacing-sm);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xs);
+    background-color: var(--gray-50);
+    transition: border-color var(--transition-base);
+}
+
+.gender-group-wrapper:focus-within {
+    border-color: var(--primary-dark);
+    box-shadow: 0 0 0 4px rgba(77, 113, 17, 0.1);
+}
+
+.gender-item {
+    flex: 1;
+    position: relative;
+}
+
+/* 1. Vẫn ẩn nút radio gốc đi */
+.gender-item input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* 2. Style MẶC ĐỊNH của label (nút bấm) */
+.gender-item label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    background-color: transparent;
+    border-radius: 9px;
+    border: 2px solid transparent;
+    transition: all var(--transition-base);
+    text-transform: none;
+    letter-spacing: normal;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* 3. HIỆU ỨNG HOVER DUY NHẤT (Khi di chuột tới) */
+/* Áp dụng cho TẤT CẢ các label trong .gender-item */
+.gender-item label:hover {
+    color: var(--primary-dark);
+    background-color: white;
+}
+
+/* 4. HIỆU ỨNG SELECTED DUY NHẤT (Khi được chọn) - DÙNG CSS THUẦN */
+/* Selector :checked + label sẽ tự động áp dụng style khi radio được chọn */
+.gender-item input[type="radio"]:checked + label {
+    color: var(--primary-dark);
+    background-color: rgba(77, 113, 17, 0.1); /* Dùng màu nền nhạt của màu chủ đạo */
+    border-color: var(--primary-dark);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }

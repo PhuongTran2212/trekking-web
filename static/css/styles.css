@@ -11,6 +11,14 @@
     --primary-medium: #C3E956;
     --primary-dark: #4D7111;
     --primary-darkest: #1F4B2C;
+        /* === NEW: Thêm biến màu cho giới tính === */
+    --gender-male: #2563eb;       /* Xanh dương */
+    --gender-female: #db2777;     /* Hồng */
+    --gender-other: #7c3aed;      /* Tím */
+    
+    --gender-male-bg: #dbeafe;
+    --gender-female-bg: #fce7f3;
+    --gender-other-bg: #ede9fe;
     
     /* Neutral Colors */
     --gray-50: #FAFAFA;
