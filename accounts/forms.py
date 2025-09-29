@@ -4,7 +4,8 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db import transaction
-from .models import TaiKhoanHoSo
+from .models import TaiKhoanHoSo, TaiKhoanThietBiCaNhan
+from core.models import The, VatDung
 
 class DangKyForm(UserCreationForm):
     # Định nghĩa lại thứ tự các trường sẽ hiển thị trên form
@@ -61,4 +62,47 @@ class DangKyForm(UserCreationForm):
             user.taikhoanhoso.save()
 
         return user
-  
+# --- CÁC FORM MỚI CHO VIỆC CẬP NHẬT PROFILE ---
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name']
+
+class ProfileUpdateForm(forms.ModelForm):
+    # ImageField sẽ tự động được tạo, không cần khai báo lại
+    class Meta:
+        model = TaiKhoanHoSo
+        fields = ['anh_dai_dien', 'sdt', 'gioi_thieu', 'tinh_thanh']
+        widgets = {
+            'gioi_thieu': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ về kinh nghiệm trekking của bạn...'}),
+        }
+
+    class Meta:
+        model = TaiKhoanHoSo
+        fields = ['anh_dai_dien', 'sdt', 'gioi_thieu', 'tinh_thanh']
+        widgets = {
+            'gioi_thieu': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ về kinh nghiệm trekking của bạn...'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tinh_thanh'].empty_label = "--- Chọn Tỉnh/Thành phố ---"
+
+# === THAY ĐỔI TẠI ĐÂY: Form sở thích sẽ nhận chuỗi JSON từ Tagify ===
+class InterestsUpdateForm(forms.Form):
+    interests = forms.CharField(
+        label="Sở thích của bạn",
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Nhập và chọn các sở thích...'})
+    )
+
+class EquipmentForm(forms.ModelForm):
+    class Meta:
+        model = TaiKhoanThietBiCaNhan
+        fields = ['vat_dung', 'so_luong', 'ghi_chu']
+        labels = {
+            'vat_dung': 'Chọn thiết bị',
+            'so_luong': 'Số lượng',
+            'ghi_chu': 'Ghi chú (ví dụ: size, màu sắc...)'
+        }

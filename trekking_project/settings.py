@@ -13,6 +13,8 @@ SECRET_KEY = 'django-insecure-Thanh7778' # Giữ nguyên key tự tạo của d�
 DEBUG = True
 
 ALLOWED_HOSTS = []
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Application definition
@@ -105,9 +107,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# Media files (User uploaded content)
+# Cấu hình cho file media do người dùng upload
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -1,0 +1,42 @@
+<!-- File: accounts/templates/accounts/partials/_equipment_manager.html -->
+
+<h6 class="mb-3 fw-bold">Các món đồ của bạn:</h6>
+{% if personal_equipment %}
+    {% for item in personal_equipment %}
+    <div class="equipment-item">
+        <div>
+            <strong>{{ item.vat_dung.ten }}</strong> (x{{ item.so_luong }})
+            {% if item.ghi_chu %}
+                <em class="text-muted ms-2">- {{ item.ghi_chu }}</em>
+            {% endif %}
+        </div>
+        <form action="{% url 'accounts:equipment-delete' pk=item.pk %}" method="POST" onsubmit="return confirm('Bạn chắc chắn muốn xóa {{ item.vat_dung.ten }}?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-sm text-danger">&times; Xóa</button>
+        </form>
+    </div>
+    {% endfor %}
+{% else %}
+    <p class="text-muted">Bạn chưa có món đồ nào trong kho.</p>
+{% endif %}
+
+<hr class="my-4">
+
+<h6 class="mb-3 fw-bold">Thêm/Cập nhật thiết bị:</h6>
+<form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="add_equipment">
+    <div class="form-group">
+        <label class="form-label">{{ equipment_form.vat_dung.label }}</label>
+        {{ equipment_form.vat_dung }}
+    </div>
+    <div class="form-group">
+        <label class="form-label">{{ equipment_form.so_luong.label }}</label>
+        {{ equipment_form.so_luong }}
+    </div>
+    <div class="form-group">
+        <label class="form-label">{{ equipment_form.ghi_chu.label }}</label>
+        {{ equipment_form.ghi_chu }}
+    </div>
+    <button type="submit" class="btn btn-secondary mt-3">Thêm / Cập nhật đồ</button>
+</form>

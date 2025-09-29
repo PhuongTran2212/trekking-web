@@ -3,10 +3,12 @@
 <nav class="navbar">
     <div class="navbar-container">
         <!-- Logo & Brand -->
-        <a href="{% url 'home' %}" class="navbar-brand">
-            <img src="{% static 'images/logo.png' %}" alt="TrekViet Logo">
-            TrekViet
-        </a>
+<a href="{% url 'home' %}" class="navbar-brand">
+  <svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-top: -5px;">
+    <path fill="#4D7111" d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z"/>
+  </svg>
+  TrekViet
+</a>
 
         <!-- Mobile Menu Toggle -->
         <button class="navbar-toggle" id="navbar-toggle">
@@ -75,17 +77,18 @@
             <!-- Profile Menu -->
             <div class="dropdown">
                 <button class="btn btn-ghost p-1">
-                    <img src="{% static 'images/default_avatar.png' %}" 
-                         alt="{{ user.username }}" 
-                         class="rounded-full" 
-                         style="width: 32px; height: 32px; object-fit: cover;">
+                   <img src="{{ user.taikhoanhoso.avatar_url }}" 
+     alt="{{ user.username }}" 
+     class="rounded-full" 
+     style="width: 32px; height: 32px; object-fit: cover;">
                 </button>
                 <div class="dropdown-content" style="right: 0; left: auto;">
                     <div class="p-3 border-bottom">
                         <div class="font-semibold">{{ user.first_name }} {{ user.last_name }}</div>
                         <div class="text-sm text-muted">@{{ user.username }}</div>
                     </div>
-                    <a href="#">Profile của tôi</a>
+                    <!-- SỬA DÒNG NÀY -->
+                    <a href="{% url 'accounts:profile-detail' username=user.username %}">Profile của tôi</a>
                     <a href="#">Cài đặt tài khoản</a>
                     <a href="#">Huy hiệu & thành tích</a>
                                         <!-- =================================================== -->
