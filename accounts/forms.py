@@ -106,3 +106,14 @@ class EquipmentForm(forms.ModelForm):
             'so_luong': 'Số lượng',
             'ghi_chu': 'Ghi chú (ví dụ: size, màu sắc...)'
         }
+        # === THÊM FORM MỚI NÀY VÀO CUỐI FILE ===
+class EquipmentEditForm(forms.ModelForm):
+    """Form chuyên dụng để SỬA một món đồ đã có."""
+    class Meta:
+        model = TaiKhoanThietBiCaNhan
+        # Chỉ cho phép sửa số lượng và ghi chú
+        fields = ['so_luong', 'ghi_chu']
+        labels = {
+            'so_luong': 'Số lượng mới',
+            'ghi_chu': 'Ghi chú mới'
+        }

@@ -1,13 +1,14 @@
 # accounts/urls.py
 
-from django.urls import path
+from django.urls import path,include
 from django.contrib.auth import views as auth_views
 from .views import (
     dang_ky_view, 
     CustomLoginView, 
     profile_view, 
     profile_update_view,
-    delete_equipment_view
+    delete_equipment_view,
+    edit_equipment_view 
 )
 
 app_name = 'accounts'
@@ -21,5 +22,8 @@ urlpatterns = [
     # URLs cho Profile
     path('ho-so/<str:username>/', profile_view, name='profile-detail'),
     path('cai-dat/', profile_update_view, name='profile-update'),
+        # URLs cho quản lý thiết bị
     path('cai-dat/xoa-thiet-bi/<int:pk>/', delete_equipment_view, name='equipment-delete'),
+    # === THÊM URL MỚI NÀY VÀO ĐÂY ===
+     path('cai-dat/sua-thiet-bi/<int:pk>/', edit_equipment_view, name='equipment-edit'),
 ]

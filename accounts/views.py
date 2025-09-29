@@ -24,7 +24,8 @@ from .forms import (
     UserUpdateForm, 
     ProfileUpdateForm, 
     InterestsUpdateForm, 
-    EquipmentForm
+    EquipmentForm,
+    EquipmentEditForm
 )
 
 # ===================================================
@@ -184,4 +185,32 @@ def delete_equipment_view(request, pk):
     item_name = equipment_item.vat_dung.ten
     equipment_item.delete()
     messages.success(request, f'Đã xóa "{item_name}" khỏi kho đồ của bạn.')
+    return redirect('accounts:profile-update')
+# === THÊM VIEW MỚI NÀY VÀO CUỐI FILE ===
+@login_required
+def edit_equipment_view(request, pk):
+    """
+    View xử lý việc CẬP NHẬT thông tin một món đồ qua Modal.
+    """
+    # Chỉ cho phép phương thức POST
+    if request.method != 'POST':
+        return HttpResponseForbidden("Method not allowed")
+    
+    # Lấy món đồ cần sửa
+    equipment_item = get_object_or_404(TaiKhoanThietBiCaNhan, pk=pk)
+
+    # Kiểm tra bảo mật: đảm bảo người dùng chỉ có thể sửa đồ của chính mình
+    if equipment_item.user != request.user:
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    # Xử lý dữ liệu form gửi lên
+    form = EquipmentEditForm(request.POST, instance=equipment_item)
+    if form.is_valid():
+        form.save()
+        messages.success(request, f'Đã cập nhật thành công "{equipment_item.vat_dung.ten}".')
+    else:
+        # Lấy lỗi đầu tiên và hiển thị cho người dùng
+        error_field, error_messages = next(iter(form.errors.items()))
+        messages.error(request, f"Lỗi cập nhật: {error_messages[0]}")
+
     return redirect('accounts:profile-update')
