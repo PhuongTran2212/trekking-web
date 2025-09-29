@@ -1,0 +1,18 @@
+<!-- core/templates/core/homepage.html -->
+
+{# Dòng này báo cho Django: Hãy sử dụng file 'base.html' làm khung sườn #}
+{% extends 'base.html' %}
+
+{# Tải các file static (CSS, JS, Images) #}
+{% load static %}
+
+{# Đây là khối nội dung sẽ được chèn vào giữa Header và Footer #}
+{% block content %}
+<div class="container text-center mt-5">
+    <h1 class="display-4">Chào mừng đến với TrekViet!</h1>
+    <p class="lead">Nền tảng kết nối cộng đồng trekking hàng đầu Việt Nam.</p>
+    <hr class="my-4">
+    <p>Khám phá những cung đường mới, tham gia các chuyến đi hấp dẫn và chia sẻ hành trình của bạn.</p>
+    <a class="btn btn-success btn-lg" href="#" role="button">Khám phá ngay</a>
+</div>
+{% endblock content %}

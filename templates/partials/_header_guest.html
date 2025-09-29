@@ -1,0 +1,100 @@
+{% load static %}
+<!-- HEADER GUEST (Khách chưa đăng nhập) -->
+<nav class="navbar">
+    <div class="navbar-container">
+        <!-- Logo & Brand -->
+<a href="{% url 'home' %}" class="navbar-brand">
+  <svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-top: -5px;">
+    <path fill="#4D7111" d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z"/>
+  </svg>
+  TrekViet
+</a>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="navbar-toggle" id="navbar-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <!-- Main Navigation -->
+        <ul class="navbar-nav" id="navbar-nav">
+            <!-- Khám phá Dropdown -->
+              <li>
+        <a href="#" class="nav-link">
+            Cung đường
+        </a>
+    </li>
+
+            <!-- Chuyến đi Dropdown -->
+                   <li>
+        <a href="#" class="nav-link">
+             Chuyến đi
+        </a>
+    </li>
+
+            <!-- Cộng đồng -->
+            <li><a href="#" class="nav-link">Cộng đồng</a></li>
+            
+            <!-- Kiến thức -->
+            <li><a href="#" class="nav-link">Kiến thức</a></li>
+        </ul>
+
+        <!-- Search & CTA Section -->
+        <div class="d-flex align-center gap-3">
+            <!-- Search Bar -->
+            <form action="#" method="GET" class="header-search">
+                <svg class="search-icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="search" name="q" class="form-control" placeholder="Tìm cung đường, chuyến đi..." style="width: 250px;">
+            </form>
+
+            <!-- CTA Buttons -->
+            <a href="{% url 'accounts:dang-nhap' %}" class="btn btn-outline btn-sm">Đăng nhập</a>
+            <a href="{% url 'accounts:dang-ky' %}" class="btn btn-primary btn-sm">Đăng ký ngay</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Login Required Modal -->
+<div class="modal" id="login-required-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Yêu cầu đăng nhập</h5>
+            <button class="modal-close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Bạn cần đăng nhập để thực hiện hành động này.</p>
+        </div>
+        <div class="modal-footer">
+            <a href="{% url 'accounts:dang-nhap' %}" class="btn btn-primary">Đăng nhập</a>
+            <a href="{% url 'accounts:dang-ky' %}" class="btn btn-secondary">Đăng ký nhanh</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mobile menu toggle
+document.getElementById('navbar-toggle').addEventListener('click', function() {
+    document.getElementById('navbar-nav').classList.toggle('active');
+});
+
+// Show login modal for protected actions
+function showLoginModal() {
+    document.getElementById('login-required-modal').classList.add('active');
+}
+
+// Close modal
+document.querySelectorAll('[data-dismiss="modal"]').forEach(btn => {
+    btn.addEventListener('click', function() {
+        this.closest('.modal').classList.remove('active');
+    });
+});
+
+// Close modal when clicking outside
+window.addEventListener('click', function(event) {
+    const activeModal = document.querySelector('.modal.active');
+    if (activeModal && event.target == activeModal) {
+        activeModal.classList.remove('active');
+    }
+});
+</script>

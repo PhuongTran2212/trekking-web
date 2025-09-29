@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Đăng Ký - TrekViet{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/auth_forms.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-container">
+        <div class="auth-form">
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z"/>
+                </svg>
+            </div>
+            
+            <h2>Chào mừng, nhà thám hiểm mới!</h2>
+<p class="auth-subtitle">Đăng ký để gia nhập TrekViet và bắt đầu hành trình khám phá những cung đường tuyệt đẹp.</p>
+            
+            <!-- Hiển thị lỗi chung của form (nếu có) -->
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <form method="post" novalidate id="registerForm">
+                {% csrf_token %}
+                
+                <!-- Hàng chứa Họ và Tên -->
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                        <div class="input-wrapper">
+                            {{ form.last_name }}
+                        </div>
+                        {% if form.last_name.errors %}<div class="form-field-error">{{ form.last_name.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                        <div class="input-wrapper">
+                            {{ form.first_name }}
+                        </div>
+                        {% if form.first_name.errors %}<div class="form-field-error">{{ form.first_name.errors.as_text }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                    <div class="input-wrapper">
+                        {{ form.username }}
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    {% if form.username.errors %}<div class="form-field-error">{{ form.username.errors.as_text }}</div>{% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    <div class="input-wrapper">
+                        {{ form.email }}
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    </div>
+                     {% if form.email.errors %}<div class="form-field-error">{{ form.email.errors.as_text }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.sdt.id_for_label }}">{{ form.sdt.label }}</label>
+                    <div class="input-wrapper">
+                        {{ form.sdt }}
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                    </div>
+                     {% if form.sdt.errors %}<div class="form-field-error">{{ form.sdt.errors.as_text }}</div>{% endif %}
+                </div>
+                
+<div class="form-group">
+                    <label for="{{ form.password1.id_for_label }}">Mật khẩu</label>
+                    <div class="input-wrapper">
+                        {{ form.password1 }}
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor">...</svg>
+                        <button type="button" class="password-toggle" onclick="togglePassword(this)">
+                            <!-- JS sẽ chèn icon mắt vào đây -->
+                        </button>
+                    </div>
+                    
+                    <!-- Khối hướng dẫn mật khẩu mới -->
+                    <div id="password-requirements" class="password-reqs">
+                        <p>Mật khẩu của bạn cần đáp ứng:</p>
+                        <ul>
+                            <li id="req-length"><span></span>Ít nhất 8 ký tự</li>
+                            <li id="req-number"><span></span>Ít nhất một chữ số</li>
+                            <li id="req-uppercase"><span></span>Ít nhất một chữ cái viết hoa</li>
+                            <li id="req-lowercase"><span></span>Ít nhất một chữ cái viết thường</li>
+                        </ul>
+                    </div>
+                    {% if form.password1.errors %}<div class="form-field-error">{{ form.password1.errors.as_text }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.password2.id_for_label }}">Xác nhận mật khẩu</label>
+                    <div class="input-wrapper">
+                        {{ form.password2 }}
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18,8h-1V6c0-2.76-2.24-5-5-5S7,3.24,7,6v2H6c-1.1,0-2,0.9-2,2v10c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V10C20,8.9,19.1,8,18,8z M12,17c-1.1,0-2-0.9-2-2s0.9-2,2-2s2,0.9,2,2S13.1,17,12,17z M15.1,8H8.9V6c0-1.71,1.39-3.1,3.1-3.1s3.1,1.39,3.1,3.1V8z"/></svg>
+                    </div>
+                     {% if form.password2.errors %}<div class="form-field-error">{{ form.password2.errors.as_text }}</div>{% endif %}
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span id="btn-text">Tạo Tài Khoản</span>
+                </button>
+            </form>
+          
+            <p class="auth-switch">Đã có tài khoản? <a href="{% url 'accounts:dang-nhap' %}">Đăng nhập ngay</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('{{ form.password1.id_for_label }}');
+    const requirementsBox = document.getElementById('password-requirements');
+
+    // Các điều kiện và li tương ứng
+    const requirements = {
+        length: document.getElementById('req-length'),
+        number: document.getElementById('req-number'),
+        uppercase: document.getElementById('req-uppercase'),
+        lowercase: document.getElementById('req-lowercase')
+    };
+
+    if (passwordInput && requirementsBox) {
+        // Sự kiện khi người dùng BẤM VÀO ô mật khẩu
+        passwordInput.addEventListener('focus', function() {
+            requirementsBox.style.display = 'block';
+        });
+
+        // Sự kiện khi người dùng BẤM RA NGOÀI ô mật khẩu
+        passwordInput.addEventListener('blur', function() {
+            requirementsBox.style.display = 'none';
+        });
+
+        // Sự kiện khi người dùng GÕ PHÍM trong ô mật khẩu
+        passwordInput.addEventListener('input', function() {
+            const value = passwordInput.value;
+
+            // 1. Kiểm tra độ dài
+            if (value.length >= 8) {
+                requirements.length.classList.add('valid');
+            } else {
+                requirements.length.classList.remove('valid');
+            }
+
+            // 2. Kiểm tra có số
+            if (/\d/.test(value)) {
+                requirements.number.classList.add('valid');
+            } else {
+                requirements.number.classList.remove('valid');
+            }
+
+            // 3. Kiểm tra có chữ hoa
+            if (/[A-Z]/.test(value)) {
+                requirements.uppercase.classList.add('valid');
+            } else {
+                requirements.uppercase.classList.remove('valid');
+            }
+            
+            // 4. Kiểm tra có chữ thường
+            if (/[a-z]/.test(value)) {
+                requirements.lowercase.classList.add('valid');
+            } else {
+                requirements.lowercase.classList.remove('valid');
+            }
+        });
+    }
+    });
+    // Toggle password visibility
+    function togglePassword(button) {
+        const passwordInput = button.previousElementSibling.previousElementSibling;
+        const eyeOn = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+        const eyeOff = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>';
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            button.innerHTML = eyeOff;
+        } else {
+            passwordInput.type = 'password';
+            button.innerHTML = eyeOn;
+        }
+    }
+    
+    // Đặt icon mắt ban đầu
+    document.querySelector('.password-toggle').innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+
+    // Form submission with loading state
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %}

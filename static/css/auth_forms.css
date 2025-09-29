@@ -1,0 +1,454 @@
+
+       
+       /* Main Container */
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-lg)
+        }
+
+        /* Glassmorphism Card */
+        .auth-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: var(--spacing-2xl);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .auth-form::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-dark), var(--primary-medium), var(--primary-dark));
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 200% 0; }
+            50% { background-position: -200% 0; }
+        }
+
+        /* Logo/Icon Area */
+        .auth-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-medium));
+            border-radius: 50%;
+            margin: 0 auto var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .auth-logo svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Typography */
+        .auth-form h2 {
+            font-family: var(--font-heading);
+            font-size: 2.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-darkest), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.2;
+        }
+
+        .auth-subtitle {
+            color: var(--gray-600);
+            margin-bottom: var(--spacing-xl);
+            font-size: 1.125rem;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        /* Form Styling */
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+            text-align: left;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-xs);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem 1.25rem 1rem 3rem;
+            font-size: 1rem;
+            color: var(--gray-800);
+            background-color: var(--gray-50);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            transition: all var(--transition-base);
+            font-weight: 500;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-dark);
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(77, 113, 17, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Input Icons */
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--gray-400);
+            transition: color var(--transition-base);
+            z-index: 2;
+        }
+
+        .form-group input:focus + .input-icon {
+            color: var(--primary-dark);
+        }
+
+        /* Password Toggle */
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            transition: color var(--transition-base);
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-medium));
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+            margin-top: var(--spacing-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .btn-submit:hover::before {
+            left: 100%;
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* Loading State */
+        .btn-submit.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn-submit.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            margin: auto;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Auth Switch */
+        .auth-switch {
+            margin-top: var(--spacing-xl);
+            font-size: 1rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .auth-switch a {
+            color: var(--primary-dark);
+            font-weight: 700;
+            text-decoration: none;
+            position: relative;
+            transition: color var(--transition-base);
+        }
+
+        .auth-switch a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 50%;
+            background: linear-gradient(90deg, var(--primary-dark), var(--primary-medium));
+            transition: all var(--transition-base);
+            transform: translateX(-50%);
+        }
+
+        .auth-switch a:hover {
+            color: var(--primary-medium);
+        }
+
+        .auth-switch a:hover::after {
+            width: 100%;
+        }
+
+        /* Forgot Password Link */
+        .forgot-password {
+            text-align: right;
+            margin-top: var(--spacing-sm);
+        }
+
+        .forgot-password a {
+            color: var(--gray-500);
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: color var(--transition-base);
+        }
+
+        .forgot-password a:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Form Errors */
+        .form-errors {
+            background: linear-gradient(135deg, #fef2f2, #fce7e7);
+            color: #dc2626;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-lg);
+            text-align: left;
+            border-left: 4px solid #dc2626;
+            font-weight: 500;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 640px) {
+            .auth-container {
+                padding: var(--spacing-md);
+            }
+            
+            .auth-form {
+                padding: var(--spacing-xl);
+            }
+            
+            .auth-form h2 {
+                font-size: 1.875rem;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            }
+            
+            .auth-form {
+                background: rgba(30, 41, 59, 0.95);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+            
+            .auth-form h2 {
+                background: linear-gradient(135deg, var(--primary-light), var(--primary-medium));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+               .form-group input {
+                background-color: rgba(15, 23, 42, 0.5);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+            }
+            .form-row {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group.half-width {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* Style cho các thông báo lỗi dưới mỗi trường */
+.form-field-error {
+    color: #dc2626;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    margin-top: var(--spacing-xs);
+    text-align: left;
+}
+.form-field-error ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.password-reqs {
+    display: none; /* Mặc định ẩn */
+    background-color: var(--gray-100);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    text-align: left;
+    color: var(--gray-600);
+    transition: all 0.3s ease;
+}
+
+.password-reqs p {
+    margin-bottom: var(--spacing-xs);
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.password-reqs ul {
+    list-style: none;
+    padding: 0;
+}
+
+.password-reqs li {
+    margin-bottom: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease;
+}
+
+/* Style cho icon trước mỗi điều kiện */
+.password-reqs li span {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: var(--spacing-sm);
+    border-radius: 50%;
+    border: 2px solid var(--gray-300);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+/* --- TRẠNG THÁI HỢP LỆ (VALID) --- */
+.password-reqs li.valid {
+    color: var(--primary-dark); /* Chữ chuyển sang màu xanh đậm */
+    font-weight: 500;
+}
+
+.password-reqs li.valid span {
+    background-color: var(--primary-dark); /* Nền icon chuyển sang xanh */
+    border-color: var(--primary-dark);
+}
+
+/* TẠO DẤU TÍCH XANH BẰNG PSEUDO-ELEMENT */
+.password-reqs li.valid span::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: solid white; /* Màu của dấu tích */
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
