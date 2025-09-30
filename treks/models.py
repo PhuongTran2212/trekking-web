@@ -1,12 +1,26 @@
 # treks/models.py
+
+import os
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
+from django.utils.text import slugify
 from core.models import TinhThanh, DoKho, VatDung
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 # ==============================================================================
-# === CÁC LỰA CHỌN (CHOICES) CHO CÁC MODEL                                   ===
+# === HÀM HELPER & LỰA CHỌN (CHOICES)                                      ===
 # ==============================================================================
+
+def get_trek_media_path(instance, filename):
+    """
+    Tạo đường dẫn upload động cho media của CungDuongTrek.
+    Kết quả: 'CungDuong/<slug-cung-duong>/<ten-file-goc>'
+    """
+    trek_slug = instance.cung_duong.slug
+    # slugify để đảm bảo tên thư mục an toàn
+    return os.path.join('CungDuong', slugify(trek_slug), filename)
 
 class TrangThaiDuyet(models.TextChoices):
     """Trạng thái duyệt nội dung do người dùng tạo."""
@@ -25,8 +39,16 @@ class CungDuongTrek(models.Model):
     Đây là model trung tâm của ứng dụng treks.
     """
     ten = models.CharField(_("Tên cung đường"), max_length=200)
-    slug = models.CharField(_("Slug"), unique=True, max_length=220)
+    slug = models.SlugField(_("Slug"), unique=True, max_length=220, blank=True, help_text=_("Để trống để tự động tạo từ tên."))
     mo_ta = models.TextField(_("Mô tả chi tiết"))
+        # MỚI: Thêm trường địa điểm chi tiết để tìm kiếm trên bản đồ
+    dia_diem_chi_tiet = models.CharField(
+        _("Địa điểm chi tiết (để tìm trên bản đồ)"), 
+        max_length=255, 
+        blank=True, 
+        null=True,
+        help_text=_("Ví dụ: Vườn quốc gia Ba Vì, Hà Nội")
+    )
     tinh_thanh = models.ForeignKey(TinhThanh, on_delete=models.PROTECT, verbose_name=_("Tỉnh/Thành phố"))
     do_dai_km = models.DecimalField(_("Độ dài (km)"), max_digits=5, decimal_places=2)
     thoi_gian_uoc_tinh_gio = models.IntegerField(_("Thời gian ước tính (giờ)"))
@@ -36,45 +58,22 @@ class CungDuongTrek(models.Model):
     du_lieu_ban_do_geojson = models.JSONField(_("Dữ liệu bản đồ GeoJSON"), blank=True, null=True)
     danh_gia_trung_binh = models.DecimalField(_("Điểm đánh giá trung bình"), max_digits=3, decimal_places=2, default=0.00)
     so_luot_danh_gia = models.IntegerField(_("Số lượt đánh giá"), default=0)
-    
+
     trang_thai = models.CharField(
         _("Trạng thái duyệt"),
-        max_length=10, 
-        choices=TrangThaiDuyet.choices, 
-        default=TrangThaiDuyet.CHO_DUYET
+        max_length=10,
+        choices=TrangThaiDuyet.choices,
+        default=TrangThaiDuyet.DA_DUYET  # Mặc định là Đã duyệt cho Admin
     )
-
     nguoi_tao = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        blank=True, 
+        User,
+        on_delete=models.SET_NULL,
+        blank=True,
         null=True,
         verbose_name=_("Người tạo")
     )
     ngay_tao = models.DateTimeField(_("Ngày tạo"), auto_now_add=True)
     ngay_cap_nhat = models.DateTimeField(_("Ngày cập nhật"), auto_now=True)
-    
-    @property
-    def anh_bia_url(self):
-        """
-        Cung cấp một URL ảnh bìa tiện lợi cho templates và APIs.
-        Ưu tiên ảnh được đánh dấu là bìa, nếu không có thì lấy ảnh đầu tiên.
-        """
-        media_bia = self.media.filter(la_anh_bia=True, loai_media='ANH').first()
-        if media_bia:
-            try:
-                return media_bia.file.url
-            except ValueError:
-                pass 
-        
-        first_image = self.media.filter(loai_media='ANH').order_by('ngay_tai_len').first()
-        if first_image:
-            try:
-                return first_image.file.url
-            except ValueError:
-                pass
-        
-        return '/static/images/default_trek_image.png'
 
     class Meta:
         db_table = 'cung_duong_trek'
@@ -85,12 +84,53 @@ class CungDuongTrek(models.Model):
     def __str__(self):
         return self.ten
 
+    @property
+    def anh_bia_url(self):
+        """
+        Cung cấp một URL ảnh bìa tiện lợi cho templates và APIs.
+        Ưu tiên ảnh được đánh dấu là bìa, nếu không có thì lấy ảnh đầu tiên.
+        """
+        media_bia = self.media.filter(la_anh_bia=True, loai_media='ANH').first()
+        if media_bia:
+            try: return media_bia.file.url
+            except ValueError: pass
+
+        first_image = self.media.filter(loai_media='ANH').order_by('ngay_tai_len').first()
+        if first_image:
+            try: return first_image.file.url
+            except ValueError: pass
+
+        return '/static/images/default_trek_image.png'
+    @property
+    def cover_media(self):
+        """
+        Trả về đối tượng CungDuongMedia đầu tiên được đánh dấu là ảnh bìa.
+        Trả về None nếu không có.
+        """
+        return self.media.filter(la_anh_bia=True).first()
+
+    def save(self, *args, **kwargs):
+        # ... hàm save của bạn giữ nguyên ...
+        super().save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        """ Ghi đè phương thức save để tự động tạo slug. """
+        if not self.slug:
+            base_slug = slugify(self.ten)
+            unique_slug = base_slug
+            num = 1
+            while CungDuongTrek.objects.filter(slug=unique_slug).exists():
+                unique_slug = f'{base_slug}-{num}'
+                num += 1
+            self.slug = unique_slug
+        super().save(*args, **kwargs)
+
 # ==============================================================================
 # === CÁC MODEL PHỤ TRỢ CHO CUNG_DUONG_TREK                                  ===
 # ==============================================================================
 
 class CungDuongDuyetLog(models.Model):
-    """Lưu lại lịch sử các hành động duyệt (phê duyệt, từ chối) đối với một CungDuongTrek."""
+    """Lưu lại lịch sử duyệt (phê duyệt, từ chối) đối với một CungDuongTrek."""
     class HanhDongDuyet(models.TextChoices):
         DUYET = 'DUYET', _('Duyệt')
         TU_CHOI = 'TU_CHOI', _('Từ chối')
@@ -112,13 +152,12 @@ class CungDuongDuyetLog(models.Model):
         return f"[{self.get_hanh_dong_display()}] {self.cung_duong.ten} bởi {admin}"
 
 class CungDuongMedia(models.Model):
-    """Quản lý nhiều ảnh/video cho một cung đường."""
     class LoaiMedia(models.TextChoices):
         ANH = 'ANH', _('Ảnh')
         VIDEO = 'VIDEO', _('Video')
 
     cung_duong = models.ForeignKey(CungDuongTrek, on_delete=models.CASCADE, related_name='media')
-    file = models.FileField(_("Tập tin media"), upload_to='treks_media/') 
+    file = models.FileField(_("Tập tin media"), upload_to=get_trek_media_path)
     loai_media = models.CharField(_("Loại media"), max_length=5, choices=LoaiMedia.choices, default=LoaiMedia.ANH)
     la_anh_bia = models.BooleanField(_("Là ảnh bìa?"), default=False, help_text=_("Đánh dấu đây là ảnh bìa chính"))
     ngay_tai_len = models.DateTimeField(_("Ngày tải lên"), auto_now_add=True)
@@ -127,10 +166,20 @@ class CungDuongMedia(models.Model):
         db_table = 'cung_duong_media'
         verbose_name = _("Media Cung Đường")
         verbose_name_plural = _("Các Media Cung Đường")
-        ordering = ['-la_anh_bia', 'ngay_tai_len'] # Ưu tiên hiển thị ảnh bìa lên đầu
+        ordering = ['-la_anh_bia', 'ngay_tai_len']
 
     def __str__(self):
         return f"{self.get_loai_media_display()} cho {self.cung_duong.ten}"
+
+@receiver(post_delete, sender=CungDuongMedia)
+def submission_delete(sender, instance, **kwargs):
+    """
+    Tự động xóa file vật lý khỏi server khi một CungDuongMedia object bị xóa.
+    """
+    if instance.file:
+        instance.file.delete(save=False)
+
+
 
 class CungDuongVatDungGoiY(models.Model):
     """Các vật dụng được gợi ý mang theo cho một cung đường cụ thể."""
@@ -140,24 +189,28 @@ class CungDuongVatDungGoiY(models.Model):
 
     class Meta:
         db_table = 'cung_duong_vat_dung_goi_y'
-        unique_together = (('cung_duong', 'vat_dung'),)
         verbose_name = _("Vật Dụng Gợi Ý")
         verbose_name_plural = _("Các Vật Dụng Gợi Ý")
+        constraints = [
+            models.UniqueConstraint(fields=['cung_duong', 'vat_dung'], name='unique_trek_equipment_suggestion')
+        ]
 
 class CungDuongDanhGia(models.Model):
     """Lưu trữ đánh giá của người dùng cho một cung đường."""
     cung_duong = models.ForeignKey(CungDuongTrek, on_delete=models.CASCADE, related_name='danh_gia')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     diem_danh_gia = models.PositiveSmallIntegerField()
     binh_luan = models.TextField(blank=True, null=True)
     ngay_danh_gia = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'cung_duong_danh_gia'
-        unique_together = (('cung_duong', 'user'),)
         verbose_name = _("Đánh Giá Cung Đường")
         verbose_name_plural = _("Các Đánh Giá Cung Đường")
         ordering = ['-ngay_danh_gia']
+        constraints = [
+            models.UniqueConstraint(fields=['cung_duong', 'user'], name='unique_user_review_per_trek')
+        ]
 
 class CungDuongAnhDanhGia(models.Model):
     """Lưu trữ hình ảnh do người dùng tải lên trong một đánh giá."""

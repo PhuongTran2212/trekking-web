@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" />
+<style>
+    #trek-map { height: 500px; border-radius: var(--radius-lg); }
+    .trek-cover { height: 400px; background-image: url('{{ trek.anh_bia_url }}'); background-size: cover; background-position: center; border-radius: var(--radius-xl); }
+    .rating-stars .fa-star { font-size: 1rem; color: var(--warning); }
+    .rating-stars .fa-star.text-muted { color: var(--gray-300) !important; }
+    .form-group input[type="radio"] { margin-right: 5px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="trek-cover shadow-lg mb-4"></div>
+    <h1>{{ trek.ten }}</h1>
+    
+    <div class="row">
+        <!-- Cột nội dung chính -->
+        <main class="col-lg-8">
+            <div class="card mb-4"><div class="card-body"><h4 class="card-title">Mô tả cung đường</h4><p>{{ trek.mo_ta|linebreaks }}</p></div></div>
+            <div class="card mb-4"><div class="card-body"><h4 class="card-title">Bản đồ lộ trình</h4><div id="trek-map"></div></div></div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Đánh giá của cộng đồng ({{ trek.so_luot_danh_gia }} lượt)</h4>
+                    {% if user.is_authenticated %}
+                        {% if not user_has_reviewed %}
+                        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                            <h5>Viết đánh giá của bạn</h5>
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="form-group">{{ review_form.diem_danh_gia.label_tag }}<div>{{ review_form.diem_danh_gia }}</div></div>
+                                <div class="form-group">{{ review_form.binh_luan.label_tag }}{{ review_form.binh_luan }}</div>
+                                <div class="form-group">
+                                    <label class="form-label" for="id_hinh_anh">Tải lên hình ảnh (tùy chọn)</label>
+                                    <input type="file" name="hinh_anh" multiple class="form-control" id="id_hinh_anh">
+                                </div>
+                                <button type="submit" class="btn btn-primary mt-2">Gửi đánh giá</button>
+                            </form>
+                        </div>
+                        {% else %}<div class="alert alert-info">Bạn đã đánh giá cung đường này.</div>{% endif %}
+                    {% else %}<div class="alert alert-warning"><a href="{% url 'accounts:dang-nhap' %}?next={{ request.path }}">Đăng nhập</a> để gửi đánh giá.</div>{% endif %}
+                    
+                    <div class="review-list">
+                        {% for review in reviews %}
+                        <div class="d-flex mb-4">
+                            <img src="{{ review.user.taikhoanhoso.avatar_url }}" class="rounded-full mr-3" style="width: 48px; height: 48px; object-fit: cover;">
+                            <div>
+                                <strong>{{ review.user.username|default:"[Người dùng đã xóa]" }}</strong>
+                                <div class="rating-stars d-inline-block ml-2">{% for i in "12345"|make_list %}<i class="fas fa-star {% if i|add:0 > review.diem_danh_gia %}text-muted{% endif %}"></i>{% endfor %}</div>
+                                <p class="my-2">{{ review.binh_luan }}</p>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for anh in review.anh_danh_gia.all %}<a href="{{ anh.hinh_anh.url }}" data-fancybox="review-{{ review.id }}"><img src="{{ anh.hinh_anh.url }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md);"></a>{% endfor %}
+                                </div>
+                                <small class="text-muted">{{ review.ngay_danh_gia|timesince }} trước</small>
+                            </div>
+                        </div>
+                        {% empty %}<p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>{% endfor %}
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Cột thông tin phụ -->
+        <aside class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header"><h5>Thông số kỹ thuật</h5></div>
+                <ul class="list-unstyled card-body">
+                    <li class="d-flex justify-between mb-2"><span>Tỉnh/Thành</span> <strong class="text-right">{{ trek.tinh_thanh.ten }}</strong></li>
+                    <li class="d-flex justify-between mb-2"><span>Độ khó</span> <strong>{{ trek.do_kho.ten }}</strong></li>
+                    <li class="d-flex justify-between mb-2"><span>Độ dài</span> <strong>{{ trek.do_dai_km }} km</strong></li>
+                    <li class="d-flex justify-between mb-2"><span>Thời gian</span> <strong>{{ trek.thoi_gian_uoc_tinh_gio }} giờ</strong></li>
+                    <li class="d-flex justify-between mb-2"><span>Tổng độ cao leo</span> <strong>{{ trek.tong_do_cao_leo_m }} m</strong></li>
+                    <li class="d-flex justify-between"><span>Mùa đẹp nhất</span> <strong>{{ trek.mua_dep_nhat }}</strong></li>
+                </ul>
+            </div>
+            <div class="card mb-4">
+                 <div class="card-header"><h5>Vật dụng gợi ý</h5></div>
+                <div class="card-body"><ul class="equipment-checklist">{% for item in vat_dung_goi_y %}<li class="equipment-item"><input type="checkbox" class="form-check-input equipment-checkbox"><span class="equipment-name">{{ item.vat_dung.ten }}</span></li>{% empty %}<li>Chưa có gợi ý vật dụng.</li>{% endfor %}</ul></div>
+            </div>
+        </aside>
+    </div>
+</div>
+{{ trek.du_lieu_ban_do_geojson|json_script:"map-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mapDataElement = document.getElementById('map-data');
+    if (mapDataElement) {
+        try {
+            const geojsonData = JSON.parse(mapDataElement.textContent);
+            if (!geojsonData || !geojsonData.features || geojsonData.features.length === 0) {
+                 throw new Error("Dữ liệu GeoJSON không hợp lệ.");
+            }
+            const map = L.map('trek-map').setView([21.028511, 105.804817], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+            const trekLayer = L.geoJSON(geojsonData, { style: { color: "#EF4444", weight: 4, opacity: 0.8 } }).addTo(map);
+            map.fitBounds(trekLayer.getBounds());
+        } catch(e) {
+            console.error("Lỗi bản đồ: ", e);
+            document.getElementById('trek-map').innerHTML = '<p class="text-center text-muted">Không có dữ liệu bản đồ để hiển thị.</p>';
+        }
+    }
+    $('[data-fancybox]').fancybox({ buttons: ["zoom", "fullScreen", "close"], loop: true });
+});
+</script>
+{% endblock %}

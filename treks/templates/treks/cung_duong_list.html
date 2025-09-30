@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container pt-5 pb-5">
+    <div class="row">
+        <!-- Cột Filter -->
+        <aside class="col-lg-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Bộ lọc nâng cao</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <div class="form-group">
+                            <label class="form-label">{{ filter_form.q.label }}</label>
+                            {{ filter_form.q }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">{{ filter_form.tinh_thanh.label }}</label>
+                            {{ filter_form.tinh_thanh }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">{{ filter_form.do_kho.label }}</label>
+                            {{ filter_form.do_kho }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">{{ filter_form.min_do_dai.label }}</label>
+                            <div class="d-flex align-center gap-2">
+                                {{ filter_form.min_do_dai }}
+                                <span>-</span>
+                                {{ filter_form.max_do_dai }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Áp dụng</button>
+                        <a href="{% url 'treks:cung_duong_list' %}" class="btn btn-outline w-100 mt-2">Xóa bộ lọc</a>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Cột Danh sách -->
+        <main class="col-lg-9">
+            <h1 class="mb-2">{{ page_title }}</h1>
+            <p class="text-muted">Tìm thấy {{ paginator.count }} cung đường phù hợp.</p>
+
+            <div class="row">
+                {% for trek in cung_duong_list %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <a href="{% url 'treks:cung_duong_detail' trek.slug %}"
+                        class="card trek-card h-100 text-decoration-none">
+                        <img src="{{ trek.anh_bia_url }}" class="trek-card-image" alt="{{ trek.ten }}">
+                        <div class="trek-card-badge">{{ trek.do_kho.ten }}</div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ trek.ten }}</h5>
+                            <p class="card-text text-muted mb-3">{{ trek.tinh_thanh.ten }}</p>
+                            <div class="d-flex justify-between text-sm text-muted">
+                                <span>{{ trek.do_dai_km }} km</span>
+                                <span>{{ trek.thoi_gian_uoc_tinh_gio }} giờ</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center p-5">
+                    <p>Không tìm thấy cung đường nào phù hợp.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-center">
+                    {% if page_obj.has_previous %}
+                    <li class="pagination-item"><a
+                            href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">&laquo;</a>
+                    </li>
+                    {% endif %}
+                    {% for num in paginator.page_range %}
+                    <li class="pagination-item {% if page_obj.number == num %}active{% endif %}">
+                        <a href="?{{ request.GET.urlencode }}&page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="pagination-item"><a
+                            href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">{{ page_title }}</h4>
+        <div>
+            <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn btn-secondary">Chỉnh sửa</a>
+            <a href="{% url 'treks_admin:cung_duong_list' %}" class="btn btn-ghost">Quay lại danh sách</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-lg-8">
+                <h5>Mô tả chi tiết</h5>
+                <p>{{ trek.mo_ta|linebreaks }}</p>
+                <hr>
+                <h5>Thư viện Media</h5>
+                <div class="d-flex flex-wrap gap-3">
+                    {% for media in trek.media.all %}
+                    <img src="{{ media.file.url }}" alt="Media for {{ trek.ten }}"
+                        style="width: 150px; height: 150px; object-fit: cover; border-radius: var(--radius-md);">
+                    {% empty %}
+                    <p>Chưa có media nào.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <h5>Thông tin cơ bản</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Tỉnh/Thành:</strong> {{ trek.tinh_thanh.ten }}</li>
+                    <li><strong>Độ khó:</strong> {{ trek.do_kho.ten }}</li>
+                    <li><strong>Trạng thái:</strong> <span class="badge bg-primary">{{ trek.get_trang_thai_display }}</span></li>
+                    <hr>
+                    <li><strong>Độ dài:</strong> {{ trek.do_dai_km }} km</li>
+                    <li><strong>Thời gian:</strong> {{ trek.thoi_gian_uoc_tinh_gio }} giờ</li>
+                    <li><strong>Độ cao leo:</strong> {{ trek.tong_do_cao_leo_m|default:"N/A" }} m</li>
+                    <li><strong>Mùa đẹp nhất:</strong> {{ trek.mua_dep_nhat|default:"N/A" }}</li>
+                </ul>
+            </div>
+        </div>
+        <hr>
+        <h5>Đánh giá của người dùng ({{ reviews.count }})</h5>
+        {% for review in reviews %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <p><strong>{{ review.user.username|default:"[Người dùng đã xóa]" }}</strong> - {{ review.diem_danh_gia
+                    }} sao - <small class="text-muted">{{ review.ngay_danh_gia|date:"d/m/Y" }}</small></p>
+                <p>{{ review.binh_luan }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <p>Chưa có đánh giá nào.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
