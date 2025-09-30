@@ -5,12 +5,11 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db import transaction
 
-# === THAY ĐỔI: Import 'GioiTinh' trực tiếp để tái sử dụng ===
 from .models import TaiKhoanHoSo, TaiKhoanThietBiCaNhan, GioiTinh
-from core.models import The # Giả định bạn sẽ cần cho InterestsForm sau này
+from core.models import The, LoaiVatDung, VatDung
 
 # ==============================================================================
-# FORM ĐĂNG KÝ TÀI KHOẢN MỚI
+# FORM ĐĂNG KÝ (KHÔNG THAY ĐỔI)
 # ==============================================================================
 class DangKyForm(UserCreationForm):
     """
@@ -34,7 +33,6 @@ class DangKyForm(UserCreationForm):
     gioi_tinh = forms.ChoiceField(
         label='Giới tính',
         required=False,
-        # === TINH CHỈNH: Tham chiếu trực tiếp tới class GioiTinh ===
         choices=GioiTinh.choices, 
         widget=forms.RadioSelect
     )
@@ -80,22 +78,21 @@ class DangKyForm(UserCreationForm):
             profile.gioi_tinh = self.cleaned_data.get('gioi_tinh')
             profile.save()
         return user
-# --- CÁC FORM MỚI CHO VIỆC CẬP NHẬT PROFILE ---
 
+# ==============================================================================
+# CÁC FORM CẬP NHẬT (KHÔNG THAY ĐỔI)
+# ==============================================================================
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name']
 
-# === THAY ĐỔI TẠI ĐÂY: Sửa lại ProfileUpdateForm ===
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = TaiKhoanHoSo
-        # Thêm 'ngay_sinh' và 'gioi_tinh' vào danh sách fields
         fields = ['anh_dai_dien', 'sdt', 'ngay_sinh', 'gioi_tinh', 'gioi_thieu', 'tinh_thanh']
         widgets = {
             'gioi_thieu': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ về kinh nghiệm trekking của bạn...'}),
-            # Thêm widgets cho các trường mới để có giao diện tốt hơn
             'ngay_sinh': forms.DateInput(attrs={'type': 'date'}),
         }
     
@@ -103,32 +100,58 @@ class ProfileUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['tinh_thanh'].empty_label = "--- Chọn Tỉnh/Thành phố ---"
         self.fields['gioi_tinh'].empty_label = "--- Chọn giới tính ---"
-# === KẾT THÚC THAY ĐỔI ===
 
-
-# === THAY ĐỔI TẠI ĐÂY: Form sở thích sẽ nhận chuỗi JSON từ Tagify ===
 class InterestsUpdateForm(forms.Form):
     interests = forms.CharField(
         label="Sở thích của bạn",
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'Nhập và chọn các sở thích...'})
     )
-
+    
+# ==============================================================================
+# === SỬA LẠI FORM THIẾT BỊ Ở ĐÂY ===
+# ==============================================================================
 class EquipmentForm(forms.ModelForm):
+    # Thêm trường này để người dùng chọn loại trước
+    loai_vat_dung = forms.ModelChoiceField(
+        queryset=LoaiVatDung.objects.all(),
+        label="Chọn loại vật dụng",
+        required=True # Bắt buộc phải chọn loại trước
+    )
+
     class Meta:
         model = TaiKhoanThietBiCaNhan
-        fields = ['vat_dung', 'so_luong', 'ghi_chu']
+        # Sắp xếp lại thứ tự fields cho logic
+        fields = ['loai_vat_dung', 'vat_dung', 'so_luong', 'ghi_chu']
         labels = {
             'vat_dung': 'Chọn thiết bị',
             'so_luong': 'Số lượng',
             'ghi_chu': 'Ghi chú (ví dụ: size, màu sắc...)'
         }
-        # === THÊM FORM MỚI NÀY VÀO CUỐI FILE ===
+        
+    # === HÀM __init__ ĐÃ ĐƯỢC DI CHUYỂN RA ĐÚNG VỊ TRÍ ===
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ban đầu, dropdown vật dụng sẽ trống, chờ người dùng chọn loại
+        self.fields['vat_dung'].queryset = VatDung.objects.none()
+
+        # Nếu form được post đi (có data), chúng ta cần đảm bảo
+        # dropdown vật dụng có các lựa chọn đúng để validation hoạt động
+        if 'loai_vat_dung' in self.data:
+            try:
+                category_id = int(self.data.get('loai_vat_dung'))
+                self.fields['vat_dung'].queryset = VatDung.objects.filter(loai_vat_dung_id=category_id).order_by('ten')
+            except (ValueError, TypeError):
+                pass  # Bỏ qua nếu có lỗi (ví dụ người dùng chưa chọn)
+        elif self.instance.pk:
+            # Nếu đang sửa một instance đã có (ít dùng cho form này nhưng vẫn nên có)
+            self.fields['vat_dung'].queryset = self.instance.vat_dung.loai_vat_dung.vatdung_set.order_by('ten')
+
+
 class EquipmentEditForm(forms.ModelForm):
     """Form chuyên dụng để SỬA một món đồ đã có."""
     class Meta:
         model = TaiKhoanThietBiCaNhan
-        # Chỉ cho phép sửa số lượng và ghi chú
         fields = ['so_luong', 'ghi_chu']
         labels = {
             'so_luong': 'Số lượng mới',

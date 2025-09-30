@@ -989,22 +989,29 @@
     .radio-select-group label {
         font-weight: normal; /* Ghi đè style của form-label */
     }
+        .sub-section-title {
+        font-family: var(--font-heading);
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--neutral-700);
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--neutral-200);
+        text-align: left;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="settings-container">
-    {# ... Giữ nguyên Header và Sidebar ... #}
-    
     <div class="settings-header">
-                <!-- === MỚI: NÚT QUAY VỀ PROFILE === -->
         <a href="{% url 'accounts:profile-detail' username=user.username %}" class="back-to-profile">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
             </svg>
             Quay về
         </a>
-        <!-- === KẾT THÚC NÚT MỚI === -->
         <h1>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"/>
@@ -1043,7 +1050,6 @@
 
         <!-- Main Content -->
         <div class="settings-content">
-            {# ... Giữ nguyên Section Thông tin cá nhân và Sở thích ... #}
             <!-- Personal Information Section -->
             <div id="info-section" class="content-section active">
                 <div class="section-title">
@@ -1076,7 +1082,6 @@
                         </div>
                     </div>
 
-                   <!-- === THAY ĐỔI: Thêm các trường mới vào Form Fields === -->
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">Họ</label>
@@ -1100,9 +1105,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">{{ profile_form.gioi_tinh.label }}</label>
-                            <div class="radio-select-group">
-                                {{ profile_form.gioi_tinh }}
-                            </div>
+                            {{ profile_form.gioi_tinh }}
                         </div>
                     </div>
                     <div class="form-group">
@@ -1180,7 +1183,6 @@
                                 {% endif %}
                             </div>
                             
-                            <!-- === THAY ĐỔI: Thêm nhóm nút Sửa/Xóa === -->
                             <div class="equipment-actions">
                                 <!-- Nút Sửa (mở Modal) -->
                                 <button type="button" class="btn-edit" 
@@ -1214,12 +1216,18 @@
                 </div>
 
                 <!-- Add Equipment Form -->
+                <!-- === THÊM MỚI / THAY THẾ TOÀN BỘ PHẦN NÀY === -->
                 <div style="background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); padding: 2rem; margin-top: 2rem;">
                     <h3 style="color: var(--text-primary); margin-bottom: 1.5rem; font-size: 1.25rem;">Thêm thiết bị mới</h3>
                     <form method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="add_equipment">
+                        
                         <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">{{ equipment_form.loai_vat_dung.label }}</label>
+                                {{ equipment_form.loai_vat_dung }}
+                            </div>
                             <div class="form-group">
                                 <label class="form-label">{{ equipment_form.vat_dung.label }}</label>
                                 {{ equipment_form.vat_dung }}
@@ -1233,6 +1241,7 @@
                             <label class="form-label">{{ equipment_form.ghi_chu.label }}</label>
                             {{ equipment_form.ghi_chu }}
                         </div>
+                        
                         <button type="submit" class="btn-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1242,13 +1251,13 @@
                         </button>
                     </form>
                 </div>
+                <!-- === KẾT THÚC PHẦN THÊM MỚI / THAY THẾ === -->
             </div>
         </div>
     </div>
 </div>
 
-<!-- === THÊM MỚI: Modal để sửa thiết bị === -->
-<!-- === BỌC TOÀN BỘ MODAL TRONG THẺ DIV NÀY === -->
+<!-- Modal để sửa thiết bị (Giữ nguyên) -->
 <div class="bootstrap-scope">
     <div class="modal fade" id="editEquipmentModal" tabindex="-1" aria-labelledby="editEquipmentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -1280,14 +1289,12 @@
         </div>
     </div>
 </div>
-<!-- === KẾT THÚC MODAL === -->
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // ... (Giữ nguyên script hiện tại của bạn) ...
     // Section Navigation
     window.showSection = function(sectionName) {
         document.querySelectorAll('.content-section').forEach(section => {
@@ -1297,7 +1304,7 @@ document.addEventListener("DOMContentLoaded", function() {
             item.classList.remove('active');
         });
         document.getElementById(sectionName + '-section').classList.add('active');
-        event.currentTarget.classList.add('active'); // Sử dụng currentTarget để đảm bảo nút bấm được chọn
+        event.currentTarget.classList.add('active');
     };
 
     // Avatar Preview
@@ -1329,37 +1336,64 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // === THÊM MỚI: JavaScript cho Modal Sửa Thiết Bị ===
+    // JavaScript cho Modal Sửa Thiết Bị
     const editModal = document.getElementById('editEquipmentModal');
     if (editModal) {
         editModal.addEventListener('show.bs.modal', function (event) {
-            // Nút đã kích hoạt modal
             const button = event.relatedTarget;
-            
-            // Trích xuất thông tin từ các thuộc tính data-*
             const pk = button.dataset.pk;
             const name = button.dataset.name;
             const quantity = button.dataset.quantity;
             const notes = button.dataset.notes;
             
-            // Cập nhật nội dung của modal
             const modalTitle = editModal.querySelector('#modalItemName');
             const modalForm = editModal.querySelector('#editEquipmentForm');
             const quantityInput = editModal.querySelector('#edit_so_luong');
             const notesInput = editModal.querySelector('#edit_ghi_chu');
 
-            // Đặt tên vật dụng vào tiêu đề modal
             modalTitle.textContent = name;
-            
-            // Đặt action của form trỏ đến đúng URL để sửa
-           // Sửa dòng đó thành:
             modalForm.action = `/tai-khoan/cai-dat/sua-thiet-bi/${pk}/`;
-            
-            // Điền dữ liệu hiện tại vào các ô input
             quantityInput.value = quantity;
             notesInput.value = notes;
         });
     }
+
+    // === THÊM MỚI: JavaScript cho Chained Dropdown ===
+    const categorySelect = document.querySelector('select[name="loai_vat_dung"]');
+    const equipmentSelect = document.querySelector('select[name="vat_dung"]');
+
+    if (categorySelect && equipmentSelect) {
+        // Vô hiệu hóa dropdown thiết bị khi tải trang
+        equipmentSelect.disabled = true;
+
+        categorySelect.addEventListener('change', function() {
+            const categoryId = this.value;
+            equipmentSelect.innerHTML = '<option value="">--- Vui lòng chọn loại vật dụng ---</option>';
+            equipmentSelect.disabled = true;
+
+            if (categoryId) {
+                equipmentSelect.innerHTML = '<option value="">Đang tải...</option>';
+                // Gọi API để lấy danh sách vật dụng
+                fetch(`{% url 'accounts:api_get_equipment_by_category' %}?category_id=${categoryId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        equipmentSelect.innerHTML = '<option value="">--- Chọn thiết bị ---</option>';
+                        data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.id;
+                            option.textContent = item.ten;
+                            equipmentSelect.appendChild(option);
+                        });
+                        equipmentSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Lỗi khi lấy danh sách thiết bị:', error);
+                        equipmentSelect.innerHTML = '<option value="">Có lỗi xảy ra</option>';
+                    });
+            }
+        });
+    }
+    // === KẾT THÚC JAVASCRIPT MỚI ===
 });
 </script>
 

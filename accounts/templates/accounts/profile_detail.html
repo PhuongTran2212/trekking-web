@@ -509,6 +509,19 @@
         .badge-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
         .profile-stats { grid-template-columns: 1fr; gap: var(--spacing-sm); }
     }
+    
+    /* === THÊM MỚI: CSS cho tiêu đề nhóm vật dụng === */
+    .sub-section-title {
+        font-family: var(--font-heading);
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--neutral-700);
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--neutral-200);
+        text-align: left;
+    }
 </style>
 {% endblock %}
 
@@ -671,24 +684,32 @@
 
                     <!-- Tab content sections -->
                     <div id="cv" class="tab-content active">
+                        
+                        <!-- === THÊM MỚI / THAY THẾ TOÀN BỘ PHẦN NÀY === -->
                         <h4 class="section-title">Thiết bị cá nhân</h4>
-                        {% if personal_equipment %}
-                        <div class="equipment-list">
-                            {% for item in personal_equipment %}
-                            <div class="item">
-                                <div class="item-name">
-                                    {{ item.vat_dung.ten }}
-                                    {% if item.so_luong > 1 %}
-                                    <span class="badge badge-primary">x{{ item.so_luong }}</span>
-                                    {% endif %}
+                        {% if grouped_equipment %}
+                            {% for category, items_in_category in grouped_equipment.items %}
+                                <h5 class="sub-section-title">{{ category.ten }}</h5>
+                                <div class="equipment-list">
+                                    {% for item in items_in_category %}
+                                    <div class="item">
+                                        <div class="item-name">
+                                            {{ item.vat_dung.ten }}
+                                            {% if item.so_luong > 1 %}
+                                            <span class="badge badge-primary">x{{ item.so_luong }}</span>
+                                            {% endif %}
+                                        </div>
+                                        {% if item.ghi_chu %}
+                                        <div class="item-note">{{ item.ghi_chu }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
                                 </div>
-                                <div class="item-note">{{ item.ghi_chu }}</div>
-                            </div>
                             {% endfor %}
-                        </div>
                         {% else %}
-                        <p class="text-muted">Chưa cập nhật danh sách thiết bị.</p>
+                            <p class="text-muted">Chưa cập nhật danh sách thiết bị.</p>
                         {% endif %}
+                        <!-- === KẾT THÚC PHẦN THÊM MỚI / THAY THẾ === -->
 
                         <hr class="my-4">
 
@@ -783,7 +804,10 @@
         });
         
         // Kích hoạt tab đầu tiên khi tải trang
-        document.querySelector('.tab-link').click();
+        const firstTab = document.querySelector('.tab-link');
+        if(firstTab) {
+            firstTab.click();
+        }
     });
 </script>
 {% endblock %}
