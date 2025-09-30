@@ -21,7 +21,7 @@ urlpatterns = [
     path('dashboard/', core_views.admin_dashboard_view, name='admin_dashboard'),
         # --- DÒNG MỚI ---
     # Bất kỳ URL nào bắt đầu bằng 'cung-duong/' sẽ được chuyển đến file treks/urls.py
-    path('dashboard/cung-duong/', include('treks.urls', namespace='treks_admin')),
+    # path('dashboard/cung-duong/', include('treks.urls', namespace='treks_admin')),
 ]
 
 # Chỉ dùng khi DEBUG=True để phục vụ media trong dev
