@@ -3,14 +3,23 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block head_extra %}
-<!-- Thư viện bản đồ Leaflet -->
+<!-- 1. CSS CHO BẢN ĐỒ LEAFLET -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- ========================================================= -->
+<!-- === 2. THÊM CSS CHO THƯ VIỆN ẢNH LIGHTGALLERY         === -->
+<!-- ========================================================= -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery.min.css" integrity="sha512-F2E+YYE1gkt0T5TVajAslgDfTEUQKtlu4ralVqic8ez/lZaMeMWFNSAiFKKUEHYeOauoVjM6yC4swWAbRhIeGg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 <style>
     #map { 
         height: 350px; 
         border-radius: var(--radius-md); 
         border: 1px solid #dee2e6;
+    }
+    /* Thêm con trỏ tay khi di chuột qua ảnh trong thư viện */
+    #lightgallery a img {
+        cursor: pointer;
     }
 </style>
 {% endblock %}
@@ -28,41 +37,57 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <!-- CỘT TRÁI: NỘI DUNG CHÍNH -->
+            <!-- ========================================================= -->
+            <!-- === CỘT TRÁI: ĐÃ SẮP XẾP LẠI BỐ CỤC HỢP LÝ HƠN       === -->
+            <!-- ========================================================= -->
             <div class="col-lg-8">
-                <h5>Mô tả chi tiết</h5>
-                <p>{{ trek.mo_ta|linebreaks }}</p>
                 
+                <!-- Bọc tất cả ảnh vào một container chung cho LightGallery -->
+                <div id="lightgallery">
+                    <!-- ẢNH BÌA -->
+                    {% with cover_media=trek.cover_media %}
+                        {% if cover_media %}
+                            <a href="{{ cover_media.file.url }}">
+                                 <img src="{{ cover_media.file.url }}" alt="Ảnh bìa của {{ trek.ten }}" class="img-fluid rounded mb-4" style="max-height: 400px; width: 100%; object-fit: cover;">
+                            </a>
+                        {% else %}
+                            <div class="alert alert-secondary">Chưa có ảnh bìa.</div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
                 <hr>
 
-                <!-- PHẦN BẢN ĐỒ MỚI -->
+                <!-- MÔ TẢ CHI TIẾT -->
+                <h5>Mô tả chi tiết</h5>
+                <p>{{ trek.mo_ta|linebreaks }}</p>
+                <hr>
+
+                <!-- BẢN ĐỒ -->
                 <h5>Vị trí trên bản đồ</h5>
-                {% if trek.dia_diem_chi_tiet %}
-                    <p><strong>Địa điểm:</strong> {{ trek.dia_diem_chi_tiet }}</p>
-                {% endif %}
+                {% if trek.dia_diem_chi_tiet %}<p><strong>Địa điểm:</strong> {{ trek.dia_diem_chi_tiet }}</p>{% endif %}
                 
                 {% if trek.du_lieu_ban_do_geojson %}
                     <div id="map" class="mb-4"></div>
                 {% else %}
                     <div class="alert alert-warning">Chưa có dữ liệu bản đồ cho cung đường này.</div>
                 {% endif %}
-
                 <hr>
 
+                <!-- THƯ VIỆN MEDIA (đặt sau cùng trong cột trái) -->
                 <h5>Thư viện Media</h5>
-                <div class="d-flex flex-wrap gap-3">
-                    {% for media in trek.media.all %}
-                    <a href="{{ media.file.url }}" target="_blank" title="Xem ảnh đầy đủ">
-                        <img src="{{ media.file.url }}" alt="Media for {{ trek.ten }}"
-                            style="width: 150px; height: 150px; object-fit: cover; border-radius: var(--radius-md);">
-                    </a>
+                <div id="gallery-container" class="d-flex flex-wrap gap-3">
+                    {% for media in trek.gallery_media %}
+                        <a href="{{ media.file.url }}">
+                            <img src="{{ media.file.url }}" alt="Media for {{ trek.ten }}"
+                                style="width: 150px; height: 150px; object-fit: cover; border-radius: var(--radius-md);">
+                        </a>
                     {% empty %}
-                    <p>Chưa có media nào.</p>
+                        <p class="text-muted">Thư viện media trống.</p>
                     {% endfor %}
                 </div>
             </div>
 
-            <!-- CỘT PHẢI: THÔNG TIN TÓM TẮT -->
+            <!-- CỘT PHẢI: THÔNG TIN TÓM TẮT (Giữ nguyên) -->
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header"><h5 class="mb-0">Thông tin cơ bản</h5></div>
@@ -90,7 +115,6 @@
                     </div>
                 </div>
 
-                <!-- PHẦN VẬT DỤNG MỚI -->
                 <div class="card mt-4">
                     <div class="card-header"><h5 class="mb-0">Vật dụng gợi ý</h5></div>
                     <div class="card-body">
@@ -110,6 +134,7 @@
         
         <hr>
 
+        <!-- PHẦN ĐÁNH GIÁ (Giữ nguyên) -->
         <h5>Đánh giá của người dùng ({{ reviews.count }})</h5>
         {% for review in reviews %}
         <div class="card mb-3">
@@ -117,9 +142,9 @@
                 <p>
                     <strong>{{ review.user.username|default:"[Người dùng đã xóa]" }}</strong> - 
                     <span class="text-warning">
-                        {% for i in "x"|ljust:review.diem_danh_gia %}★{% endfor %}{% for i in "x"|ljust:review.diem_danh_gia|add:"-5"|slice:"1:" %}☆{% endfor %}
-                    </span> - 
-                    <small class="text-muted">{{ review.ngay_danh_gia|date:"d/m/Y H:i" }}</small>
+                        {% for i in "12345" %}{% if forloop.counter <= review.diem_danh_gia %}★{% else %}☆{% endif %}{% endfor %}
+                    </span>
+                    <small class="text-muted">{{ review.ngay_danh_gia|date:"d/m/Y H-i" }}</small>
                 </p>
                 <p class="mb-0">{{ review.binh_luan|linebreaks }}</p>
             </div>
@@ -132,40 +157,55 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- SCRIPT BẢN ĐỒ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- ========================================================= -->
+<!-- === 3. THÊM SCRIPT CHO THƯ VIỆN ẢNH LIGHTGALLERY      === -->
+<!-- ========================================================= -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js" integrity="sha512-jEJ0Gv46rxEM9zBiEeOhNKmpGD6Aq75vTMEd3k0m+MHL2wqwMkbHFU4g5lkRBYODeDp2N0gUjMvYuRPEm_tP8w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // --- Code cho bản đồ (giữ nguyên) ---
     const mapElement = document.getElementById('map');
-    
-    // Dữ liệu GeoJSON được truyền từ Django vào JavaScript một cách an toàn
     const geojsonDataString = '{{ trek.du_lieu_ban_do_geojson|escapejs|default:"null" }}';
     
-    // Chỉ chạy code bản đồ nếu có cả thẻ div#map và dữ liệu
     if (mapElement && geojsonDataString !== 'null') {
         try {
             const geojsonData = JSON.parse(geojsonDataString);
-
-            // Kiểm tra xem dữ liệu có hợp lệ không
-            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+            if (geojsonData?.features?.length > 0) {
                 const coords = geojsonData.features[0].geometry.coordinates;
-                const latLng = [coords[1], coords[0]]; // Leaflet dùng [lat, lon], GeoJSON là [lon, lat]
-
-                // Khởi tạo bản đồ
-                const map = L.map(mapElement).setView(latLng, 13); // Zoom level 13
-
-                // Thêm lớp bản đồ nền từ OpenStreetMap
+                const latLng = [coords[1], coords[0]];
+                const map = L.map(mapElement).setView(latLng, 13);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
-
-                // Thêm marker vào vị trí
                 L.marker(latLng).addTo(map)
                     .bindPopup('<b>{{ trek.ten|escapejs }}</b><br>{{ trek.dia_diem_chi_tiet|escapejs }}')
                     .openPopup();
             }
-        } catch (e) {
-            console.error("Lỗi khi xử lý dữ liệu bản đồ:", e);
-        }
+        } catch (e) { console.error("Lỗi khi xử lý dữ liệu bản đồ:", e); }
     }
+
+    // --- Code khởi tạo LightGallery ---
+    // Gộp cả ảnh bìa và thư viện vào chung một popup
+    const mainGalleryContainer = document.getElementById('lightgallery');
+    const mediaGalleryContainer = document.getElementById('gallery-container');
+    
+    // Sao chép các ảnh từ thư viện media vào container chính
+    mediaGalleryContainer.querySelectorAll('a').forEach(link => {
+        mainGalleryContainer.appendChild(link);
+    });
+    // Xóa container cũ sau khi đã chuyển
+    mediaGalleryContainer.remove();
+
+    // Khởi tạo LightGallery trên container chính
+    lightGallery(mainGalleryContainer, {
+        selector: 'a', // Áp dụng cho tất cả các thẻ <a> bên trong
+        download: true, // Cho phép nút tải ảnh
+        speed: 500
+    });
 });
 </script>
 {% endblock %}

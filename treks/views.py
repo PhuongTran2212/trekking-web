@@ -11,7 +11,7 @@ from django.db.models import Q
 
 # Import các models cần thiết
 from .models import CungDuongTrek, CungDuongMedia, TrangThaiDuyet, CungDuongDanhGia
-
+from django.db.models import Count, Avg
 # QUAN TRỌNG: Import cả hai form từ forms.py
 from .forms import CungDuongTrekAdminForm, CungDuongTrekFilterForm
 

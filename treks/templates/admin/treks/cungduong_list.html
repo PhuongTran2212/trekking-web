@@ -11,9 +11,7 @@
         </a>
     </div>
     <div class="card-body">
-        <!-- ============================================= -->
-        <!-- === KHU VỰC BỘ LỌC NÂNG CAO               === -->
-        <!-- ============================================= -->
+        <!-- Khu vực bộ lọc giữ nguyên -->
         <div class="card bg-light mb-4">
             <div class="card-body">
                 <form method="get" class="row g-3 align-items-end">
@@ -38,9 +36,7 @@
             </div>
         </div>
 
-        <!-- ============================================= -->
-        <!-- === BẢNG HIỂN THỊ DANH SÁCH               === -->
-        <!-- ============================================= -->
+        <!-- Bảng hiển thị danh sách -->
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle">
                 <thead>
@@ -49,6 +45,7 @@
                         <th>Tên cung đường</th>
                         <th>Tỉnh/Thành</th>
                         <th>Độ khó</th>
+                        <th class="text-center">Đánh giá</th>
                         <th>Trạng thái</th>
                         <th>Ngày cập nhật</th>
                         <th class="text-end">Hành động</th>
@@ -66,6 +63,15 @@
                         </td>
                         <td>{{ trek.tinh_thanh.ten }}</td>
                         <td>{{ trek.do_kho.ten }}</td>
+                        <td class="text-center">
+                            {% if trek.so_luot_danh_gia > 0 %}
+                                <span class="fw-bold text-warning">{{ trek.danh_gia_trung_binh|floatformat:1 }} ★</span>
+                                <br>
+                                <small class="text-muted">({{ trek.so_luot_danh_gia }} lượt)</small>
+                            {% else %}
+                                <span class="text-muted">Chưa có</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if trek.trang_thai == 'DA_DUYET' %}
                                 <span class="badge bg-success">{{ trek.get_trang_thai_display }}</span>
@@ -76,18 +82,31 @@
                             {% endif %}
                         </td>
                         <td>{{ trek.ngay_cap_nhat|date:"d/m/Y H:i" }}</td>
+                        
+                        <!-- ========================================================= -->
+                        <!-- === CỘT HÀNH ĐỘNG ĐÃ ĐƯỢC CẬP NHẬT                   === -->
+                        <!-- ========================================================= -->
                         <td class="text-end">
+                            <!-- NÚT MỚI: TẠO CHUYẾN ĐI (VÔ HIỆU HÓA) -->
+                            <a href="#" class="btn btn-sm btn-info disabled" title="Tạo chuyến đi từ cung đường này (tính năng sắp ra mắt)">
+                                <i class="fas fa-calendar-plus"></i>
+                            </a>
+                            
+                            <!-- Nút sửa -->
                             <a href="{% url 'treks_admin:cung_duong_update' pk=trek.pk %}" class="btn btn-sm btn-warning" title="Chỉnh sửa">
                                 <i class="fas fa-edit"></i>
                             </a>
+
+                            <!-- Nút xóa -->
                             <a href="{% url 'treks_admin:cung_duong_delete' pk=trek.pk %}" class="btn btn-sm btn-danger" title="Xóa">
                                 <i class="fas fa-trash-alt"></i>
                             </a>
                         </td>
+
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center py-4">
+                        <td colspan="8" class="text-center py-4">
                             Không tìm thấy cung đường nào phù hợp với điều kiện lọc.
                         </td>
                     </tr>
@@ -96,9 +115,7 @@
             </table>
         </div>
 
-        <!-- =================================================================== -->
-        <!-- === KHU VỰC PHÂN TRANG (ĐÃ CẬP NHẬT ĐỂ GIỮ THAM SỐ LỌC) === -->
-        <!-- =================================================================== -->
+        <!-- Khu vực phân trang giữ nguyên -->
         {% if is_paginated %}
         <nav aria-label="Page navigation" class="mt-4">
             <ul class="pagination justify-content-center">

@@ -108,6 +108,13 @@ class CungDuongTrek(models.Model):
         Trả về None nếu không có.
         """
         return self.media.filter(la_anh_bia=True).first()
+    @property
+    def gallery_media(self):
+        """
+        Trả về queryset chứa tất cả media KHÔNG phải là ảnh bìa.
+        Đây chính là "Thư viện Media" mà template cần.
+        """
+        return self.media.filter(la_anh_bia=False).order_by('ngay_tai_len')
 
     def save(self, *args, **kwargs):
         # ... hàm save của bạn giữ nguyên ...
@@ -221,3 +228,6 @@ class CungDuongAnhDanhGia(models.Model):
         db_table = 'cung_duong_anh_danh_gia'
         verbose_name = _("Ảnh Đánh Giá")
         verbose_name_plural = _("Các Ảnh Đánh Giá")
+            # ===================================================================
+    # === BẠN CHỈ CẦN THÊM ĐÚNG KHỐI CODE NÀY VÀO MODEL CỦA MÌNH      ===
+    # ===================================================================
