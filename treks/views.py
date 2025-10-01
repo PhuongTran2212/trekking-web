@@ -8,15 +8,19 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.db import transaction
 from django.db.models import Q
+
+# Import các models cần thiết
 from .models import CungDuongTrek, CungDuongMedia, TrangThaiDuyet, CungDuongDanhGia
-from .forms import CungDuongTrekAdminForm
+
+# QUAN TRỌNG: Import cả hai form từ forms.py
+from .forms import CungDuongTrekAdminForm, CungDuongTrekFilterForm
 
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_staff
 
 # ==============================================================================
-# VIEW DÙNG CHUNG ĐỂ XỬ LÝ MEDIA - ĐÂY LÀ TRÁI TIM CỦA VIỆC TÁI CẤU TRÚC
+# VIEW DÙNG CHUNG ĐỂ XỬ LÝ MEDIA (Giữ nguyên - đã tốt)
 # ==============================================================================
 class CungDuongBaseView:
     """
@@ -28,9 +32,7 @@ class CungDuongBaseView:
         # 1. Xử lý ảnh bìa mới (nếu có)
         cover_image_file = request.FILES.get('anh_bia')
         if cover_image_file:
-            # Xóa tất cả ảnh bìa cũ để đảm bảo chỉ có một
             trek_instance.media.filter(la_anh_bia=True).delete()
-            # Tạo ảnh bìa mới
             CungDuongMedia.objects.create(
                 cung_duong=trek_instance, 
                 file=cover_image_file, 
@@ -47,13 +49,16 @@ class CungDuongBaseView:
                     cung_duong=trek_instance, 
                     file=f, 
                     loai_media=loai,
-                    la_anh_bia=False # Luôn đảm bảo ảnh từ thư viện không phải ảnh bìa
+                    la_anh_bia=False
                 )
 
 # ==============================================================================
 # CÁC VIEW CHÍNH
 # ==============================================================================
 
+# ==============================================================================
+# === CUNGDUONGLISTVIEW (ĐÃ CẬP NHẬT HOÀN CHỈNH VỚI LOGIC LỌC) ============
+# ==============================================================================
 class CungDuongListView(AdminRequiredMixin, ListView):
     model = CungDuongTrek
     template_name = 'admin/treks/cungduong_list.html'
@@ -61,15 +66,54 @@ class CungDuongListView(AdminRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by('-ngay_cap_nhat')
-        query = self.request.GET.get('q')
-        if query:
-            queryset = queryset.filter(Q(ten__icontains=query) | Q(tinh_thanh__ten__icontains=query))
+        """
+        Ghi đè phương thức này để xử lý logic lọc nâng cao.
+        """
+        # Bắt đầu với queryset gốc, tối ưu bằng select_related và sắp xếp
+        queryset = super().get_queryset().select_related('tinh_thanh', 'do_kho').order_by('-ngay_cap_nhat')
+
+        # Khởi tạo form lọc với dữ liệu từ request GET (ví dụ: ?q=abc&trang_thai=DA_DUYET)
+        self.filter_form = CungDuongTrekFilterForm(self.request.GET)
+
+        # Kiểm tra nếu form hợp lệ
+        if self.filter_form.is_valid():
+            q = self.filter_form.cleaned_data.get('q')
+            trang_thai = self.filter_form.cleaned_data.get('trang_thai')
+            do_kho = self.filter_form.cleaned_data.get('do_kho')
+
+            # 1. Lọc theo từ khóa tìm kiếm (tên cung đường HOẶC tên tỉnh thành)
+            if q:
+                queryset = queryset.filter(
+                    Q(ten__icontains=q) | Q(tinh_thanh__ten__icontains=q)
+                )
+            
+            # 2. Lọc theo trạng thái duyệt (nếu có giá trị được chọn)
+            if trang_thai:
+                queryset = queryset.filter(trang_thai=trang_thai)
+
+            # 3. Lọc theo độ khó (nếu có giá trị được chọn)
+            if do_kho:
+                queryset = queryset.filter(do_kho=do_kho)
+
         return queryset
 
     def get_context_data(self, **kwargs):
+        """
+        Ghi đè để thêm form lọc và các tham số vào context cho template.
+        """
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Quản lý Cung đường"
+        
+        # Đưa form đã khởi tạo vào context để template có thể render các ô input
+        context['filter_form'] = self.filter_form
+        
+        # Tạo chuỗi query string để giữ lại các bộ lọc khi chuyển trang.
+        # Ví dụ: "q=Fansipan&trang_thai=DA_DUYET"
+        params = self.request.GET.copy()
+        if 'page' in params:
+            del params['page']
+        context['query_params'] = params.urlencode()
+        
         return context
 
 class CungDuongCreateView(AdminRequiredMixin, CungDuongBaseView, CreateView):
@@ -85,14 +129,16 @@ class CungDuongCreateView(AdminRequiredMixin, CungDuongBaseView, CreateView):
     def form_valid(self, form):
         self.object = form.save(commit=False)
         self.object.nguoi_tao = self.request.user
-        self.object.trang_thai = TrangThaiDuyet.DA_DUYET
+        # Mặc định là Đã duyệt khi admin tạo, nhưng vẫn có thể sửa trong form
+        if not form.cleaned_data.get('trang_thai'):
+            self.object.trang_thai = TrangThaiDuyet.DA_DUYET
         
         try:
             with transaction.atomic():
                 self.object.save()
-                form.save_m2m() # Lưu quan hệ ManyToMany
+                # Đây là phương thức được cung cấp bởi Django khi dùng M2M, cần gọi sau khi object chính được lưu
+                form.save_m2m() 
                 
-                # GỌI HÀM DÙNG CHUNG để xử lý media
                 self.handle_media_uploads(self.request, self.object)
 
             messages.success(self.request, f"Đã tạo thành công cung đường '{self.object.ten}'.")
@@ -102,7 +148,6 @@ class CungDuongCreateView(AdminRequiredMixin, CungDuongBaseView, CreateView):
             return self.form_invalid(form)
 
     def get_success_url(self):
-        # Sau khi tạo thành công, chuyển đến trang chi tiết
         return reverse('treks_admin:cung_duong_detail', kwargs={'pk': self.object.pk})
 
 class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
@@ -119,8 +164,6 @@ class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
         try:
             with transaction.atomic():
                 self.object = form.save()
-                
-                # GỌI HÀM DÙNG CHUNG để xử lý media (code đã gọn hơn rất nhiều)
                 self.handle_media_uploads(self.request, self.object)
 
             messages.success(self.request, f"Đã cập nhật thành công cung đường '{self.object.ten}'.")
@@ -130,8 +173,8 @@ class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
             return self.form_invalid(form)
         
     def get_success_url(self):
-        # Quay về chính trang chỉnh sửa để xem kết quả ngay lập tức
-        return reverse('treks_admin:cung_duong_update', kwargs={'pk': self.object.pk})
+        # Chuyển về trang chi tiết để xem kết quả tổng quan
+        return reverse('treks_admin:cung_duong_detail', kwargs={'pk': self.object.pk})
 
 class CungDuongDetailView(AdminRequiredMixin, DetailView):
     model = CungDuongTrek
@@ -153,7 +196,6 @@ class CungDuongDeleteView(AdminRequiredMixin, DeleteView):
         messages.success(self.request, f"Đã xóa vĩnh viễn cung đường '{self.object.ten}'.")
         return super().form_valid(form)
 
-# View xóa media vẫn giữ nguyên, nó đã được thiết kế tốt
 def delete_media_view(request, pk):
     if request.method != 'POST':
         messages.error(request, "Phương thức không hợp lệ.")
@@ -171,6 +213,7 @@ def delete_media_view(request, pk):
         media.delete() 
 
         messages.success(request, f"Đã xóa thành công media: {file_name}")
+        # Chuyển hướng lại trang update để người dùng thấy ngay thay đổi
         return redirect('treks_admin:cung_duong_update', pk=cung_duong_pk)
     except Exception as e:
         messages.error(request, f"Đã có lỗi xảy ra khi xóa media: {e}")

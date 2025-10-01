@@ -1,7 +1,7 @@
 # treks/forms.py (PHIÊN BẢN TỐI GIẢN & CHUẨN XÁC)
 
 from django import forms
-from .models import CungDuongTrek, CungDuongDanhGia, CungDuongVatDungGoiY
+from .models import CungDuongTrek, CungDuongDanhGia, CungDuongVatDungGoiY, TrangThaiDuyet
 from core.models import TinhThanh, DoKho, VatDung
 
 class CungDuongTrekAdminForm(forms.ModelForm):
@@ -27,20 +27,32 @@ class CungDuongTrekAdminForm(forms.ModelForm):
         fields = [
             'ten', 'mo_ta', 'dia_diem_chi_tiet', 'tinh_thanh', 'do_dai_km', 
             'thoi_gian_uoc_tinh_gio', 'tong_do_cao_leo_m', 'do_kho', 
-            'mua_dep_nhat', 'du_lieu_ban_do_geojson', 'vat_dung_goi_y'
+            'mua_dep_nhat', 'du_lieu_ban_do_geojson', 'vat_dung_goi_y', 'trang_thai'
         ]
         # Tùy chỉnh các widget để thêm class CSS và ID cho JavaScript.
         widgets = {
             'ten': forms.TextInput(attrs={'class': 'form-control'}),
             'mo_ta': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
-                        'dia_diem_chi_tiet': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_dia_diem_chi_tiet', 'placeholder': 'VD: Vườn quốc gia Ba Vì, Hà Nội'}),
+                      'dia_diem_chi_tiet': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'id': 'id_dia_diem_chi_tiet', # ID cho ô nhập địa điểm
+                'placeholder': 'VD: Vườn quốc gia Ba Vì, Hà Nội',
+                'autocomplete': 'off' # Tắt tự động điền của trình duyệt
+            }),
+            
             'tinh_thanh': forms.Select(attrs={'class': 'form-control'}),
             'do_dai_km': forms.NumberInput(attrs={'class': 'form-control'}),
             'thoi_gian_uoc_tinh_gio': forms.NumberInput(attrs={'class': 'form-control'}),
             'tong_do_cao_leo_m': forms.NumberInput(attrs={'class': 'form-control'}),
             'do_kho': forms.Select(attrs={'class': 'form-control'}),
             'mua_dep_nhat': forms.TextInput(attrs={'class': 'form-control'}),
-            'du_lieu_ban_do_geojson': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'id': 'id_geojson', 'readonly': True}),
+            'trang_thai': forms.Select(attrs={'class': 'form-select'}),
+                       
+            # DÒNG QUAN TRỌNG: Thêm ID cho trường ẩn này
+            'du_lieu_ban_do_geojson': forms.Textarea(attrs={
+                'style': 'display: none;', 
+                'id': 'id_du_lieu_ban_do_geojson' 
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -65,6 +77,28 @@ class CungDuongTrekAdminForm(forms.ModelForm):
                 CungDuongVatDungGoiY.objects.create(cung_duong=instance, vat_dung=vat_dung)
             
         return instance
+class CungDuongTrekFilterForm(forms.Form):
+    # Lấy các lựa chọn từ model và thêm một lựa chọn "Tất cả"
+    CHOICES_TRANG_THAI = [('', 'Tất cả trạng thái')] + TrangThaiDuyet.choices
+
+    q = forms.CharField(
+        label="Tìm kiếm",
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên, tỉnh thành...'})
+    )
+    trang_thai = forms.ChoiceField(
+        label="Trạng thái",
+        required=False,
+        choices=CHOICES_TRANG_THAI,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    do_kho = forms.ModelChoiceField(
+        queryset=DoKho.objects.all(),
+        required=False,
+        label="Độ khó",
+        empty_label="Tất cả độ khó",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
 
 # Form 2: Dùng cho người dùng lọc cung đường (KHÔNG THAY ĐỔI)
 class CungDuongFilterForm(forms.Form):

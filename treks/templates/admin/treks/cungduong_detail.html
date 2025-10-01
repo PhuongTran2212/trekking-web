@@ -1,54 +1,127 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 {% block title %}{{ page_title }}{% endblock %}
-{% block content %}
 
+{% block head_extra %}
+<!-- Thư viện bản đồ Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    #map { 
+        height: 350px; 
+        border-radius: var(--radius-md); 
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0">{{ page_title }}</h4>
         <div>
-            <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn btn-secondary">Chỉnh sửa</a>
+            <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn btn-secondary">
+                <i class="fas fa-edit me-1"></i> Chỉnh sửa
+            </a>
             <a href="{% url 'treks_admin:cung_duong_list' %}" class="btn btn-ghost">Quay lại danh sách</a>
         </div>
     </div>
     <div class="card-body">
         <div class="row">
+            <!-- CỘT TRÁI: NỘI DUNG CHÍNH -->
             <div class="col-lg-8">
                 <h5>Mô tả chi tiết</h5>
                 <p>{{ trek.mo_ta|linebreaks }}</p>
+                
                 <hr>
+
+                <!-- PHẦN BẢN ĐỒ MỚI -->
+                <h5>Vị trí trên bản đồ</h5>
+                {% if trek.dia_diem_chi_tiet %}
+                    <p><strong>Địa điểm:</strong> {{ trek.dia_diem_chi_tiet }}</p>
+                {% endif %}
+                
+                {% if trek.du_lieu_ban_do_geojson %}
+                    <div id="map" class="mb-4"></div>
+                {% else %}
+                    <div class="alert alert-warning">Chưa có dữ liệu bản đồ cho cung đường này.</div>
+                {% endif %}
+
+                <hr>
+
                 <h5>Thư viện Media</h5>
                 <div class="d-flex flex-wrap gap-3">
                     {% for media in trek.media.all %}
-                    <img src="{{ media.file.url }}" alt="Media for {{ trek.ten }}"
-                        style="width: 150px; height: 150px; object-fit: cover; border-radius: var(--radius-md);">
+                    <a href="{{ media.file.url }}" target="_blank" title="Xem ảnh đầy đủ">
+                        <img src="{{ media.file.url }}" alt="Media for {{ trek.ten }}"
+                            style="width: 150px; height: 150px; object-fit: cover; border-radius: var(--radius-md);">
+                    </a>
                     {% empty %}
                     <p>Chưa có media nào.</p>
                     {% endfor %}
                 </div>
             </div>
+
+            <!-- CỘT PHẢI: THÔNG TIN TÓM TẮT -->
             <div class="col-lg-4">
-                <h5>Thông tin cơ bản</h5>
-                <ul class="list-unstyled">
-                    <li><strong>Tỉnh/Thành:</strong> {{ trek.tinh_thanh.ten }}</li>
-                    <li><strong>Độ khó:</strong> {{ trek.do_kho.ten }}</li>
-                    <li><strong>Trạng thái:</strong> <span class="badge bg-primary">{{ trek.get_trang_thai_display }}</span></li>
-                    <hr>
-                    <li><strong>Độ dài:</strong> {{ trek.do_dai_km }} km</li>
-                    <li><strong>Thời gian:</strong> {{ trek.thoi_gian_uoc_tinh_gio }} giờ</li>
-                    <li><strong>Độ cao leo:</strong> {{ trek.tong_do_cao_leo_m|default:"N/A" }} m</li>
-                    <li><strong>Mùa đẹp nhất:</strong> {{ trek.mua_dep_nhat|default:"N/A" }}</li>
-                </ul>
+                <div class="card">
+                    <div class="card-header"><h5 class="mb-0">Thông tin cơ bản</h5></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li><strong>Tỉnh/Thành:</strong> {{ trek.tinh_thanh.ten }}</li>
+                            <li><strong>Độ khó:</strong> {{ trek.do_kho.ten }}</li>
+                            <li><strong>Trạng thái:</strong> 
+                                {% if trek.trang_thai == 'DA_DUYET' %}<span class="badge bg-success">{{ trek.get_trang_thai_display }}</span>
+                                {% elif trek.trang_thai == 'CHO_DUYET' %}<span class="badge bg-warning text-dark">{{ trek.get_trang_thai_display }}</span>
+                                {% else %}<span class="badge bg-danger">{{ trek.get_trang_thai_display }}</span>
+                                {% endif %}
+                            </li>
+                            <li><strong>Đánh giá:</strong> 
+                                <i class="fas fa-star text-warning"></i> 
+                                {{ trek.danh_gia_trung_binh|floatformat:1 }} 
+                                <small class="text-muted">({{ trek.so_luot_danh_gia }} lượt)</small>
+                            </li>
+                            <hr>
+                            <li><strong>Độ dài:</strong> {{ trek.do_dai_km }} km</li>
+                            <li><strong>Thời gian:</strong> {{ trek.thoi_gian_uoc_tinh_gio }} giờ</li>
+                            <li><strong>Độ cao leo:</strong> {{ trek.tong_do_cao_leo_m|default:"N/A" }} m</li>
+                            <li><strong>Mùa đẹp nhất:</strong> {{ trek.mua_dep_nhat|default:"N/A" }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- PHẦN VẬT DỤNG MỚI -->
+                <div class="card mt-4">
+                    <div class="card-header"><h5 class="mb-0">Vật dụng gợi ý</h5></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            {% for item in trek.vat_dung_goi_y.all %}
+                                <li>
+                                    <i class="fas fa-check-circle text-success me-2"></i>{{ item.vat_dung.ten }}
+                                </li>
+                            {% empty %}
+                                <p class="mb-0 text-muted">Chưa có gợi ý vật dụng.</p>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
+        
         <hr>
+
         <h5>Đánh giá của người dùng ({{ reviews.count }})</h5>
         {% for review in reviews %}
         <div class="card mb-3">
             <div class="card-body">
-                <p><strong>{{ review.user.username|default:"[Người dùng đã xóa]" }}</strong> - {{ review.diem_danh_gia
-                    }} sao - <small class="text-muted">{{ review.ngay_danh_gia|date:"d/m/Y" }}</small></p>
-                <p>{{ review.binh_luan }}</p>
+                <p>
+                    <strong>{{ review.user.username|default:"[Người dùng đã xóa]" }}</strong> - 
+                    <span class="text-warning">
+                        {% for i in "x"|ljust:review.diem_danh_gia %}★{% endfor %}{% for i in "x"|ljust:review.diem_danh_gia|add:"-5"|slice:"1:" %}☆{% endfor %}
+                    </span> - 
+                    <small class="text-muted">{{ review.ngay_danh_gia|date:"d/m/Y H:i" }}</small>
+                </p>
+                <p class="mb-0">{{ review.binh_luan|linebreaks }}</p>
             </div>
         </div>
         {% empty %}
@@ -56,4 +129,43 @@
         {% endfor %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mapElement = document.getElementById('map');
+    
+    // Dữ liệu GeoJSON được truyền từ Django vào JavaScript một cách an toàn
+    const geojsonDataString = '{{ trek.du_lieu_ban_do_geojson|escapejs|default:"null" }}';
+    
+    // Chỉ chạy code bản đồ nếu có cả thẻ div#map và dữ liệu
+    if (mapElement && geojsonDataString !== 'null') {
+        try {
+            const geojsonData = JSON.parse(geojsonDataString);
+
+            // Kiểm tra xem dữ liệu có hợp lệ không
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                const coords = geojsonData.features[0].geometry.coordinates;
+                const latLng = [coords[1], coords[0]]; // Leaflet dùng [lat, lon], GeoJSON là [lon, lat]
+
+                // Khởi tạo bản đồ
+                const map = L.map(mapElement).setView(latLng, 13); // Zoom level 13
+
+                // Thêm lớp bản đồ nền từ OpenStreetMap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                // Thêm marker vào vị trí
+                L.marker(latLng).addTo(map)
+                    .bindPopup('<b>{{ trek.ten|escapejs }}</b><br>{{ trek.dia_diem_chi_tiet|escapejs }}')
+                    .openPopup();
+            }
+        } catch (e) {
+            console.error("Lỗi khi xử lý dữ liệu bản đồ:", e);
+        }
+    }
+});
+</script>
 {% endblock %}
