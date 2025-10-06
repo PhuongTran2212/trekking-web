@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bài viết của tôi{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/community.css' %}">
+    {# Thêm CSS cho tag nếu bạn chưa có file css chung #}
+    <style>
+      .tag-badge-sm {
+        display: inline-block;
+        padding: 0.25em 0.5em;
+        font-size: .70em;
+        font-weight: 700;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        border-radius: 0.25rem;
+        background-color: #6c757d;
+        text-decoration: none;
+        margin-right: 4px;
+        margin-bottom: 4px;
+      }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="my-posts-header">
+        <h1>Bài viết của tôi</h1>
+        <a href="{% url 'community:tao-bai-viet' %}" class="btn btn-primary">
+            <i class="fas fa-plus mr-2"></i> Tạo bài viết mới
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% for post in bai_viet %}
+    <div class="post-card">
+        <div class="post-card-img-wrapper">
+            {% if post.media.first %}
+                <img src="{{ post.media.first.duong_dan_file.url }}" alt="{{ post.tieu_de }}" class="post-card-img">
+            {% else %}
+                <img src="{% static 'images/placeholder.jpg' %}" alt="Placeholder" class="post-card-img">
+            {% endif %}
+        </div>
+        <div class="post-card-body">
+            <div>
+                <h2 class="post-card-title">
+                    <a href="{% url 'community:chi-tiet-bai-viet' post.id %}">{{ post.tieu_de }}</a>
+                </h2>
+                <div class="post-card-meta">
+                    <div class="post-card-meta-item">
+                        {% if post.trang_thai == 'da_duyet' %}
+                            <span class="badge badge-success">Đã duyệt</span>
+                        {% elif post.trang_thai == 'cho_duyet' %}
+                            <span class="badge badge-warning">Chờ duyệt</span>
+                        {% else %}
+                            <span class="badge badge-danger">Từ chối</span>
+                        {% endif %}
+                    </div>
+                    <div class="post-card-meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>{{ post.ngay_dang|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="post-card-meta-item">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span>{{ post.luot_binh_chon }}</span>
+                    </div>
+                    <div class="post-card-meta-item">
+                        <i class="fas fa-comment"></i>
+                        <span>{{ post.so_luong_binh_luan }}</span>
+                    </div>
+                </div>
+                
+                <!-- === BẮT ĐẦU: KHỐI MÃ MỚI HIỂN THỊ TAGS === -->
+                {% if post.tags.all %}
+                <div class="mt-2">
+                  {% for tag in post.tags.all %}
+                    <span class="tag-badge-sm">#{{ tag.ten }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+                <!-- === KẾT THÚC: KHỐI MÃ MỚI HIỂN THỊ TAGS === -->
+            </div>
+            <div class="post-card-actions">
+                <a href="{% url 'community:chi-tiet-bai-viet' post.id %}" class="btn btn-outline btn-sm">Xem</a>
+                <a href="{% url 'community:sua-bai-viet' post.id %}" class="btn btn-secondary btn-sm">Sửa</a>
+                <a href="{% url 'community:xoa-bai-viet' post.id %}" class="btn btn-danger btn-sm">Xóa</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card text-center">
+        <div class="card-body">
+            <p class="mb-0">Bạn chưa có bài viết nào. Hãy tạo một bài viết mới để chia sẻ kinh nghiệm của bạn!</p>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if bai_viet.has_other_pages %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if bai_viet.has_previous %}
+                <li class="pagination-item"><a href="?page={{ bai_viet.previous_page_number }}">«</a></li>
+            {% else %}
+                <li class="pagination-item disabled"><span>«</span></li>
+            {% endif %}
+
+            {% for i in bai_viet.paginator.page_range %}
+                {% if bai_viet.number == i %}
+                    <li class="pagination-item active"><span>{{ i }}</span></li>
+                {% else %}
+                    <li class="pagination-item"><a href="?page={{ i }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if bai_viet.has_next %}
+                <li class="pagination-item"><a href="?page={{ bai_viet.next_page_number }}">»</a></li>
+            {% else %}
+                <li class="pagination-item disabled"><span>»</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chỉnh sửa bài viết - {{ bai_viet.tieu_de|truncatechars:30 }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/community.css' %}">
+<style>
+  /* Container cho mỗi media item cần có position: relative
+     để nút xóa (với position: absolute) có thể định vị theo nó */
+  .media-item {
+    position: relative;
+    display: inline-block;
+    margin: 5px;
+    vertical-align: top;
+    width: 250px; /* Có thể đặt chiều rộng cố định để đồng đều */
+    height: 250px;
+    overflow: hidden;
+    background-color: #f0f2f5;
+    border-radius: 8px;
+  }
+  .media-item img, .media-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Đảm bảo ảnh/video lấp đầy mà không bị méo */
+  }
+
+  /* Style cho nút xóa ở góc, áp dụng cho cả media cũ và mới */
+  .delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    font-weight: bold;
+    color: #606770;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.2s;
+  }
+
+  .delete-btn:hover {
+    background-color: #E4E6E9;
+  }
+  
+  .post-media-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">✏️ Chỉnh sửa bài viết</h4>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data" id="edit-post-form">
+            {% csrf_token %}
+
+            <!-- Tiêu đề -->
+            <div class="mb-3">
+              <label for="{{ form.tieu_de.id_for_label }}" class="form-label fw-bold">{{ form.tieu_de.label }}</label>
+              {{ form.tieu_de }}
+              {% if form.tieu_de.errors %}
+                <div class="text-danger small mt-1">{{ form.tieu_de.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Nội dung -->
+            <div class="mb-3">
+              <label for="{{ form.noi_dung.id_for_label }}" class="form-label fw-bold">{{ form.noi_dung.label }}</label>
+              {{ form.noi_dung }}
+              {% if form.noi_dung.errors %}
+                <div class="text-danger small mt-1">{{ form.noi_dung.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Chuyến đi -->
+            <div class="mb-3">
+              <label for="{{ form.chuyen_di.id_for_label }}" class="form-label fw-bold">{{ form.chuyen_di.label }}</label>
+              {{ form.chuyen_di }}
+            </div>
+
+            <!-- Tags -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">{{ form.tags.label }}</label>
+              <div class="tag-checkbox-container border rounded p-3 bg-light">{{ form.tags }}</div>
+            </div>
+
+            <!-- Media hiện tại -->
+            {% if bai_viet.media.all %}
+            <div class="mb-4">
+              <label class="form-label fw-bold">Media hiện tại</label>
+              <div class="post-media-gallery" id="existing-media">
+                {% for media in bai_viet.media.all %}
+                <div class="media-item" id="media-container-{{ media.id }}">
+                  {% if media.loai_media == 'anh' %}
+                    <img src="{{ media.duong_dan_file.url }}" alt="Media bài viết">
+                  {% else %}
+                    <video src="{{ media.duong_dan_file.url }}"></video>
+                  {% endif %}
+                  <button
+                    type="button"
+                    class="delete-btn existing-media-delete-btn"
+                    title="Xóa media này"
+                    data-media-id="{{ media.id }}"
+                    data-delete-url="{% url 'community:xoa-media' media.id %}"
+                  >&times;</button>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Xem trước media mới -->
+            <div class="mb-4">
+              <label class="form-label fw-bold text-success">Media mới sẽ được thêm (xem trước):</label>
+              <div id="preview-container" class="post-media-gallery">
+                 <!-- Preview sẽ được thêm vào đây -->
+              </div>
+            </div>
+
+            <!-- Thêm media mới -->
+            <div class="mb-4">
+              <label for="media_files" class="form-label fw-bold">Thêm ảnh/video mới (tùy chọn)</label>
+              <input
+                type="file"
+                class="form-control"
+                id="media_files"
+                name="media_files"
+                multiple
+                accept="image/*,video/*"
+              />
+            </div>
+
+            <div class="alert alert-info">
+              <strong>Lưu ý:</strong> Sau khi chỉnh sửa, bài viết sẽ trở lại trạng thái <em>“Chờ duyệt”</em> để quản trị viên xem lại.
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+              <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
+              <a href="{% url 'community:bai-viet-cua-toi' %}" class="btn btn-secondary">Hủy</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script xử lý xóa + xem trước -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+  // ===============================
+  // 🗑️ Xử lý xóa media HIỆN TẠI (trên server)
+  // ===============================
+  document.querySelectorAll(".existing-media-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      if (!confirm("Bạn có chắc chắn muốn xóa media này không? Thao tác này không thể hoàn tác.")) return;
+
+      const mediaId = this.dataset.mediaId;
+      const deleteUrl = this.dataset.deleteUrl;
+      const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+      fetch(deleteUrl, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "X-Requested-With": "XMLHttpRequest"
+        },
+      })
+      .then(response => {
+        if (!response.ok) {
+            throw new Error('Server responded with an error!');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          const mediaContainer = document.getElementById(`media-container-${mediaId}`);
+          if (mediaContainer) {
+              mediaContainer.remove();
+          }
+        } else {
+          alert('Lỗi: ' + (data.error || 'Không thể xóa media.'));
+        }
+      })
+      .catch(error => {
+        console.error('Fetch Error:', error);
+        alert('Đã xảy ra lỗi kết nối. Vui lòng thử lại.');
+      });
+    });
+  });
+
+  // ===========================================
+  // 🌄 Xử lý xem trước và xóa media MỚI được chọn
+  // ===========================================
+  const fileInput = document.getElementById("media_files");
+  const previewContainer = document.getElementById("preview-container");
+  
+  // Mảng này sẽ lưu các file người dùng chọn
+  let selectedFiles = [];
+
+  fileInput.addEventListener("change", function(event) {
+    // Thêm các file mới vào mảng
+    Array.from(event.target.files).forEach(file => {
+        selectedFiles.push(file);
+    });
+    updatePreview();
+    updateFileInput();
+  });
+
+  function updatePreview() {
+    previewContainer.innerHTML = ""; // Xóa các preview cũ để vẽ lại
+
+    selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        
+        const mediaWrapper = document.createElement("div");
+        mediaWrapper.classList.add("media-item");
+
+        reader.onload = function(e) {
+            const url = e.target.result;
+            let mediaElement;
+
+            if (file.type.startsWith("image/")) {
+                mediaElement = document.createElement("img");
+                mediaElement.src = url;
+            } else if (file.type.startsWith("video/")) {
+                mediaElement = document.createElement("video");
+                mediaElement.src = url;
+                // Có thể thêm 'controls' nếu muốn xem video ngay trên preview
+                // mediaElement.controls = true; 
+            }
+            if (mediaElement) mediaWrapper.appendChild(mediaElement);
+        }
+
+        reader.readAsDataURL(file);
+
+        // Tạo nút xóa cho từng preview
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerHTML = "&times;";
+        deleteBtn.type = "button";
+        deleteBtn.classList.add("delete-btn");
+        deleteBtn.title = `Xóa ${file.name}`;
+        
+        deleteBtn.addEventListener("click", function() {
+            // Xóa file khỏi mảng và cập nhật lại
+            selectedFiles.splice(index, 1);
+            updatePreview();
+            updateFileInput();
+        });
+
+        mediaWrapper.appendChild(deleteBtn);
+        previewContainer.appendChild(mediaWrapper);
+    });
+  }
+
+  // Cập nhật lại danh sách file trong input trước khi submit form
+  function updateFileInput() {
+      const dataTransfer = new DataTransfer();
+      selectedFiles.forEach(file => {
+          dataTransfer.items.add(file);
+      });
+      fileInput.files = dataTransfer.files;
+  }
+});
+</script>
+{% endblock %}

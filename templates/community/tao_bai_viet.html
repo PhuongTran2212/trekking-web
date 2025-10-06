@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %} Tạo bài viết mới {% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/community.css' %}">
+<style>
+  /* === BẮT ĐẦU: CSS CHO MEDIA PREVIEW (SAO CHÉP TỪ TRANG SỬA BÀI VIẾT) === */
+  .tag-checkbox-container ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    columns: 2;
+    -webkit-columns: 2;
+    -moz-columns: 2;
+  }
+  .tag-checkbox-container li {
+    padding: 0.25rem 0;
+    break-inside: avoid-column;
+  }
+  .tag-checkbox-container label {
+    margin-left: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+  }
+
+  /* Hiển thị media trong grid layout */
+  .post-media-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px; /* Khoảng cách giữa các item */
+  }
+
+  /* Container cho mỗi media item (ảnh/video) */
+  .media-item {
+    position: relative;
+    display: inline-block;
+    width: 250px;
+    height: 250px;
+    overflow: hidden;
+    background-color: #f0f2f5;
+    border-radius: 8px; /* Bo góc mềm mại */
+  }
+  .media-item img, .media-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Đảm bảo media lấp đầy khung mà không bị méo */
+  }
+
+  /* Nút xóa 'x' ở góc trên bên phải */
+  .delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    font-weight: bold;
+    color: #606770;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.2s;
+  }
+  .delete-btn:hover {
+    background-color: #E4E6E9;
+  }
+  /* === KẾT THÚC: CSS CHO MEDIA PREVIEW === */
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">✍️ Tạo bài viết mới</h4>
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {# Tiêu đề #}
+            <div class="mb-3">
+              <label for="{{ form.tieu_de.id_for_label }}" class="form-label">
+                {{ form.tieu_de.label }}
+              </label>
+              {{ form.tieu_de }}
+              {% if form.tieu_de.errors %}
+                <div class="text-danger small mt-1">{{ form.tieu_de.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            {# Nội dung #}
+            <div class="mb-3">
+              <label for="{{ form.noi_dung.id_for_label }}" class="form-label">
+                {{ form.noi_dung.label }}
+              </label>
+              {{ form.noi_dung }}
+              {% if form.noi_dung.errors %}
+                <div class="text-danger small mt-1">{{ form.noi_dung.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            {# Chuyến đi #}
+            <div class="mb-3">
+              <label for="{{ form.chuyen_di.id_for_label }}" class="form-label">
+                {{ form.chuyen_di.label }}
+              </label>
+              {{ form.chuyen_di }}
+              {% if form.chuyen_di.errors %}
+                <div class="text-danger small mt-1">{{ form.chuyen_di.errors|striptags }}</div>
+              {% endif %}
+            </div>
+            
+            {# Tags #}
+            <div class="mb-3">
+              <label class="form-label">{{ form.tags.label }}</label>
+              <div class="tag-checkbox-container p-3 border rounded">
+                {{ form.tags }}
+              </div>
+              {% if form.tags.errors %}
+                <div class="text-danger small mt-1">{{ form.tags.errors|striptags }}</div>
+              {% endif %}
+            </div>
+
+            {# Upload media #}
+            <div class="mb-3">
+              <label for="media_files" class="form-label">
+                📷 Tải lên ảnh/video (tùy chọn)
+              </label>
+              <input
+                type="file"
+                class="form-control"
+                id="media_files"
+                name="media_files"
+                multiple
+                accept="image/*,video/*"
+              />
+              <small class="text-muted">
+                Bạn có thể chọn và xóa từng file trước khi đăng.
+              </small>
+            </div>
+
+            {# === BẮT ĐẦU: KHU VỰC XEM TRƯỚC MEDIA ĐÃ CẬP NHẬT === #}
+            <div id="preview-container" class="post-media-gallery mb-3">
+              <!-- Xem trước media sẽ được hiển thị ở đây -->
+            </div>
+            {# === KẾT THÚC: KHU VỰC XEM TRƯỚC MEDIA ĐÃ CẬP NHẬT === #}
+
+            <div class="alert alert-info mt-3">
+              <strong>📌 Lưu ý:</strong> Bài viết của bạn sẽ được gửi đến quản
+              trị viên để duyệt. Sau khi được phê duyệt, bài viết sẽ hiển thị
+              trong cộng đồng.
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+              <button type="submit" class="btn btn-primary">📤 Đăng bài</button>
+              <a
+                href="{% url 'community:danh-sach-bai-viet' %}"
+                class="btn btn-secondary"
+                >Hủy</a
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# === BẮT ĐẦU: SCRIPT MỚI ĐỂ XEM TRƯỚC VÀ XÓA MEDIA === #}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const fileInput = document.getElementById("media_files");
+  const previewContainer = document.getElementById("preview-container");
+  
+  // Mảng này sẽ lưu các file người dùng chọn để dễ dàng quản lý (thêm/xóa)
+  let selectedFiles = [];
+
+  fileInput.addEventListener("change", function(event) {
+    // Thêm các file mới được chọn vào mảng
+    Array.from(event.target.files).forEach(file => {
+        selectedFiles.push(file);
+    });
+    // Cập nhật lại giao diện xem trước và danh sách file trong input
+    updatePreview();
+    updateFileInput();
+  });
+
+  function updatePreview() {
+    previewContainer.innerHTML = ""; // Xóa các preview cũ để vẽ lại từ đầu
+
+    selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        
+        const mediaWrapper = document.createElement("div");
+        mediaWrapper.classList.add("media-item");
+
+        reader.onload = function(e) {
+            const url = e.target.result;
+            let mediaElement;
+
+            if (file.type.startsWith("image/")) {
+                mediaElement = document.createElement("img");
+                mediaElement.src = url;
+                mediaElement.alt = file.name;
+            } else if (file.type.startsWith("video/")) {
+                mediaElement = document.createElement("video");
+                mediaElement.src = url;
+                // Thêm thuộc tính để video không tự động phát và tắt tiếng
+                mediaElement.muted = true;
+                mediaElement.playsInline = true;
+            }
+            if (mediaElement) mediaWrapper.appendChild(mediaElement);
+        }
+
+        reader.readAsDataURL(file);
+
+        // Tạo nút xóa 'x' cho từng media
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerHTML = "&times;";
+        deleteBtn.type = "button";
+        deleteBtn.classList.add("delete-btn");
+        deleteBtn.title = `Xóa ${file.name}`;
+        
+        // Gán sự kiện click để xóa file
+        deleteBtn.addEventListener("click", function() {
+            // Xóa file khỏi mảng tại vị trí 'index'
+            selectedFiles.splice(index, 1);
+            // Cập nhật lại giao diện và input
+            updatePreview();
+            updateFileInput();
+        });
+
+        mediaWrapper.appendChild(deleteBtn);
+        previewContainer.appendChild(mediaWrapper);
+    });
+  }
+
+  // Hàm này rất quan trọng: nó cập nhật lại đối tượng FileList trong thẻ <input>
+  // vì FileList mặc định là chỉ đọc (read-only).
+  function updateFileInput() {
+      const dataTransfer = new DataTransfer();
+      selectedFiles.forEach(file => {
+          dataTransfer.items.add(file);
+      });
+      // Gán danh sách file mới vào input
+      fileInput.files = dataTransfer.files;
+  }
+});
+</script>
+{# === KẾT THÚC: SCRIPT MỚI === #}
+{% endblock %}

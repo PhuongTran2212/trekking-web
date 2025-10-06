@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ bai_viet.tieu_de }}{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/community.css' %}">
+    <style>
+      /* Thêm style cho thẻ tag */
+      .post-tags {
+        margin-top: 1rem;
+      }
+      .tag-badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: .75em;
+        font-weight: 700;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        background-color: #6c757d; /* Màu xám */
+        text-decoration: none;
+        margin-right: 5px;
+        margin-bottom: 5px;
+      }
+      .tag-badge:hover {
+        background-color: #5a6268;
+        color: #fff;
+      }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <div class="container post-detail-container">
+
+        <!-- Banner trạng thái bài viết (chỉ tác giả thấy) -->
+        {% if not is_approved and request.user == bai_viet.tac_gia %}
+            {% if bai_viet.trang_thai == 'cho_duyet' %}
+            <div class="post-status-banner pending">
+                <i class="icon-clock"></i>
+                <span>Bài viết này đang chờ duyệt. Chỉ bạn mới có thể thấy nó.</span>
+            </div>
+            {% elif bai_viet.trang_thai == 'tu_choi' %}
+            <div class="post-status-banner rejected">
+                <i class="icon-x-circle"></i>
+                <span>Bài viết của bạn đã bị từ chối. Vui lòng chỉnh sửa và gửi lại.</span>
+            </div>
+            {% endif %}
+        {% endif %}
+
+
+        <article>
+            <!-- Header bài viết -->
+            <header class="post-header">
+                <h1 class="post-title">{{ bai_viet.tieu_de }}</h1>
+                <div class="post-author-meta">
+                    <span>Đăng bởi <strong class="author-name">{{ bai_viet.tac_gia.get_full_name|default:bai_viet.tac_gia.username }}</strong></span>
+                    <span>&middot;</span>
+                    <time datetime="{{ bai_viet.ngay_dang|date:'Y-m-d' }}">{{ bai_viet.ngay_dang|date:"d/m/Y" }}</time>
+                    {% if bai_viet.chuyen_di %}
+                        <span>&middot;</span>
+                        <span>Trong chuyến đi: <a href="#_"><strong>{{ bai_viet.chuyen_di.ten_chuyen_di }}</strong></a></span>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Nội dung bài viết -->
+            <div class="post-content">
+                {{ bai_viet.noi_dung|linebreaks }}
+            </div>
+            
+            <!-- === BẮT ĐẦU: KHỐI MÃ MỚI HIỂN THỊ TAGS === -->
+            {% if bai_viet.tags.all %}
+            <div class="post-tags">
+              {% for tag in bai_viet.tags.all %}
+                <a href="{% url 'community:danh-sach-bai-viet' %}?tag={{ tag.slug }}" class="tag-badge">
+                  #{{ tag.ten }}
+                </a>
+              {% endfor %}
+            </div>
+            {% endif %}
+            <!-- === KẾT THÚC: KHỐI MÃ MỚI HIỂN THỊ TAGS === -->
+
+
+            <!-- Media (Ảnh/Video) -->
+            {% if bai_viet.media.all %}
+            <div class="post-media-gallery">
+                {% for media in bai_viet.media.all %}
+                <div class="media-item">
+                    {% if media.loai_media == 'anh' %}
+                        <img src="{{ media.duong_dan_file.url }}" alt="Hình ảnh bài viết">
+                    {% elif media.loai_media == 'video' %}
+                        <video controls>
+                            <source src="{{ media.duong_dan_file.url }}" type="{{ media.duong_dan_file.content_type }}">
+                            Trình duyệt của bạn không hỗ trợ video.
+                        </video>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+
+            <!-- Thanh tương tác (chỉ hiển thị khi đã duyệt) -->
+            {% if is_approved %}
+            <div class="post-interaction-bar">
+                <button type="button" id="upvoteBtn" class="upvote-btn {% if da_upvote %}upvoted{% endif %}" data-post-id="{{ bai_viet.id }}">
+                    <i class="icon-arrow-up"></i>
+                    Bình chọn
+                    <span class="upvote-count" id="upvoteCount">{{ bai_viet.luot_binh_chon }}</span>
+                </button>
+                <div class="comment-count-display">
+                    <i class="icon-message-square"></i>
+                    <span>{{ bai_viet.so_luong_binh_luan }} bình luận</span>
+                </div>
+            </div>
+            {% endif %}
+        </article>
+
+        <!-- Khu vực bình luận (chỉ hiển thị khi đã duyệt) -->
+        {% if is_approved %}
+        <section class="comments-section">
+            <div class="comment-form-container">
+                <h4>Để lại bình luận</h4>
+                {% if user.is_authenticated %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form.noi_dung }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Gửi bình luận</button>
+                </form>
+                {% else %}
+                <p>Vui lòng <a href="{% url 'accounts:login' %}?next={{ request.path }}">đăng nhập</a> để bình luận.</p>
+                {% endif %}
+            </div>
+
+            <ul class="comment-thread">
+                {% for comment in binh_luan_goc %}
+                    {% include 'community/partials/comment.html' with comment=comment %}
+                {% empty %}
+                <li>Chưa có bình luận nào. Hãy là người đầu tiên!</li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Upvote AJAX ---
+    const upvoteBtn = document.getElementById('upvoteBtn');
+    if (upvoteBtn) {
+        upvoteBtn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const url = `{% url 'community:toggle-upvote' 0 %}`.replace('0', postId);
+            const csrfToken = getCookie('csrftoken');
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const upvoteCount = document.getElementById('upvoteCount');
+                    upvoteCount.textContent = data.luot_binh_chon;
+                    this.classList.toggle('upvoted', data.da_upvote);
+                }
+            })
+            .catch(error => console.error('Lỗi:', error));
+        });
+    }
+
+    // --- Reply Form Toggle ---
+    document.querySelectorAll('.btn-reply').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const commentId = this.dataset.commentId;
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            if (replyForm) {
+                // Hide all other reply forms
+                document.querySelectorAll('.reply-form').forEach(form => {
+                    if (form.id !== `reply-form-${commentId}`) {
+                        form.style.display = 'none';
+                    }
+                });
+                // Toggle the current one
+                replyForm.style.display = replyForm.style.display === 'block' ? 'none' : 'block';
+            }
+        });
+    });
+
+    // --- CSRF Token Helper ---
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

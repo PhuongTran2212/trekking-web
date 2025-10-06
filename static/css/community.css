@@ -1,0 +1,301 @@
+/* ========================================
+   COMMUNITY MODULE STYLES
+   ======================================== */
+
+/* 1. My Posts Page (bai_viet_cua_toi.html)
+   ======================================== */
+.my-posts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.post-card {
+    display: flex;
+    background-color: #fff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: var(--spacing-lg);
+    transition: box-shadow var(--transition-base);
+}
+
+.post-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.post-card-img-wrapper {
+    flex-shrink: 0;
+    width: 200px;
+    height: 150px;
+}
+
+.post-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: var(--gray-100);
+}
+
+.post-card-body {
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.post-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.post-card-title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.post-card-title a:hover {
+    color: var(--primary-dark);
+}
+
+.post-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-bottom: var(--spacing-md);
+}
+
+.post-card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.post-card-actions {
+    margin-top: auto;
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.post-card-actions .btn {
+    width: auto; /* Override mobile style */
+}
+
+/* 2. Post Detail Page (chi_tiet_bai_viet.html)
+   ======================================== */
+.post-detail-container {
+    padding: var(--spacing-xl) 0;
+}
+
+.post-status-banner {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+.post-status-banner.pending { background-color: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.post-status-banner.rejected { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+
+
+.post-header .post-title {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.post-author-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--gray-600);
+    margin-bottom: var(--spacing-lg);
+}
+
+.post-author-meta .author-name {
+    font-weight: 500;
+    color: var(--primary-dark);
+}
+
+/* === START: PHẦN ĐÃ SỬA ĐỂ KHUNG VỪA VỚI ẢNH === */
+.post-media-gallery {
+    margin: var(--spacing-xl) 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.media-item {
+    /* Cho phép khung co lại để vừa với nội dung (ảnh) */
+    width: fit-content;
+
+
+    /* Đảm bảo khung không bị rộng hơn không gian cho phép */
+    max-width: 100%;
+
+    border-radius: var(--radius-lg);
+    overflow: hidden; /* Giữ thuộc tính này để bo góc hoạt động */
+}
+
+.media-item img, .media-item video {
+    display: block; /* Loại bỏ khoảng trắng thừa dưới ảnh */
+    width: auto; /* Chiều rộng tự động */
+    height: auto; /* Chiều cao tự động để giữ đúng tỷ lệ */
+
+    max-width: 100%; /* Đảm bảo ảnh không tràn ra khỏi container của nó */
+    /* Giới hạn chiều cao tối đa của chính hình ảnh */
+    max-height: 70vh; /* ví dụ: cao tối đa 70% chiều cao màn hình */
+
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.media-item img:hover {
+    transform: scale(1.03);
+}
+
+
+.post-content {
+    line-height: 1.8;
+    font-size: 1.125rem;
+    color: var(--gray-800);
+}
+
+.post-interaction-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+    margin: var(--spacing-xl) 0;
+    border-top: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.upvote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.upvote-btn:hover {
+    background-color: var(--primary-lightest);
+    border-color: var(--primary-light);
+}
+.upvote-btn.upvoted {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: white;
+}
+.upvote-btn.upvoted .icon-upvote {
+    color: var(--primary-medium);
+}
+.upvote-count {
+    font-weight: 600;
+}
+
+.comment-count-display {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--gray-600);
+}
+
+/* Comments Section */
+.comments-section {
+    margin-top: var(--spacing-2xl);
+}
+
+.comment-form-container {
+    background: #fff;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+.comment-form-container h4 { margin-top: 0; }
+.comment-form-container textarea { min-height: 120px; }
+
+.comment-thread {
+    list-style: none;
+    margin-top: var(--spacing-xl);
+}
+
+.comment {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background-color: var(--gray-200);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--gray-600);
+}
+.comment-avatar img {
+    width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-full);
+}
+
+.comment-body { flex-grow: 1; }
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+.comment-author { font-weight: 600; color: var(--gray-900); }
+.comment-date { font-size: 0.8125rem; color: var(--gray-500); }
+
+.comment-content {
+    background-color: var(--gray-100);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+}
+
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+}
+.comment-actions button, .comment-actions a {
+    background: none;
+    border: none;
+    color: var(--gray-600);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+}
+.comment-actions button:hover, .comment-actions a:hover {
+    color: var(--primary-dark);
+}
+
+.comment-replies {
+    list-style: none;
+    padding-left: 56px; /* 40px avatar + 16px gap */
+    margin-top: var(--spacing-lg);
+}
+
+.reply-form {
+    display: none; /* Hidden by default */
+    margin-top: var(--spacing-md);
+    padding-left: 56px;
+}

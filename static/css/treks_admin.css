@@ -1,0 +1,190 @@
+/* ========================================
+   CSS DÀNH RIÊNG CHO QUẢN LÝ CUNG ĐƯỜNG (ADMIN)
+   ======================================== */
+
+/* 1. Header & Actions
+   ======================================== */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--gray-200);
+    margin-bottom: var(--spacing-xl);
+}
+.page-header h1 {
+    margin-bottom: 0; /* Ghi đè margin mặc định của h1 */
+}
+
+/* 2. Search & Filter Bar
+   ======================================== */
+.filter-bar {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.search-form {
+    flex-grow: 1; /* Cho phép thanh tìm kiếm chiếm nhiều không gian nhất */
+    position: relative;
+}
+.search-form .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    width: 18px;
+    height: 18px;
+}
+.search-form .form-control {
+    padding-left: 3rem;
+    height: 44px; /* Đồng bộ chiều cao với nút */
+}
+
+/* 3. Table Styling
+   ======================================== */
+.table-wrapper {
+    background-color: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden; /* Quan trọng để bo góc hoạt động */
+}
+
+.table {
+    border-collapse: collapse; /* Bỏ các đường kẻ đôi */
+    width: 100%;
+}
+
+.table th, .table td {
+    padding: var(--spacing-md) var(--spacing-lg);
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.table thead {
+    background-color: var(--gray-50);
+}
+
+.table th {
+    font-weight: 600;
+    color: var(--gray-600);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table tbody tr:hover {
+    background-color: var(--primary-lightest);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Căn giữa các cột có nội dung ngắn */
+.table .text-center { text-align: center; }
+.table .text-right { text-align: right; }
+
+/* Style cho các cell cụ thể */
+.table td.actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+.table td .trek-name {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+.table td .trek-location {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+/* 4. Status Indicators (Trạng thái Duyệt)
+   ======================================== */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-weight: 500;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+}
+
+.status-indicator.approved {
+    background-color: var(--success-lightest, #F0FDF4);
+    color: var(--success-dark, #166534);
+}
+.status-indicator.pending {
+    background-color: var(--warning-lightest, #FFFBEB);
+    color: var(--warning-dark, #92400E);
+}
+.status-indicator::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+.status-indicator.approved::before { background-color: var(--success); }
+.status-indicator.pending::before { background-color: var(--warning); }
+
+
+/* 5. Create/Update Form Styling
+   ======================================== */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 cột */
+    gap: var(--spacing-xl);
+}
+.form-group.full-width {
+    grid-column: span 2; /* Cho các trường như Mô tả chiếm toàn bộ chiều rộng */
+}
+
+/* Style cho các widget của Django */
+.form-group select,
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="url"],
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.form-group textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.form-group select:focus,
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-dark);
+    box-shadow: 0 0 0 3px rgba(77, 113, 17, 0.1);
+}
+
+.form-actions {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+/* 6. Delete Confirmation Page
+   ======================================== */
+.delete-confirmation {
+    background-color: white;
+    padding: var(--spacing-2xl);
+    border-radius: var(--radius-lg);
+    border-left: 5px solid var(--danger);
+    box-shadow: var(--shadow-md);
+}
+.delete-confirmation h1 {
+    color: var(--danger);
+}
