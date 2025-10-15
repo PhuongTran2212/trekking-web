@@ -185,6 +185,15 @@ class CungDuongDetailView(AdminRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = f"Chi tiết: {self.object.ten}"
         context['reviews'] = CungDuongDanhGia.objects.filter(cung_duong=self.object).order_by('-ngay_danh_gia')
+          # 1. Lấy danh sách reviews
+        reviews = CungDuongDanhGia.objects.filter(cung_duong=self.object).order_by('-ngay_danh_gia')
+        
+        # 2. Thêm danh sách reviews vào context
+        context['reviews'] = reviews
+        
+        # 3. === DÒNG CODE SỬA LỖI ===
+        #    Đếm số lượng từ queryset và thêm vào context với key là 'total_reviews'
+        context['total_reviews'] = reviews.count()
         return context
 
 class CungDuongDeleteView(AdminRequiredMixin, DeleteView):

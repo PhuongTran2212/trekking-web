@@ -4,7 +4,7 @@
 
 {% block head_extra %}
 <!-- Thư viện bản đồ Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
    
 <style>
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
             findButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
             searchResultsContainer.innerHTML = '<div class="list-group-item">Đang tìm...</div>';
             const apiUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
-            fetch(apiUrl, { headers: { 'User-Agent': 'TrekkingApp/1.0 (contact@example.com)' } })
+            fetch(apiUrl, { headers: { 'User-Agent': 'TrekkingApp/1.0 (nguyenthanhhuyen230305@gmail.com)' } })
                 .then(res => res.json())
                 .then(data => {
                     searchResultsContainer.innerHTML = '';

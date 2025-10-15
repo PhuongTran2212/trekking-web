@@ -35,6 +35,29 @@
         align-items: flex-start !important;
     }
 
+    /* SVG Icon Styles */
+    .trek-icon {
+        width: 18px !important;
+        height: 18px !important;
+        display: inline-block !important;
+        vertical-align: middle !important;
+    }
+
+    .trek-icon-location {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .trek-icon-distance {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .trek-icon-time {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
     /* Filter Sidebar Styles */
     .trek-filter-sidebar {
         flex: 0 0 320px !important;
@@ -274,10 +297,6 @@
         gap: 0.5rem !important;
     }
 
-    .trek-card-location::before {
-        content: "📍" !important;
-    }
-
     .trek-card-stats {
         display: flex !important;
         justify-content: space-between !important;
@@ -294,18 +313,6 @@
         color: var(--trek-text-muted) !important;
         font-size: 0.9rem !important;
         font-weight: 500 !important;
-    }
-
-    .trek-card-stat::before {
-        font-size: 1.1rem !important;
-    }
-
-    .trek-card-stat:first-child::before {
-        content: "🥾" !important;
-    }
-
-    .trek-card-stat:last-child::before {
-        content: "⏱️" !important;
     }
 
     /* Empty State */
@@ -462,10 +469,34 @@
                         </div>
                         <div class="trek-card-body">
                             <h5 class="trek-card-title">{{ trek.ten }}</h5>
-                            <p class="trek-card-location">{{ trek.tinh_thanh.ten }}</p>
+                            <p class="trek-card-location">
+                                <svg class="trek-icon trek-icon-location" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                {{ trek.tinh_thanh.ten }}
+                            </p>
                             <div class="trek-card-stats">
-                                <span class="trek-card-stat">{{ trek.do_dai_km }} km</span>
-                                <span class="trek-card-stat">{{ trek.thoi_gian_uoc_tinh_gio }} giờ</span>
+                                <span class="trek-card-stat">
+                                    <svg class="trek-icon trek-icon-shoe" xmlns="http://www.w3.org/2000/svg" width="24"
+                                        height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 19h16a2 2 0 0 0 2-2v-1l-6-3-2-3-3 2-5-4H4z" />
+                                        <path d="M4 19v-3a2 2 0 0 1 2-2h1" />
+                                    </svg>
+                                    {{ trek.do_dai_km }} km
+                                </span>
+                                <span class="trek-card-stat">
+                                    <svg class="trek-icon trek-icon-time" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    {{ trek.thoi_gian_uoc_tinh_gio }} giờ
+                                </span>
                             </div>
                         </div>
                     </div>
