@@ -25,6 +25,8 @@ urlpatterns = [
     # Bất kỳ URL nào bắt đầu bằng 'cung-duong/' sẽ được chuyển đến file treks/urls.py
     path('dashboard/cung-duong/', include('treks.urls', namespace='treks_admin')),
     path("community/", include(("community.urls", "community"), namespace="community")),
+    path('dashboard/posts/', include('post.urls', namespace='post_admin')),
+    
 ]
 
 # Chỉ dùng khi DEBUG=True để phục vụ media trong dev

@@ -1,5 +1,3 @@
-# cSpell:disable
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -42,63 +40,70 @@ def danh_sach_bai_viet(request):
     })
 
 
-# community/views.py
-
 def chi_tiet_bai_viet(request, bai_viet_id):
-    """Hiển thị chi tiết bài viết và bình luận"""
+    """
+    Hiển thị chi tiết bài viết, bình luận và xử lý việc đăng bình luận
+    theo mẫu Post/Redirect/Get.
+    """
     qs = CongDongBaiViet.objects.select_related('tac_gia', 'chuyen_di') \
                                 .prefetch_related('media', 'binh_luan__user', 'binh_luan__cac_tra_loi__user')
-
     bai_viet = get_object_or_404(qs, id=bai_viet_id)
 
     # Kiểm tra quyền truy cập: bài viết phải được duyệt HOẶC người xem là tác giả
     is_approved = bai_viet.trang_thai == CongDongBaiViet.TrangThaiBaiViet.DA_DUYET
     if not is_approved and bai_viet.tac_gia != request.user:
-        # Http404 được giữ nguyên để bảo mật, không tiết lộ bài viết chưa duyệt
-        from django.http import Http404
         raise Http404("Bài viết chưa được duyệt hoặc không tồn tại.")
+    
+    # --- XỬ LÝ YÊU CẦU POST ---
+    # Chỉ xử lý POST nếu bài viết đã được duyệt
+    if is_approved and request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, 'Bạn cần đăng nhập để bình luận.')
+            # Chuyển hướng đến trang đăng nhập thay vì trả về lỗi 403
+            return redirect('accounts:login')
 
-    binh_luan_goc = []
-    form = None
-    da_upvote = False
-
-    # Chỉ xử lý bình luận và upvote khi bài viết ĐÃ ĐƯỢC DUYỆT
-    if is_approved:
-        binh_luan_goc = bai_viet.binh_luan.filter(tra_loi_binh_luan__isnull=True)
-        
-        # Lấy trạng thái upvote của user hiện tại
-        if request.user.is_authenticated:
-            da_upvote = bai_viet.da_binh_chon(request.user)
-
-        # Xử lý khi người dùng gửi bình luận mới
-        if request.method == 'POST':
-            if not request.user.is_authenticated:
-                messages.error(request, 'Bạn cần đăng nhập để bình luận.')
-                return redirect('accounts:login')
-
-            form = BinhLuanForm(request.POST)
-            if form.is_valid():
-                binh_luan = form.save(commit=False)
-                binh_luan.bai_viet = bai_viet
-                binh_luan.user = request.user
-
-                tra_loi_id = request.POST.get('tra_loi_binh_luan_id')
-                if tra_loi_id:
-                    binh_luan.tra_loi_binh_luan_id = tra_loi_id
-
-                binh_luan.save()
-                messages.success(request, 'Đã thêm bình luận.')
-                return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet.id)
+        form = BinhLuanForm(request.POST)
+        if form.is_valid():
+            binh_luan = form.save(commit=False)
+            binh_luan.bai_viet = bai_viet
+            binh_luan.user = request.user
+            tra_loi_id = request.POST.get('tra_loi_binh_luan_id')
+            if tra_loi_id:
+                binh_luan.tra_loi_binh_luan_id = tra_loi_id
+            binh_luan.save()
+            messages.success(request, 'Đã thêm bình luận thành công.')
         else:
-            form = BinhLuanForm()
+            # Nếu form không hợp lệ, tạo một thông báo lỗi duy nhất để hiển thị
+            error_message = "Đã có lỗi xảy ra. Vui lòng kiểm tra lại nội dung bình luận."
+            # Lấy lỗi cụ thể hơn nếu có
+            if form.errors:
+                first_error_field = list(form.errors.keys())[0]
+                first_error_message = form.errors[first_error_field][0]
+                error_message = f"Lỗi: {first_error_message}"
 
-    return render(request, 'community/chi_tiet_bai_viet.html', {
+            messages.error(request, error_message)
+        
+        # Luôn luôn redirect về chính trang này sau khi xử lý POST
+        return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet.id)
+
+    # --- CHUẨN BỊ DỮ LIỆU CHO YÊU CẦU GET ---
+    
+    binh_luan_goc = bai_viet.binh_luan.filter(tra_loi_binh_luan__isnull=True)
+    da_upvote = False
+    form = None # Form sẽ là None nếu người dùng chưa đăng nhập hoặc bài viết chưa duyệt
+
+    if is_approved and request.user.is_authenticated:
+        da_upvote = bai_viet.da_binh_chon(request.user)
+        form = BinhLuanForm() # Tạo một form trống cho người dùng nhập liệu
+
+    context = {
         'bai_viet': bai_viet,
         'binh_luan_goc': binh_luan_goc,
         'form': form,
         'da_upvote': da_upvote,
         'is_approved': is_approved,
-    })
+    }
+    return render(request, 'community/chi_tiet_bai_viet.html', context)
 
 
 @login_required
@@ -123,11 +128,8 @@ def tao_bai_viet(request):
                     loai_media=loai_media,
                     duong_dan_file=file
                 )
-                # =========================================================
-                # === THÊM DÒNG NÀY ĐỂ GIẢI PHÓNG FILE TRÊN WINDOWS ===
                 if hasattr(file, 'close'):
                     file.close()
-                # =========================================================
 
             messages.success(request, 'Bài viết của bạn đã được gửi và đang chờ duyệt.')
             return redirect('community:bai-viet-cua-toi')
@@ -160,11 +162,8 @@ def sua_bai_viet(request, bai_viet_id):
                     loai_media=loai_media,
                     duong_dan_file=file
                 )
-                # =========================================================
-                # === THÊM DÒNG NÀY ĐỂ GIẢI PHÓNG FILE TRÊN WINDOWS ===
                 if hasattr(file, 'close'):
                     file.close()
-                # =========================================================
 
             messages.success(request, 'Bài viết đã được cập nhật và đang chờ duyệt lại.')
             return redirect('community:bai-viet-cua-toi')
@@ -172,6 +171,8 @@ def sua_bai_viet(request, bai_viet_id):
         form = BaiVietForm(instance=bai_viet)
 
     return render(request, 'community/sua_bai_viet.html', {'form': form, 'bai_viet': bai_viet})
+
+
 @login_required
 def xoa_bai_viet(request, bai_viet_id):
     """Xóa bài viết"""
@@ -185,7 +186,6 @@ def xoa_bai_viet(request, bai_viet_id):
     return render(request, 'community/xoa_bai_viet.html', {'bai_viet': bai_viet})
 
 
-# ✅ Sửa đúng tại đây
 @login_required
 def bai_viet_cua_toi(request):
     """Hiển thị danh sách bài viết của người dùng hiện tại"""
@@ -209,6 +209,13 @@ def bai_viet_cua_toi(request):
 def toggle_upvote(request, bai_viet_id):
     """Toggle upvote cho bài viết (AJAX)"""
     bai_viet = get_object_or_404(CongDongBaiViet, id=bai_viet_id)
+    
+    if bai_viet.trang_thai != CongDongBaiViet.TrangThaiBaiViet.DA_DUYET:
+        return JsonResponse({
+            'success': False,
+            'error': 'Bài viết chưa được duyệt, không thể bình chọn.',
+            'is_approved': False
+        }, status=403)
 
     binh_chon = CongDongBinhChonBaiViet.objects.filter(
         bai_viet=bai_viet, user=request.user
@@ -228,8 +235,10 @@ def toggle_upvote(request, bai_viet_id):
     return JsonResponse({
         'success': True,
         'da_upvote': da_upvote,
-        'luot_binh_chon': bai_viet.luot_binh_chon
+        'luot_binh_chon': bai_viet.luot_binh_chon,
+        'is_approved': True
     })
+
 
 
 @login_required
@@ -246,19 +255,13 @@ def xoa_media(request, media_id):
         if media.bai_viet.tac_gia != request.user:
             return JsonResponse({'success': False, 'error': 'Bạn không có quyền thực hiện hành động này.'}, status=403)
 
-        # Xóa file vật lý khỏi hệ thống
         media.duong_dan_file.delete(save=False)
-
-        # Xóa đối tượng khỏi cơ sở dữ liệu
         media.delete()
 
         return JsonResponse({'success': True})
 
     except Exception as e:
-        # =================================================================
-        # === QUAN TRỌNG: Dòng này sẽ in lỗi thật sự ra cửa sổ terminal ===
-        print(f"!!!!!!!! LỖI KHI XÓA MEDIA (ID: {media_id}): {e} !!!!!!!!")
-        # =================================================================
+        print(f"LỖI KHI XÓA MEDIA (ID: {media_id}): {e}")
         return JsonResponse({'success': False, 'error': 'Đã có lỗi xảy ra từ phía máy chủ.'}, status=500)
 
 

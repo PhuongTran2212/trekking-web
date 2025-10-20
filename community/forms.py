@@ -1,5 +1,3 @@
-# cSpell:disable
-
 from django import forms
 from .models import CongDongBaiViet, CongDongBinhLuan
 from core.models import The

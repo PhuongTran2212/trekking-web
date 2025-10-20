@@ -41,18 +41,14 @@ class CongDongBaiVietAdmin(admin.ModelAdmin):
         'so_binh_luan',
         'ngay_dang'
     ]
-    # === SỬA ĐỔI 1: THÊM 'tags' VÀO BỘ LỌC ===
     list_filter = ['trang_thai', 'ngay_dang', 'chuyen_di', 'tags']
     search_fields = ['tieu_de', 'noi_dung', 'tac_gia__username']
     readonly_fields = ['ngay_dang', 'ngay_cap_nhat', 'luot_binh_chon']
     inlines = [MediaBaiVietInline]
-
-    # === SỬA ĐỔI 2: THÊM DÒNG NÀY ĐỂ HIỂN THỊ TAGS ĐẸP HƠN ===
     filter_horizontal = ('tags',)
     
     fieldsets = (
         ('Thông tin bài viết', {
-            # === SỬA ĐỔI 3: THÊM 'tags' VÀO ĐÂY ĐỂ CHỈNH SỬA ===
             'fields': ('tieu_de', 'noi_dung', 'tac_gia', 'chuyen_di', 'tags')
         }),
         ('Trạng thái', {

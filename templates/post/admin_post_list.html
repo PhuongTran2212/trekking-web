@@ -1,0 +1,112 @@
+<!-- templates/post/admin_post_list.html (PHIÊN BẢN SỬA LỖI) -->
+{% extends 'admin_base.html' %}
+
+{% block title %}{{ title }} - TrekViet Admin{% endblock title %}
+
+{% block content %}
+<style>
+    /* ... các style khác giữ nguyên ... */
+    .card { background-color: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); }
+    .page-title { font-family: var(--font-heading); font-size: 1.75rem; color: var(--gray-800); }
+    .filter-tabs { display: flex; gap: var(--spacing-sm); border-bottom: 1px solid var(--gray-200); margin-bottom: var(--spacing-lg); }
+    .filter-tab { padding: 0.75rem 1.25rem; border-bottom: 3px solid transparent; font-weight: 600; color: var(--gray-500); transition: all var(--transition-fast); }
+    .filter-tab:hover { color: var(--primary-dark); }
+    .filter-tab.active { color: var(--primary-dark); border-bottom-color: var(--primary-medium); }
+    .table-responsive { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
+    .data-table th { font-size: 0.8rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; }
+    
+    .badge { display: inline-block; padding: 0.25rem 0.625rem; font-size: 0.75rem; font-weight: 600; border-radius: var(--radius-full); }
+    .badge-pending { background-color: #FEF3C7; color: #92400E; }
+    .badge-approved { background-color: var(--primary-lightest); color: var(--primary-dark); }
+    .badge-rejected { background-color: #FEE2E2; color: #991B1B; }
+    
+    .action-btn { background: none; border: 1px solid var(--gray-300); border-radius: var(--radius-md); padding: 0.5rem 0.8rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all var(--transition-fast); margin: 0 0.2rem; }
+    .btn-approve { color: var(--success); border-color: var(--success); }
+    .btn-approve:hover { background-color: var(--success); color: white; }
+    .btn-reject { color: #F59E0B; border-color: #F59E0B; }
+    .btn-reject:hover { background-color: #F59E0B; color: white; }
+    .btn-delete { color: var(--danger); border-color: var(--danger); }
+    .btn-delete:hover { background-color: var(--danger); color: white; }
+
+    /* === SỬA LỖI Ở ĐÂY === */
+    /* Tạo một class riêng cho link tiêu đề */
+    .post-title-link {
+        font-weight: 600;
+        color: var(--gray-800);
+        text-decoration: none; /* Bỏ gạch chân mặc định */
+        transition: color var(--transition-fast);
+    }
+    .post-title-link:hover {
+        color: var(--primary-dark); /* Đổi màu khi hover */
+        text-decoration: underline; /* Thêm gạch chân khi hover */
+    }
+    /* ======================= */
+</style>
+
+<div class="card">
+    <div class="page-header"><h1 class="page-title">{{ title }}</h1></div>
+
+    <!-- Thanh lọc -->
+    <div class="filter-tabs">
+        <a href="{% url 'post_admin:post_list' %}" class="filter-tab {% if not status_filter %}active{% endif %}">Tất cả</a>
+        <a href="?status=cho_duyet" class="filter-tab {% if status_filter == 'cho_duyet' %}active{% endif %}">Chờ duyệt</a>
+        <a href="?status=da_duyet" class="filter-tab {% if status_filter == 'da_duyet' %}active{% endif %}">Đã duyệt</a>
+        <a href="?status=tu_choi" class="filter-tab {% if status_filter == 'tu_choi' %}active{% endif %}">Từ chối</a>
+    </div>
+
+    <!-- Thông báo -->
+    {% if messages %}{% for message in messages %}
+        <div style="margin-bottom: 1rem; padding: 1rem; border-radius: 0.5rem; background-color: {% if message.tags == 'success' %}var(--primary-lightest){% elif message.tags == 'error' %}#fdecec{% else %}#fffbeb{% endif %}; color: {% if message.tags == 'success' %}var(--primary-dark){% elif message.tags == 'error' %}var(--danger){% else %}#b45309{% endif %};">
+            {{ message }}
+        </div>
+    {% endfor %}{% endif %}
+
+    <!-- Bảng dữ liệu -->
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr><th>Tiêu đề</th><th>Tác giả</th><th>Ngày đăng</th><th>Trạng thái</th><th style="text-align: right;">Hành động</th></tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>
+                        <!-- === SỬA LỖI Ở ĐÂY === -->
+                        <a href="{% url 'post_admin:post_detail' post.id %}" class="post-title-link">
+                            {{ post.tieu_de }}
+                        </a>
+                        <!-- ======================= -->
+                    </td>
+                    <td>@{{ post.tac_gia.username }}</td>
+                    <td>{{ post.ngay_dang|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if post.trang_thai == 'cho_duyet' %}<span class="badge badge-pending">Chờ duyệt</span>
+                        {% elif post.trang_thai == 'da_duyet' %}<span class="badge badge-approved">Đã duyệt</span>
+                        {% elif post.trang_thai == 'tu_choi' %}<span class="badge badge-rejected">Từ chối</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        {% if post.trang_thai == 'cho_duyet' %}
+                            <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'da_duyet' %}" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn DUYỆT bài viết này?');">
+                                {% csrf_token %}<button type="submit" class="action-btn btn-approve">Duyệt</button>
+                            </form>
+                            <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'tu_choi' %}" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn TỪ CHỐI bài viết này?');">
+                                {% csrf_token %}<button type="submit" class="action-btn btn-reject">Từ chối</button>
+                            </form>
+                        {% endif %}
+                        <form method="POST" action="{% url 'post_admin:post_delete' post.id %}" style="display: inline;" onsubmit="return confirm('Hành động này không thể hoàn tác! Bạn có chắc chắn muốn XÓA bài viết này?');">
+                            {% csrf_token %}<button type="submit" class="action-btn btn-delete">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="text-align: center; padding: 2rem;">Không có bài viết nào.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

@@ -5,111 +5,182 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/community.css' %}">
-    {# Thêm CSS cho tag nếu bạn chưa có file css chung #}
-    <style>
-      .tag-badge-sm {
-        display: inline-block;
-        padding: 0.25em 0.5em;
-        font-size: .70em;
-        font-weight: 700;
-        line-height: 1;
-        color: #fff;
-        text-align: center;
-        border-radius: 0.25rem;
-        background-color: #6c757d;
-        text-decoration: none;
-        margin-right: 4px;
-        margin-bottom: 4px;
-      }
-    </style>
 {% endblock %}
 
 {% block content %}
 <div class="container my-5">
+    <!-- Enhanced header with better layout -->
     <div class="my-posts-header">
-        <h1>Bài viết của tôi</h1>
+        <div>
+            <h1 class="mb-2">Bài viết của tôi</h1>
+            <p class="text-muted mb-0">Quản lý và theo dõi các bài viết bạn đã chia sẻ</p>
+        </div>
         <a href="{% url 'community:tao-bai-viet' %}" class="btn btn-primary">
-            <i class="fas fa-plus mr-2"></i> Tạo bài viết mới
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Tạo bài viết mới
         </a>
     </div>
 
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            <div class="alert alert-{{ message.tags }} animate-fadeInUp">
+                <div class="alert-content">{{ message }}</div>
+            </div>
         {% endfor %}
     {% endif %}
 
-    {% for post in bai_viet %}
-    <div class="post-card">
-        <div class="post-card-img-wrapper">
-            {% if post.media.first %}
-                <img src="{{ post.media.first.duong_dan_file.url }}" alt="{{ post.tieu_de }}" class="post-card-img">
-            {% else %}
-                <img src="{% static 'images/placeholder.jpg' %}" alt="Placeholder" class="post-card-img">
-            {% endif %}
-        </div>
-        <div class="post-card-body">
-            <div>
-                <h2 class="post-card-title">
-                    <a href="{% url 'community:chi-tiet-bai-viet' post.id %}">{{ post.tieu_de }}</a>
-                </h2>
-                <div class="post-card-meta">
-                    <div class="post-card-meta-item">
-                        {% if post.trang_thai == 'da_duyet' %}
-                            <span class="badge badge-success">Đã duyệt</span>
-                        {% elif post.trang_thai == 'cho_duyet' %}
-                            <span class="badge badge-warning">Chờ duyệt</span>
-                        {% else %}
-                            <span class="badge badge-danger">Từ chối</span>
-                        {% endif %}
-                    </div>
-                    <div class="post-card-meta-item">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span>{{ post.ngay_dang|date:"d/m/Y" }}</span>
-                    </div>
-                    <div class="post-card-meta-item">
-                        <i class="fas fa-thumbs-up"></i>
-                        <span>{{ post.luot_binh_chon }}</span>
-                    </div>
-                    <div class="post-card-meta-item">
-                        <i class="fas fa-comment"></i>
-                        <span>{{ post.so_luong_binh_luan }}</span>
-                    </div>
+    {% if bai_viet %}
+        <!-- Improved post card grid layout -->
+        <div class="posts-grid">
+            {% for post in bai_viet %}
+            <article class="post-card animate-fadeInUp">
+                <!-- Better image wrapper with placeholder -->
+                <div class="post-card-img-wrapper">
+                    {% if post.media.first %}
+                        <img src="{{ post.media.first.duong_dan_file.url }}" alt="{{ post.tieu_de }}" class="post-card-img">
+                    {% else %}
+                        <div class="post-card-img post-card-placeholder">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </div>
+                    {% endif %}
                 </div>
                 
-                <!-- === BẮT ĐẦU: KHỐI MÃ MỚI HIỂN THỊ TAGS === -->
-                {% if post.tags.all %}
-                <div class="mt-2">
-                  {% for tag in post.tags.all %}
-                    <span class="tag-badge-sm">#{{ tag.ten }}</span>
-                  {% endfor %}
-                </div>
-                {% endif %}
-                <!-- === KẾT THÚC: KHỐI MÃ MỚI HIỂN THỊ TAGS === -->
-            </div>
-            <div class="post-card-actions">
-                <a href="{% url 'community:chi-tiet-bai-viet' post.id %}" class="btn btn-outline btn-sm">Xem</a>
-                <a href="{% url 'community:sua-bai-viet' post.id %}" class="btn btn-secondary btn-sm">Sửa</a>
-                <a href="{% url 'community:xoa-bai-viet' post.id %}" class="btn btn-danger btn-sm">Xóa</a>
-            </div>
-        </div>
-    </div>
-    {% empty %}
-    <div class="card text-center">
-        <div class="card-body">
-            <p class="mb-0">Bạn chưa có bài viết nào. Hãy tạo một bài viết mới để chia sẻ kinh nghiệm của bạn!</p>
-        </div>
-    </div>
-    {% endfor %}
+                <div class="post-card-body">
+                    <div class="post-card-content">
+                        <!-- Add author avatar display -->
+                        <div class="post-author-section-card">
+                            {% if post.tac_gia.taikhoanhoso.anh_dai_dien %}
+                                <img src="{{ post.tac_gia.taikhoanhoso.anh_dai_dien.url }}" alt="{{ post.tac_gia.username }}" class="post-author-avatar-sm">
+                            {% else %}
+                                <img src="/static/images/default_avatar.png" alt="{{ post.tac_gia.username }}" class="post-author-avatar-sm">
+                            {% endif %}
+                            <div>
+                                <p class="post-author-name-sm">{{ post.tac_gia.get_full_name|default:post.tac_gia.username }}</p>
+                            </div>
+                        </div>
 
-    <!-- Pagination -->
+                        <!-- Improved title styling -->
+                        <h2 class="post-card-title">
+                            <a href="{% url 'community:chi-tiet-bai-viet' post.id %}">{{ post.tieu_de }}</a>
+                        </h2>
+                        
+                        <!-- Better metadata display -->
+                        <div class="post-card-meta">
+                            <div class="post-card-meta-item">
+                                {% if post.trang_thai == 'da_duyet' %}
+                                    <span class="badge badge-success">Đã duyệt</span>
+                                {% elif post.trang_thai == 'cho_duyet' %}
+                                    <span class="badge badge-warning">Chờ duyệt</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Từ chối</span>
+                                {% endif %}
+                            </div>
+                            <div class="post-card-meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span>{{ post.ngay_dang|date:"d/m/Y" }}</span>
+                            </div>
+                            <div class="post-card-meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                                </svg>
+                                <span>{{ post.luot_binh_chon }}</span>
+                            </div>
+                            <div class="post-card-meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                                <span>{{ post.so_luong_binh_luan }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if post.tags.all %}
+                        <div class="post-tags mt-3">
+                            {% for tag in post.tags.all %}
+                                <span class="badge badge-primary">#{{ tag.ten }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Improved action buttons layout -->
+                    <div class="post-card-actions">
+                        <a href="{% url 'community:chi-tiet-bai-viet' post.id %}" class="btn btn-outline btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            Xem
+                        </a>
+                        <a href="{% url 'community:sua-bai-viet' post.id %}" class="btn btn-secondary btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Sửa
+                        </a>
+                        <a href="{% url 'community:xoa-bai-viet' post.id %}" class="btn btn-ghost btn-sm text-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Xóa
+                        </a>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Better empty state design -->
+        <div class="card text-center p-5 animate-fadeInUp">
+            <div class="card-body">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem; color: var(--gray-400);">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+                <h3 class="mb-3">Chưa có bài viết nào</h3>
+                <p class="text-muted mb-4">Hãy tạo bài viết đầu tiên để chia sẻ trải nghiệm trekking của bạn với cộng đồng!</p>
+                <a href="{% url 'community:tao-bai-viet' %}" class="btn btn-primary">
+                    Tạo bài viết đầu tiên
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Improved pagination -->
     {% if bai_viet.has_other_pages %}
-    <nav aria-label="Page navigation">
+    <nav aria-label="Phân trang bài viết" class="mt-5">
         <ul class="pagination">
             {% if bai_viet.has_previous %}
-                <li class="pagination-item"><a href="?page={{ bai_viet.previous_page_number }}">«</a></li>
+                <li class="pagination-item">
+                    <a href="?page={{ bai_viet.previous_page_number }}" aria-label="Trang trước">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </a>
+                </li>
             {% else %}
-                <li class="pagination-item disabled"><span>«</span></li>
+                <li class="pagination-item disabled">
+                    <span aria-label="Trang trước">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </span>
+                </li>
             {% endif %}
 
             {% for i in bai_viet.paginator.page_range %}
@@ -121,12 +192,51 @@
             {% endfor %}
 
             {% if bai_viet.has_next %}
-                <li class="pagination-item"><a href="?page={{ bai_viet.next_page_number }}">»</a></li>
+                <li class="pagination-item">
+                    <a href="?page={{ bai_viet.next_page_number }}" aria-label="Trang sau">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </a>
+                </li>
             {% else %}
-                <li class="pagination-item disabled"><span>»</span></li>
+                <li class="pagination-item disabled">
+                    <span aria-label="Trang sau">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </span>
+                </li>
             {% endif %}
         </ul>
     </nav>
     {% endif %}
 </div>
+
+<style>
+/* Add styles for author section in post cards */
+.post-author-section-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.post-author-avatar-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--primary-light);
+}
+
+.post-author-name-sm {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+}
+</style>
 {% endblock %}

@@ -1,264 +1,545 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %} Tạo bài viết mới {% endblock %}
+{% block title %}Tạo bài viết mới{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/community.css' %}">
 <style>
-  /* === BẮT ĐẦU: CSS CHO MEDIA PREVIEW (SAO CHÉP TỪ TRANG SỬA BÀI VIẾT) === */
+  /* Added modern styling for create post form */
+  .create-post-container {
+    max-width: 900px;
+    margin: 2rem auto;
+  }
+  
+  .create-post-card {
+    background: var(--surface-primary, #fff);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    overflow: hidden;
+  }
+  
+  .create-post-header {
+    background: linear-gradient(135deg, var(--primary-dark, #4D7111) 0%, var(--primary-medium, #C3E956) 100%);
+    padding: 1.5rem 2rem;
+    color: white;
+  }
+  
+  .create-post-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .create-post-body {
+    padding: 2rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a1a);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border-light, #e0e0e0);
+    border-radius: var(--radius-md, 8px);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: var(--surface-primary, #fff);
+  }
+  
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary-medium, #C3E956);
+    box-shadow: 0 0 0 3px rgba(195, 233, 86, 0.1);
+  }
+  
+  textarea.form-control {
+    min-height: 200px;
+    resize: vertical;
+    font-family: inherit;
+  }
+  
+  .tag-checkbox-container {
+    background: var(--surface-secondary, #f8f9fa);
+    border: 2px solid var(--border-light, #e0e0e0);
+    border-radius: var(--radius-md, 8px);
+    padding: 1.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
   .tag-checkbox-container ul {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
     margin: 0;
-    columns: 2;
-    -webkit-columns: 2;
-    -moz-columns: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
   }
+  
   .tag-checkbox-container li {
-    padding: 0.25rem 0;
-    break-inside: avoid-column;
+    display: flex;
+    align-items: center;
   }
-  .tag-checkbox-container label {
-    margin-left: 0.5rem;
-    font-weight: normal;
+  
+  .tag-checkbox-container input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.5rem;
     cursor: pointer;
+    accent-color: var(--primary-medium, #C3E956);
   }
-
-  /* Hiển thị media trong grid layout */
+  
+  .tag-checkbox-container label {
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-secondary, #666);
+    user-select: none;
+  }
+  
+  /* Media preview styles */
+  .media-preview-section {
+    margin-top: 1rem;
+  }
+  
   .post-media-gallery {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px; /* Khoảng cách giữa các item */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
   }
-
-  /* Container cho mỗi media item (ảnh/video) */
+  
   .media-item {
     position: relative;
-    display: inline-block;
-    width: 250px;
-    height: 250px;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md, 8px);
     overflow: hidden;
-    background-color: #f0f2f5;
-    border-radius: 8px; /* Bo góc mềm mại */
+    background: var(--surface-secondary, #f0f2f5);
+    cursor: pointer;
+    transition: transform 0.2s ease;
   }
-  .media-item img, .media-item video {
+  
+  .media-item:hover {
+    transform: scale(1.02);
+  }
+  
+  .media-item img,
+  .media-item video {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Đảm bảo media lấp đầy khung mà không bị méo */
+    object-fit: cover;
   }
-
-  /* Nút xóa 'x' ở góc trên bên phải */
+  
   .delete-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    z-index: 10;
-    background-color: rgba(255, 255, 255, 0.9);
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    font-weight: bold;
-    color: #606770;
-    font-size: 18px;
-    line-height: 1;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    padding: 0;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
+  
   .delete-btn:hover {
-    background-color: #E4E6E9;
+    background: #ff4444;
+    color: white;
+    transform: scale(1.1);
   }
-  /* === KẾT THÚC: CSS CHO MEDIA PREVIEW === */
+  
+  .media-item-more {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    pointer-events: none;
+  }
+  
+  /* Modal styles */
+  .image-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  
+  .image-modal.show {
+    display: flex;
+  }
+  
+  .image-modal-content {
+    background: white;
+    border-radius: var(--radius-lg, 12px);
+    max-width: 1400px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+  }
+  
+  .image-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface-secondary, #f0f0f0);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: all 0.2s ease;
+    z-index: 10;
+  }
+  
+  .image-modal-close:hover {
+    background: #ff4444;
+    color: white;
+  }
+  
+  #modal-gallery-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .modal-media-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md, 8px);
+    overflow: hidden;
+    background: var(--surface-secondary, #f0f0f0);
+  }
+  
+  .modal-media-item img,
+  .modal-media-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Alert and info boxes */
+  .info-alert {
+    background: linear-gradient(135deg, rgba(195, 233, 86, 0.1) 0%, rgba(77, 113, 17, 0.05) 100%);
+    border-left: 4px solid var(--primary-medium, #C3E956);
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md, 8px);
+    margin-top: 1.5rem;
+  }
+  
+  .info-alert strong {
+    color: var(--primary-dark, #4D7111);
+  }
+  
+  /* Action buttons */
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-light, #e0e0e0);
+  }
+  
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md, 8px);
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+  
+  .btn-primary {
+    background: var(--primary-dark, #4D7111);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background: var(--primary-medium, #C3E956);
+    color: var(--primary-dark, #4D7111);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(77, 113, 17, 0.3);
+  }
+  
+  .btn-secondary {
+    background: var(--surface-secondary, #f0f0f0);
+    color: var(--text-primary, #1a1a1a);
+  }
+  
+  .btn-secondary:hover {
+    background: var(--border-light, #e0e0e0);
+  }
+  
+  .error-text {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  /* File input styling */
+  input[type="file"] {
+    padding: 0.5rem;
+  }
+  
+  .file-input-label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  
+  .file-help-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #666);
+    margin-top: 0.5rem;
+  }
 </style>
 {% endblock %}
 
-
 {% block content %}
-<div class="container mt-4">
-  <div class="row">
-    <div class="col-md-8 offset-md-2">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          <h4 class="mb-0">✍️ Tạo bài viết mới</h4>
+<div class="create-post-container">
+  <div class="create-post-card">
+    <div class="create-post-header">
+      <h1>
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Tạo bài viết mới
+      </h1>
+    </div>
+    
+    <div class="create-post-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="{{ form.tieu_de.id_for_label }}" class="form-label">{{ form.tieu_de.label }}</label>
+          {{ form.tieu_de }}
+          {% if form.tieu_de.errors %}
+            <div class="error-text">{{ form.tieu_de.errors|striptags }}</div>
+          {% endif %}
         </div>
-        <div class="card-body">
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
 
-            {# Tiêu đề #}
-            <div class="mb-3">
-              <label for="{{ form.tieu_de.id_for_label }}" class="form-label">
-                {{ form.tieu_de.label }}
-              </label>
-              {{ form.tieu_de }}
-              {% if form.tieu_de.errors %}
-                <div class="text-danger small mt-1">{{ form.tieu_de.errors|striptags }}</div>
-              {% endif %}
-            </div>
-
-            {# Nội dung #}
-            <div class="mb-3">
-              <label for="{{ form.noi_dung.id_for_label }}" class="form-label">
-                {{ form.noi_dung.label }}
-              </label>
-              {{ form.noi_dung }}
-              {% if form.noi_dung.errors %}
-                <div class="text-danger small mt-1">{{ form.noi_dung.errors|striptags }}</div>
-              {% endif %}
-            </div>
-
-            {# Chuyến đi #}
-            <div class="mb-3">
-              <label for="{{ form.chuyen_di.id_for_label }}" class="form-label">
-                {{ form.chuyen_di.label }}
-              </label>
-              {{ form.chuyen_di }}
-              {% if form.chuyen_di.errors %}
-                <div class="text-danger small mt-1">{{ form.chuyen_di.errors|striptags }}</div>
-              {% endif %}
-            </div>
-            
-            {# Tags #}
-            <div class="mb-3">
-              <label class="form-label">{{ form.tags.label }}</label>
-              <div class="tag-checkbox-container p-3 border rounded">
-                {{ form.tags }}
-              </div>
-              {% if form.tags.errors %}
-                <div class="text-danger small mt-1">{{ form.tags.errors|striptags }}</div>
-              {% endif %}
-            </div>
-
-            {# Upload media #}
-            <div class="mb-3">
-              <label for="media_files" class="form-label">
-                📷 Tải lên ảnh/video (tùy chọn)
-              </label>
-              <input
-                type="file"
-                class="form-control"
-                id="media_files"
-                name="media_files"
-                multiple
-                accept="image/*,video/*"
-              />
-              <small class="text-muted">
-                Bạn có thể chọn và xóa từng file trước khi đăng.
-              </small>
-            </div>
-
-            {# === BẮT ĐẦU: KHU VỰC XEM TRƯỚC MEDIA ĐÃ CẬP NHẬT === #}
-            <div id="preview-container" class="post-media-gallery mb-3">
-              <!-- Xem trước media sẽ được hiển thị ở đây -->
-            </div>
-            {# === KẾT THÚC: KHU VỰC XEM TRƯỚC MEDIA ĐÃ CẬP NHẬT === #}
-
-            <div class="alert alert-info mt-3">
-              <strong>📌 Lưu ý:</strong> Bài viết của bạn sẽ được gửi đến quản
-              trị viên để duyệt. Sau khi được phê duyệt, bài viết sẽ hiển thị
-              trong cộng đồng.
-            </div>
-
-            <div class="d-flex gap-2 mt-4">
-              <button type="submit" class="btn btn-primary">📤 Đăng bài</button>
-              <a
-                href="{% url 'community:danh-sach-bai-viet' %}"
-                class="btn btn-secondary"
-                >Hủy</a
-              >
-            </div>
-          </form>
+        <div class="form-group">
+          <label for="{{ form.noi_dung.id_for_label }}" class="form-label">{{ form.noi_dung.label }}</label>
+          {{ form.noi_dung }}
+          {% if form.noi_dung.errors %}
+            <div class="error-text">{{ form.noi_dung.errors|striptags }}</div>
+          {% endif %}
         </div>
-      </div>
+
+        <div class="form-group">
+          <label for="{{ form.chuyen_di.id_for_label }}" class="form-label">{{ form.chuyen_di.label }}</label>
+          {{ form.chuyen_di }}
+          {% if form.chuyen_di.errors %}
+            <div class="error-text">{{ form.chuyen_di.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ form.tags.label }}</label>
+          <div class="tag-checkbox-container">
+            {{ form.tags }}
+          </div>
+          {% if form.tags.errors %}
+            <div class="error-text">{{ form.tags.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="media_files" class="form-label file-input-label">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            Tải lên ảnh/video
+          </label>
+          <input type="file" class="form-control" id="media_files" name="media_files" multiple accept="image/*,video/*"/>
+          <div class="file-help-text">Bạn có thể chọn nhiều file. Click vào ảnh để xem tất cả hoặc xóa từng file.</div>
+        </div>
+
+        <div id="preview-container" class="post-media-gallery"></div>
+
+        <div class="info-alert">
+          <strong>Lưu ý:</strong> Bài viết của bạn sẽ được gửi đến quản trị viên để duyệt trước khi hiển thị công khai.
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Đăng bài
+          </button>
+          <a href="{% url 'community:danh-sach-bai-viet' %}" class="btn btn-secondary">Hủy</a>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
-{# === BẮT ĐẦU: SCRIPT MỚI ĐỂ XEM TRƯỚC VÀ XÓA MEDIA === #}
+<!-- Modal for viewing all media -->
+<div id="image-modal" class="image-modal">
+  <div class="image-modal-content">
+    <button id="modal-close-btn" class="image-modal-close">&times;</button>
+    <h5 id="modal-title">Tất cả ảnh/video đã chọn</h5>
+    <div id="modal-gallery-container"></div>
+  </div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  const fileInput = document.getElementById("media_files");
-  const previewContainer = document.getElementById("preview-container");
-  
-  // Mảng này sẽ lưu các file người dùng chọn để dễ dàng quản lý (thêm/xóa)
-  let selectedFiles = [];
+    const fileInput = document.getElementById("media_files");
+    const previewContainer = document.getElementById("preview-container");
+    const modal = document.getElementById("image-modal");
+    const modalCloseBtn = document.getElementById("modal-close-btn");
+    const modalGallery = document.getElementById("modal-gallery-container");
+    const modalTitle = document.getElementById("modal-title");
 
-  fileInput.addEventListener("change", function(event) {
-    // Thêm các file mới được chọn vào mảng
-    Array.from(event.target.files).forEach(file => {
-        selectedFiles.push(file);
+    let selectedFiles = [];
+
+    fileInput.addEventListener("change", function(event) {
+        Array.from(event.target.files).forEach(file => selectedFiles.push(file));
+        updatePreview();
+        updateFileInput();
     });
-    // Cập nhật lại giao diện xem trước và danh sách file trong input
-    updatePreview();
-    updateFileInput();
-  });
 
-  function updatePreview() {
-    previewContainer.innerHTML = ""; // Xóa các preview cũ để vẽ lại từ đầu
+    function updatePreview() {
+        previewContainer.innerHTML = "";
+        const MAX_PREVIEWS = 4;
 
-    selectedFiles.forEach((file, index) => {
-        const reader = new FileReader();
+        selectedFiles.forEach((file, index) => {
+            if (index >= MAX_PREVIEWS) return;
+
+            const mediaWrapper = createMediaElement(file, index, 'page');
+            
+            if (index === MAX_PREVIEWS - 1 && selectedFiles.length > MAX_PREVIEWS) {
+                const remainingCount = selectedFiles.length - MAX_PREVIEWS;
+                const moreOverlay = document.createElement("div");
+                moreOverlay.classList.add("media-item-more");
+                moreOverlay.textContent = `+${remainingCount}`;
+                mediaWrapper.appendChild(moreOverlay);
+                
+                mediaWrapper.style.cursor = "pointer";
+                mediaWrapper.addEventListener("click", openModal);
+            }
+            
+            previewContainer.appendChild(mediaWrapper);
+        });
+    }
+    
+    function createMediaElement(file, index, context) {
+        const wrapperClass = context === 'modal' ? 'modal-media-item' : 'media-item';
         
         const mediaWrapper = document.createElement("div");
-        mediaWrapper.classList.add("media-item");
+        mediaWrapper.classList.add(wrapperClass);
 
+        const reader = new FileReader();
         reader.onload = function(e) {
             const url = e.target.result;
             let mediaElement;
-
             if (file.type.startsWith("image/")) {
                 mediaElement = document.createElement("img");
                 mediaElement.src = url;
-                mediaElement.alt = file.name;
             } else if (file.type.startsWith("video/")) {
                 mediaElement = document.createElement("video");
                 mediaElement.src = url;
-                // Thêm thuộc tính để video không tự động phát và tắt tiếng
                 mediaElement.muted = true;
                 mediaElement.playsInline = true;
             }
             if (mediaElement) mediaWrapper.appendChild(mediaElement);
-        }
-
+        };
         reader.readAsDataURL(file);
 
-        // Tạo nút xóa 'x' cho từng media
         const deleteBtn = document.createElement("button");
         deleteBtn.innerHTML = "&times;";
         deleteBtn.type = "button";
         deleteBtn.classList.add("delete-btn");
         deleteBtn.title = `Xóa ${file.name}`;
-        
-        // Gán sự kiện click để xóa file
-        deleteBtn.addEventListener("click", function() {
-            // Xóa file khỏi mảng tại vị trí 'index'
+        deleteBtn.addEventListener("click", function(event) {
+            event.stopPropagation();
             selectedFiles.splice(index, 1);
-            // Cập nhật lại giao diện và input
-            updatePreview();
             updateFileInput();
+            updatePreview();
+            if(modal.classList.contains('show')) {
+                populateModal();
+            }
         });
 
         mediaWrapper.appendChild(deleteBtn);
-        previewContainer.appendChild(mediaWrapper);
-    });
-  }
+        return mediaWrapper;
+    }
 
-  // Hàm này rất quan trọng: nó cập nhật lại đối tượng FileList trong thẻ <input>
-  // vì FileList mặc định là chỉ đọc (read-only).
-  function updateFileInput() {
-      const dataTransfer = new DataTransfer();
-      selectedFiles.forEach(file => {
-          dataTransfer.items.add(file);
-      });
-      // Gán danh sách file mới vào input
-      fileInput.files = dataTransfer.files;
-  }
+    function openModal() {
+        populateModal();
+        modal.classList.add("show");
+    }
+
+    function closeModal() {
+        modal.classList.remove("show");
+    }
+    
+    function populateModal() {
+        modalGallery.innerHTML = "";
+        modalTitle.textContent = `Tất cả ${selectedFiles.length} ảnh/video đã chọn`;
+        selectedFiles.forEach((file, index) => {
+            const mediaElement = createMediaElement(file, index, 'modal');
+            modalGallery.appendChild(mediaElement);
+        });
+    }
+
+    modalCloseBtn.addEventListener("click", closeModal);
+    modal.addEventListener("click", function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+    
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        fileInput.files = dataTransfer.files;
+    }
 });
 </script>
-{# === KẾT THÚC: SCRIPT MỚI === #}
 {% endblock %}

@@ -1,0 +1,49 @@
+{% load static %}
+
+<li class="comment-item" id="comment-{{ comment.id }}">
+    <div class="comment-wrapper">
+        <div class="comment-avatar">
+            {{ comment.user.get_full_name|default:comment.user.username|slice:":1"|upper }}
+        </div>
+        <div class="comment-content">
+            <div class="comment-header">
+                <span class="comment-author">{{ comment.user.get_full_name|default:comment.user.username }}</span>
+                <span class="comment-timestamp">{{ comment.ngay_binh_luan|timesince }} trước</span>
+            </div>
+            <div class="comment-body">
+                <p>{{ comment.noi_dung|linebreaksbr }}</p>
+            </div>
+            <div class="comment-actions">
+                <a href="#" class="btn-reply" data-comment-id="{{ comment.id }}">Trả lời</a>
+                {% if user == comment.user or user.is_staff %}
+                    <form action="{% url 'community:xoa-binh-luan' comment.id %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-delete">Xóa</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Form trả lời (ẩn mặc định) -->
+    <div class="reply-form" id="reply-form-{{ comment.id }}" style="display: none;">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="tra_loi_binh_luan_id" value="{{ comment.id }}">
+            <div class="form-group">
+                <textarea name="noi_dung" class="form-control" rows="2" placeholder="Viết câu trả lời..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Gửi</button>
+        </form>
+    </div>
+
+    <!-- Hiển thị các bình luận trả lời (đệ quy) -->
+    {% if comment.cac_tra_loi.all %}
+    <ul class="comment-replies">
+        {% for reply in comment.cac_tra_loi.all %}
+            {# === SỬA ĐỔI: Đảm bảo đường dẫn này đúng === #}
+            {% include 'community/comment.html' with comment=reply %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</li>

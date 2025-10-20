@@ -1,9 +1,7 @@
-# cSpell:disable
-
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from core.models import The  # Đảm bảo đã import model The
+from core.models import The
 from trips.models import ChuyenDi
 
 class CongDongBaiViet(models.Model):
@@ -22,15 +20,12 @@ class CongDongBaiViet(models.Model):
         related_name='bai_viet_cong_dong',
         verbose_name="Tác giả"
     )
-    # === THÊM TRƯỜNG TAGS VÀO ĐÂY ===
     tags = models.ManyToManyField(
         The,
         related_name='bai_viet_cong_dong',
         blank=True,
         verbose_name="Các thẻ"
     )
-    # ==================================
-    
     luot_binh_chon = models.IntegerField(default=0, verbose_name="Lượt bình chọn")
     ngay_dang = models.DateTimeField(auto_now_add=True, verbose_name="Ngày đăng")
     ngay_cap_nhat = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
@@ -73,7 +68,6 @@ class CongDongBaiViet(models.Model):
         return self.binh_chon.filter(user=user).exists()
 
 class CongDongMediaBaiViet(models.Model):
-    # ... các model còn lại giữ nguyên ...
     """Model cho media (ảnh/video) của bài viết"""
     
     class LoaiMedia(models.TextChoices):

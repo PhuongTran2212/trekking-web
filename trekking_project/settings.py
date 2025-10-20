@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # KHAI BÁO CÁC APP CỦA BẠN
+
     'core.apps.CoreConfig',
     'accounts.apps.AccountsConfig',
     'treks.apps.TreksConfig',
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'knowledge.apps.KnowledgeConfig',
     'gamification.apps.GamificationConfig',
     'taggit.apps.TaggitAppConfig',
+    'post.apps.PostConfig',
 ]
 
 MIDDLEWARE = [
