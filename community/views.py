@@ -59,7 +59,6 @@ def chi_tiet_bai_viet(request, bai_viet_id):
     if is_approved and request.method == 'POST':
         if not request.user.is_authenticated:
             messages.error(request, 'Bạn cần đăng nhập để bình luận.')
-            # Chuyển hướng đến trang đăng nhập thay vì trả về lỗi 403
             return redirect('accounts:login')
 
         form = BinhLuanForm(request.POST)
@@ -67,15 +66,20 @@ def chi_tiet_bai_viet(request, bai_viet_id):
             binh_luan = form.save(commit=False)
             binh_luan.bai_viet = bai_viet
             binh_luan.user = request.user
+            
             tra_loi_id = request.POST.get('tra_loi_binh_luan_id')
             if tra_loi_id:
-                binh_luan.tra_loi_binh_luan_id = tra_loi_id
+                try:
+                    binh_luan_cha = CongDongBinhLuan.objects.get(id=tra_loi_id, bai_viet=bai_viet)
+                    binh_luan.tra_loi_binh_luan = binh_luan_cha
+                except CongDongBinhLuan.DoesNotExist:
+                    messages.error(request, 'Bình luận gốc không tồn tại.')
+                    return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet.id)
+            
             binh_luan.save()
             messages.success(request, 'Đã thêm bình luận thành công.')
         else:
-            # Nếu form không hợp lệ, tạo một thông báo lỗi duy nhất để hiển thị
             error_message = "Đã có lỗi xảy ra. Vui lòng kiểm tra lại nội dung bình luận."
-            # Lấy lỗi cụ thể hơn nếu có
             if form.errors:
                 first_error_field = list(form.errors.keys())[0]
                 first_error_message = form.errors[first_error_field][0]
@@ -83,18 +87,17 @@ def chi_tiet_bai_viet(request, bai_viet_id):
 
             messages.error(request, error_message)
         
-        # Luôn luôn redirect về chính trang này sau khi xử lý POST
         return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet.id)
 
     # --- CHUẨN BỊ DỮ LIỆU CHO YÊU CẦU GET ---
     
     binh_luan_goc = bai_viet.binh_luan.filter(tra_loi_binh_luan__isnull=True)
     da_upvote = False
-    form = None # Form sẽ là None nếu người dùng chưa đăng nhập hoặc bài viết chưa duyệt
+    form = None
 
     if is_approved and request.user.is_authenticated:
         da_upvote = bai_viet.da_binh_chon(request.user)
-        form = BinhLuanForm() # Tạo một form trống cho người dùng nhập liệu
+        form = BinhLuanForm()
 
     context = {
         'bai_viet': bai_viet,
@@ -104,7 +107,6 @@ def chi_tiet_bai_viet(request, bai_viet_id):
         'is_approved': is_approved,
     }
     return render(request, 'community/chi_tiet_bai_viet.html', context)
-
 
 @login_required
 def tao_bai_viet(request):

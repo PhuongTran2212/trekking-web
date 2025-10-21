@@ -956,3 +956,177 @@
     padding: var(--spacing-lg) var(--spacing-md);
   }
 }
+/* Thêm file CSS riêng cho styling replies */
+
+/* Comment Replies Container */
+.comment-replies {
+  margin-top: var(--spacing-lg);
+  padding-left: var(--spacing-lg);
+  border-left: 2px solid var(--primary-light);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Reply Item */
+.reply-item {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--gray-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-100);
+  transition: all var(--transition-base);
+}
+
+.reply-item:hover {
+  background-color: white;
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Reply Avatar */
+.reply-avatar {
+  flex-shrink: 0;
+}
+
+.reply-avatar .avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--primary-light);
+}
+
+/* Reply Body */
+.reply-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* Reply Header */
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.reply-author {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.reply-date {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+/* Reply Content */
+.reply-content {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--gray-700);
+}
+
+.reply-content p {
+  margin-bottom: var(--spacing-xs);
+}
+
+.reply-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Reply Actions */
+.reply-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+/* Comment Actions */
+.comment-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+/* Reply and Delete Buttons */
+.btn-reply,
+.btn-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 0.375rem 0.75rem;
+  background-color: transparent;
+  color: var(--primary-dark);
+  border: 1px solid var(--primary-light);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.btn-reply:hover {
+  background-color: var(--primary-lightest);
+  border-color: var(--primary-dark);
+}
+
+.btn-delete {
+  color: var(--destructive);
+  border-color: var(--destructive);
+}
+
+.btn-delete:hover {
+  background-color: rgba(220, 38, 38, 0.1);
+  border-color: var(--destructive);
+}
+
+/* Form Actions */
+.comment-form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.comment-form-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .comment-replies {
+    padding-left: var(--spacing-md);
+  }
+
+  .reply-item {
+    padding: var(--spacing-sm);
+  }
+
+  .reply-avatar .avatar-img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .reply-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+
+  .comment-form-actions {
+    flex-direction: column;
+  }
+
+  .comment-form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -19,7 +19,6 @@
                 <!-- Post Meta Information -->
                 <div class="post-detail-meta">
                     <div class="post-author-section">
-                        <!-- Reduced avatar size and positioned in corner -->
                         {% if bai_viet.tac_gia.taikhoanhoso.anh_dai_dien %}
                             <img src="{{ bai_viet.tac_gia.taikhoanhoso.anh_dai_dien.url }}" alt="{{ bai_viet.tac_gia.username }}" class="post-author-avatar-sm">
                         {% else %}
@@ -147,20 +146,28 @@
         <section class="comments-section">
             <!-- Comment Form -->
             <div class="comment-form-container">
-                <h3 class="comments-section-title">Để lại bình luận</h3>
+                <h3 class="comments-section-title">Bình luận</h3>
                 {% if user.is_authenticated %}
                 <form method="post" action="{% url 'community:chi-tiet-bai-viet' bai_viet.id %}" class="comment-form">
                     {% csrf_token %}
+                    <input type="hidden" name="tra_loi_binh_luan_id" id="tra_loi_binh_luan_id" value="">
                     <div class="form-group">
                         {{ form.noi_dung }}
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                        Gửi bình luận
-                    </button>
+                    <!-- Added reply info display and cancel button -->
+                    <div id="reply-info" class="reply-info">
+                        <span id="reply-info-text"></span>
+                        <button type="button" id="cancel-reply-btn" class="btn-cancel-reply">Hủy</button>
+                    </div>
+                    <div class="comment-form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                            <span id="submit-btn-text">Gửi bình luận</span>
+                        </button>
+                    </div>
                 </form>
                 {% else %}
                 <div class="alert alert-info">
@@ -175,14 +182,14 @@
             </div>
 
             <!-- Comments List -->
-            {% if bai_viet.binh_luan.all %}
+            {% if binh_luan_goc %}
             <div class="comments-list">
                 <h3 class="comments-list-title">Bình luận ({{ bai_viet.so_luong_binh_luan }})</h3>
                 <div class="comments-container">
-                    {% for binh_luan in bai_viet.binh_luan.all %}
-                    <div class="comment-item">
+                    {% for binh_luan in binh_luan_goc %}
+                    <!-- Updated comment item styling for Facebook-like appearance -->
+                    <div class="comment-item" id="comment-{{ binh_luan.id }}">
                         <div class="comment-avatar">
-                            <!-- Display actual user avatar in comments -->
                             {% if binh_luan.user.taikhoanhoso.anh_dai_dien %}
                                 <img src="{{ binh_luan.user.taikhoanhoso.anh_dai_dien.url }}" alt="{{ binh_luan.user.username }}" class="avatar-img">
                             {% else %}
@@ -190,13 +197,64 @@
                             {% endif %}
                         </div>
                         <div class="comment-body">
-                            <div class="comment-header">
-                                <strong class="comment-author">{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}</strong>
+                            <div class="comment-bubble">
+                                <div class="comment-header">
+                                    <strong class="comment-author">{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}</strong>
+                                </div>
+                                <div class="comment-content">
+                                    {{ binh_luan.noi_dung|linebreaks }}
+                                </div>
+                            </div>
+                            <div class="comment-meta">
                                 <span class="comment-date">{{ binh_luan.ngay_binh_luan|date:"d/m/Y H:i" }}</span>
+                                {% if user.is_authenticated %}
+                                <button type="button" class="btn-reply" data-comment-id="{{ binh_luan.id }}" data-comment-author="{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}">
+                                    Trả lời
+                                </button>
+                                {% endif %}
+                                {% if user == binh_luan.user or user.is_staff %}
+                                    <form action="{% url 'community:xoa-binh-luan' binh_luan.id %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-delete">Xóa</button>
+                                    </form>
+                                {% endif %}
                             </div>
-                            <div class="comment-content">
-                                {{ binh_luan.noi_dung|linebreaks }}
+
+                            <!-- Updated reply display with Facebook-style nested comments -->
+                            {% if binh_luan.cac_tra_loi.all %}
+                            <div class="comment-replies">
+                                {% for tra_loi in binh_luan.cac_tra_loi.all %}
+                                <div class="reply-item" id="comment-{{ tra_loi.id }}">
+                                    <div class="reply-avatar">
+                                        {% if tra_loi.user.taikhoanhoso.anh_dai_dien %}
+                                            <img src="{{ tra_loi.user.taikhoanhoso.anh_dai_dien.url }}" alt="{{ tra_loi.user.username }}" class="avatar-img-sm">
+                                        {% else %}
+                                            <img src="/static/images/default_avatar.png" alt="{{ tra_loi.user.username }}" class="avatar-img-sm">
+                                        {% endif %}
+                                    </div>
+                                    <div class="reply-body">
+                                        <div class="reply-bubble">
+                                            <div class="reply-header">
+                                                <strong class="reply-author">{{ tra_loi.user.get_full_name|default:tra_loi.user.username }}</strong>
+                                            </div>
+                                            <div class="reply-content">
+                                                {{ tra_loi.noi_dung|linebreaks }}
+                                            </div>
+                                        </div>
+                                        <div class="reply-meta">
+                                            <span class="reply-date">{{ tra_loi.ngay_binh_luan|date:"d/m/Y H:i" }}</span>
+                                            {% if user == tra_loi.user or user.is_staff %}
+                                                <form action="{% url 'community:xoa-binh-luan' tra_loi.id %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn-delete">Xóa</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
@@ -218,7 +276,6 @@
 </div>
 
 <style>
-/* Added small avatar style for detail page */
 .post-author-avatar-sm {
   width: 48px;
   height: 48px;
@@ -232,6 +289,220 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+/* Facebook-style comment styling */
+.comment-item {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: #f0f2f5;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.comment-avatar {
+  flex-shrink: 0;
+}
+
+.avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.avatar-img-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.comment-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.comment-bubble {
+  background-color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid #e5e7eb;
+}
+
+.comment-header {
+  margin-bottom: var(--spacing-xs);
+}
+
+.comment-author {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.comment-content {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--gray-800);
+}
+
+.comment-content p {
+  margin-bottom: var(--spacing-xs);
+}
+
+.comment-content p:last-child {
+  margin-bottom: 0;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 0.8rem;
+  padding: 0 var(--spacing-xs);
+}
+
+.comment-date {
+  color: var(--gray-500);
+}
+
+.btn-reply,
+.btn-delete {
+  background-color: transparent;
+  color: var(--primary-dark);
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+
+.btn-reply:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.btn-delete {
+  color: var(--destructive);
+}
+
+.btn-delete:hover {
+  text-decoration: underline;
+}
+
+/* Nested replies styling */
+.comment-replies {
+  margin-top: var(--spacing-md);
+  padding-left: var(--spacing-md);
+  border-left: 2px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.reply-item {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.reply-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.reply-bubble {
+  background-color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid #e5e7eb;
+}
+
+.reply-header {
+  margin-bottom: var(--spacing-xs);
+}
+
+.reply-author {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.reply-content {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--gray-800);
+}
+
+.reply-content p {
+  margin-bottom: var(--spacing-xs);
+}
+
+.reply-content p:last-child {
+  margin-bottom: 0;
+}
+
+.reply-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 0.75rem;
+  padding: 0 var(--spacing-xs);
+}
+
+.reply-date {
+  color: var(--gray-500);
+}
+
+.reply-info {
+  padding: var(--spacing-md);
+  background-color: #e3f2fd;
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-md);
+  color: var(--primary-dark);
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-md);
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reply-info.show {
+  display: flex;
+}
+
+.btn-cancel-reply {
+  background-color: transparent;
+  color: var(--primary-dark);
+  border: 1px solid var(--primary-dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-cancel-reply:hover {
+  background-color: var(--primary-dark);
+  color: white;
+}
+
+.comment-form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.comment-form-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 </style>
 
@@ -269,6 +540,41 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    const replyButtons = document.querySelectorAll('.btn-reply');
+    const replyForm = document.querySelector('.comment-form');
+    const replyIdInput = document.getElementById('tra_loi_binh_luan_id');
+    const cancelReplyBtn = document.getElementById('cancel-reply-btn');
+    const submitBtnText = document.getElementById('submit-btn-text');
+    const replyInfo = document.getElementById('reply-info');
+    const replyInfoText = document.getElementById('reply-info-text');
+    const textarea = document.querySelector('.comment-form textarea');
+
+    replyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const commentAuthor = this.dataset.commentAuthor;
+            
+            replyIdInput.value = commentId;
+            submitBtnText.textContent = `Trả lời ${commentAuthor}`;
+            replyInfoText.textContent = `Đang trả lời ${commentAuthor}`;
+            replyInfo.classList.add('show');
+            
+            textarea.focus();
+            textarea.placeholder = `Trả lời ${commentAuthor}...`;
+            
+            // Scroll to form
+            replyForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+
+    cancelReplyBtn.addEventListener('click', function() {
+        replyIdInput.value = '';
+        submitBtnText.textContent = 'Gửi bình luận';
+        replyInfo.classList.remove('show');
+        textarea.placeholder = 'Viết bình luận của bạn...';
+        textarea.value = '';
+    });
 });
 </script>
 {% endblock %}

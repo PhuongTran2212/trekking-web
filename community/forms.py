@@ -1,15 +1,14 @@
 from django import forms
-from .models import CongDongBaiViet, CongDongBinhLuan
+from .models import CongDongBaiViet, CongDongBinhLuan, CongDongMediaBaiViet
 from core.models import The
-from trips.models import ChuyenDi
-from .models import CongDongMediaBaiViet
+# Không cần import ChuyenDi nữa vì đã loại bỏ trường đó
+# from trips.models import ChuyenDi 
 
 class BaiVietForm(forms.ModelForm):
     """Form tạo/chỉnh sửa bài viết"""
 
-    # Trường tags đã được định nghĩa đúng với widget CheckboxSelectMultiple
     tags = forms.ModelMultipleChoiceField(
-        queryset=The.objects.all().order_by('ten'), # Lấy tất cả các thẻ từ CSDL
+        queryset=The.objects.all().order_by('ten'),
         widget=forms.CheckboxSelectMultiple,
         label="Chọn các thẻ phù hợp",
         required=False
@@ -17,8 +16,8 @@ class BaiVietForm(forms.ModelForm):
     
     class Meta:
         model = CongDongBaiViet
-        # === THAY ĐỔI QUAN TRỌNG: Thêm 'tags' vào danh sách fields ===
-        fields = ['tieu_de', 'noi_dung', 'chuyen_di', 'tags']
+        # === THAY ĐỔI: Đã loại bỏ 'chuyen_di' khỏi danh sách fields ===
+        fields = ['tieu_de', 'noi_dung', 'tags']
         # ==============================================================
         widgets = {
             'tieu_de': forms.TextInput(attrs={
@@ -30,14 +29,12 @@ class BaiVietForm(forms.ModelForm):
                 'placeholder': 'Chia sẻ trải nghiệm của bạn...',
                 'rows': 8,
             }),
-            'chuyen_di': forms.Select(attrs={
-                'class': 'form-select',
-            })
+            # Widget cho 'chuyen_di' đã được xóa
         }
         labels = {
             'tieu_de': 'Tiêu đề',
             'noi_dung': 'Nội dung',
-            'chuyen_di': 'Chuyến đi liên quan (nếu có)',
+            # Label cho 'chuyen_di' đã được xóa
         }
     
     def clean_tieu_de(self):
