@@ -2,63 +2,36 @@
 
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, View, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count, Avg
+import requests
 
-# Import các models cần thiết
 from .models import CungDuongTrek, CungDuongMedia, TrangThaiDuyet, CungDuongDanhGia
-from django.db.models import Count, Avg
-# QUAN TRỌNG: Import cả hai form từ forms.py
-from .forms import CungDuongTrekAdminForm, CungDuongTrekFilterForm
+from .forms import CungDuongTrekAdminForm, CungDuongTrekFilterForm, CungDuongMapForm # Thêm CungDuongMapForm
 
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_staff
 
-# ==============================================================================
-# VIEW DÙNG CHUNG ĐỂ XỬ LÝ MEDIA (Giữ nguyên - đã tốt)
-# ==============================================================================
 class CungDuongBaseView:
-    """
-    Một view mixin chứa logic xử lý upload media dùng chung
-    cho cả Create và Update.
-    """
     def handle_media_uploads(self, request, trek_instance):
-        """Hàm xử lý upload ảnh bìa và thư viện media."""
-        # 1. Xử lý ảnh bìa mới (nếu có)
         cover_image_file = request.FILES.get('anh_bia')
         if cover_image_file:
             trek_instance.media.filter(la_anh_bia=True).delete()
             CungDuongMedia.objects.create(
-                cung_duong=trek_instance, 
-                file=cover_image_file, 
-                loai_media='ANH', 
-                la_anh_bia=True
+                cung_duong=trek_instance, file=cover_image_file, loai_media='ANH', la_anh_bia=True
             )
-        
-        # 2. Xử lý các file mới trong thư viện (nếu có)
         gallery_files = request.FILES.getlist('file')
-        if gallery_files:
-            for f in gallery_files:
-                loai = 'ANH' if f.content_type.startswith('image') else 'VIDEO'
-                CungDuongMedia.objects.create(
-                    cung_duong=trek_instance, 
-                    file=f, 
-                    loai_media=loai,
-                    la_anh_bia=False
-                )
+        for f in gallery_files:
+            loai = 'ANH' if f.content_type.startswith('image') else 'VIDEO'
+            CungDuongMedia.objects.create(
+                cung_duong=trek_instance, file=f, loai_media=loai, la_anh_bia=False
+            )
 
-# ==============================================================================
-# CÁC VIEW CHÍNH
-# ==============================================================================
-
-# ==============================================================================
-# === CUNGDUONGLISTVIEW (ĐÃ CẬP NHẬT HOÀN CHỈNH VỚI LOGIC LỌC) ============
-# ==============================================================================
 class CungDuongListView(AdminRequiredMixin, ListView):
     model = CungDuongTrek
     template_name = 'admin/treks/cungduong_list.html'
@@ -66,54 +39,28 @@ class CungDuongListView(AdminRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        """
-        Ghi đè phương thức này để xử lý logic lọc nâng cao.
-        """
-        # Bắt đầu với queryset gốc, tối ưu bằng select_related và sắp xếp
         queryset = super().get_queryset().select_related('tinh_thanh', 'do_kho').order_by('-ngay_cap_nhat')
-
-        # Khởi tạo form lọc với dữ liệu từ request GET (ví dụ: ?q=abc&trang_thai=DA_DUYET)
         self.filter_form = CungDuongTrekFilterForm(self.request.GET)
-
-        # Kiểm tra nếu form hợp lệ
         if self.filter_form.is_valid():
             q = self.filter_form.cleaned_data.get('q')
             trang_thai = self.filter_form.cleaned_data.get('trang_thai')
             do_kho = self.filter_form.cleaned_data.get('do_kho')
-
-            # 1. Lọc theo từ khóa tìm kiếm (tên cung đường HOẶC tên tỉnh thành)
             if q:
-                queryset = queryset.filter(
-                    Q(ten__icontains=q) | Q(tinh_thanh__ten__icontains=q)
-                )
-            
-            # 2. Lọc theo trạng thái duyệt (nếu có giá trị được chọn)
+                queryset = queryset.filter(Q(ten__icontains=q) | Q(tinh_thanh__ten__icontains=q))
             if trang_thai:
                 queryset = queryset.filter(trang_thai=trang_thai)
-
-            # 3. Lọc theo độ khó (nếu có giá trị được chọn)
             if do_kho:
                 queryset = queryset.filter(do_kho=do_kho)
-
         return queryset
 
     def get_context_data(self, **kwargs):
-        """
-        Ghi đè để thêm form lọc và các tham số vào context cho template.
-        """
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Quản lý Cung đường"
-        
-        # Đưa form đã khởi tạo vào context để template có thể render các ô input
         context['filter_form'] = self.filter_form
-        
-        # Tạo chuỗi query string để giữ lại các bộ lọc khi chuyển trang.
-        # Ví dụ: "q=Fansipan&trang_thai=DA_DUYET"
         params = self.request.GET.copy()
         if 'page' in params:
             del params['page']
         context['query_params'] = params.urlencode()
-        
         return context
 
 class CungDuongCreateView(AdminRequiredMixin, CungDuongBaseView, CreateView):
@@ -129,26 +76,23 @@ class CungDuongCreateView(AdminRequiredMixin, CungDuongBaseView, CreateView):
     def form_valid(self, form):
         self.object = form.save(commit=False)
         self.object.nguoi_tao = self.request.user
-        # Mặc định là Đã duyệt khi admin tạo, nhưng vẫn có thể sửa trong form
         if not form.cleaned_data.get('trang_thai'):
             self.object.trang_thai = TrangThaiDuyet.DA_DUYET
-        
         try:
             with transaction.atomic():
                 self.object.save()
-                # Đây là phương thức được cung cấp bởi Django khi dùng M2M, cần gọi sau khi object chính được lưu
                 form.save_m2m() 
-                
                 self.handle_media_uploads(self.request, self.object)
-
             messages.success(self.request, f"Đã tạo thành công cung đường '{self.object.ten}'.")
             return redirect(self.get_success_url())
         except Exception as e:
-            messages.error(self.request, f"Đã có lỗi xảy ra khi tạo cung đường: {e}")
+            messages.error(self.request, f"Lỗi khi tạo cung đường: {e}")
             return self.form_invalid(form)
 
     def get_success_url(self):
-        return reverse('treks_admin:cung_duong_detail', kwargs={'pk': self.object.pk})
+        # SAU KHI TẠO XONG, CHUYỂN NGAY ĐẾN TRANG CHỈNH SỬA BẢN ĐỒ
+        messages.info(self.request, "Tiếp theo: Hãy chọn vị trí trên bản đồ cho cung đường vừa tạo.")
+        return reverse('treks_admin:cung_duong_edit_map', kwargs={'pk': self.object.pk})
 
 class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
     model = CungDuongTrek
@@ -165,15 +109,13 @@ class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
             with transaction.atomic():
                 self.object = form.save()
                 self.handle_media_uploads(self.request, self.object)
-
             messages.success(self.request, f"Đã cập nhật thành công cung đường '{self.object.ten}'.")
             return HttpResponseRedirect(self.get_success_url())
         except Exception as e:
-            messages.error(self.request, f"Đã có lỗi xảy ra khi cập nhật: {e}")
+            messages.error(self.request, f"Lỗi khi cập nhật: {e}")
             return self.form_invalid(form)
         
     def get_success_url(self):
-        # Chuyển về trang chi tiết để xem kết quả tổng quan
         return reverse('treks_admin:cung_duong_detail', kwargs={'pk': self.object.pk})
 
 class CungDuongDetailView(AdminRequiredMixin, DetailView):
@@ -184,15 +126,8 @@ class CungDuongDetailView(AdminRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = f"Chi tiết: {self.object.ten}"
-        context['reviews'] = CungDuongDanhGia.objects.filter(cung_duong=self.object).order_by('-ngay_danh_gia')
-          # 1. Lấy danh sách reviews
         reviews = CungDuongDanhGia.objects.filter(cung_duong=self.object).order_by('-ngay_danh_gia')
-        
-        # 2. Thêm danh sách reviews vào context
         context['reviews'] = reviews
-        
-        # 3. === DÒNG CODE SỬA LỖI ===
-        #    Đếm số lượng từ queryset và thêm vào context với key là 'total_reviews'
         context['total_reviews'] = reviews.count()
         return context
 
@@ -206,24 +141,93 @@ class CungDuongDeleteView(AdminRequiredMixin, DeleteView):
         return super().form_valid(form)
 
 def delete_media_view(request, pk):
-    if request.method != 'POST':
-        messages.error(request, "Phương thức không hợp lệ.")
-        return redirect('treks_admin:cung_duong_list')
-
-    if not request.user.is_staff:
-        messages.error(request, "Bạn không có quyền thực hiện hành động này.")
-        return redirect('treks_admin:cung_duong_list')
-        
+    if request.method != 'POST': return redirect('treks_admin:cung_duong_list')
+    if not request.user.is_staff: return redirect('treks_admin:cung_duong_list')
     try:
         media = get_object_or_404(CungDuongMedia, pk=pk)
         cung_duong_pk = media.cung_duong.pk
-        file_name = media.file.name
-        
         media.delete() 
-
-        messages.success(request, f"Đã xóa thành công media: {file_name}")
-        # Chuyển hướng lại trang update để người dùng thấy ngay thay đổi
+        messages.success(request, "Đã xóa thành công media.")
         return redirect('treks_admin:cung_duong_update', pk=cung_duong_pk)
     except Exception as e:
-        messages.error(request, f"Đã có lỗi xảy ra khi xóa media: {e}")
+        messages.error(request, f"Lỗi khi xóa media: {e}")
         return redirect('treks_admin:cung_duong_list')
+
+class NominatimProxyView(AdminRequiredMixin, View):
+    """
+    API Proxy này giờ đây có 2 chức năng:
+    1. Tìm kiếm xuôi (search): ?q=<tên địa điểm>
+    2. Tìm kiếm ngược (reverse): ?lat=<vĩ độ>&lon=<kinh độ>
+    """
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get('q', '').strip()
+        lat = request.GET.get('lat')
+        lon = request.GET.get('lon')
+
+        headers = { 'User-Agent': 'TrekkingApp/1.0 (YourAppContact@example.com)' }
+        
+        try:
+            # === CHỨC NĂNG TÌM KIẾM NGƯỢC (REVERSE GEOCODING) ===
+            if lat and lon:
+                api_url = "https://nominatim.openstreetmap.org/reverse"
+                params = {
+                    'format': 'jsonv2', # SỬA LỖI: Dùng format jsonv2 để có cấu trúc ổn định
+                    'lat': lat,
+                    'lon': lon,
+                    'zoom': 18,        # THÊM: Mức độ chi tiết, 18 là mức đường phố
+                    'addressdetails': 1
+                }
+                response = requests.get(api_url, params=params, headers=headers, timeout=10)
+                response.raise_for_status() # Ném lỗi nếu status code là 4xx hoặc 5xx
+                
+                data = response.json()
+                # API reverse chỉ trả về 1 object, ta cho vào list để đồng bộ
+                # và đảm bảo có display_name
+                if 'display_name' not in data:
+                    data['display_name'] = f"Tọa độ: {lat}, {lon}"
+
+                return JsonResponse([data], safe=False)
+
+            # === CHỨC NĂNG TÌM KIẾM XUÔI (SEARCH) ===
+            elif query:
+                api_url = "https://nominatim.openstreetmap.org/search"
+                params = {
+                    'q': query,
+                    'format': 'json',
+                    'addressdetails': 1,
+                    'limit': 5
+                }
+                response = requests.get(api_url, params=params, headers=headers, timeout=10)
+                response.raise_for_status()
+                return JsonResponse(response.json(), safe=False)
+            
+            else:
+                return JsonResponse({'error': 'Missing required parameters (q or lat/lon).'}, status=400)
+
+        except requests.exceptions.RequestException as e:
+            return JsonResponse({'error': f'Failed to connect to Nominatim API: {e}'}, status=502)
+        except Exception as e:
+            # Bắt các lỗi khác, ví dụ JSONDecodeError
+            return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
+# ==========================================================
+# === VIEW MỚI CHO TRANG BẢN ĐỒ RIÊNG BIỆT ===
+# ==========================================================
+class CungDuongMapUpdateView(AdminRequiredMixin, UpdateView):
+    model = CungDuongTrek
+    form_class = CungDuongMapForm
+    template_name = 'admin/treks/cungduong_map_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f"Chỉnh sửa Bản đồ cho: {self.object.ten}"
+        return context
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, f"Đã cập nhật vị trí trên bản đồ cho '{self.object.ten}'.")
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        # Sau khi lưu bản đồ, quay về trang chi tiết để xem tổng quan
+        return reverse('treks_admin:cung_duong_detail', kwargs={'pk': self.object.pk})

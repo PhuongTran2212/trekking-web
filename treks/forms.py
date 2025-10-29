@@ -125,5 +125,15 @@ class CungDuongDanhGiaForm(forms.ModelForm):
         for field in self.fields:
             if not isinstance(self.fields[field].widget, forms.RadioSelect): 
                 self.fields[field].widget.attrs.update({'class': 'form-control'})
-
+class CungDuongMapForm(forms.ModelForm):
+    """Một form siêu đơn giản chỉ để cập nhật dữ liệu bản đồ."""
+    class Meta:
+        model = CungDuongTrek
+        fields = ['du_lieu_ban_do_geojson']
+        widgets = {
+            'du_lieu_ban_do_geojson': forms.Textarea(attrs={
+                'id': 'id_du_lieu_ban_do_geojson', # ID quan trọng cho JS
+                'style': 'display: none;'
+            }),
+        }
 # XÓA BỎ CÁC FORM UPLOAD (MediaUploadForm, ReviewImageUploadForm)

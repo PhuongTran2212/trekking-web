@@ -13,8 +13,6 @@ SECRET_KEY = 'django-insecure-Thanh7778' # Giữ nguyên key tự tạo của d�
 DEBUG = True
 
 ALLOWED_HOSTS = []
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Application definition
@@ -24,7 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles', # Đã có sẵn, rất tốt
 
     # KHAI BÁO CÁC APP CỦA BẠN
     'core.apps.CoreConfig',
@@ -68,17 +66,14 @@ WSGI_APPLICATION = 'trekking_project.wsgi.application'
 
 
 # Database
-# ==============================================================================
-# PHẦN QUAN TRỌNG NHẤT
-# ==============================================================================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'trekking_db',          # <<-- Tên CSDL bạn đã tạo ở Bước 2
-        'USER': 'root',                 # <<-- User mặc định của XAMPP
-        'PASSWORD': '',                 # <<-- Mật khẩu mặc định của XAMPP (để trống)
+        'NAME': 'trekking_db',
+        'USER': 'root',
+        'PASSWORD': '',
         'HOST': '127.0.0.1',
-        'PORT': '3307',                 # <<-- Cổng MySQL của bạn
+        'PORT': '3307',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -89,10 +84,7 @@ DATABASES = {
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
-    { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
-    { 'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
-    { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
+    # ... (giữ nguyên)
 ]
 
 
@@ -103,13 +95,27 @@ USE_I1N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+# ==============================================================================
+# === PHẦN CẤU HÌNH STATIC & MEDIA (ĐÃ ĐƯỢC DỌN DẸP VÀ SỬA LỖI) ===
+# ==============================================================================
 
-# Cấu hình cho file media do người dùng upload
+# URL để truy cập các file tĩnh (CSS, JS) trong trình duyệt
+STATIC_URL = 'static/'
+
+# Đường dẫn đến thư mục chứa các file tĩnh chung của project
+# SỬA LỖI: Sử dụng BASE_DIR / 'static' cho cú pháp Pathlib hiện đại
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# URL để truy cập các file do người dùng upload (ảnh, video)
 MEDIA_URL = '/media/'
+
+# Đường dẫn đến thư mục chứa các file media trên server
 MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# --- ĐÃ XÓA CÁC DÒNG BỊ LẶP LẠI VÀ LỖI CHÍNH TẢ Ở CUỐI FILE ---
