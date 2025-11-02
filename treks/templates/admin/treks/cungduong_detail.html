@@ -17,7 +17,6 @@
             border: 1px solid #dee2e6;
         }
         
-        /* === CSS NÂNG CẤP CHO THƯ VIỆN ẢNH (HIỂN THỊ 5 ẢNH) === */
         .smart-gallery {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -26,9 +25,8 @@
         .gallery-item {
             position: relative; width: 100%; padding-top: 100%;
             border-radius: 8px; overflow: hidden; cursor: pointer;
-            display: none; /* Mặc định ẩn tất cả */
+            display: none;
         }
-        /* Chỉ hiển thị 5 item đầu tiên */
         .gallery-item:nth-child(-n+5) {
             display: block;
         }
@@ -85,7 +83,6 @@
                 {% endif %}
                 <hr>
 
-                <!-- === THƯ VIỆN MEDIA VỚI LOGIC HIỂN THỊ MỚI (5 ẢNH) === -->
                 <h5>Thư viện Media</h5>
                 {% with gallery=trek.gallery_media %}
                     <div id="lightgallery" class="smart-gallery">
@@ -171,6 +168,10 @@
         {% endfor %}
     </div>
 </div>
+
+<!-- THẺ SCRIPT AN TOÀN ĐỂ TRUYỀN DỮ LIỆU BẢN ĐỒ -->
+{{ trek.du_lieu_ban_do_geojson|json_script:"map-data" }}
+
 {% endblock %}
 
 {% block extra_js %}
@@ -183,17 +184,19 @@
 document.addEventListener('DOMContentLoaded', function () {
     
     /**
-     * KHỞI TẠO BẢN ĐỒ XEM TRƯỚC
+     * KHỞI TẠO BẢN ĐỒ XEM TRƯỚC (SỬ DỤNG JSON_SCRIPT)
      */
     const mapElement = document.getElementById('map');
-    const geojsonDataString = `{{ trek.du_lieu_ban_do_geojson|escapejs }}`;
+    const mapDataElement = document.getElementById('map-data');
     
-    if (mapElement && geojsonDataString && geojsonDataString !== 'None') {
+    if (mapElement && mapDataElement && mapDataElement.textContent) {
         try {
-            const geojsonData = JSON.parse(geojsonDataString);
+            const geojsonData = JSON.parse(mapDataElement.textContent);
+            
             if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
                 const feature = geojsonData.features[0];
                 if (feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
+                    
                     const map = L.map(mapElement, { scrollWheelZoom: false, dragging: true, zoomControl: true });
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
@@ -216,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * KHỞI TẠO THƯ VIỆN ẢNH (ĐÃ XÓA NÚT XÓA)
+     * KHỞI TẠO THƯ VIỆN ẢNH
      */
     const lgContainer = document.getElementById('lightgallery');
     if (lgContainer) {
