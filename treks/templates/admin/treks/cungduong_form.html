@@ -3,83 +3,105 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block head_extra %}
-    <!-- THÊM LẠI THƯ VIỆN LEAFLET VÀO ĐÂY -->
+    <!-- 1. Leaflet cho bản đồ xem trước -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <!-- 2. Thư viện Ảnh LightGallery -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
+
     <style>
         .vat-dung-list { columns: 2; -webkit-columns: 2; -moz-columns: 2; }
-        .vat-dung-list div { display: block; }
-        
-        /* CSS cho bản đồ xem trước */
-        #map-preview {
-            height: 300px;
-            border-radius: 8px;
-            background-color: #e9ecef;
+        #map-preview { height: 300px; border-radius: 8px; background-color: #e9ecef; }
+
+        .media-manager-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
+        .media-item {
+            position: relative; border-radius: 8px; overflow: hidden;
+            border: 2px solid transparent; transition: border-color 0.3s ease; cursor: pointer;
         }
+        .media-item.is-cover { border-color: var(--primary-medium, #22C55E); box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+        .media-item img {
+            width: 100%; height: 120px; object-fit: cover;
+            display: block; transition: transform 0.3s ease;
+        }
+        .media-item:hover img { transform: scale(1.05); }
+        .gallery-item-more-overlay {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0,0,0,0.6); color: white; font-size: 2rem; font-weight: bold;
+        }
+        .lg-toolbar .lg-icon { font-size: 20px; }
+        #lg-custom-pin.active { color: var(--primary-medium, #22C55E) !important; }
     </style>
 {% endblock %}
 
 {% block content %}
 <div class="card">
     <div class="card-header"><h4 class="mb-0">{{ page_title }}</h4></div>
+    
+    <!-- MỘT FORM DUY NHẤT BAO BỌC TẤT CẢ -->
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="card-body">
             {% if form.errors %}<div class="alert alert-danger">Vui lòng sửa các lỗi bên dưới.</div>{% endif %}
             <div class="row">
-                <!-- Cột trái -->
+                <!-- CỘT TRÁI -->
                 <div class="col-8">
-                    <div class="form-group mb-3">{{ form.ten.label_tag }} {{ form.ten }}</div>
-                    <div class="form-group mb-3">{{ form.mo_ta.label_tag }} {{ form.mo_ta }}</div>
-                    <div class="form-group mb-3">{{ form.dia_diem_chi_tiet.label_tag }} {{ form.dia_diem_chi_tiet }}</div>
+                    <div class="card mb-4">
+                        <div class="card-header"><h6 class="mb-0">Thông tin Cơ bản</h6></div>
+                        <div class="card-body">
+                            <div class="form-group mb-3">{{ form.ten.label_tag }} {{ form.ten }}</div>
+                            <div class="form-group mb-3">{{ form.mo_ta.label_tag }} {{ form.mo_ta }}</div>
+                            <div class="form-group mb-3">{{ form.dia_diem_chi_tiet.label_tag }} {{ form.dia_diem_chi_tiet }}</div>
+                        </div>
+                    </div>
                     
-                    <!-- ========================================================== -->
-                    <!-- === KHU VỰC BẢN ĐỒ ĐÃ ĐƯỢC NÂNG CẤP HOÀN TOÀN === -->
-                    <!-- ========================================================== -->
                     {% if object %}
-                        <div class="card mt-4">
+                        <div class="card mb-4">
                             <div class="card-header"><h6 class="mb-0">Vị trí trên Bản đồ</h6></div>
                             <div class="card-body">
-                                {% if form.du_lieu_ban_do_geojson.value %}
-                                    <!-- Nếu có dữ liệu, hiển thị bản đồ xem trước -->
-                                    <div id="map-preview"></div>
-                                    <p class="text-muted small mt-2">Đây là bản đồ xem trước. Để thay đổi, vui lòng sử dụng trang chỉnh sửa riêng.</p>
-                                {% else %}
-                                    <!-- Nếu chưa có dữ liệu -->
-                                    <p>Cung đường này chưa có vị trí trên bản đồ.</p>
-                                {% endif %}
-                                <a href="{% url 'treks_admin:cung_duong_edit_map' pk=object.pk %}" class="btn btn-secondary mt-2">
-                                    Chỉnh sửa trên trang Bản đồ
-                                </a>
-                                <!-- Trường ẩn này luôn phải có để form hoạt động -->
+                                {% if form.du_lieu_ban_do_geojson.value %}<div id="map-preview"></div>{% else %}<p>Chưa có vị trí.</p>{% endif %}
+                                <a href="{% url 'treks_admin:cung_duong_edit_map' pk=object.pk %}" class="btn btn-secondary mt-2">Thiết lập / Chỉnh sửa Bản đồ</a>
                                 {{ form.du_lieu_ban_do_geojson }} 
                             </div>
                         </div>
-                    {% else %}
-                        <!-- Khi tạo mới, hiển thị thông báo -->
-                        <div class="alert alert-info mt-4">
-                            <strong>Lưu ý:</strong> Vị trí trên bản đồ sẽ được thiết lập ở bước tiếp theo, sau khi bạn lưu các thông tin cơ bản này.
-                        </div>
                     {% endif %}
 
-                    <div class="card mt-4">
-                        <div class="card-header"><h6 class="mb-0">Tải lên / Thay đổi Media</h6></div>
+                    <!-- QUẢN LÝ MEDIA -->
+                    <div class="card">
+                        <div class="card-header"><h6 class="mb-0">Quản lý Media</h6></div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Ảnh bìa</label>
-                                <input type="file" name="anh_bia" class="form-control" accept="image/*">
+                            <div class="mb-4 p-3 border rounded bg-light">
+                                <label class="form-label fw-bold">Tải lên ảnh/video mới</label>
+                                <input type="file" name="files_to_upload" class="form-control" multiple>
+                                <div class="form-text">Chọn nhiều file. Nhấn "Lưu thay đổi" ở cuối trang để tải lên.</div>
                             </div>
-                            <hr>
-                            <div>
-                                <label class="form-label fw-bold">Thư viện Media</label>
-                                <input type="file" name="file" class="form-control" multiple>
-                            </div>
+
+                            {% if object and object.media.all %}
+                                <h6 class="mb-3">Media hiện có</h6>
+                                <div id="lightgallery" class="media-manager-grid">
+                                    {% for media in object.media.all %}
+                                        <a class="media-item {% if forloop.counter > 4 %}d-none{% endif %} {% if media.la_anh_bia %}is-cover{% endif %}"
+                                           href="{{ media.file.url }}"
+                                           data-sub-html="<h4>{{ object.ten }}{% if media.la_anh_bia %} (Ảnh bìa){% endif %}</h4>"
+                                           data-media-id="{{ media.pk }}"
+                                           data-is-cover="{{ media.la_anh_bia|yesno:'true,false' }}">
+                                            <img src="{{ media.file.url }}">
+                                            {% if forloop.counter == 4 and object.media.all.count > 4 %}
+                                                <div class="gallery-item-more-overlay">+{{ object.media.all.count|add:"-4" }}</div>
+                                            {% endif %}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {% if object %}
+                                <p class="text-muted">Chưa có media nào.</p>
+                                {% endif %}
+                            {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <!-- Cột phải -->
+                <!-- CỘT PHẢI -->
                 <div class="col-4">
                     <div class="card">
                         <div class="card-header"><h6 class="mb-0">Thuộc tính & Trạng thái</h6></div>
@@ -105,99 +127,141 @@
         <div class="card-footer text-end">
             <a href="{% if object %}{% url 'treks_admin:cung_duong_detail' pk=object.pk %}{% else %}{% url 'treks_admin:cung_duong_list' %}{% endif %}" class="btn btn-secondary">Hủy</a>
             <button type="submit" class="btn btn-primary">
-                {% if object %}Lưu thay đổi{% else %}Lưu và Tiếp tục đến trang Bản đồ{% endif %}
+                {% if object %}Lưu thay đổi{% else %}Lưu và Tiếp tục{% endif %}
             </button>
         </div>
     </form>
 </div>
 
-{% if object %}
-<div class="card mt-4">
-    <div class="card-header"><h6 class="mb-0">Media hiện có</h6></div>
-    <div class="card-body">
-        <h6 class="mb-3">Ảnh bìa</h6>
-        {% with cover_media=object.cover_media %}
-            {% if cover_media %}
-                <div class="position-relative d-inline-block mb-3">
-                    <img src="{{ cover_media.file.url }}" class="img-thumbnail" style="width: 200px; height: 150px; object-fit: cover;">
-                    <form method="POST" action="{% url 'treks_admin:cung_duong_media_delete_now' pk=cover_media.pk %}" onsubmit="return confirm('Bạn có chắc muốn xóa ảnh bìa này không?');" class="position-absolute" style="top: -10px; right: -10px;">
-                        {% csrf_token %}<button type="submit" class="btn btn-danger btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; padding: 0;">&times;</button>
-                    </form>
-                </div>
-            {% else %}<p class="text-muted">Chưa có ảnh bìa.</p>{% endif %}
-        {% endwith %}
-        <hr>
-        <h6 class="mb-3">Thư viện Media</h6>
-        {% with gallery_media=object.media.all %}{% if gallery_media|length > 1 or not object.cover_media %}<div class="d-flex flex-wrap gap-4">{% for media in gallery_media %}{% if not media.la_anh_bia %}<div class="position-relative"><a href="{{ media.file.url }}" target="_blank"><img src="{{ media.file.url }}" alt="{{ media.file.name }}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px;"></a><form method="POST" action="{% url 'treks_admin:cung_duong_media_delete_now' pk=media.pk %}" onsubmit="return confirm('Bạn có chắc muốn xóa file này không?');" class="position-absolute" style="top: -10px; right: -10px;">{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; padding: 0;">&times;</button></form></div>{% endif %}{% endfor %}</div>{% else %}<p class="text-muted">Thư viện media trống.</p>{% endif %}{% endwith %}
-    </div>
-</div>
-{% endif %}
+<!-- Thẻ script an toàn để truyền dữ liệu bản đồ -->
+{{ object.du_lieu_ban_do_geojson|json_script:"map-data" }}
+
 {% endblock %}
 
-
 {% block extra_js %}
+<!-- Script LightGallery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/zoom/lg-zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const mapPreviewDiv = document.getElementById('map-preview');
-    const geojsonInput = document.getElementById('id_du_lieu_ban_do_geojson');
-
-    // Chỉ chạy script nếu có cả div bản đồ và dữ liệu
-    if (mapPreviewDiv && geojsonInput && geojsonInput.value) {
-        
-        // 1. Khởi tạo bản đồ xem trước
-        const map = L.map('map-preview', {
-            scrollWheelZoom: false, // Tắt zoom bằng con lăn chuột
-            dragging: true,        // Cho phép kéo bản đồ
-            zoomControl: true      // Hiển thị nút +/-
-        }).setView([16.0, 108.0], 9); // Tọa độ mặc định
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-             attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
+    /**
+     * SCRIPT BẢN ĐỒ XEM TRƯỚC
+     */
+    const mapElement = document.getElementById('map-preview');
+    const mapDataElement = document.getElementById('map-data');
+    if (mapElement && mapDataElement && mapDataElement.textContent) {
         try {
-            const geojsonData = JSON.parse(geojsonInput.value);
-            
-            if(geojsonData && geojsonData.features.length > 0) {
+            const geojsonData = JSON.parse(mapDataElement.textContent);
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
                 const feature = geojsonData.features[0];
-                if(feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
-                    
-                    // 2. Vẽ đường đi (line)
-                    const routeLayer = L.geoJSON(geojsonData, {
-                        style: function() {
-                            return { color: '#EF4444', weight: 5, opacity: 0.8 };
-                        }
-                    }).addTo(map);
-
-                    // 3. Vẽ điểm đầu và điểm cuối
+                if (feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
+                    const map = L.map(mapElement, { scrollWheelZoom: false, dragging: true, zoomControl: true });
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    const routeLayer = L.geoJSON(geojsonData, { style: () => ({ color: '#EF4444', weight: 5, opacity: 0.8 }) }).addTo(map);
                     const coords = feature.geometry.coordinates;
                     const startLatLng = L.latLng(coords[0][1], coords[0][0]);
                     const endLatLng = L.latLng(coords[coords.length - 1][1], coords[coords.length - 1][0]);
-
-                    const startIcon = L.icon({
-                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-                    });
-                    
-                    const endIcon = L.icon({
-                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-                    });
-
+                    const startIcon = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+                    const endIcon = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
                     L.marker(startLatLng, { icon: startIcon }).addTo(map).bindPopup('Điểm bắt đầu');
                     L.marker(endLatLng, { icon: endIcon }).addTo(map).bindPopup('Điểm kết thúc');
-
-                    // 4. Tự động zoom bản đồ để thấy toàn bộ cung đường
-                    setTimeout(() => {
-                        map.fitBounds(routeLayer.getBounds());
-                    }, 100);
+                    setTimeout(() => { map.fitBounds(routeLayer.getBounds()); }, 100);
                 }
             }
-        } catch (e) {
-            console.error("Lỗi khi hiển thị bản đồ xem trước:", e);
-            mapPreviewDiv.innerHTML = '<div class="alert alert-warning">Không thể hiển thị bản đồ xem trước. Dữ liệu có thể bị lỗi.</div>';
+        } catch (e) { console.error("Lỗi khi hiển thị bản đồ xem trước:", e); }
+    }
+
+    /**
+     * KHỞI TẠO THƯ VIỆN ẢNH VỚI CÁC NÚT HÀNH ĐỘNG
+     */
+    const lgContainer = document.getElementById('lightgallery');
+    if (lgContainer) {
+        const gallery = lightGallery(lgContainer, {
+            plugins: [lgZoom, lgThumbnail],
+            selector: '.media-item',
+            download: true,
+            speed: 500
+        });
+
+        lgContainer.addEventListener('lgAfterOpen', () => {
+            const toolbar = document.querySelector('.lg-toolbar');
+            if (toolbar && !document.getElementById('lg-custom-actions')) {
+                const customActions = document.createElement('div');
+                customActions.id = 'lg-custom-actions';
+                const pinButton = document.createElement('button');
+                pinButton.id = 'lg-custom-pin';
+                pinButton.type = 'button';
+                pinButton.className = 'lg-icon';
+                pinButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.146.146A.5.5 0 0 1 4.5 0h7a.5.5 0 0 1 .5.5c0 .68-.342 1.174-.646 1.479-.126.125-.25.224-.354.298v4.431l.078.048c.203.127.476.314.751.555C12.36 7.775 13 8.527 13 9.5a.5.5 0 0 1-.5.5h-4v4.5c0 .276-.224.5-.5.5s-.5-.224-.5-.5V10h-4a.5.5 0 0 1-.5-.5c0-.973.64-1.725 1.17-2.189A5.921 5.921 0 0 1 5 6.708V2.277a2.77 2.77 0 0 1-.354-.298C4.342 1.674 4 1.179 4 .5a.5.5 0 0 1 .146-.354z"/></svg>`;
+                const deleteButton = document.createElement('button');
+                deleteButton.id = 'lg-custom-delete';
+                deleteButton.type = 'button';
+                deleteButton.className = 'lg-icon';
+                deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>`;
+                
+                function submitActionForm(actionUrl) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = actionUrl;
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrfmiddlewaretoken';
+                    csrfInput.value = '{{ csrf_token }}';
+                    form.appendChild(csrfInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+                
+                pinButton.onclick = () => {
+                    const mediaId = gallery.galleryItems[gallery.index].el.dataset.mediaId;
+                    if (mediaId) {
+                        const actionUrl = `{% url 'treks_admin:cung_duong_media_set_cover' pk=999 %}`.replace('999', mediaId);
+                        submitActionForm(actionUrl);
+                    }
+                };
+
+                deleteButton.onclick = () => {
+                    if (confirm('Bạn có chắc chắn muốn xóa media này không?')) {
+                        const mediaId = gallery.galleryItems[gallery.index].el.dataset.mediaId;
+                        if (mediaId) {
+                            const actionUrl = `{% url 'treks_admin:cung_duong_media_delete_now' pk=999 %}`.replace('999', mediaId);
+                            submitActionForm(actionUrl);
+                        }
+                    }
+                };
+                
+                customActions.appendChild(pinButton);
+                customActions.appendChild(deleteButton);
+                toolbar.insertBefore(customActions, toolbar.firstChild);
+            }
+            
+            const isCover = gallery.galleryItems[gallery.index].el.dataset.isCover === 'true';
+            const pinButton = document.getElementById('lg-custom-pin');
+            if (pinButton) {
+                pinButton.classList.toggle('active', isCover);
+                pinButton.setAttribute('aria-label', isCover ? 'Bỏ ghim ảnh bìa' : 'Đặt làm ảnh bìa');
+            }
+        });
+
+        lgContainer.addEventListener('lgAfterSlide', (event) => {
+            const { index } = event.detail;
+            const pinButton = document.getElementById('lg-custom-pin');
+            if (pinButton) {
+                const isCover = gallery.galleryItems[index].el.dataset.isCover === 'true';
+                pinButton.classList.toggle('active', isCover);
+                pinButton.setAttribute('aria-label', isCover ? 'Bỏ ghim ảnh bìa' : 'Đặt làm ảnh bìa');
+            }
+        });
+
+        const moreOverlay = lgContainer.querySelector('.gallery-item-more-overlay');
+        if (moreOverlay) {
+            moreOverlay.parentElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                gallery.openGallery(3);
+            });
         }
     }
 });

@@ -18,19 +18,21 @@ class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
         return self.request.user.is_staff
 
 class CungDuongBaseView:
+    """Mixin chứa toàn bộ logic xử lý upload media."""
     def handle_media_uploads(self, request, trek_instance):
-        cover_image_file = request.FILES.get('anh_bia')
-        if cover_image_file:
-            trek_instance.media.filter(la_anh_bia=True).delete()
-            CungDuongMedia.objects.create(
-                cung_duong=trek_instance, file=cover_image_file, loai_media='ANH', la_anh_bia=True
-            )
-        gallery_files = request.FILES.getlist('file')
-        for f in gallery_files:
-            loai = 'ANH' if f.content_type.startswith('image') else 'VIDEO'
-            CungDuongMedia.objects.create(
-                cung_duong=trek_instance, file=f, loai_media=loai, la_anh_bia=False
-            )
+        # 1. Xử lý các file từ thư viện (từ input name='files_to_upload')
+        gallery_files = request.FILES.getlist('files_to_upload')
+        if gallery_files:
+            for f in gallery_files:
+                loai = 'ANH' if f.content_type.startswith('image') else 'VIDEO'
+                CungDuongMedia.objects.create(
+                    cung_duong=trek_instance, 
+                    file=f, 
+                    loai_media=loai,
+                    la_anh_bia=False
+                )
+            messages.info(request, f"Đã tải lên thành công {len(gallery_files)} file media mới.")
+
 
 class CungDuongListView(AdminRequiredMixin, ListView):
     model = CungDuongTrek
@@ -94,6 +96,9 @@ class CungDuongCreateView(AdminRequiredMixin, CungDuongBaseView, CreateView):
         messages.info(self.request, "Tiếp theo: Hãy chọn vị trí trên bản đồ cho cung đường vừa tạo.")
         return reverse('treks_admin:cung_duong_edit_map', kwargs={'pk': self.object.pk})
 
+# treks/views.py
+
+# THAY THẾ TOÀN BỘ CLASS NÀY
 class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
     model = CungDuongTrek
     form_class = CungDuongTrekAdminForm
@@ -105,17 +110,26 @@ class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
         return context
         
     def form_valid(self, form):
+        """
+        Hàm này được gọi khi form chính hợp lệ.
+        Nó sẽ lưu thông tin và gọi hàm xử lý upload.
+        """
         try:
             with transaction.atomic():
+                # Lưu thông tin chính từ form
                 self.object = form.save()
+                
+                # Gọi hàm xử lý upload file media mới
                 self.handle_media_uploads(self.request, self.object)
-            messages.success(self.request, f"Đã cập nhật thành công cung đường '{self.object.ten}'.")
+
+            messages.success(self.request, f"Đã cập nhật thành công thông tin cho '{self.object.ten}'.")
             return HttpResponseRedirect(self.get_success_url())
         except Exception as e:
             messages.error(self.request, f"Lỗi khi cập nhật: {e}")
             return self.form_invalid(form)
         
     def get_success_url(self):
+        # Sau khi lưu, ở lại trang chỉnh sửa
         return reverse('treks_admin:cung_duong_update', kwargs={'pk': self.object.pk})
 
 class CungDuongDetailView(AdminRequiredMixin, DetailView):
@@ -239,3 +253,19 @@ class CungDuongMapUpdateView(AdminRequiredMixin, UpdateView):
 
     def get_success_url(self):
          return reverse('treks_admin:cung_duong_update', kwargs={'pk': self.object.pk})
+def set_cover_media_view(request, pk):
+    if request.method != 'POST': return redirect('treks_admin:cung_duong_list')
+    if not request.user.is_staff: return redirect('treks_admin:cung_duong_list')
+    try:
+        media = get_object_or_404(CungDuongMedia, pk=pk)
+        cung_duong = media.cung_duong
+        # Xóa cờ ảnh bìa hiện tại
+        cung_duong.media.filter(la_anh_bia=True).update(la_anh_bia=False)
+        # Đặt ảnh mới làm ảnh bìa
+        media.la_anh_bia = True
+        media.save()
+        messages.success(request, "Đã đặt ảnh này làm ảnh bìa thành công.")
+        return redirect('treks_admin:cung_duong_update', pk=cung_duong.pk)
+    except Exception as e:
+        messages.error(request, f"Lỗi khi đặt ảnh bìa: {e}")
+        return redirect('treks_admin:cung_duong_list')

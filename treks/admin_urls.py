@@ -16,4 +16,5 @@ urlpatterns = [
     
     # URL MỚI CHO TRANG BẢN ĐỒ RIÊNG
     path('<int:pk>/chinh-sua-ban-do/', views.CungDuongMapUpdateView.as_view(), name='cung_duong_edit_map'),
+    path('media/<int:pk>/set-cover/', views.set_cover_media_view, name='cung_duong_media_set_cover'),
 ]
