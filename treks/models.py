@@ -9,6 +9,7 @@ from core.models import TinhThanh, DoKho, VatDung
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
+
 # ==============================================================================
 # === HÀM HELPER & LỰA CHỌN (CHOICES)                                      ===
 # ==============================================================================
@@ -50,10 +51,16 @@ class CungDuongTrek(models.Model):
         help_text=_("Ví dụ: Vườn quốc gia Ba Vì, Hà Nội")
     )
     tinh_thanh = models.ForeignKey(TinhThanh, on_delete=models.PROTECT, verbose_name=_("Tỉnh/Thành phố"))
-    do_dai_km = models.DecimalField(_("Độ dài (km)"), max_digits=5, decimal_places=2)
-    thoi_gian_uoc_tinh_gio = models.IntegerField(_("Thời gian ước tính (giờ)"))
+    do_dai_km = models.DecimalField(_("Độ dài (km)"), max_digits=5, decimal_places=2, default=0.00 )
+    thoi_gian_uoc_tinh_gio = models.IntegerField(_("Thời gian ước tính (giờ)"),blank=True,null=True )
     tong_do_cao_leo_m = models.IntegerField(_("Tổng độ cao leo (m)"), blank=True, null=True)
-    do_kho = models.ForeignKey(DoKho, on_delete=models.PROTECT, verbose_name=_("Độ khó"))
+    do_kho = models.ForeignKey(
+    DoKho, 
+    on_delete=models.SET_NULL, # <-- THAY ĐỔI QUAN TRỌNG
+    blank=True,                # <-- THÊM
+    null=True,                 # <-- THÊM
+    verbose_name=_("Độ khó")
+)
     mua_dep_nhat = models.CharField(_("Mùa đẹp nhất"), max_length=100, blank=True, null=True)
     du_lieu_ban_do_geojson = models.JSONField(_("Dữ liệu bản đồ GeoJSON"), blank=True, null=True)
     danh_gia_trung_binh = models.DecimalField(_("Điểm đánh giá trung bình"), max_digits=3, decimal_places=2, default=0.00)
@@ -121,16 +128,22 @@ class CungDuongTrek(models.Model):
         super().save(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        """ Ghi đè phương thức save để tự động tạo slug. """
-        if not self.slug:
-            base_slug = slugify(self.ten)
-            unique_slug = base_slug
-            num = 1
-            while CungDuongTrek.objects.filter(slug=unique_slug).exists():
-                unique_slug = f'{base_slug}-{num}'
-                num += 1
-            self.slug = unique_slug
-        super().save(*args, **kwargs)
+     if not self.slug:
+        # Bước 1: Dùng slugify của Django để chuyển thành dạng chuẩn "deo-hai-van"
+        standard_slug = slugify(self.ten)
+        
+        # Bước 2: Dùng phương thức .replace() của Python để xóa bỏ tất cả dấu gạch ngang
+        base_slug = standard_slug.replace('-', '')
+
+        # Logic kiểm tra slug trùng lặp không thay đổi
+        unique_slug = base_slug
+        num = 1
+        while CungDuongTrek.objects.filter(slug=unique_slug).exists():
+            # Nếu trùng, slug mới sẽ là "deohaivan-1", "deohaivan-2",...
+            unique_slug = f'{base_slug}-{num}'
+            num += 1
+        self.slug = unique_slug
+     super().save(*args, **kwargs)
 
 # ==============================================================================
 # === CÁC MODEL PHỤ TRỢ CHO CUNG_DUONG_TREK                                  ===

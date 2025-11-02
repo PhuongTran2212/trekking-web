@@ -3,10 +3,21 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block head_extra %}
-<style>
-    .vat-dung-list { columns: 2; -webkit-columns: 2; -moz-columns: 2; }
-    .vat-dung-list div { display: block; }
-</style>
+    <!-- THÊM LẠI THƯ VIỆN LEAFLET VÀO ĐÂY -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        .vat-dung-list { columns: 2; -webkit-columns: 2; -moz-columns: 2; }
+        .vat-dung-list div { display: block; }
+        
+        /* CSS cho bản đồ xem trước */
+        #map-preview {
+            height: 300px;
+            border-radius: 8px;
+            background-color: #e9ecef;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -23,21 +34,33 @@
                     <div class="form-group mb-3">{{ form.mo_ta.label_tag }} {{ form.mo_ta }}</div>
                     <div class="form-group mb-3">{{ form.dia_diem_chi_tiet.label_tag }} {{ form.dia_diem_chi_tiet }}</div>
                     
+                    <!-- ========================================================== -->
+                    <!-- === KHU VỰC BẢN ĐỒ ĐÃ ĐƯỢC NÂNG CẤP HOÀN TOÀN === -->
+                    <!-- ========================================================== -->
                     {% if object %}
-                    <div class="card mt-4">
-                        <div class="card-header"><h6 class="mb-0">Vị trí trên Bản đồ</h6></div>
-                        <div class="card-body">
-                            <p>Để thay đổi vị trí trên bản đồ, vui lòng sử dụng trang riêng.</p>
-                            <a href="{% url 'treks_admin:cung_duong_edit_map' pk=object.pk %}" class="btn btn-secondary">
-                                Chỉnh sửa trên trang Bản đồ
-                            </a>
-                            {{ form.du_lieu_ban_do_geojson }} 
+                        <div class="card mt-4">
+                            <div class="card-header"><h6 class="mb-0">Vị trí trên Bản đồ</h6></div>
+                            <div class="card-body">
+                                {% if form.du_lieu_ban_do_geojson.value %}
+                                    <!-- Nếu có dữ liệu, hiển thị bản đồ xem trước -->
+                                    <div id="map-preview"></div>
+                                    <p class="text-muted small mt-2">Đây là bản đồ xem trước. Để thay đổi, vui lòng sử dụng trang chỉnh sửa riêng.</p>
+                                {% else %}
+                                    <!-- Nếu chưa có dữ liệu -->
+                                    <p>Cung đường này chưa có vị trí trên bản đồ.</p>
+                                {% endif %}
+                                <a href="{% url 'treks_admin:cung_duong_edit_map' pk=object.pk %}" class="btn btn-secondary mt-2">
+                                    Chỉnh sửa trên trang Bản đồ
+                                </a>
+                                <!-- Trường ẩn này luôn phải có để form hoạt động -->
+                                {{ form.du_lieu_ban_do_geojson }} 
+                            </div>
                         </div>
-                    </div>
                     {% else %}
-                    <div class="alert alert-info mt-4">
-                        <strong>Lưu ý:</strong> Vị trí trên bản đồ sẽ được thiết lập ở bước tiếp theo, sau khi bạn lưu các thông tin cơ bản này.
-                    </div>
+                        <!-- Khi tạo mới, hiển thị thông báo -->
+                        <div class="alert alert-info mt-4">
+                            <strong>Lưu ý:</strong> Vị trí trên bản đồ sẽ được thiết lập ở bước tiếp theo, sau khi bạn lưu các thông tin cơ bản này.
+                        </div>
                     {% endif %}
 
                     <div class="card mt-4">
@@ -80,7 +103,7 @@
             </div>
         </div>
         <div class="card-footer text-end">
-            <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'treks_admin:cung_duong_list' %}{% endif %}" class="btn btn-secondary">Hủy</a>
+            <a href="{% if object %}{% url 'treks_admin:cung_duong_detail' pk=object.pk %}{% else %}{% url 'treks_admin:cung_duong_list' %}{% endif %}" class="btn btn-secondary">Hủy</a>
             <button type="submit" class="btn btn-primary">
                 {% if object %}Lưu thay đổi{% else %}Lưu và Tiếp tục đến trang Bản đồ{% endif %}
             </button>
@@ -109,4 +132,74 @@
     </div>
 </div>
 {% endif %}
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mapPreviewDiv = document.getElementById('map-preview');
+    const geojsonInput = document.getElementById('id_du_lieu_ban_do_geojson');
+
+    // Chỉ chạy script nếu có cả div bản đồ và dữ liệu
+    if (mapPreviewDiv && geojsonInput && geojsonInput.value) {
+        
+        // 1. Khởi tạo bản đồ xem trước
+        const map = L.map('map-preview', {
+            scrollWheelZoom: false, // Tắt zoom bằng con lăn chuột
+            dragging: true,        // Cho phép kéo bản đồ
+            zoomControl: true      // Hiển thị nút +/-
+        }).setView([16.0, 108.0], 9); // Tọa độ mặc định
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+             attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        try {
+            const geojsonData = JSON.parse(geojsonInput.value);
+            
+            if(geojsonData && geojsonData.features.length > 0) {
+                const feature = geojsonData.features[0];
+                if(feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
+                    
+                    // 2. Vẽ đường đi (line)
+                    const routeLayer = L.geoJSON(geojsonData, {
+                        style: function() {
+                            return { color: '#EF4444', weight: 5, opacity: 0.8 };
+                        }
+                    }).addTo(map);
+
+                    // 3. Vẽ điểm đầu và điểm cuối
+                    const coords = feature.geometry.coordinates;
+                    const startLatLng = L.latLng(coords[0][1], coords[0][0]);
+                    const endLatLng = L.latLng(coords[coords.length - 1][1], coords[coords.length - 1][0]);
+
+                    const startIcon = L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+                    });
+                    
+                    const endIcon = L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+                    });
+
+                    L.marker(startLatLng, { icon: startIcon }).addTo(map).bindPopup('Điểm bắt đầu');
+                    L.marker(endLatLng, { icon: endIcon }).addTo(map).bindPopup('Điểm kết thúc');
+
+                    // 4. Tự động zoom bản đồ để thấy toàn bộ cung đường
+                    setTimeout(() => {
+                        map.fitBounds(routeLayer.getBounds());
+                    }, 100);
+                }
+            }
+        } catch (e) {
+            console.error("Lỗi khi hiển thị bản đồ xem trước:", e);
+            mapPreviewDiv.innerHTML = '<div class="alert alert-warning">Không thể hiển thị bản đồ xem trước. Dữ liệu có thể bị lỗi.</div>';
+        }
+    }
+});
+</script>
 {% endblock %}

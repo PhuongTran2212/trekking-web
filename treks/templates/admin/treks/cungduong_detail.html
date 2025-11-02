@@ -3,26 +3,52 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block head_extra %}
-<!-- 1. CSS CHO BẢN ĐỒ LEAFLET -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- 1. Thư viện Bản đồ Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- ========================================================= -->
-<!-- === 2. THÊM CSS CHO THƯ VIỆN ẢNH LIGHTGALLERY         === -->
-<!-- ========================================================= -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery.min.css" integrity="sha512-F2E+YYE1gkt0T5TVajAslgDfTEUQKtlu4ralVqic8ez/lZaMeMWFNSAiFKKUEHYeOauoVjM6yC4swWAbRhIeGg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-<style>
-    #map { 
-        height: 350px; 
-        border-radius: var(--radius-md); 
-        border: 1px solid #dee2e6;
-    }
-    /* Thêm con trỏ tay khi di chuột qua ảnh trong thư viện */
-    #lightgallery a img {
-        cursor: pointer;
-    }
-</style>
+    <!-- 2. Thư viện Ảnh LightGallery -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
+    
+    <style>
+        #map { 
+            height: 350px; 
+            border-radius: 8px; 
+            border: 1px solid #dee2e6;
+        }
+        
+        /* === CSS NÂNG CẤP CHO THƯ VIỆN ẢNH (HIỂN THỊ 5 ẢNH) === */
+        .smart-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.75rem;
+        }
+        .gallery-item {
+            position: relative; width: 100%; padding-top: 100%;
+            border-radius: 8px; overflow: hidden; cursor: pointer;
+            display: none; /* Mặc định ẩn tất cả */
+        }
+        /* Chỉ hiển thị 5 item đầu tiên */
+        .gallery-item:nth-child(-n+5) {
+            display: block;
+        }
+        .gallery-item img {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .gallery-item:hover img { transform: scale(1.05); }
+        .gallery-item-more-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0,0,0,0.6); color: white;
+            font-size: 2rem; font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .gallery-item:hover .gallery-item-more-overlay {
+            background-color: rgba(0,0,0,0.7);
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -30,72 +56,64 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0">{{ page_title }}</h4>
         <div>
-            <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn btn-secondary">
-                <i class="fas fa-edit me-1"></i> Chỉnh sửa
-            </a>
+            <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn btn-secondary">Chỉnh sửa</a>
             <a href="{% url 'treks_admin:cung_duong_list' %}" class="btn btn-ghost">Quay lại danh sách</a>
         </div>
     </div>
     <div class="card-body">
         <div class="row">
-            <!-- ========================================================= -->
-            <!-- === CỘT TRÁI: ĐÃ SẮP XẾP LẠI BỐ CỤC HỢP LÝ HƠN       === -->
-            <!-- ========================================================= -->
             <div class="col-lg-8">
-                
-                <!-- Bọc tất cả ảnh vào một container chung cho LightGallery -->
-                <div id="lightgallery">
-                    <!-- ẢNH BÌA -->
-                    {% with cover_media=trek.cover_media %}
-                        {% if cover_media %}
-                            <a href="{{ cover_media.file.url }}">
-                                 <img src="{{ cover_media.file.url }}" alt="Ảnh bìa của {{ trek.ten }}" class="img-fluid rounded mb-4" style="max-height: 400px; width: 100%; object-fit: cover;">
-                            </a>
-                        {% else %}
-                            <div class="alert alert-secondary">Chưa có ảnh bìa.</div>
-                        {% endif %}
-                    {% endwith %}
-                </div>
+                <!-- ẢNH BÌA -->
+                {% with cover_media=trek.cover_media %}
+                    {% if cover_media %}
+                        <img src="{{ cover_media.file.url }}" alt="Ảnh bìa của {{ trek.ten }}" class="img-fluid rounded mb-4" style="max-height: 400px; width: 100%; object-fit: cover;">
+                    {% else %}
+                        <div class="alert alert-secondary">Chưa có ảnh bìa.</div>
+                    {% endif %}
+                {% endwith %}
                 <hr>
 
-                <!-- MÔ TẢ CHI TIẾT -->
                 <h5>Mô tả chi tiết</h5>
                 <p>{{ trek.mo_ta|linebreaks }}</p>
                 <hr>
 
-                <!-- BẢN ĐỒ -->
                 <h5>Vị trí trên bản đồ</h5>
-                {% if trek.dia_diem_chi_tiet %}<p><strong>Địa điểm:</strong> {{ trek.dia_diem_chi_tiet }}</p>{% endif %}
-                
                 {% if trek.du_lieu_ban_do_geojson %}
                     <div id="map" class="mb-4"></div>
                 {% else %}
-                    <div class="alert alert-warning">Chưa có dữ liệu bản đồ cho cung đường này.</div>
+                    <div class="alert alert-warning">Chưa có dữ liệu bản đồ.</div>
                 {% endif %}
                 <hr>
 
-                <!-- THƯ VIỆN MEDIA (đặt sau cùng trong cột trái) -->
+                <!-- === THƯ VIỆN MEDIA VỚI LOGIC HIỂN THỊ MỚI (5 ẢNH) === -->
                 <h5>Thư viện Media</h5>
-                <div id="gallery-container" class="d-flex flex-wrap gap-3">
-                    {% for media in trek.gallery_media %}
-                        <a href="{{ media.file.url }}">
-                            <img src="{{ media.file.url }}" alt="Media for {{ trek.ten }}"
-                                style="width: 150px; height: 150px; object-fit: cover; border-radius: var(--radius-md);">
-                        </a>
-                    {% empty %}
+                {% with gallery=trek.gallery_media %}
+                    <div id="lightgallery" class="smart-gallery">
+                        {% for media in gallery %}
+                            <a class="gallery-item" href="{{ media.file.url }}" data-sub-html="<h4>{{ trek.ten }}</h4>">
+                                <img src="{{ media.file.url }}" />
+                                {% if forloop.counter == 5 and gallery.count > 5 %}
+                                    <div class="gallery-item-more-overlay">
+                                        +{{ gallery.count|add:"-5" }}
+                                    </div>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                    {% if not gallery %}
                         <p class="text-muted">Thư viện media trống.</p>
-                    {% endfor %}
-                </div>
+                    {% endif %}
+                {% endwith %}
             </div>
 
-            <!-- CỘT PHẢI: THÔNG TIN TÓM TẮT (Giữ nguyên) -->
+            <!-- CỘT PHẢI: THÔNG TIN TÓM TẮT -->
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header"><h5 class="mb-0">Thông tin cơ bản</h5></div>
                     <div class="card-body">
                         <ul class="list-unstyled">
-                            <li><strong>Tỉnh/Thành:</strong> {{ trek.tinh_thanh.ten }}</li>
-                            <li><strong>Độ khó:</strong> {{ trek.do_kho.ten }}</li>
+                            {% if trek.tinh_thanh %}<li><strong>Tỉnh/Thành:</strong> {{ trek.tinh_thanh.ten }}</li>{% endif %}
+                            {% if trek.do_kho %}<li><strong>Độ khó:</strong> {{ trek.do_kho.ten }}</li>{% endif %}
                             <li><strong>Trạng thái:</strong> 
                                 {% if trek.trang_thai == 'DA_DUYET' %}<span class="badge bg-success">{{ trek.get_trang_thai_display }}</span>
                                 {% elif trek.trang_thai == 'CHO_DUYET' %}<span class="badge bg-warning text-dark">{{ trek.get_trang_thai_display }}</span>
@@ -103,12 +121,11 @@
                                 {% endif %}
                             </li>
                             <li><strong>Đánh giá:</strong> 
-                                <i class="fas fa-star text-warning"></i> 
-                                {{ trek.danh_gia_trung_binh|floatformat:1 }} 
+                                {{ trek.danh_gia_trung_binh|floatformat:1 }} ★ 
                                 <small class="text-muted">({{ trek.so_luot_danh_gia }} lượt)</small>
                             </li>
                             <hr>
-                            <li><strong>Độ dài:</strong> {{ trek.do_dai_km }} km</li>
+                            <li><strong>Độ dài (khứ hồi):</strong> {{ trek.do_dai_km|floatformat:2 }} km</li>
                             <li><strong>Thời gian:</strong> {{ trek.thoi_gian_uoc_tinh_gio }} giờ</li>
                             <li><strong>Độ cao leo:</strong> {{ trek.tong_do_cao_leo_m|default:"N/A" }} m</li>
                             <li><strong>Mùa đẹp nhất:</strong> {{ trek.mua_dep_nhat|default:"N/A" }}</li>
@@ -119,94 +136,97 @@
                 <div class="card mt-4">
                     <div class="card-header"><h5 class="mb-0">Vật dụng gợi ý</h5></div>
                     <div class="card-body">
+                        {% if trek.vat_dung_goi_y.all %}
                         <ul class="list-unstyled">
                             {% for item in trek.vat_dung_goi_y.all %}
-                                <li>
-                                    <i class="fas fa-check-circle text-success me-2"></i>{{ item.vat_dung.ten }}
-                                </li>
-                            {% empty %}
-                                <p class="mb-0 text-muted">Chưa có gợi ý vật dụng.</p>
+                                <li>- {{ item.vat_dung.ten }}</li>
                             {% endfor %}
                         </ul>
+                        {% else %}
+                            <p class="mb-0 text-muted">Chưa có gợi ý vật dụng.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
-        
         <hr>
 
-        <!-- PHẦN ĐÁNH GIÁ (Giữ nguyên) -->
-        <h5>Đánh giá của người dùng ({{ reviews.count }})</h5>
+        <!-- PHẦN ĐÁNH GIÁ -->
+        <h5>Đánh giá của người dùng ({{ total_reviews }})</h5>
         {% for review in reviews %}
-        <div class="card mb-3">
-            <div class="card-body">
-                <p>
-                    <strong>{{ review.user.username|default:"[Người dùng đã xóa]" }}</strong> - 
-                    <span class="text-warning">
-                        {% for i in "12345" %}{% if forloop.counter <= review.diem_danh_gia %}★{% else %}☆{% endif %}{% endfor %}
-                    </span>
-                    <small class="text-muted">{{ review.ngay_danh_gia|date:"d/m/Y H-i" }}</small>
-                </p>
-                <p class="mb-0">{{ review.binh_luan|linebreaks }}</p>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="mb-1">
+                        <strong>{{ review.user.username|default:"[Người dùng ẩn danh]" }}</strong> - 
+                        <span class="text-warning">
+                            {% for i in "12345" %}{% if forloop.counter <= review.diem_danh_gia %}★{% else %}☆{% endif %}{% endfor %}
+                        </span>
+                    </p>
+                    <small class="text-muted d-block mb-2">{{ review.ngay_danh_gia|date:"H:i, d/m/Y" }}</small>
+                    <p class="mb-0">{{ review.binh_luan|linebreaks }}</p>
+                </div>
             </div>
-        </div>
         {% empty %}
-        <p>Chưa có đánh giá nào.</p>
+            <p>Chưa có đánh giá nào.</p>
         {% endfor %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- SCRIPT BẢN ĐỒ -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- ========================================================= -->
-<!-- === 3. THÊM SCRIPT CHO THƯ VIỆN ẢNH LIGHTGALLERY      === -->
-<!-- ========================================================= -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js" integrity="sha512-jEJ0Gv46rxEM9zBiEeOhNKmpGD6Aq75vTMEd3k0m+MHL2wqwMkbHFU4g5lkRBYODeDp2N0gUjMvYuRPEm_tP8w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- Script LightGallery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/zoom/lg-zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // --- Code cho bản đồ (giữ nguyên) ---
-    const mapElement = document.getElementById('map');
-    const geojsonDataString = '{{ trek.du_lieu_ban_do_geojson|escapejs|default:"null" }}';
     
-    if (mapElement && geojsonDataString !== 'null') {
+    /**
+     * KHỞI TẠO BẢN ĐỒ XEM TRƯỚC
+     */
+    const mapElement = document.getElementById('map');
+    const geojsonDataString = `{{ trek.du_lieu_ban_do_geojson|escapejs }}`;
+    
+    if (mapElement && geojsonDataString && geojsonDataString !== 'None') {
         try {
             const geojsonData = JSON.parse(geojsonDataString);
-            if (geojsonData?.features?.length > 0) {
-                const coords = geojsonData.features[0].geometry.coordinates;
-                const latLng = [coords[1], coords[0]];
-                const map = L.map(mapElement).setView(latLng, 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-                L.marker(latLng).addTo(map)
-                    .bindPopup('<b>{{ trek.ten|escapejs }}</b><br>{{ trek.dia_diem_chi_tiet|escapejs }}')
-                    .openPopup();
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                const feature = geojsonData.features[0];
+                if (feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
+                    const map = L.map(mapElement, { scrollWheelZoom: false, dragging: true, zoomControl: true });
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+                    const routeLayer = L.geoJSON(geojsonData, { style: () => ({ color: '#EF4444', weight: 5, opacity: 0.8 }) }).addTo(map);
+
+                    const coords = feature.geometry.coordinates;
+                    const startLatLng = L.latLng(coords[0][1], coords[0][0]);
+                    const endLatLng = L.latLng(coords[coords.length - 1][1], coords[coords.length - 1][0]);
+
+                    const startIcon = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+                    const endIcon = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+
+                    L.marker(startLatLng, { icon: startIcon }).addTo(map).bindPopup('Điểm bắt đầu');
+                    L.marker(endLatLng, { icon: endIcon }).addTo(map).bindPopup('Điểm kết thúc');
+
+                    setTimeout(() => { map.fitBounds(routeLayer.getBounds()); }, 100);
+                }
             }
         } catch (e) { console.error("Lỗi khi xử lý dữ liệu bản đồ:", e); }
     }
 
-    // --- Code khởi tạo LightGallery ---
-    // Gộp cả ảnh bìa và thư viện vào chung một popup
-    const mainGalleryContainer = document.getElementById('lightgallery');
-    const mediaGalleryContainer = document.getElementById('gallery-container');
-    
-    // Sao chép các ảnh từ thư viện media vào container chính
-    mediaGalleryContainer.querySelectorAll('a').forEach(link => {
-        mainGalleryContainer.appendChild(link);
-    });
-    // Xóa container cũ sau khi đã chuyển
-    mediaGalleryContainer.remove();
-
-    // Khởi tạo LightGallery trên container chính
-    lightGallery(mainGalleryContainer, {
-        selector: 'a', // Áp dụng cho tất cả các thẻ <a> bên trong
-        download: true, // Cho phép nút tải ảnh
-        speed: 500
-    });
+    /**
+     * KHỞI TẠO THƯ VIỆN ẢNH (ĐÃ XÓA NÚT XÓA)
+     */
+    const lgContainer = document.getElementById('lightgallery');
+    if (lgContainer) {
+        lightGallery(lgContainer, {
+            plugins: [lgZoom, lgThumbnail],
+            speed: 500,
+            download: true,
+            selector: '.gallery-item'
+        });
+    }
 });
 </script>
 {% endblock %}
