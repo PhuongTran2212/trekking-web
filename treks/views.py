@@ -116,7 +116,7 @@ class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
             return self.form_invalid(form)
         
     def get_success_url(self):
-        return reverse('treks_admin:cung_duong_detail', kwargs={'pk': self.object.pk})
+        return reverse('treks_admin:cung_duong_update', kwargs={'pk': self.object.pk})
 
 class CungDuongDetailView(AdminRequiredMixin, DetailView):
     model = CungDuongTrek
@@ -216,18 +216,26 @@ class NominatimProxyView(AdminRequiredMixin, View):
 class CungDuongMapUpdateView(AdminRequiredMixin, UpdateView):
     model = CungDuongTrek
     form_class = CungDuongMapForm
-    template_name = 'admin/treks/cungduong_map_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_title'] = f"Chỉnh sửa Bản đồ cho: {self.object.ten}"
-        return context
+    template_name = 'admin/treks/cungDuong_map_form.html'
 
     def form_valid(self, form):
-        form.save()
+        # Lưu dữ liệu GeoJSON từ form
+        self.object = form.save(commit=False)
+        
+        # Lấy giá trị độ dài được tính toán từ request POST
+        calculated_length = self.request.POST.get('do_dai_km_calculated')
+        
+        if calculated_length:
+            try:
+                # Cập nhật trường do_dai_km của object
+                self.object.do_dai_km = float(calculated_length)
+                messages.info(self.request, f"Độ dài cung đường được tự động cập nhật thành {calculated_length} km.")
+            except (ValueError, TypeError):
+                messages.warning(self.request, "Không thể cập nhật độ dài tự động.")
+        
+        self.object.save()
         messages.success(self.request, f"Đã cập nhật vị trí trên bản đồ cho '{self.object.ten}'.")
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        # Sau khi lưu bản đồ, quay về trang chi tiết để xem tổng quan
-        return reverse('treks_admin:cung_duong_detail', kwargs={'pk': self.object.pk})
+         return reverse('treks_admin:cung_duong_update', kwargs={'pk': self.object.pk})
