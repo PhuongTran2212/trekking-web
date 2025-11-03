@@ -2,6 +2,7 @@
 from django.urls import reverse
 from django.views.generic import ListView, DetailView
 from django.db.models import Q, Count
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from .models import CungDuongTrek, CungDuongDanhGia, CungDuongAnhDanhGia
@@ -60,20 +61,30 @@ class CungDuongDetailView(DetailView):
         # Lấy điểm trung bình đã được tính sẵn từ model (do signal cập nhật)
         average_rating = trek.danh_gia_trung_binh
         
-        # 2. TÍNH TOÁN PHÂN BỐ ĐÁNH GIÁ (RATING BREAKDOWN)
-        rating_breakdown = []
+        # 2. TÍNH TOÁN CÁC THỐNG KÊ CẦN THIẾT
+        rating_breakdown = [] # Dữ liệu cho biểu đồ thanh
+        stats = {             # Dữ liệu cho các nút lọc
+            'total': total_reviews,
+            'with_comment': all_reviews.exclude(binh_luan__exact='').count(),
+            'with_media': all_reviews.filter(anh_danh_gia__isnull=False).distinct().count(),
+            'stars': {}
+        }
+
         if total_reviews > 0:
             star_counts = all_reviews.values('diem_danh_gia').annotate(count=Count('id'))
             counts_dict = {item['diem_danh_gia']: item['count'] for item in star_counts}
+            
             for i in range(5, 0, -1):
                 count = counts_dict.get(i, 0)
-                # Tính toán tỷ lệ phần trăm
+                stats['stars'][i] = count
+                
                 percentage = (count / total_reviews) * 100
                 rating_breakdown.append({
                     'stars': i,
                     'count': count,
                     'percentage': percentage
                 })
+                
         
         # 3. KIỂM TRA XEM USER HIỆN TẠI ĐÃ ĐÁNH GIÁ CHƯA
         user_has_reviewed = False
@@ -82,43 +93,50 @@ class CungDuongDetailView(DetailView):
         
         # 4. TRUYỀN TẤT CẢ DỮ LIỆU SANG TEMPLATE
         context['page_title'] = trek.ten
-        context['reviews'] = all_reviews # Danh sách chi tiết các đánh giá
-        context['total_reviews'] = total_reviews # Tổng số
-        context['average_rating'] = average_rating # Điểm trung bình
-        context['rating_breakdown'] = rating_breakdown # Dữ liệu cho biểu đồ
+        context['reviews'] = all_reviews
+        context['total_reviews'] = total_reviews
+        context['average_rating'] = average_rating
+        context['review_stats'] = stats
+        context['rating_breakdown'] = rating_breakdown
         context['user_has_reviewed'] = user_has_reviewed
         context['vat_dung_goi_y'] = trek.vat_dung_goi_y.all()
         
-        # Chỉ truyền form nếu user chưa đánh giá và form chưa được thêm vào context (tránh ghi đè khi post lỗi)
+        # Chỉ truyền form nếu user chưa đánh giá và form chưa được thêm vào context
         if 'review_form' not in context and self.request.user.is_authenticated and not user_has_reviewed:
             context['review_form'] = CungDuongDanhGiaForm()
             
         return context
     
     def post(self, request, *args, **kwargs):
-        # Hàm post của bạn đã đúng, giữ nguyên
+        # Hàm post của bạn đã đúng, giữ nguyên logic
         if not request.user.is_authenticated:
-            messages.error(request, "Bạn cần đăng nhập để đánh giá."); return redirect('accounts:dang-nhap')
-        trek = self.get_object()
-        if CungDuongDanhGia.objects.filter(cung_duong=trek, user=request.user).exists():
-            messages.error(request, "Bạn đã đánh giá cung đường này rồi."); return redirect(trek.get_absolute_url() + '#reviews')
+            messages.error(request, "Bạn cần đăng nhập để đánh giá."); 
+            return redirect('accounts:dang-nhap')
+            
+        self.object = self.get_object()
+        
+        if CungDuongDanhGia.objects.filter(cung_duong=self.object, user=request.user).exists():
+            messages.warning(request, "Bạn đã đánh giá cung đường này rồi."); 
+            return redirect(self.object.get_absolute_url() + '#reviews')
         
         review_form = CungDuongDanhGiaForm(request.POST, request.FILES)
 
         if review_form.is_valid():
-            review = review_form.save(commit=False)
-            review.cung_duong, review.user = trek, request.user
-            review.save()
-            
-            for f in request.FILES.getlist('hinh_anh'): 
-                CungDuongAnhDanhGia.objects.create(danh_gia=review, hinh_anh=f)
+            with transaction.atomic():
+                review = review_form.save(commit=False)
+                review.cung_duong = self.object
+                review.user = request.user
+                review.save()
+                
+                for f in request.FILES.getlist('hinh_anh'): 
+                    CungDuongAnhDanhGia.objects.create(danh_gia=review, hinh_anh=f)
             
             messages.success(request, "Cảm ơn bạn đã gửi đánh giá!"); 
-            return redirect(trek.get_absolute_url() + '#reviews')
+            return redirect(self.object.get_absolute_url() + '#reviews')
         else:
+            messages.error(request, "Đã có lỗi xảy ra, vui lòng kiểm tra lại thông tin.");
             context = self.get_context_data()
             context['review_form'] = review_form
-            messages.error(request, "Đã có lỗi xảy ra, vui lòng kiểm tra lại thông tin."); 
             return self.render_to_response(context)
         # ==========================================================
 # === VIEW MỚI ĐỂ XÓA ĐÁNH GIÁ ===
