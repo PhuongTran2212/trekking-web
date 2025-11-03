@@ -13,7 +13,6 @@
     <style>
         .vat-dung-list { columns: 2; -webkit-columns: 2; -moz-columns: 2; }
         #map-preview { height: 300px; border-radius: 8px; background-color: #e9ecef; }
-
         .media-manager-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
         .media-item {
             position: relative; border-radius: 8px; overflow: hidden;
@@ -41,11 +40,13 @@
     <!-- MỘT FORM DUY NHẤT BAO BỌC TẤT CẢ -->
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        {{ form.media }} <!-- Quan trọng cho TinyMCE -->
         <div class="card-body">
             {% if form.errors %}<div class="alert alert-danger">Vui lòng sửa các lỗi bên dưới.</div>{% endif %}
             <div class="row">
                 <!-- CỘT TRÁI -->
                 <div class="col-8">
+                    <!-- THÔNG TIN CƠ BẢN -->
                     <div class="card mb-4">
                         <div class="card-header"><h6 class="mb-0">Thông tin Cơ bản</h6></div>
                         <div class="card-body">
@@ -55,6 +56,7 @@
                         </div>
                     </div>
                     
+                    <!-- BẢN ĐỒ VÀ QUẢN LÝ MEDIA - CHỈ HIỂN THỊ KHI ĐANG CHỈNH SỬA -->
                     {% if object %}
                         <div class="card mb-4">
                             <div class="card-header"><h6 class="mb-0">Vị trí trên Bản đồ</h6></div>
@@ -64,41 +66,43 @@
                                 {{ form.du_lieu_ban_do_geojson }} 
                             </div>
                         </div>
-                    {% endif %}
 
-                    <!-- QUẢN LÝ MEDIA -->
-                    <div class="card">
-                        <div class="card-header"><h6 class="mb-0">Quản lý Media</h6></div>
-                        <div class="card-body">
-                            <div class="mb-4 p-3 border rounded bg-light">
-                                <label class="form-label fw-bold">Tải lên ảnh/video mới</label>
-                                <input type="file" name="files_to_upload" class="form-control" multiple>
-                                <div class="form-text">Chọn nhiều file. Nhấn "Lưu thay đổi" ở cuối trang để tải lên.</div>
-                            </div>
-
-                            {% if object and object.media.all %}
-                                <h6 class="mb-3">Media hiện có</h6>
-                                <div id="lightgallery" class="media-manager-grid">
-                                    {% for media in object.media.all %}
-                                        <a class="media-item {% if forloop.counter > 4 %}d-none{% endif %} {% if media.la_anh_bia %}is-cover{% endif %}"
-                                           href="{{ media.file.url }}"
-                                           data-sub-html="<h4>{{ object.ten }}{% if media.la_anh_bia %} (Ảnh bìa){% endif %}</h4>"
-                                           data-media-id="{{ media.pk }}"
-                                           data-is-cover="{{ media.la_anh_bia|yesno:'true,false' }}">
-                                            <img src="{{ media.file.url }}">
-                                            {% if forloop.counter == 4 and object.media.all.count > 4 %}
-                                                <div class="gallery-item-more-overlay">+{{ object.media.all.count|add:"-4" }}</div>
-                                            {% endif %}
-                                        </a>
-                                    {% endfor %}
+                        <div class="card">
+                            <div class="card-header"><h6 class="mb-0">Quản lý Media</h6></div>
+                            <div class="card-body">
+                                <div class="mb-4 p-3 border rounded bg-light">
+                                    <label class="form-label fw-bold">Tải lên ảnh/video mới</label>
+                                    <input type="file" name="files_to_upload" class="form-control" multiple>
+                                    <div class="form-text">Chọn nhiều file. Nhấn "Lưu thay đổi" ở cuối trang để tải lên.</div>
                                 </div>
-                            {% else %}
-                                {% if object %}
-                                <p class="text-muted">Chưa có media nào.</p>
+
+                                {% if object.media.all %}
+                                    <h6 class="mb-3">Media hiện có</h6>
+                                    <div id="lightgallery" class="media-manager-grid">
+                                        {% for media in object.media.all %}
+                                            <a class="media-item {% if forloop.counter > 4 %}d-none{% endif %} {% if media.la_anh_bia %}is-cover{% endif %}"
+                                               href="{{ media.file.url }}"
+                                               data-sub-html="<h4>{{ object.ten }}{% if media.la_anh_bia %} (Ảnh bìa){% endif %}</h4>"
+                                               data-media-id="{{ media.pk }}"
+                                               data-is-cover="{{ media.la_anh_bia|yesno:'true,false' }}">
+                                                <img src="{{ media.file.url }}">
+                                                {% if forloop.counter == 4 and object.media.all.count > 4 %}
+                                                    <div class="gallery-item-more-overlay">+{{ object.media.all.count|add:"-4" }}</div>
+                                                {% endif %}
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">Chưa có media nào.</p>
                                 {% endif %}
-                            {% endif %}
+                            </div>
                         </div>
-                    </div>
+                    {% else %}
+                        <!-- THÔNG BÁO KHI TẠO MỚI -->
+                         <div class="alert alert-info mt-4">
+                            <strong>Lưu ý:</strong> Bạn cần lưu cung đường này trước khi có thể thiết lập vị trí và quản lý media.
+                        </div>
+                    {% endif %}
                 </div>
 
                 <!-- CỘT PHẢI -->
@@ -137,6 +141,7 @@
 {{ object.du_lieu_ban_do_geojson|json_script:"map-data" }}
 
 {% endblock %}
+
 
 {% block extra_js %}
 <!-- Script LightGallery -->

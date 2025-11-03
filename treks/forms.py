@@ -3,6 +3,7 @@
 from django import forms
 from .models import CungDuongTrek, CungDuongDanhGia, CungDuongVatDungGoiY, TrangThaiDuyet
 from core.models import TinhThanh, DoKho, VatDung
+from tinymce.widgets import TinyMCE
 
 class CungDuongTrekAdminForm(forms.ModelForm):
     """
@@ -32,7 +33,7 @@ class CungDuongTrekAdminForm(forms.ModelForm):
         # Tùy chỉnh các widget để thêm class CSS và ID cho JavaScript.
         widgets = {
             'ten': forms.TextInput(attrs={'class': 'form-control'}),
-            'mo_ta': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            'mo_ta': TinyMCE(attrs={'cols': 80, 'rows': 20}),
                       'dia_diem_chi_tiet': forms.TextInput(attrs={
                 'class': 'form-control', 
                 'id': 'id_dia_diem_chi_tiet', # ID cho ô nhập địa điểm
@@ -113,9 +114,22 @@ class CungDuongFilterForm(forms.Form):
 
 # Form 3: Dùng cho người dùng gửi đánh giá (CHỈ GIỮ LẠI CÁC TRƯỜNG CẦN VALIDATE)
 class CungDuongDanhGiaForm(forms.ModelForm):
-    diem_danh_gia = forms.ChoiceField(label="Chấm điểm", choices=[(i, f"{i} sao") for i in range(5, 0, -1)], widget=forms.RadioSelect)
-    binh_luan = forms.CharField(label="Bình luận của bạn", widget=forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ cảm nhận của bạn...'}))
+    # Sử dụng ChoiceField với widget RadioSelect để người dùng dễ chọn sao
+    diem_danh_gia = forms.ChoiceField(
+        label="Chấm điểm của bạn",
+        choices=[(i, f"{i} sao") for i in range(5, 0, -1)],
+        widget=forms.RadioSelect,
+        required=True
+    )
     
+    binh_luan = forms.CharField(
+        label="Bình luận của bạn",
+        widget=forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ cảm nhận của bạn...'}),
+        required=False
+    )
+
+    # --- ĐÃ XÓA TRƯỜNG `hinh_anh` KHỎI ĐÂY ---
+
     class Meta:
         model = CungDuongDanhGia
         fields = ['diem_danh_gia', 'binh_luan']

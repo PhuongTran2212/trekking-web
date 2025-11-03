@@ -4,264 +4,970 @@
 {% block title %}{{ trek.ten }} - Chi tiết Cung đường{% endblock %}
 
 {% block extra_css %}
-<!-- Thư viện Leaflet cho bản đồ -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<!-- Thư viện LightGallery cho popup ảnh -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 <style>
     :root {
-        --spacing-xs: 0.5rem;
-        --spacing-sm: 0.75rem;
-        --spacing-md: 1rem;
-        --spacing-lg: 1.5rem;
-        --spacing-xl: 2rem;
-        --spacing-2xl: 3rem;
-        --radius-sm: 0.375rem;
-        --radius-md: 0.5rem;
-        --radius-lg: 0.75rem;
-        --radius-xl: 1rem;
-        --primary-dark: #1eaf5f;
+        --primary: #10b981;
+        --primary-dark: #059669;
+        --primary-light: #d1fae5;
+        --accent: #f59e0b;
+        --accent-dark: #d97706;
         --gray-50: #f9fafb;
         --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
         --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
         --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
         --gray-900: #111827;
-        --warning: #f59e0b;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 2px 8px 0 rgb(0 0 0 / 0.08);
+        --shadow-md: 0 8px 16px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 16px 24px -4px rgb(0 0 0 / 0.12);
+        --shadow-xl: 0 20px 40px -8px rgb(0 0 0 / 0.15);
+        --radius-sm: 0.5rem;
+        --radius-md: 1rem;
+        --radius-lg: 1.5rem;
+        --radius-xl: 2rem;
     }
     
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
     body {
-        font-family: sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        color: var(--gray-900);
+        background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
+        line-height: 1.6;
     }
 
     .container {
-        max-width: 1200px;
-        margin-left: auto;
-        margin-right: auto;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    .my-5 {
-        margin-top: 3rem;
-        margin-bottom: 3rem;
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
     }
 
-    /* === BỐ CỤC CHÍNH (FLEXBOX) === */
-    .row {
-        display: flex;
-        flex-wrap: wrap; 
-        gap: var(--spacing-xl); 
-    }
-    .col-lg-8 {
-        flex: 1; 
-        min-width: 60%; 
-    }
-    .col-lg-4 {
-        width: 350px; 
-        flex-shrink: 0; 
-    }
-    @media (max-width: 991.98px) {
-        .col-lg-8,
-        .col-lg-4 {
-            width: 100%; 
-        }
-    }
-    
-    /* === THỐNG KÊ ĐÁNH GIÁ === */
-    .rating-summary {
-        display: flex;
-        gap: var(--spacing-xl);
-        align-items: center;
-        margin-bottom: var(--spacing-xl);
-        padding: var(--spacing-lg);
-        background-color: var(--gray-50);
-        border-radius: var(--radius-lg);
-    }
-    .rating-summary-overview {
-        text-align: center;
-        flex-shrink: 0;
-        width: 150px;
-    }
-    .rating-summary-overview .average-score {
-        font-size: 3.5rem;
-        font-weight: 800;
-        color: var(--gray-900);
-        line-height: 1;
-    }
-    .rating-summary-overview .average-stars .fa-star {
-        color: var(--warning);
-    }
-    .rating-summary-overview .total-reviews {
-        font-size: 0.9rem;
-        color: var(--gray-600);
-        margin-top: var(--spacing-sm);
-    }
-    .rating-summary-breakdown {
-        flex-grow: 1;
-    }
-    .rating-bar-item {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-xs);
-        font-size: 0.9rem;
-    }
-    .rating-bar-item .star-label {
-        color: var(--gray-600);
-        width: 50px;
-        flex-shrink: 0;
-    }
-    .progress-bar-container {
-        flex-grow: 1;
-        height: 8px;
-        background-color: var(--gray-100);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    .progress-bar-fill {
-        height: 100%;
-        background-color: var(--warning);
-        border-radius: 4px;
-        transition: width 0.5s ease-in-out;
-    }
-    .rating-bar-item .count {
-        color: var(--gray-900);
-        font-weight: 600;
-        min-width: 30px;
-        text-align: right;
-    }
-
-    /* === Cover Image & Header === */
-    .trek-cover-container {
-        height: 500px;
+    /* === HERO SECTION === */
+    .hero-section {
         position: relative;
-        border-radius: var(--radius-xl);
+        height: 70vh;
+        min-height: 550px;
+        margin-bottom: 4rem;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         overflow: hidden;
-        margin-bottom: var(--spacing-2xl);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        box-shadow: var(--shadow-xl);
     }
-    .trek-cover-image {
-        width: 100%;
-        height: 100%;
-        background-image: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%), url('{{ trek.anh_bia_url }}');
+
+    .hero-image {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.7) 100%), url('{{ trek.anh_bia_url }}');
         background-size: cover;
         background-position: center;
-        transition: transform 0.3s ease;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .trek-cover-container:hover .trek-cover-image {
-        transform: scale(1.02);
+
+    /* Added zoom effect on hover */
+    .hero-section:hover .hero-image {
+        transform: scale(1.08);
     }
-    .trek-header-content {
+
+    .hero-content {
         position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
-        padding: var(--spacing-2xl);
-        color: white;
+        padding: 4rem 2rem;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 40%, transparent 100%);
     }
-    .trek-location {
-        font-size: 1rem;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        margin-bottom: var(--spacing-sm);
+
+    .hero-badge {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-    }
-    .trek-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        line-height: 1.1;
-        text-shadow: 0 4px 20px rgba(0,0,0,0.6);
-        margin: 0;
-        color: white; /* ĐẢM BẢO MÀU TRẮNG CHO TÊN CUNG ĐƯỜNG */
+        padding: 0.625rem 1.5rem;
+        background: rgba(16, 185, 129, 0.2);
+        backdrop-filter: blur(20px);
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #a7f3d0;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        animation: slideInUp 0.6s ease-out 0.2s both;
     }
 
-    /* === Các style khác (giữ nguyên) === */
-    .stats-bar { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md); background: linear-gradient(135deg, #ffffff 0%, var(--gray-50) 100%); padding: var(--spacing-xl); border-radius: var(--radius-xl); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); margin-bottom: var(--spacing-xl); border: 1px solid rgba(0, 0, 0, 0.05); } @media (min-width: 768px) { .stats-bar { grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); } } .stat-item { text-align: center; padding: var(--spacing-md); border-radius: var(--radius-lg); transition: all 0.3s ease; position: relative; } .stat-item:hover { background: white; transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); } .stat-item i { font-size: 2rem; color: var(--primary-dark); margin-bottom: var(--spacing-md); display: block; } .stat-value { font-size: 1.75rem; font-weight: 800; color: var(--gray-900); margin-bottom: var(--spacing-xs); line-height: 1; } .stat-label { font-size: 0.875rem; color: var(--gray-600); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-    .card { border: none; border-radius: var(--radius-xl); box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); margin-bottom: var(--spacing-xl); overflow: hidden; transition: box-shadow 0.3s ease; } .card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); } .card-header { background: linear-gradient(135deg, var(--gray-50) 0%, white 100%); border-bottom: 2px solid var(--gray-100); padding: var(--spacing-lg) var(--spacing-xl); font-weight: 700; } .card-header h5 { margin: 0; font-size: 1.25rem; color: var(--gray-900); } .card-body { padding: var(--spacing-xl); } .card-title { font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: var(--spacing-lg); display: flex; align-items: center; gap: var(--spacing-md); } .card-title::before { content: ''; width: 4px; height: 1.5rem; background: var(--primary-dark); border-radius: 2px; }
-    #trek-map { height: 500px; border-radius: var(--radius-lg); box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06); }
-    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--spacing-md); } .gallery-grid a { position: relative; overflow: hidden; border-radius: var(--radius-lg); display: block; aspect-ratio: 1; } .gallery-grid a::after { content: ''; position: absolute; inset: 0; background: rgba(0, 0, 0, 0); transition: background 0.3s ease; } .gallery-grid a:hover::after { background: rgba(0, 0, 0, 0.3); } .gallery-grid img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; } .gallery-grid a:hover img { transform: scale(1.1); }
-    .review-list { margin-top: var(--spacing-xl); } .review-item { padding: var(--spacing-lg); background: var(--gray-50); border-radius: var(--radius-lg); margin-bottom: var(--spacing-lg); transition: all 0.3s ease; } .review-item:hover { background: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); } .rating-stars { display: inline-flex; gap: 0.25rem; } .rating-stars .fa-star { font-size: 1rem; color: var(--warning); } .rating-stars .fa-star.text-muted { color: var(--gray-300) !important; } .review-images { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); margin-top: var(--spacing-md); } .review-images a { border-radius: var(--radius-md); overflow: hidden; display: block; transition: transform 0.2s ease; } .review-images a:hover { transform: scale(1.05); }
-    .sidebar-card { position: sticky; top: 20px; } .sidebar-card .card { margin-bottom: var(--spacing-lg); } .list-group-item { border: none; padding: var(--spacing-md) 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-100); } .list-group-item:last-child { border-bottom: none; }
-    .btn { border-radius: var(--radius-lg); font-weight: 600; padding: 0.75rem 1.5rem; transition: all 0.3s ease; border: none; cursor: pointer; } .btn-primary { background: linear-gradient(135deg, var(--primary-dark) 0%, #2563eb 100%); color: white; box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.3); } .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.4); } .btn-secondary { background: var(--gray-100); color: var(--gray-900); } .btn-secondary:hover { background: var(--gray-300); transform: translateY(-2px); } .btn-icon { width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin: 0 0.25rem; } .btn-light { background: var(--gray-100); color: var(--gray-600); } .btn-light:hover { background: var(--primary-dark); color: white; }
-    .equipment-checklist { list-style: none; padding: 0; margin: 0; } .equipment-item { display: flex; align-items: center; gap: var(--spacing-md); padding: var(--spacing-md); border-radius: var(--radius-md); transition: background 0.2s ease; } .equipment-item:hover { background: var(--gray-50); } .equipment-checkbox { width: 20px; height: 20px; cursor: pointer; } .equipment-name { font-size: 0.95rem; color: var(--gray-900); }
-    .creator-card { display: flex; align-items: center; gap: var(--spacing-md); padding: var(--spacing-lg); } .creator-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gray-100); } .creator-info { flex: 1; } .creator-name { font-weight: 700; color: var(--gray-900); text-decoration: none; font-size: 1.1rem; } .creator-name:hover { color: var(--primary-dark); }
-    @media (max-width: 768px) { .trek-title { font-size: 2rem; } .trek-cover-container { height: 350px; } .trek-header-content { padding: var(--spacing-lg); } .card-body { padding: var(--spacing-lg); } .rating-summary { flex-direction: column; } }
+    .hero-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 900;
+        color: white;
+        margin: 0;
+        text-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        animation: slideInUp 0.8s ease-out 0.4s both;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* === STATS GRID === */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.75rem;
+        margin: -5rem auto 4rem;
+        max-width: 1100px;
+        padding: 0 1.5rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    /* Enhanced stat card design */
+    .stat-card {
+        background: white;
+        padding: 2.25rem 1.75rem;
+        border-radius: var(--radius-lg);
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1.5px solid var(--gray-100);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.5s ease-out;
+    }
+
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-12px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-light);
+        background: linear-gradient(135deg, #f0fdf4 0%, white 100%);
+    }
+
+    .stat-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-light) 0%, #a7f3d0 100%);
+        border-radius: var(--radius-md);
+        color: var(--primary-dark);
+        font-size: 2rem;
+        transition: all 0.4s ease;
+    }
+
+    .stat-card:hover .stat-icon {
+        transform: scale(1.15) rotate(-5deg);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    /* === MAIN LAYOUT === */
+    .content-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 3rem;
+        margin-bottom: 5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .content-wrapper {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+    }
+
+    /* === CARD STYLES === */
+    .card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2.5rem;
+        overflow: hidden;
+        border: 1px solid var(--gray-100);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Added card elevation on hover */
+    .card:hover {
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+    }
+
+    .card-header {
+        padding: 2rem 2.25rem;
+        background: linear-gradient(135deg, #f8fafb 0%, #f0f4f8 100%);
+        border-bottom: 2px solid var(--gray-100);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-header h5 {
+        font-size: 1.375rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Removed before pseudo-element, using icon instead */
+    .card-header h5 i {
+        color: var(--primary);
+        font-size: 1.25rem;
+    }
+
+    .card-body {
+        padding: 2.25rem;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-title i {
+        color: var(--primary);
+        font-size: 1.25rem;
+    }
+
+    /* === MAP STYLES === */
+    #trek-map {
+        height: 550px;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }
+
+    #trek-map:hover {
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* === GALLERY === */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Improved gallery item design */
+    .gallery-grid a {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        display: block;
+        box-shadow: var(--shadow);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--gray-100);
+    }
+
+    .gallery-grid a::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 1;
+    }
+
+    .gallery-grid a:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .gallery-grid a:hover::before {
+        opacity: 1;
+    }
+
+    .gallery-grid img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+
+    .gallery-grid a:hover img {
+        transform: scale(1.12);
+    }
+
+    /* === RATING SUMMARY === */
+    .rating-summary {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 3rem;
+        padding: 2.5rem;
+        background: linear-gradient(135deg, #f0fdf4 0%, #f8fafb 100%);
+        border-radius: var(--radius-lg);
+        margin-bottom: 2.5rem;
+        border: 2px solid var(--primary-light);
+    }
+
+    .rating-overview {
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .average-score {
+        font-size: 3.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 0.75rem;
+    }
+
+    .average-stars {
+        display: flex;
+        justify-content: center;
+        gap: 0.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .average-stars .fa-star {
+        color: var(--accent);
+        font-size: 1.5rem;
+    }
+
+    .total-reviews {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        font-weight: 600;
+    }
+
+    .rating-breakdown {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .rating-bar-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .star-label {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--gray-700);
+        min-width: 55px;
+    }
+
+    .progress-bar-container {
+        flex: 1;
+        height: 12px;
+        background: var(--gray-200);
+        border-radius: 50px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+        border-radius: 50px;
+        transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .rating-count {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        min-width: 40px;
+        text-align: right;
+    }
+
+    /* === REVIEW ITEM === */
+    .review-item {
+        padding: 2rem;
+        background: white;
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+        border: 1.5px solid var(--gray-100);
+        transition: all 0.4s ease;
+    }
+
+    /* Improved review item hover effect */
+    .review-item:hover {
+        background: #fafbfc;
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+        transform: translateX(6px);
+    }
+
+    .review-header {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .review-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary-light);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .review-meta {
+        flex: 1;
+    }
+
+    .review-author {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: var(--gray-900);
+    }
+
+    .rating-stars {
+        display: inline-flex;
+        gap: 0.25rem;
+        margin-left: 0.5rem;
+    }
+
+    .rating-stars .fa-star {
+        font-size: 0.875rem;
+        color: var(--accent);
+    }
+
+    .rating-stars .fa-star.text-muted {
+        color: var(--gray-300) !important;
+    }
+
+    .review-date {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+
+    .review-content {
+        margin: 1rem 0 1rem 73px;
+        line-height: 1.7;
+        color: var(--gray-700);
+    }
+
+    .review-images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1.25rem;
+        margin-left: 73px;
+    }
+
+    .review-images a {
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .review-images a:hover {
+        transform: scale(1.08);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary);
+    }
+
+    .review-images img {
+        width: 110px;
+        height: 110px;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* === SIDEBAR === */
+    .sidebar {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 2.25rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.75rem;
+        border: 1px solid var(--gray-100);
+        transition: all 0.3s ease;
+    }
+
+    /* Added action card hover effect */
+    .action-card:hover {
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+    }
+
+    .creator-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1.75rem;
+        margin-bottom: 1.75rem;
+        border-bottom: 2px solid var(--gray-100);
+    }
+
+    .creator-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary-light);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .creator-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+    }
+
+    .creator-name {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .creator-name:hover {
+        color: var(--primary);
+    }
+
+    /* === BUTTONS === */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.625rem;
+        padding: 0.975rem 1.875rem;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: 0.9375rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Improved button gradients and hover states */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, #047857 100%);
+    }
+
+    .btn-secondary {
+        background: var(--gray-100);
+        color: var(--gray-900);
+        border: 1.5px solid var(--gray-200);
+    }
+
+    .btn-secondary:hover {
+        background: white;
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-3px);
+    }
+
+    .btn-block {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .btn-icon {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border-radius: 50%;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        border: 1.5px solid var(--gray-200);
+    }
+
+    .btn-icon:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: scale(1.12);
+    }
+
+    .share-section {
+        padding-top: 1.75rem;
+        margin-top: 1.75rem;
+        border-top: 2px solid var(--gray-100);
+        text-align: center;
+    }
+
+    .share-label {
+        color: var(--gray-600);
+        font-size: 0.875rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .share-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    /* === INFO LIST === */
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .info-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--gray-600);
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    .info-label i {
+        color: var(--primary);
+        font-size: 1.25rem;
+    }
+
+    .info-value {
+        font-weight: 800;
+        color: var(--gray-900);
+    }
+
+    /* === EQUIPMENT LIST === */
+    .equipment-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .equipment-item {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 1rem 0;
+        transition: all 0.2s ease;
+    }
+
+    .equipment-item:hover {
+        padding-left: 0.5rem;
+    }
+
+    .equipment-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--primary);
+    }
+
+    .equipment-name {
+        font-size: 0.9375rem;
+        color: var(--gray-700);
+        font-weight: 500;
+    }
+
+    /* === ALERTS === */
+    .alert {
+        padding: 1.25rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border: 1.5px solid;
+        animation: slideInUp 0.4s ease-out;
+    }
+
+    .alert-info {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        color: #1e40af;
+    }
+
+    .alert-warning {
+        background: #fef3c7;
+        border-color: #fcd34d;
+        color: #92400e;
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        border-color: #6ee7b7;
+        color: #065f46;
+    }
+
+    /* === EMPTY STATE === */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--gray-300);
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        font-size: 1.125rem;
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+        .hero-section {
+            height: 55vh;
+            min-height: 420px;
+        }
+
+        .hero-content {
+            padding: 2.5rem 1.5rem;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            margin-top: -3.5rem;
+            gap: 1.25rem;
+        }
+
+        .stat-card {
+            padding: 1.5rem 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+
+        .rating-summary {
+            grid-template-columns: 1fr;
+            gap: 1.75rem;
+        }
+
+        .review-content,
+        .review-images {
+            margin-left: 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .sidebar {
+            position: static;
+        }
+
+        .content-wrapper {
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            margin-top: -2.5rem;
+        }
+
+        .gallery-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .hero-title {
+            font-size: 1.75rem;
+        }
+
+        .stat-value {
+            font-size: 1.625rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    
-    <!-- COVER IMAGE & HEADER -->
-    <div class="trek-cover-container">
-        <div class="trek-cover-image"></div>
-        <div class="trek-header-content">
-            <div class="trek-location">
+<!-- HERO SECTION -->
+<div class="hero-section">
+    <div class="hero-image"></div>
+    <div class="hero-content">
+        <div class="container">
+            <div class="hero-badge">
                 <i class="fas fa-map-marker-alt"></i>
                 {{ trek.tinh_thanh.ten }}
             </div>
-            <h1 class="trek-title">{{ trek.ten }}</h1>
+            <h1 class="hero-title">{{ trek.ten }}</h1>
         </div>
     </div>
+</div>
 
-    <div class="row">
-        <!-- CỘT NỘI DUNG CHÍNH (TRÁI) -->
-        <main class="col-lg-8">
+<!-- STATS GRID -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-route"></i>
+        </div>
+        <div class="stat-value">{{ trek.do_dai_km }}</div>
+        <div class="stat-label">Độ dài (km)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="far fa-clock"></i>
+        </div>
+        <div class="stat-value">{{ trek.thoi_gian_uoc_tinh_gio }}</div>
+        <div class="stat-label">Thời gian (giờ)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-mountain"></i>
+        </div>
+        <div class="stat-value">{{ trek.tong_do_cao_leo_m }}</div>
+        <div class="stat-label">Độ cao leo (m)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <div class="stat-value">{{ trek.do_kho.ten }}</div>
+        <div class="stat-label">Độ khó</div>
+    </div>
+</div>
 
-            <!-- STATS BAR - THANH THÔNG SỐ NHANH -->
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <i class="fas fa-route"></i>
-                    <div class="stat-value">{{ trek.do_dai_km }}</div>
-                    <div class="stat-label">Độ dài (km)</div>
-                </div>
-                <div class="stat-item">
-                    <i class="far fa-clock"></i>
-                    <div class="stat-value">{{ trek.thoi_gian_uoc_tinh_gio }}</div>
-                    <div class="stat-label">Thời gian (giờ)</div>
-                </div>
-                <div class="stat-item">
-                    <i class="fas fa-mountain"></i>
-                    <div class="stat-value">{{ trek.tong_do_cao_leo_m }}</div>
-                    <div class="stat-label">Độ cao leo (m)</div>
-                </div>
-                <div class="stat-item">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <div class="stat-value">{{ trek.do_kho.ten }}</div>
-                    <div class="stat-label">Độ khó</div>
-                </div>
-            </div>
-
+<!-- MAIN CONTENT -->
+<div class="container">
+    <div class="content-wrapper">
+        <!-- LEFT COLUMN -->
+        <main>
             <!-- MÔ TẢ -->
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title">Giới thiệu hành trình</h4>
-                    <p style="line-height: 1.7; color: var(--gray-600);">{{ trek.mo_ta|linebreaks }}</p>
+                    <h4 class="card-title"><i class="fas fa-book-open"></i>Giới thiệu hành trình</h4>
+                    <div style="line-height: 1.8; color: var(--gray-700); font-size: 1rem;">{{ trek.mo_ta|safe }}</div>
                 </div>
             </div>
 
             <!-- BẢN ĐỒ -->
             <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-map"></i>Bản đồ lộ trình</h5>
+                </div>
                 <div class="card-body">
-                    <h4 class="card-title">Bản đồ lộ trình</h4>
-                    <div id="trek-map"></div>
+                    {% if trek.du_lieu_ban_do_geojson %}
+                        <div id="trek-map"></div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-map"></i>
+                            <p>Chưa có dữ liệu bản đồ</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- THƯ VIỆN HÌNH ẢNH -->
             {% if trek.gallery_media %}
             <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-images"></i>Thư viện media</h5>
+                </div>
                 <div class="card-body">
-                    <h4 class="card-title">Thư viện media</h4>
                     <div class="gallery-grid" id="trek-gallery-container">
                         {% for media in trek.gallery_media %}
-                            <a href="{{ media.file.url }}">
+                            <a href="{{ media.file.url }}" data-sub-html="<h4>{{ trek.ten }}</h4>">
                                 <img src="{{ media.file.url }}" alt="Hình ảnh {{ trek.ten }}" loading="lazy">
                             </a>
                         {% endfor %}
@@ -269,98 +975,133 @@
                 </div>
             </div>
             {% endif %}
-            
-            <!-- ĐÁNH GIÁ -->
-            <div class="card" id="reviews">
-                <div class="card-body">
-                    <h4 class="card-title">Đánh giá của cộng đồng ({{ total_reviews }} lượt)</h4>
-                    
-                    <!-- KHUNG THỐNG KÊ ĐÁNH GIÁ -->
-                    {% if total_reviews > 0 %}
-                    <div class="rating-summary">
-                        <!-- Cột bên trái: Điểm trung bình -->
-                        <div class="rating-summary-overview">
-                            <div class="average-score">{{ average_rating|floatformat:1 }}</div>
-                            <div class="average-stars">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                            </div>
-                            <div class="total-reviews">từ {{ total_reviews }} đánh giá</div>
-                        </div>
 
-                        <!-- Cột bên phải: Chi tiết từng sao -->
-                        <div class="rating-summary-breakdown">
-                            {% for item in rating_breakdown %}
-                            <div class="rating-bar-item">
-                                <span class="star-label">{{ item.stars }} sao</span>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style                                </div>
-                                <span class="count">{{ item.count }}</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+            <!-- KHỐI ĐÁNH GIÁ -->
+            <div class="card" id="reviews">
+                <div class="card-header">
+                    <h5><i class="fas fa-star"></i>Đánh giá sản phẩm</h5>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- THỐNG KÊ ĐÁNH GIÁ -->
+        <!-- KHUNG THỐNG KÊ ĐÁNH GIÁ -->
+{% if total_reviews > 0 %}
+<div class="rating-summary">
+    <!-- Cột bên trái: Điểm trung bình -->
+    <div class="rating-summary-overview">
+        <div class="average-score">{{ average_rating|floatformat:1 }}</div>
+        <div class="average-stars">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+        </div>
+        <div class="total-reviews">từ {{ total_reviews }} đánh giá</div>
+    </div>
+
+    <!-- Cột bên phải: Chi tiết từng sao -->
+    <div class="rating-summary-breakdown">
+        {% for item in rating_breakdown %}
+        <div class="rating-bar-item">
+            <span class="star-label">{{ item.stars }} sao</span>
+            <div class="progress-bar-container">
+                <!-- ========================================================== -->
+                <!-- === DÙNG BIẾN `item.percentage` ĐÃ ĐƯỢC TÍNH SẴN === -->
+                <!-- ========================================================== -->
+                <div class="progress-bar-fill" data-width="{{ item.percentage|floatformat:0 }}"></div>
+            </div>
+            <span class="rating-count">{{ item.count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
                     {% endif %}
                     
                     <!-- FORM ĐÁNH GIÁ -->
                     {% if user.is_authenticated %}
-                        {% if not user_has_reviewed %}
-                        <div class="mb-4 p-4" style="background: var(--gray-50); border-radius: var(--radius-lg);">
-                            <h5 style="margin-bottom: var(--spacing-lg);">Viết đánh giá của bạn</h5>
-                            <form method="post" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <!-- ... Form fields ... -->
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane me-2"></i>Gửi đánh giá
-                                </button>
-                            </form>
-                        </div>
+                        {% if user_has_reviewed %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>Cảm ơn bạn đã đánh giá cung đường này.
+                            </div>
                         {% else %}
-                        <div class="alert alert-info" style="border-radius: var(--radius-lg);">
-                            <i class="fas fa-check-circle me-2"></i>Bạn đã đánh giá cung đường này.
-                        </div>
+                            <div class="card" style="background: linear-gradient(135deg, #f0fdf4 0%, #f8fafb 100%); margin-bottom: 2rem;">
+                                <div class="card-body">
+                                    <h5 style="margin-bottom: 1.5rem; color: var(--gray-900);"><i class="fas fa-pen-fancy" style="color: var(--primary); margin-right: 0.5rem;"></i>Viết đánh giá của bạn</h5>
+                                    <form method="post" enctype="multipart/form-data" action="{% url 'treks:cung_duong_detail' slug=trek.slug %}#reviews">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">{{ review_form.diem_danh_gia.label }}</label>
+                                            <div>{{ review_form.diem_danh_gia }}</div>
+                                            {% if review_form.diem_danh_gia.errors %}<div class="text-danger small mt-1">{{ review_form.diem_danh_gia.errors.as_text }}</div>{% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">{{ review_form.binh_luan.label }}</label>
+                                            {{ review_form.binh_luan }}
+                                            {% if review_form.binh_luan.errors %}<div class="text-danger small mt-1">{{ review_form.binh_luan.errors.as_text }}</div>{% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="id_hinh_anh" class="form-label fw-bold">Thêm hình ảnh (có thể chọn nhiều ảnh)</label>
+                                            <input type="file" name="hinh_anh" id="id_hinh_anh" class="form-control" multiple accept="image/*">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane"></i>Gửi đánh giá
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         {% endif %}
                     {% else %}
-                    <div class="alert alert-warning" style="border-radius: var(--radius-lg);">
-                        <i class="fas fa-sign-in-alt me-2"></i>
-                        <a href="#">Đăng nhập</a> để gửi đánh giá.
-                    </div>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle"></i>
+                            <a href="{% url 'accounts:dang-nhap' %}?next={{ request.path }}#reviews" class="fw-bold" style="color: inherit;">Đăng nhập</a> để gửi đánh giá.
+                        </div>
                     {% endif %}
                     
                     <!-- DANH SÁCH ĐÁNH GIÁ -->
                     <div class="review-list">
                         {% for review in reviews %}
-                        <div class="review-item" data-lightgallery-review>
-                            <div style="display: flex; align-items: flex-start; gap: 1rem;">
-                                <img src="{{ review.user.taikhoanhoso.avatar_url }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid var(--gray-100);">
-                                <div style="flex-grow: 1;">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                                        <div>
-                                            <strong style="font-size: 1.1rem; color: var(--gray-900);">{{ review.user.username|default:"[Người dùng đã xóa]" }}</strong>
-                                            <div class="rating-stars" style="display: inline-block; margin-left: 0.5rem;">
-                                                {% for i in "12345"|make_list %}
-                                                <i class="fas fa-star {% if i|add:0 > review.diem_danh_gia %}text-muted{% endif %}"></i>
-                                                {% endfor %}
-                                            </div>
+                        <div class="review-item">
+                            <div class="review-header">
+                                <img src="{{ review.user.taikhoanhoso.avatar_url }}" class="review-avatar" alt="{{ review.user.username }}">
+                                <div class="review-meta">
+                                    <div>
+                                        <strong class="review-author">{{ review.user.username|default:"Ẩn danh" }}</strong>
+                                        <div class="rating-stars">
+                                            {% for i in "12345"|make_list %}<i class="fas fa-star {% if i|add:0 > review.diem_danh_gia %}text-muted{% endif %}"></i>{% endfor %}
                                         </div>
-                                        <small style="color: var(--gray-600);">{{ review.ngay_danh_gia|timesince }} trước</small>
                                     </div>
-                                    <p style="margin: var(--spacing-md) 0; line-height: 1.6; color: var(--gray-600);">{{ review.binh_luan }}</p>
-                                    {% if review.anh_danh_gia.all %}
-                                    <div class="review-images">
-                                        {% for anh in review.anh_danh_gia.all %}
-                                        <a href="{{ anh.hinh_anh.url }}">
-                                            <img src="{{ anh.hinh_anh.url }}" style="width: 100px; height: 100px; object-fit: cover; border-radius: var(--radius-md);" loading="lazy">
-                                        </a>
-                                        {% endfor %}
-                                    </div>
-                                    {% endif %}
+                                    <div class="review-date">{{ review.ngay_danh_gia|timesince }} trước</div>
                                 </div>
                             </div>
+                            <p class="review-content">{{ review.binh_luan|linebreaks }}</p>
+                            
+                            {% if review.anh_danh_gia.all %}
+                            <div class="review-images" data-lightgallery-review-id="{{ review.pk }}">
+                                {% for anh in review.anh_danh_gia.all %}
+                                <a href="{{ anh.hinh_anh.url }}">
+                                    <img src="{{ anh.hinh_anh.url }}" alt="Đánh giá hình ảnh">
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- NÚT SỬA/XÓA -->
+                            {% if review.user == user or user.is_staff %}
+                            <div class="mt-3" style="display: flex; gap: 0.75rem;">
+                                <a href="{% url 'treks:update_review' review.pk %}" class="btn btn-secondary" style="font-size: 0.85rem;">
+                                    <i class="fas fa-edit"></i>Sửa
+                                </a>
+                                <form action="{% url 'treks:delete_review' review.pk %}" method="post" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem;">
+                                        <i class="fas fa-trash"></i>Xóa
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
                         </div>
                         {% empty %}
-                        <div style="text-align: center; padding: 3rem 0;">
-                            <i class="fas fa-comments" style="font-size: 3rem; color: var(--gray-300); margin-bottom: var(--spacing-md);"></i>
-                            <p style="color: var(--gray-600);">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+                        <div class="empty-state" style="padding: 3rem 1rem;">
+                            <i class="fas fa-comments"></i>
+                            <p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
                         </div>
                         {% endfor %}
                     </div>
@@ -368,72 +1109,84 @@
             </div>
         </main>
 
-        <!-- CỘT THÔNG TIN PHỤ (PHẢI) -->
-        <aside class="col-lg-4">
-            <div class="sidebar-card">
-                <!-- CARD HÀNH ĐỘNG & CHIA SẺ -->
-                <div class="card">
-                    <div class="card-body">
-                        <a href="#" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem; text-align: center; display: block; text-decoration: none;">
-                            <i class="fas fa-search me-2"></i>Tìm chuyến đi
-                        </a>
-                        <a href="#" class="btn btn-secondary" style="width: 100%; margin-bottom: 1.5rem; text-align: center; display: block; text-decoration: none;">
-                            <i class="fas fa-plus me-2"></i>Tạo chuyến đi mới
-                        </a>
-                        <div style="text-align: center; padding-top: 1rem; border-top: 1px solid var(--gray-100);">
-                            <span style="color: var(--gray-600); margin-right: 0.5rem; font-size: 0.9rem; font-weight: 600;">Chia sẻ:</span>
-                            <a href="#" class="btn btn-icon btn-light"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#" class="btn btn-icon btn-light"><i class="fab fa-twitter"></i></a>
-                            <a href="#" class="btn btn-icon btn-light"><i class="fas fa-link"></i></a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- CARD THÔNG TIN BỔ SUNG -->
-                <div class="card">
-                    <div class="card-header"><h5>Thông tin thêm</h5></div>
-                    <div class="card-body">
-                        <ul style="list-style: none; padding: 0; margin: calc(var(--spacing-lg) * -1);">
-                            <li class="list-group-item" style="padding: var(--spacing-lg);">
-                                <span style="display: flex; align-items: center; gap: var(--spacing-sm);">
-                                    <i class="fas fa-cloud-sun-rain" style="color: var(--primary-dark);"></i>
-                                    <span style="color: var(--gray-600);">Mùa đẹp nhất</span>
-                                </span>
-                                <strong style="color: var(--gray-900);">{{ trek.mua_dep_nhat|default:"Chưa cập nhật" }}</strong>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- VẬT DỤNG GỢI Ý -->
-                <div class="card">
-                    <div class="card-header"><h5>Vật dụng gợi ý</h5></div>
-                    <div class="card-body">
-                        <ul class="equipment-checklist">
-                            {% for item in vat_dung_goi_y %}
-                                <li class="equipment-item">
-                                    <input type="checkbox" class="equipment-checkbox" id="item-{{ forloop.counter }}">
-                                    <label for="item-{{ forloop.counter }}" class="equipment-name">{{ item.vat_dung.ten }}</label>
-                                </li>
-                            {% empty %}
-                                <li style="text-align: center; padding: 1rem 0; color: var(--gray-600);">Chưa có gợi ý vật dụng.</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- THÔNG TIN NGƯỜI TẠO -->
+        <!-- RIGHT SIDEBAR -->
+        <aside class="sidebar">
+            <!-- ACTION CARD -->
+            <div class="action-card">
+                <!-- CREATOR INFO -->
                 {% if trek.nguoi_tao %}
-                <div class="card">
-                    <div class="card-header"><h5>Người tạo</h5></div>
-                    <div class="card-body creator-card">
-                        <img src="{{ trek.nguoi_tao.taikhoanhoso.avatar_url }}" class="creator-avatar" alt="{{ trek.nguoi_tao.username }}">
-                        <div class="creator-info">
-                            <a href="#" class="creator-name">{{ trek.nguoi_tao.get_full_name|default:trek.nguoi_tao.username }}</a>
-                        </div>
+                <div class="creator-section">
+                    <img src="{{ trek.nguoi_tao.taikhoanhoso.avatar_url }}" class="creator-avatar" alt="{{ trek.nguoi_tao.username }}">
+                    <div>
+                        <div class="creator-label">Được tạo bởi</div>
+                        <a href="#" class="creator-name">{{ trek.nguoi_tao.get_full_name|default:trek.nguoi_tao.username }}</a>
                     </div>
                 </div>
                 {% endif %}
+
+                <!-- ACTION BUTTONS -->
+                <a href="#" class="btn btn-primary btn-block">
+                    <i class="fas fa-compass"></i>Tìm chuyến đi
+                </a>
+                <a href="#" class="btn btn-secondary btn-block">
+                    <i class="fas fa-plus"></i>Tạo chuyến đi mới
+                </a>
+
+                <!-- SHARE SECTION -->
+                <div class="share-section">
+                    <span class="share-label">Chia sẻ cung đường</span>
+                    <div class="share-buttons">
+                        <button id="share-facebook" class="btn btn-icon" title="Chia sẻ lên Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </button>
+                        <button id="share-twitter" class="btn btn-icon" title="Chia sẻ lên X (Twitter)">
+                            <i class="fab fa-twitter"></i>
+                        </button>
+                        <button id="copy-link" class="btn btn-icon" title="Sao chép liên kết">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INFO CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i>Thông tin thêm</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="info-list">
+                        <li class="info-list-item">
+                            <span class="info-label">
+                                <i class="fas fa-cloud-sun-rain"></i>
+                                Mùa đẹp nhất
+                            </span>
+                            <strong class="info-value">{{ trek.mua_dep_nhat|default:"Chưa cập nhật" }}</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- EQUIPMENT CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-backpack"></i>Vật dụng gợi ý</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="equipment-list">
+                        {% for item in trek.vat_dung_goi_y.all %}
+                        <li class="equipment-item">
+                            <input type="checkbox" class="equipment-checkbox" id="item-{{ forloop.counter }}">
+                            <label for="item-{{ forloop.counter }}" class="equipment-name">{{ item.vat_dung.ten }}</label>
+                        </li>
+                        {% empty %}
+                        <li class="empty-state" style="padding: 2rem 0.5rem;">
+                            <i class="fas fa-backpack" style="font-size: 2.5rem;"></i>
+                            <p style="font-size: 0.9rem; margin-top: 0.75rem;">Chưa có gợi ý vật dụng.</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
         </aside>
     </div>
@@ -445,52 +1198,146 @@
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/zoom/lg-zoom.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // --- KHỞI TẠO BẢN ĐỒ ---
+
+    // === PROGRESS BAR WIDTHS ===
+    document.querySelectorAll('.progress-bar-fill[data-width]').forEach(function(el) {
+        const width = el.getAttribute('data-width');
+        if (width !== null) {
+            el.style.width = width + '%';
+        }
+    });
+
+    // === MAP INITIALIZATION ===
+    const mapElement = document.getElementById('trek-map');
     const mapDataElement = document.getElementById('map-data');
-    if (mapDataElement) {
+    
+    if (mapElement && mapDataElement && mapDataElement.textContent.trim() !== "") {
         try {
             const geojsonData = JSON.parse(mapDataElement.textContent);
-            if (!geojsonData?.features?.length) { throw new Error("Dữ liệu GeoJSON không hợp lệ."); }
-            const map = L.map('trek-map');
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-                maxZoom: 19, 
-                attribution: '&copy; OpenStreetMap' 
-            }).addTo(map);
-            const trekLayer = L.geoJSON(geojsonData, { 
-                style: { 
-                    color: "#EF4444", 
-                    weight: 4, 
-                    opacity: 0.8 
-                } 
-            }).addTo(map);
-            map.fitBounds(trekLayer.getBounds().pad(0.1));
+            
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                const feature = geojsonData.features[0];
+                if (feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
+                    
+                    const map = L.map(mapElement, { 
+                        scrollWheelZoom: false, 
+                        dragging: true, 
+                        zoomControl: true 
+                    });
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    const routeLayer = L.geoJSON(geojsonData, { 
+                        style: { 
+                            color: "#10b981", 
+                            weight: 4, 
+                            opacity: 0.8 
+                        } 
+                    }).addTo(map);
+
+                    const coords = feature.geometry.coordinates;
+                    const startLatLng = L.latLng(coords[0][1], coords[0][0]);
+                    const endLatLng = L.latLng(coords[coords.length - 1][1], coords[coords.length - 1][0]);
+                    
+                    const startIcon = L.icon({ 
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', 
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', 
+                        iconSize: [25, 41], 
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34]
+                    });
+                    
+                    const endIcon = L.icon({ 
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', 
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', 
+                        iconSize: [25, 41], 
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34]
+                    });
+
+                    L.marker(startLatLng, { icon: startIcon }).addTo(map).bindPopup('Điểm bắt đầu');
+                    L.marker(endLatLng, { icon: endIcon }).addTo(map).bindPopup('Điểm kết thúc');
+
+                    map.fitBounds(routeLayer.getBounds().pad(0.1));
+                }
+            }
         } catch(e) {
-            console.error("Lỗi bản đồ: ", e);
-            document.getElementById('trek-map').innerHTML = '<p style="text-align: center; color: #6c757d; padding: 3rem;">Không có dữ liệu bản đồ để hiển thị.</p>';
+            console.error("Lỗi khi khởi tạo bản đồ:", e);
+            mapElement.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Không thể hiển thị bản đồ</p></div>';
         }
     }
 
-    // --- KHỞI TẠO LIGHTGALLERY CHO THƯ VIỆN ẢNH CHÍNH ---
+    // === LIGHTGALLERY INITIALIZATION ===
     const galleryContainer = document.getElementById('trek-gallery-container');
     if(galleryContainer) {
         lightGallery(galleryContainer, { 
+            plugins: [lgZoom, lgThumbnail],
             selector: 'a', 
             download: true,
             speed: 500,
-            getCaptionFromTitleOrAlt: true
+            licenseKey: 'your-license-key'
         });
     }
 
-    // --- KHỞI TẠO LIGHTGALLERY CHO ẢNH ĐÁNH GIÁ CỦA NGƯỜI DÙNG ---
-    document.querySelectorAll('[data-lightgallery-review]').forEach(reviewEl => {
-        lightGallery(reviewEl, { 
-            selector: 'a', 
-            download: true,
-            speed: 500
-        });
+    document.querySelectorAll('[data-lightgallery-review-id]').forEach(reviewEl => {
+        const reviewImages = reviewEl;
+        if(reviewImages) {
+            lightGallery(reviewImages, { 
+                selector: 'a', 
+                download: true,
+                speed: 500,
+                licenseKey: 'your-license-key'
+            });
+        }
     });
+    
+    // === SHARE FUNCTIONALITY ===
+    const shareUrl = window.location.href;
+    const shareTitle = "{{ trek.ten|escapejs }}";
+
+    const facebookBtn = document.getElementById('share-facebook');
+    if (facebookBtn) {
+        facebookBtn.addEventListener('click', () => {
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+            window.open(fbUrl, 'facebook-share-dialog', 'width=800,height=600');
+        });
+    }
+
+    const twitterBtn = document.getElementById('share-twitter');
+    if (twitterBtn) {
+        twitterBtn.addEventListener('click', () => {
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
+            window.open(twitterUrl, 'twitter-share-dialog', 'width=800,height=600');
+        });
+    }
+
+    const copyLinkBtn = document.getElementById('copy-link');
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                const originalHTML = copyLinkBtn.innerHTML;
+                copyLinkBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyLinkBtn.style.background = 'var(--primary)';
+                copyLinkBtn.style.color = 'white';
+                
+                setTimeout(() => {
+                    copyLinkBtn.innerHTML = originalHTML;
+                    copyLinkBtn.style.background = '';
+                    copyLinkBtn.style.color = '';
+                }, 2000);
+            }).catch((err) => {
+                console.error('Không thể sao chép: ', err);
+                alert('Lỗi! Không thể sao chép liên kết.');
+            });
+        });
+    }
 });
 </script>
 {% endblock %}

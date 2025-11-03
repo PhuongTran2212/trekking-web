@@ -9,4 +9,11 @@ app_name = 'treks'
 urlpatterns = [
     path('', user_views.CungDuongListView.as_view(), name='cung_duong_list'),
     path('<slug:slug>/', user_views.CungDuongDetailView.as_view(), name='cung_duong_detail'),
+        # URL để xử lý việc xóa một đánh giá
+    # Ví dụ: /treks/review/123/delete/
+    path('review/<int:pk>/delete/', user_views.delete_review, name='delete_review'),
+
+    # URL để hiển thị form và xử lý việc cập nhật một đánh giá
+    # Ví dụ: /treks/review/123/update/
+    path('review/<int:pk>/update/', user_views.UpdateReviewView.as_view(), name='update_review'),
 ]

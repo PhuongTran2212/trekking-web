@@ -3,6 +3,7 @@
 import os
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
 from core.models import TinhThanh, DoKho, VatDung
@@ -90,6 +91,11 @@ class CungDuongTrek(models.Model):
 
     def __str__(self):
         return self.ten
+    def get_absolute_url(self):
+        """
+        Trả về URL đầy đủ đến trang chi tiết của cung đường này.
+        """
+        return reverse('treks:cung_duong_detail', kwargs={'slug': self.slug})
 
     @property
     def anh_bia_url(self):
