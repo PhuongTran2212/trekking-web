@@ -923,6 +923,140 @@
         color: white !important;
         border-color: var(--danger, #EF4444) !important;
     }
+            /* === CSS MỚI CHO "XEM THÊM" VÀ ẢNH REVIEW === */
+        .review-content.truncated {
+            max-height: 90px; /* Chiều cao tương đương khoảng 3-4 dòng */
+            overflow: hidden;
+            position: relative;
+        }
+        .review-content.truncated::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to top, white, rgba(255,255,255,0));
+        }
+        .toggle-comment {
+            color: var(--primary, #10b981);
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .review-images-more {
+            width: 80px; height: 80px; border-radius: 0.5rem;
+            display: flex; align-items: center; justify-content: center;
+            background-color: var(--gray-100);
+            font-size: 1.5rem; font-weight: bold; color: var(--gray-600);
+        }
+            /* === CSS NÂNG CẤP CHO KHUNG THỐNG KÊ & BỘ LỌC === */
+    .review-stats-container {
+        background-color: #fffbf8;
+        border: 1px solid #fde4d0;
+        border-radius: 4px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        flex-wrap: wrap; /* Cho phép xuống dòng trên màn hình nhỏ */
+    }
+
+    .average-rating-box {
+        flex-shrink: 0;
+        text-align: center;
+        padding-right: 2rem;
+        border-right: 1px solid #eee;
+    }
+
+    .average-rating-box .score {
+        font-size: 1.8rem;
+        color: #ee4d2d;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    .average-rating-box .score span {
+        font-size: 3rem;
+    }
+
+    .average-rating-box .stars {
+        font-size: 1.2rem;
+        color: #ffb900;
+        margin-top: 0.25rem;
+    }
+
+    .review-filters-box {
+        flex-grow: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .review-filter-btn {
+        background-color: white;
+        border: 1px solid rgba(0,0,0,.09);
+        color: rgba(0,0,0,.8);
+        padding: 0.4rem 1rem;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 400;
+        font-size: 0.875rem;
+    }
+
+    .review-filter-btn:hover {
+        border-color: #ee4d2d;
+        color: #ee4d2d;
+    }
+
+    .review-filter-btn.active {
+        background-color: #ee4d2d;
+        color: white;
+        border-color: #ee4d2d;
+    }
+
+    @media (max-width: 768px) {
+        .review-stats-container {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1.5rem;
+        }
+        .average-rating-box {
+            border-right: none;
+            border-bottom: 1px solid #eee;
+            padding-right: 0;
+            padding-bottom: 1.5rem;
+        }
+    }
+        /* === CSS MỚI CHO FORM ĐÁNH GIÁ SAO === */
+    .rating-input-group {
+        display: inline-flex;
+        flex-direction: row-reverse; /* Để chọn sao từ phải qua trái */
+        justify-content: flex-end;
+    }
+    .rating-input-group input[type="radio"] {
+        display: none;
+    }
+    .rating-input-group label {
+        font-size: 2rem;
+        color: var(--gray-300, #d1d5db);
+        cursor: pointer;
+        transition: color 0.2s ease;
+        padding: 0 0.1em;
+    }
+    /* Khi hover vào một sao, nó và các sao bên trái (em nó) sẽ đổi màu */
+    .rating-input-group label:hover,
+    .rating-input-group label:hover ~ label {
+        color: var(--accent, #f59e0b);
+    }
+    /* Khi một nút radio được chọn, các sao bên trái (em nó) sẽ đổi màu */
+    .rating-input-group input[type="radio"]:checked ~ label {
+        color: var(--accent, #f59e0b);
+    }
 </style>
 {% endblock %}
 
@@ -1022,122 +1156,192 @@
             {% endif %}
 
             <!-- KHỐI ĐÁNH GIÁ -->
-            <div class="card" id="reviews">
-                <div class="card-header">
-                    <h5><i class="fas fa-star"></i>Bình luận cộng đồng</h5>
-                </div>
-                <div class="card-body">
-                    
-                    <!-- THỐNG KÊ ĐÁNH GIÁ -->
-                  {% if total_reviews > 0 %}
-                    <div class="p-3 mb-4" style="background-color: #f8fafc; border: 1px solid var(--gray-200); border-radius: 1rem;">
-                        <div class="d-flex flex-wrap gap-2" id="review-filters">
-                            <button class="review-filter-btn active" data-filter="all">Tất cả ({{ review_stats.total }})</button>
-                            <button class="review-filter-btn" data-filter="5">5 Sao ({{ review_stats.stars.5 }})</button>
-                            <button class="review-filter-btn" data-filter="4">4 Sao ({{ review_stats.stars.4 }})</button>
-                            <button class="review-filter-btn" data-filter="3">3 Sao ({{ review_stats.stars.3 }})</button>
-                            <button class="review-filter-btn" data-filter="2">2 Sao ({{ review_stats.stars.2 }})</button>
-                            <button class="review-filter-btn" data-filter="1">1 Sao ({{ review_stats.stars.1 }})</button>
-                            <button class="review-filter-btn" data-filter="media">Có Hình Ảnh ({{ review_stats.with_media }})</button>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- FORM ĐÁNH GIÁ -->
-                    {% if user.is_authenticated %}
-                        {% if user_has_reviewed %}
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle"></i>Cảm ơn bạn đã đánh giá cung đường này.
-                            </div>
-                        {% else %}
-                            <div class="card" style="background: linear-gradient(135deg, #f0fdf4 0%, #f8fafb 100%); margin-bottom: 2rem;">
-                                <div class="card-body">
-                                    <h5 style="margin-bottom: 1.5rem; color: var(--gray-900);"><i class="fas fa-pen-fancy" style="color: var(--primary); margin-right: 0.5rem;"></i>Viết đánh giá của bạn</h5>
-                                    <form method="post" enctype="multipart/form-data" action="{% url 'treks:cung_duong_detail' slug=trek.slug %}#reviews">
-                                        {% csrf_token %}
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold">{{ review_form.diem_danh_gia.label }}</label>
-                                            <div>{{ review_form.diem_danh_gia }}</div>
-                                            {% if review_form.diem_danh_gia.errors %}<div class="text-danger small mt-1">{{ review_form.diem_danh_gia.errors.as_text }}</div>{% endif %}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold">{{ review_form.binh_luan.label }}</label>
-                                            {{ review_form.binh_luan }}
-                                            {% if review_form.binh_luan.errors %}<div class="text-danger small mt-1">{{ review_form.binh_luan.errors.as_text }}</div>{% endif %}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="id_hinh_anh" class="form-label fw-bold">Thêm hình ảnh (có thể chọn nhiều ảnh)</label>
-                                            <input type="file" name="hinh_anh" id="id_hinh_anh" class="form-control" multiple accept="image/*">
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-paper-plane"></i>Gửi đánh giá
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        {% endif %}
+ <div class="card" id="reviews">
+    <div class="card-header"><h5><i class="fas fa-star"></i>Đánh giá của cộng đồng</h5></div>
+    <div class="card-body">
+        
+        <!-- KHUNG THỐNG KÊ VÀ BỘ LỌC -->
+  {% if total_reviews > 0 %}
+<div class="review-stats-container mb-4">
+    <!-- CỘT BÊN TRÁI: ĐIỂM TRUNG BÌNH -->
+    <div class="average-rating-box">
+        <div class="score"><span>{{ average_rating|floatformat:1 }}</span> trên 5</div>
+        <div class="stars">
+            {% with avg_int=average_rating|floatformat:0 %}
+                {% for i in "12345"|make_list %}
+                    {% if i|add:0 <= avg_int|add:0 %}
+                        <i class="fas fa-star"></i>
+                    {% elif i|add:0 == avg_int|add:1 and average_rating|slice:"-1" >= "5" %}
+                        <i class="fas fa-star-half-alt"></i>
                     {% else %}
-                        <div class="alert alert-warning">
-                            <i class="fas fa-info-circle"></i>
-                            <a href="{% url 'accounts:dang-nhap' %}?next={{ request.path }}#reviews" class="fw-bold" style="color: inherit;">Đăng nhập</a> để gửi đánh giá.
-                        </div>
+                        <i class="far fa-star"></i>
                     {% endif %}
-                    
-                    <!-- DANH SÁCH ĐÁNH GIÁ -->
-                     <div class="review-list">
-                        {% for review in reviews %}
-                        <div class="review-item" 
-                             data-rating="{{ review.diem_danh_gia }}" 
-                             data-has-comment="{% if review.binh_luan|striptags %}true{% else %}false{% endif %}" 
-                             data-has-media="{% if review.anh_danh_gia.all %}true{% else %}false{% endif %}">
-                            
-                            <div class="review-header">
-                                <img src="{{ review.user.taikhoanhoso.avatar_url }}" class="review-avatar" alt="{{ review.user.username }}">
-                                <div class="review-meta">
-                                    <div>
-                                        <strong class="review-author">{{ review.user.username|default:"Ẩn danh" }}</strong>
-                                        <div class="rating-stars">
-                                            {% for i in "12345"|make_list %}<i class="fas fa-star {% if i|add:0 > review.diem_danh_gia %}text-muted{% endif %}"></i>{% endfor %}
-                                        </div>
-                                    </div>
-                                    <div class="review-date">{{ review.ngay_danh_gia|timesince }} trước</div>
-                                </div>
-                            </div>
+                {% endfor %}
+            {% endwith %}
+        </div>
+    </div>
 
-                            <!-- 3. NÚT SỬA/XÓA (ĐÃ DI CHUYỂN LÊN GÓC PHẢI) -->
-                            {% if review.user == user or user.is_staff %}
-<div class="review-actions">
-    <a href="{% url 'treks:update_review' review.pk %}" class="btn btn-sm btn-light" title="Sửa">
-        <i class="fas fa-edit"></i>
-    </a>
-    <form action="{% url 'treks:delete_review' review.pk %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-sm btn-light btn-action-delete" title="Xóa">
-            <i class="fas fa-trash"></i>
-        </button>
-    </form>
+    <!-- CỘT BÊN PHẢI: CÁC NÚT LỌC -->
+    <div class="review-filters-box" id="review-filters">
+        <button class="review-filter-btn active" data-filter="all">Tất cả ({{ review_stats.total }})</button>
+        <button class="review-filter-btn" data-filter="5">5 Sao ({{ review_stats.stars.5 }})</button>
+        <button class="review-filter-btn" data-filter="4">4 Sao ({{ review_stats.stars.4 }})</button>
+        <button class="review-filter-btn" data-filter="3">3 Sao ({{ review_stats.stars.3 }})</button>
+        <button class="review-filter-btn" data-filter="2">2 Sao ({{ review_stats.stars.2 }})</button>
+        <button class="review-filter-btn" data-filter="1">1 Sao ({{ review_stats.stars.1 }})</button>
+        <button class="review-filter-btn" data-filter="media">Có Hình Ảnh ({{ review_stats.with_media }})</button>
+    </div>
 </div>
-                            {% endif %}
-                            
-                            <p class="review-content">{{ review.binh_luan|linebreaks }}</p>
-                            
-                            {% if review.anh_danh_gia.all %}
-                            <div class="review-images" data-lightgallery-review-id="{{ review.pk }}">
-                                {% for anh in review.anh_danh_gia.all %}
-                                <a href="{{ anh.hinh_anh.url }}"><img src="{{ anh.hinh_anh.url }}" alt="Đánh giá hình ảnh"></a>
-                                {% endfor %}
+{% endif %}
+        
+<!-- ========================================================== -->
+<!-- === FORM ĐÁNH GIÁ VÀ THÔNG BÁO (HOÀN CHỈNH) === -->
+<!-- ========================================================== -->
+{% if user.is_authenticated %}
+    {% if user_has_reviewed %}
+        <div class="alert alert-success mt-4">
+            <i class="fas fa-check-circle me-2"></i>Cảm ơn bạn đã đánh giá cung đường này.
+        </div>
+    {% else %}
+        <div class="card mt-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #f8fafb 100%);">
+            <div class="card-body">
+                <h5 style="margin-bottom: 1.5rem; color: var(--gray-900);">
+                    <i class="fas fa-pen-fancy me-2" style="color: var(--primary);"></i>
+                    Viết đánh giá của bạn
+                </h5>
+                <form method="post" enctype="multipart/form-data" action="{% url 'treks:cung_duong_detail' slug=trek.slug %}#reviews">
+                    {% csrf_token %}
+                    
+                    <!-- PHẦN CHỌN SAO -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-block">Chấm điểm của bạn:</label>
+                        <div class="rating-input-group">
+                            <!-- Django sẽ render các nút radio ở đây, được style bằng CSS -->
+                            {% for value, text in review_form.diem_danh_gia.field.choices %}
+                                <input type="radio" id="star{{ value }}" name="{{ review_form.diem_danh_gia.name }}" value="{{ value }}" {% if review_form.diem_danh_gia.value == value %}checked{% endif %} required>
+                                <label for="star{{ value }}" title="{{ text }}">★</label>
+                            {% endfor %}
+                        </div>
+                        {% if review_form.diem_danh_gia.errors %}
+                            <div class="text-danger small mt-1">{{ review_form.diem_danh_gia.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- PHẦN BÌNH LUẬN -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{{ review_form.binh_luan.label }}</label>
+                        {{ review_form.binh_luan }}
+                        {% if review_form.binh_luan.errors %}
+                            <div class="text-danger small mt-1">{{ review_form.binh_luan.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- PHẦN UPLOAD HÌNH ẢNH -->
+                    <div class="mb-3">
+                        <label for="id_hinh_anh" class="form-label fw-bold">Thêm hình ảnh (có thể chọn nhiều ảnh)</label>
+                        <input type="file" name="hinh_anh" id="id_hinh_anh" class="form-control" multiple accept="image/*">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Gửi đánh giá
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-warning mt-4">
+        <i class="fas fa-info-circle me-2"></i>
+        <a href="{% url 'accounts:dang-nhap' %}?next={{ request.path }}#reviews" class="fw-bold" style="color: inherit;">Đăng nhập</a> để gửi đánh giá.
+    </div>
+{% endif %}
+        <!-- DANH SÁCH ĐÁNH GIÁ -->
+        <div class="review-list mt-4">
+            {% for review in reviews_page.object_list %}
+            <div class="review-item" 
+                 data-rating="{{ review.diem_danh_gia }}" 
+                 data-has-comment="{% if review.binh_luan|striptags %}true{% else %}false{% endif %}" 
+                 data-has-media="{% if review.anh_danh_gia.all %}true{% else %}false{% endif %}">
+                
+                <div class="review-header">
+                    <img src="{{ review.user.taikhoanhoso.avatar_url }}" class="review-avatar" alt="{{ review.user.username }}">
+                    <div class="review-meta">
+                        <div>
+                            <strong class="review-author">{{ review.user.username|default:"Ẩn danh" }}</strong>
+                            <div class="rating-stars">
+                                {% for i in "12345"|make_list %}<i class="fas fa-star {% if i|add:0 > review.diem_danh_gia %}text-muted{% endif %}"></i>{% endfor %}
                             </div>
-                            {% endif %}
                         </div>
-                        {% empty %}
-                        <div class="empty-state">
-                            <i class="fas fa-comments"></i>
-                            <p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
-                        </div>
+                        <div class="review-date">{{ review.ngay_danh_gia|timesince }} trước</div>
+                    </div>
+                </div>
+
+                {% if review.user == user or user.is_staff %}
+                <div class="review-actions">
+                    <a href="{% url 'treks:update_review' review.pk %}" class="btn btn-sm btn-light" title="Sửa"><i class="fas fa-edit"></i></a>
+                    <form action="{% url 'treks:delete_review' review.pk %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-light btn-action-delete" title="Xóa"><i class="fas fa-trash"></i></button>
+                    </form>
+                </div>
+                {% endif %}
+
+                {% if review.binh_luan|striptags|wordcount > 50 %}
+                    <div class="review-content truncated">{{ review.binh_luan|linebreaks }}</div>
+                    <span class="toggle-comment">Xem thêm</span>
+                {% else %}
+                    <div class="review-content">{{ review.binh_luan|linebreaks }}</div>
+                {% endif %}
+                
+                {% with review_images=review.anh_danh_gia.all %}
+                {% if review_images %}
+                <div class="review-images" data-lightgallery-review-id="{{ review.pk }}">
+                    {% for anh in review_images|slice:":3" %}
+                    <a href="{{ anh.hinh_anh.url }}"><img src="{{ anh.hinh_anh.url }}" alt="Đánh giá hình ảnh"></a>
+                    {% endfor %}
+                    {% if review_images.count > 3 %}
+                        <a href="{{ review_images.3.hinh_anh.url }}" class="review-images-more">
+                            +{{ review_images.count|add:"-3" }}
+                        </a>
+                    {% endif %}
+                    <div style="display:none;">
+                        {% for anh in review_images|slice:"3:" %}
+                            <a href="{{ anh.hinh_anh.url }}"></a>
                         {% endfor %}
                     </div>
                 </div>
+                {% endif %}
+                {% endwith %}
             </div>
+            {% empty %}
+            {% if not user.is_authenticated or user_has_reviewed %}
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+                </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- PHÂN TRANG CHO BÌNH LUẬN -->
+        {% if reviews_page.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if reviews_page.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ reviews_page.previous_page_number }}#reviews">Trước</a></li>
+                {% endif %}
+                {% for i in reviews_page.paginator.page_range %}
+                    <li class="page-item {% if reviews_page.number == i %}active{% endif %}"><a class="page-link" href="?page={{ i }}#reviews">{{ i }}</a></li>
+                {% endfor %}
+                {% if reviews_page.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ reviews_page.next_page_number }}#reviews">Sau</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+    </div>
+</div>
         </main>
 
 
@@ -1402,6 +1606,13 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
+  document.querySelectorAll('.toggle-comment').forEach(button => {
+        button.addEventListener('click', function() {
+            const content = this.previousElementSibling; // Lấy div.review-content
+            content.classList.remove('truncated');
+            this.style.display = 'none'; // Ẩn nút "Xem thêm"
+        });
+    });
 });
 </script>
 {% endblock %}

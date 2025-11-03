@@ -3,6 +3,7 @@
 import os
 from django.db import models
 from django.contrib.auth.models import User
+from django.forms import ValidationError
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
@@ -14,7 +15,12 @@ from django.dispatch import receiver
 # ==============================================================================
 # === HÀM HELPER & LỰA CHỌN (CHOICES)                                      ===
 # ==============================================================================
-
+def validate_image_size(value):
+    filesize = value.size
+    if filesize > 5 * 1024 * 1024: # 5MB
+        raise ValidationError("Kích thước ảnh không được vượt quá 5MB.")
+    else:
+        return value
 def get_trek_media_path(instance, filename):
     """
     Tạo đường dẫn upload động cho media của CungDuongTrek.
@@ -239,9 +245,9 @@ class CungDuongDanhGia(models.Model):
         ]
 
 class CungDuongAnhDanhGia(models.Model):
-    """Lưu trữ hình ảnh do người dùng tải lên trong một đánh giá."""
     danh_gia = models.ForeignKey(CungDuongDanhGia, on_delete=models.CASCADE, related_name='anh_danh_gia')
-    hinh_anh = models.ImageField(upload_to='reviews_media/')
+    # ÁP DỤNG VALIDATOR VÀO ĐÂY
+    hinh_anh = models.ImageField(upload_to='reviews_media/', validators=[validate_image_size])
 
     class Meta:
         db_table = 'cung_duong_anh_danh_gia'

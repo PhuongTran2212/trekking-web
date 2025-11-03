@@ -12,7 +12,7 @@ from django.views.generic import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
-
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # ... (CungDuongListView không đổi) ...
 class CungDuongListView(ListView):
     model = CungDuongTrek
@@ -56,7 +56,20 @@ class CungDuongDetailView(DetailView):
         
         # 1. Lấy tất cả đánh giá và tối ưu hóa truy vấn
         all_reviews = trek.danh_gia.select_related('user', 'user__taikhoanhoso').prefetch_related('anh_danh_gia').order_by('-ngay_danh_gia')
+        # ==========================================================
+        # === LOGIC PHÂN TRANG CHO BÌNH LUẬN ===
+        # ==========================================================
+        paginator = Paginator(all_reviews, 6) # 6 bình luận mỗi trang
+        page_number = self.request.GET.get('page', 1)
+        try:
+            reviews_page = paginator.page(page_number)
+        except PageNotAnInteger:
+            reviews_page = paginator.page(1)
+        except EmptyPage:
+            reviews_page = paginator.page(paginator.num_pages)
         
+        context['reviews_page'] = reviews_page
+        # ==========================================================
         total_reviews = all_reviews.count()
         # Lấy điểm trung bình đã được tính sẵn từ model (do signal cập nhật)
         average_rating = trek.danh_gia_trung_binh
