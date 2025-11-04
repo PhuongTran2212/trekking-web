@@ -1057,6 +1057,45 @@
     .rating-input-group input[type="radio"]:checked ~ label {
         color: var(--accent, #f59e0b);
     }
+        .edit-review-image-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .edit-review-image-item {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+    .edit-review-image-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .delete-image-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 24px;
+        height: 24px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    .edit-review-image-item:hover .delete-image-btn {
+        opacity: 1;
+    }
 </style>
 {% endblock %}
 
@@ -1276,15 +1315,14 @@
                     </div>
                 </div>
 
-                {% if review.user == user or user.is_staff %}
-                <div class="review-actions">
-                    <a href="{% url 'treks:update_review' review.pk %}" class="btn btn-sm btn-light" title="Sửa"><i class="fas fa-edit"></i></a>
-                    <form action="{% url 'treks:delete_review' review.pk %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-light btn-action-delete" title="Xóa"><i class="fas fa-trash"></i></button>
-                    </form>
-                </div>
-                {% endif %}
+                            {% if review.user == user or user.is_staff %}
+                            <div class="review-actions">
+                                <button type="button" class="btn btn-sm btn-light edit-review-btn" data-review-id="{{ review.pk }}" data-bs-toggle="modal" data-bs-target="#editReviewModal" title="Sửa"><i class="fas fa-edit"></i></button>
+                                <form action="{% url 'treks:delete_review' review.pk %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa?');">
+                                    {% csrf_token %}<button type="submit" class="btn btn-sm btn-light btn-action-delete" title="Xóa"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                            {% endif %}
 
                 {% if review.binh_luan|striptags|wordcount > 50 %}
                     <div class="review-content truncated">{{ review.binh_luan|linebreaks }}</div>
@@ -1426,6 +1464,53 @@
             </div>
         </aside>
     </div>
+<div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editReviewModalLabel">Chỉnh sửa Đánh giá</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <!-- THÊM enctype="multipart/form-data" VÀO FORM -->
+            <form id="editReviewForm" method="post" action="{% url 'treks:cung_duong_detail' slug=trek.slug %}#reviews" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="review_id" id="edit-review-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chấm điểm của bạn:</label>
+                        <div class="rating-input-group" id="edit-rating-stars">
+                            <!-- Sao sẽ được tạo bằng JS -->
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-comment" class="form-label fw-bold">Bình luận của bạn:</label>
+                        <textarea name="binh_luan" id="edit-comment" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <!-- KHỐI MỚI ĐỂ HIỂN THỊ VÀ UPLOAD ẢNH -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Hình ảnh hiện tại:</label>
+                        <div id="current-images-container" class="edit-review-image-list">
+                            <!-- Ảnh hiện tại sẽ được JS chèn vào đây -->
+                        </div>
+                        <p id="no-images-text" class="text-muted small" style="display: none;">Không có hình ảnh nào.</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-hinh-anh-moi" class="form-label fw-bold">Thêm hình ảnh mới:</label>
+                        <input type="file" name="hinh_anh_moi" id="edit-hinh-anh-moi" class="form-control" multiple accept="image/*">
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </div>
 
 {{ trek.du_lieu_ban_do_geojson|json_script:"map-data" }}
@@ -1464,7 +1549,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     const routeLayer = L.geoJSON(geojsonData, { 
                         style: { 
-                            color: "#10b981", 
+                            color: "red", 
                             weight: 4, 
                             opacity: 0.8 
                         } 
@@ -1613,6 +1698,134 @@ document.addEventListener('DOMContentLoaded', function () {
             this.style.display = 'none'; // Ẩn nút "Xem thêm"
         });
     });
+    /**
+     * ======================================================================
+     * === SCRIPT MỚI CHO MODAL SỬA ĐÁNH GIÁ ===
+     * ======================================================================
+     */
+    const editReviewModal = document.getElementById('editReviewModal');
+    
+    if (editReviewModal) {
+        // Lấy các element cần thiết từ DOM
+        const editReviewForm = document.getElementById('editReviewForm');
+        const editReviewIdInput = document.getElementById('edit-review-id');
+        const editCommentTextarea = document.getElementById('edit-comment');
+        const editRatingStarsContainer = document.getElementById('edit-rating-stars');
+        const currentImagesContainer = document.getElementById('current-images-container');
+        const noImagesText = document.getElementById('no-images-text');
+        const newImageInput = document.getElementById('edit-hinh-anh-moi');
+
+        // Biến này sẽ lưu danh sách các ID ảnh đang "chờ xóa"
+        // Dùng Set để tự động xử lý việc thêm/xóa các ID trùng lặp
+        let imagesToDelete = new Set();
+        
+        // Sự kiện được kích hoạt ngay khi modal bắt đầu được hiển thị
+        editReviewModal.addEventListener('show.bs.modal', function (event) {
+            
+            // 1. Reset trạng thái của form và danh sách chờ xóa
+            imagesToDelete.clear();
+            currentImagesContainer.innerHTML = '';
+            newImageInput.value = '';
+            noImagesText.style.display = 'none';
+            // Xóa input ẩn của lần submit trước (nếu có)
+            const oldHiddenInput = editReviewForm.querySelector('input[name="images_to_delete"]');
+            if (oldHiddenInput) {
+                oldHiddenInput.remove();
+            }
+
+            // 2. Lấy review ID và gọi API
+            const button = event.relatedTarget;
+            const reviewId = button.dataset.reviewId;
+            const apiUrl = `{% url 'treks:get_review_data' pk=999 %}`.replace('999', reviewId);
+            
+            // 3. Gọi API để lấy dữ liệu chi tiết của đánh giá
+            fetch(apiUrl)
+                .then(response => response.ok ? response.json() : Promise.reject(response))
+                .then(data => {
+                    if (data.error) { alert(data.error); return; }
+
+                    // 4. Điền dữ liệu đã có vào form
+                    editReviewIdInput.value = data.id;
+                    editCommentTextarea.value = data.comment || '';
+
+                    // 4.1. Tạo các nút chọn sao
+                    editRatingStarsContainer.innerHTML = '';
+                    for (let i = 5; i >= 1; i--) {
+                        const isChecked = (i === data.rating) ? 'checked' : '';
+                        const inputHTML = `<input type="radio" id="edit-star${i}" name="diem_danh_gia" value="${i}" ${isChecked} required>`;
+                        const labelHTML = `<label for="edit-star${i}" title="${i} sao">★</label>`;
+                        editRatingStarsContainer.insertAdjacentHTML('beforeend', inputHTML + labelHTML);
+                    }
+
+                    // 4.2. Hiển thị các ảnh hiện có
+                    if (data.images && data.images.length > 0) {
+                        data.images.forEach(img => {
+                            const imageHTML = `
+                                <div class="edit-review-image-item" id="review-image-${img.id}">
+                                    <img src="${img.url}" alt="Review image">
+                                    <button type="button" class="delete-image-btn" data-image-id="${img.id}" title="Đánh dấu để xóa">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `;
+                            currentImagesContainer.insertAdjacentHTML('beforeend', imageHTML);
+                        });
+                    } else {
+                        noImagesText.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi khi lấy dữ liệu đánh giá:", err);
+                    alert("Không thể tải dữ liệu để chỉnh sửa. Vui lòng thử lại.");
+                    bootstrap.Modal.getInstance(editReviewModal).hide();
+                });
+        });
+
+        // 5. Sự kiện "đánh dấu xóa" / "hoàn tác"
+        currentImagesContainer.addEventListener('click', function(event) {
+            const deleteBtn = event.target.closest('.delete-image-btn');
+            if (!deleteBtn) return;
+
+            const imageId = deleteBtn.dataset.imageId;
+            const imageItem = document.getElementById(`review-image-${imageId}`);
+            const imageElement = imageItem.querySelector('img');
+
+            // Kiểm tra xem ảnh đã được đánh dấu xóa chưa
+            if (imageItem.classList.contains('marked-for-deletion')) {
+                // Hoàn tác: Bỏ đánh dấu, hiện lại ảnh, đổi icon
+                imageItem.classList.remove('marked-for-deletion');
+                imageElement.style.opacity = '1';
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                deleteBtn.setAttribute('title', 'Đánh dấu để xóa');
+                imagesToDelete.delete(imageId); // Xóa ID khỏi danh sách chờ xóa
+            } else {
+                // Đánh dấu xóa: Làm mờ ảnh, đổi icon
+                imageItem.classList.add('marked-for-deletion');
+                imageElement.style.opacity = '0.3'; // Làm mờ ảnh
+                deleteBtn.innerHTML = '<i class="fas fa-undo"></i>';
+                deleteBtn.setAttribute('title', 'Hoàn tác');
+                imagesToDelete.add(imageId); // Thêm ID vào danh sách chờ xóa
+            }
+        });
+
+        // 6. Sự kiện khi submit form: Gắn danh sách ID cần xóa vào form
+        editReviewForm.addEventListener('submit', function(event) {
+            // Xóa input ẩn cũ để tránh bị trùng lặp
+            const oldHiddenInput = this.querySelector('input[name="images_to_delete"]');
+            if (oldHiddenInput) {
+                oldHiddenInput.remove();
+            }
+
+            // Nếu có ảnh đang chờ xóa, tạo input ẩn và thêm vào form
+            if (imagesToDelete.size > 0) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'images_to_delete';
+                hiddenInput.value = Array.from(imagesToDelete).join(',');
+                this.appendChild(hiddenInput);
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

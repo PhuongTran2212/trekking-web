@@ -15,5 +15,6 @@ urlpatterns = [
 
     # URL để hiển thị form và xử lý việc cập nhật một đánh giá
     # Ví dụ: /treks/review/123/update/
-    path('review/<int:pk>/update/', user_views.UpdateReviewView.as_view(), name='update_review'),
+    path('api/review/<int:pk>/', user_views.get_review_data, name='get_review_data'),
+    path('api/review-image/<int:pk>/delete/', user_views.delete_review_image, name='delete_review_image'),
 ]
