@@ -4,6 +4,8 @@ from django import forms
 from .models import CungDuongTrek, CungDuongDanhGia, CungDuongVatDungGoiY, TrangThaiDuyet
 from core.models import TinhThanh, DoKho, VatDung
 from tinymce.widgets import TinyMCE
+from django import forms
+from core.models import TinhThanh, DoKho
 
 class CungDuongTrekAdminForm(forms.ModelForm):
     """
@@ -102,15 +104,54 @@ class CungDuongTrekFilterForm(forms.Form):
     )
 
 # Form 2: Dùng cho người dùng lọc cung đường (KHÔNG THAY ĐỔI)
+# treks/forms.py
+
 class CungDuongFilterForm(forms.Form):
-    q = forms.CharField(label="Tìm kiếm", required=False, widget=forms.TextInput(attrs={'placeholder': 'Tên cung đường...'}))
-    tinh_thanh = forms.ModelChoiceField(queryset=TinhThanh.objects.all().order_by('ten'), required=False, label="Tỉnh/Thành", empty_label="Tất cả địa phương")
-    do_kho = forms.ModelChoiceField(queryset=DoKho.objects.all(), required=False, label="Độ khó", empty_label="Tất cả độ khó")
-    min_do_dai = forms.IntegerField(label="Độ dài từ (km)", required=False, min_value=0)
-    max_do_dai = forms.IntegerField(label="Đến (km)", required=False, min_value=0)
+    q = forms.CharField(
+        label='Tìm theo tên',
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'VD: Tà Năng - Phan Dũng...'})
+    )
+    tinh_thanh = forms.ModelChoiceField(
+        label='Tỉnh/Thành phố',
+        queryset=TinhThanh.objects.order_by('ten'),
+        required=False,
+        empty_label="Tất cả tỉnh thành"
+    )
+    do_kho = forms.ModelChoiceField(
+        label='Độ khó',
+        queryset=DoKho.objects.all(),
+        required=False,
+        empty_label="Tất cả độ khó"
+    )
+    
+    min_do_dai = forms.DecimalField(
+        label='Độ dài (km)',
+        required=False,
+        widget=forms.NumberInput(attrs={'placeholder': 'Từ', 'step': '0.1', 'min': '0'})
+    )
+    max_do_dai = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={'placeholder': 'Đến', 'step': '0.1', 'min': '0'})
+    )
+
+    min_danh_gia = forms.DecimalField(
+        label='Đánh giá tối thiểu',
+        required=False,
+        max_digits=2, decimal_places=1,
+        widget=forms.NumberInput(attrs={'placeholder': 'Từ 1.0 đến 5.0', 'step': '0.1', 'min': '1', 'max': '5'})
+    )
+    min_do_cao = forms.IntegerField(
+        label='Tổng độ cao leo (m)',
+        required=False,
+        widget=forms.NumberInput(attrs={'placeholder': 'Tối thiểu (m)', 'min': '0'})
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields: self.fields[field].widget.attrs.update({'class': 'form-control'})
+        # Gán class chung cho các widget để dễ style bằng CSS
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'trek-form-control'})
 
 # Form 3: Dùng cho người dùng gửi đánh giá (CHỈ GIỮ LẠI CÁC TRƯỜNG CẦN VALIDATE)
 class CungDuongDanhGiaForm(forms.ModelForm):

@@ -22,12 +22,53 @@ class CungDuongListView(ListView):
     paginate_by = 9
     
     def get_queryset(self):
-        queryset = CungDuongTrek.objects.filter(trang_thai='DA_DUYET').order_by('-danh_gia_trung_binh', '-ngay_cap_nhat')
+        # === BẮT ĐẦU VỚI QUERYSET GỐC VÀ THÊM ANNOTATION ===
+        # Dùng annotate để đếm số chuyến đi liên quan một cách hiệu quả
+        queryset = CungDuongTrek.objects.filter(trang_thai='DA_DUYET').annotate(
+            # Đếm số chuyến đi liên quan (dựa trên related_name='chuyendi')
+            so_chuyen_di=Count('chuyendi', distinct=True),
+            # Đếm số bình luận có nội dung thực sự (không null và không rỗng)
+            so_binh_luan=Count('danh_gia', filter=Q(danh_gia__binh_luan__isnull=False) & ~Q(danh_gia__binh_luan=''))
+        ).order_by('-danh_gia_trung_binh', '-ngay_cap_nhat')
+
         form = CungDuongFilterForm(self.request.GET)
+        
         if form.is_valid():
-            q = form.cleaned_data.get('q')
-            if q: queryset = queryset.filter(ten__icontains=q)
-            # ... (các filter khác)
+            cleaned_data = form.cleaned_data
+            
+            # Filter theo tên
+            q = cleaned_data.get('q')
+            if q:
+                queryset = queryset.filter(ten__icontains=q)
+            
+            # Filter theo tỉnh thành
+            tinh_thanh = cleaned_data.get('tinh_thanh')
+            if tinh_thanh:
+                queryset = queryset.filter(tinh_thanh=tinh_thanh)
+
+            # Filter theo độ khó
+            do_kho = cleaned_data.get('do_kho')
+            if do_kho:
+                queryset = queryset.filter(do_kho=do_kho)
+
+            # Filter theo độ dài (số thực)
+            min_do_dai = cleaned_data.get('min_do_dai')
+            if min_do_dai is not None:
+                queryset = queryset.filter(do_dai_km__gte=min_do_dai)
+            
+            max_do_dai = cleaned_data.get('max_do_dai')
+            if max_do_dai is not None:
+                queryset = queryset.filter(do_dai_km__lte=max_do_dai)
+
+            # === ÁP DỤNG CÁC BỘ LỌC MỚI ===
+            min_danh_gia = cleaned_data.get('min_danh_gia')
+            if min_danh_gia is not None:
+                queryset = queryset.filter(danh_gia_trung_binh__gte=min_danh_gia)
+
+            min_do_cao = cleaned_data.get('min_do_cao')
+            if min_do_cao is not None:
+                queryset = queryset.filter(tong_do_cao_leo_m__gte=min_do_cao)
+                
         return queryset
         
     def get_context_data(self, **kwargs):
