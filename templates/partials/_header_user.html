@@ -29,10 +29,31 @@
             </li>
 
             <!-- Chuyến đi Dropdown -->
-            <li>
-                <a href="#" class="nav-link">
+            <!-- === DROPDOWN "CHUYẾN ĐI" ĐƠN GIẢN HÓA === -->
+            <li class="dropdown">
+                <a href="" class="nav-link">
                     Chuyến đi
+                    <svg class="chevron-down" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
                 </a>
+                <div class="dropdown-content">
+                    <a href="" class="dropdown-item">
+                        <i class="fas fa-compass" ></i>
+                        <div><strong>Khám phá Chuyến đi</strong></div>
+                    </a>
+
+                    {% if user.is_authenticated %}
+                    <div class="dropdown-divider"></div>
+                    <a href="" class="dropdown-item">
+                        <i class="fas fa-route"></i>
+                        <div><strong>Chuyến đi của tôi</strong></div>
+                    </a>
+                    {% endif %}
+                </div>
             </li>
 
             <!-- Cộng đồng Dropdown -->
