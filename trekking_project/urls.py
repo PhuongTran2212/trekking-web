@@ -19,6 +19,7 @@ urlpatterns = [
     # Dòng này sẽ trỏ đến file treks/urls.py
     path('cung-duong/', include('treks.urls', namespace='treks')),
     path('tinymce/', include('tinymce.urls')),
+    path('chuyen-di/', include('trips.urls')),
 
 ]
 

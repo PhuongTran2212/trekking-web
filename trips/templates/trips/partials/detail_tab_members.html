@@ -1,0 +1,42 @@
+{% comment %}
+    File: templates/trips/partials/detail_tab_members.html
+    Variables: is_organizer, pending_requests, trip
+{% endcomment %}
+{% if is_organizer and pending_requests %}
+<h4 class="mb-3">Yêu cầu đang chờ ({{ pending_requests.count }})</h4>
+<ul class="list-group mb-4">
+    {% for req in pending_requests %}
+    <li class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="member-list-item">
+                <img src="{{ req.user.taikhoanhoso.avatar_url }}" class="member-avatar" alt="Avatar">
+                <div>
+                    <strong>{{ req.user.username }}</strong>
+                    {% if req.ly_do_tham_gia %}<p class="small text-muted mb-0 fst-italic">"{{ req.ly_do_tham_gia }}"</p>{% endif %}
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-success approve-btn" data-member-id="{{ req.id }}"><i class="fas fa-check"></i> Duyệt</button>
+                <button class="btn btn-sm btn-danger reject-btn ms-1" data-member-id="{{ req.id }}"><i class="fas fa-times"></i> Từ chối</button>
+            </div>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+<hr>
+{% endif %}
+
+<h4 class="mb-3">Danh sách thành viên</h4>
+<ul class="list-group">
+    {% for member in trip.thanh_vien.all %}
+        {% if member.trang_thai_tham_gia == 'DA_THAM_GIA' %}
+        <li class="list-group-item member-list-item">
+            <img src="{{ member.user.taikhoanhoso.avatar_url }}" class="member-avatar" alt="Avatar">
+            <div>
+                <strong>{{ member.user.username }}</strong>
+                {% if member.vai_tro == 'TRUONG_DOAN' %}<span class="badge bg-primary ms-2">Trưởng đoàn</span>{% endif %}
+            </div>
+        </li>
+        {% endif %}
+    {% endfor %}
+</ul>

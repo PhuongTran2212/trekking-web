@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+<style>
+    /* TẤT CẢ CSS ĐỀU ĐƯỢC "KHÓA" BÊN TRONG CLASS ".trip-form-page"
+      Sẽ không ảnh hưởng đến Header nữa.
+    */
+
+    /* Bọc các biến trong class cha, thay vì :root */
+    .trip-form-page {
+        --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        --font-heading: 'Montserrat', 'Inter', sans-serif;
+        --trek-primary: #2d5016;
+        --trek-primary-hover: #1f3810;
+        --trek-accent: #7cb342;
+        --trek-bg: #fafafa;
+        --trek-card-bg: #ffffff;
+        --trek-text: #1a1a1a;
+        --trek-text-muted: #666666;
+        --trek-border: #e5e5e5;
+        --trek-shadow: rgba(0, 0, 0, 0.08);
+        --trek-shadow-hover: rgba(0, 0, 0, 0.12);
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        /* Đảm bảo font chính được áp dụng CHỈ trong trang này */
+        font-family: var(--font-primary);
+    }
+
+    /* === PAGE HEADER === */
+    .trip-form-page .page-header {
+        background: white;
+        padding: 2.5rem 0 2rem;
+        margin-bottom: 3rem;
+        border-bottom: 2px solid var(--trek-border);
+    }
+    .trip-form-page .page-header h1 {
+        font-family: var(--font-heading);
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--trek-text);
+        margin-bottom: 0.75rem;
+    }
+    .trip-form-page .page-header p {
+        color: var(--trek-text-muted);
+        font-size: 1rem;
+        margin: 0 auto;
+        max-width: 700px;
+    }
+    .trip-form-page .page-header a { color: var(--trek-primary); text-decoration: none; font-weight: 600; }
+    .trip-form-page .page-header a:hover { color: var(--trek-primary-hover); }
+
+    /* === SECTION HEADERS === */
+    .trip-form-page .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--trek-border);
+    }
+    .trip-form-page .section-number {
+        width: 36px;
+        height: 36px;
+        background: var(--trek-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.125rem;
+        flex-shrink: 0;
+    }
+    .trip-form-page .section-header h2 {
+        font-family: var(--font-heading);
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: var(--trek-text);
+        margin: 0;
+    }
+
+    /* === FORM CONTROLS === */
+    .trip-form-page .form-control, 
+    .trip-form-page .form-select, 
+    .trip-form-page .form-check-input {
+        font-family: var(--font-primary);
+        border: 1px solid var(--trek-border) !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem;
+        transition: var(--transition-smooth);
+    }
+    .trip-form-page .form-control:focus, 
+    .trip-form-page .form-select:focus, 
+    .trip-form-page .form-check-input:focus {
+        border-color: var(--trek-accent) !important;
+        box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1) !important;
+    }
+    .trip-form-page .form-label {
+        font-family: var(--font-primary);
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--trek-text-muted);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    /* Select2 override */
+    .trip-form-page .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 8px !important;
+        border: 1px solid var(--trek-border) !important;
+        font-family: var(--font-primary);
+    }
+    .trip-form-page .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+        border-color: var(--trek-accent) !important;
+        box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1) !important;
+    }
+    .trip-form-page .form-check-label {
+        font-family: var(--font-primary);
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    /* === CARD WRAPPER === */
+    .trip-form-page .card {
+        border: 1px solid var(--trek-border);
+        border-radius: 12px;
+        background: var(--trek-card-bg);
+        box-shadow: var(--trek-shadow);
+        transition: var(--transition-smooth);
+        margin-bottom: 2rem;
+    }
+    .trip-form-page .card:hover { box-shadow: var(--trek-shadow-hover); }
+
+    /* === FORM GRID === */
+    .trip-form-page .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+    }
+    .trip-form-page .form-grid.form-grid-full { grid-template-columns: 1fr; }
+    .trip-form-page .form-grid.form-grid-half { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 768px) {
+        .trip-form-page .form-grid, .trip-form-page .form-grid-half { grid-template-columns: 1fr; }
+    }
+
+    /* Timeline formset */
+    .trip-form-page .timeline-form-row {
+        position: relative;
+        padding: 1.25rem;
+        background: var(--trek-bg);
+        border: 1px solid var(--trek-border);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        display: grid;
+        grid-template-columns: 40px 1fr 40px;
+        gap: 1rem;
+        align-items: flex-start;
+        transition: var(--transition-smooth);
+    }
+    .trip-form-page .timeline-form-row:hover { background: white; border-color: var(--trek-accent); }
+    .trip-form-page .timeline-handle { color: var(--trek-text-muted); cursor: grab; display: flex; align-items: center; justify-content: center; height: 40px; flex-shrink: 0; }
+    .trip-form-page .timeline-handle:active { cursor: grabbing; }
+    .trip-form-page .timeline-fields { display: flex; flex-direction: column; gap: 1rem; }
+    .trip-form-page .timeline-fields > div:first-child { display: grid; grid-template-columns: 120px 150px 1fr; gap: 0.75rem; }
+    @media (max-width: 768px) { .trip-form-page .timeline-fields > div:first-child { grid-template-columns: 1fr; } }
+    .trip-form-page .timeline-fields label { font-weight: 600; font-size: 0.8rem; color: var(--trek-text-muted); margin-bottom: 0.25rem; }
+    .trip-form-page .timeline-fields input, .trip-form-page .timeline-fields textarea { font-size: 0.95rem !important; }
+    .trip-form-page .delete-timeline-btn {
+        width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;
+        background: #fee; border: 1px solid #fca5a5; color: #dc2626;
+        border-radius: 8px; cursor: pointer; transition: var(--transition-smooth); flex-shrink: 0;
+    }
+    .trip-form-page .delete-timeline-btn:hover { background: #fca5a5; color: white; }
+    .trip-form-page #add-form {
+        background: white; border: 2px solid var(--trek-border); color: var(--trek-primary);
+        font-weight: 600; border-radius: 8px; padding: 0.75rem 1.5rem;
+        transition: var(--transition-smooth); margin-top: 1rem;
+    }
+    .trip-form-page #add-form:hover { border-color: var(--trek-primary); background: var(--trek-bg); }
+
+    /* Media */
+    .trip-form-page .media-upload-box {
+        border: 2px dashed var(--trek-border); border-radius: 12px; padding: 2.5rem;
+        background: linear-gradient(135deg, var(--trek-bg) 0%, var(--trek-card-bg) 100%);
+        text-align: center; transition: var(--transition-smooth); cursor: pointer;
+    }
+    .trip-form-page .media-upload-box:hover { border-color: var(--trek-accent); background: var(--trek-bg); }
+    .trip-form-page .media-upload-box label { font-weight: 600; color: var(--trek-primary); font-size: 1.125rem; margin-bottom: 0.5rem; cursor: pointer; }
+    .trip-form-page .media-upload-box p { color: var(--trek-text-muted); font-size: 0.875rem; margin: 0; }
+    .trip-form-page .media-upload-box input[type="file"] { display: none; }
+    .trip-form-page .media-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.25rem; margin-top: 1.5rem; }
+    .trip-form-page .media-item {
+        position: relative; border: 3px solid transparent; border-radius: 10px;
+        overflow: hidden; aspect-ratio: 1/1; cursor: pointer;
+        transition: var(--transition-smooth); background: var(--trek-bg);
+    }
+    .trip-form-page .media-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+    .trip-form-page .media-item:hover img { transform: scale(1.05); }
+    .trip-form-page .media-item.is-cover { border-color: var(--trek-primary); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--trek-primary); }
+    .trip-form-page .media-actions {
+        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6);
+        display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+        opacity: 0; transition: opacity 0.2s ease;
+    }
+    .trip-form-page .media-item:hover .media-actions { opacity: 1; }
+    .trip-form-page .media-actions button {
+        width: 44px; height: 44px; border-radius: 8px; border: none;
+        background: rgba(255, 255, 255, 0.95); cursor: pointer; display: flex;
+        align-items: center; justify-content: center; transition: var(--transition-smooth);
+        font-size: 1.125rem;
+    }
+    .trip-form-page .media-actions button:hover { transform: scale(1.1); background: white; }
+    .trip-form-page .media-actions .set-cover-btn { color: var(--trek-text-muted); }
+    .trip-form-page .media-actions .set-cover-btn.active { color: var(--trek-primary); }
+    .trip-form-page .media-actions .delete-media-btn { color: #dc2626; }
+
+    /* === BUTTONS (KHÓA LẠI) === */
+    .trip-form-page .btn-primary {
+        background: var(--trek-primary); border: none; color: white;
+        font-weight: 600; border-radius: 8px; padding: 0.875rem 1.75rem;
+        transition: var(--transition-smooth); font-family: var(--font-primary);
+    }
+    .trip-form-page .btn-primary:hover {
+        background: var(--trek-primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(45, 80, 22, 0.2);
+    }
+    .trip-form-page .btn-ghost {
+        background: transparent; border: 1px solid var(--trek-border);
+        color: var(--trek-text); font-weight: 600; border-radius: 8px;
+        padding: 0.875rem 1.75rem; transition: var(--trek-shadow);
+        font-family: var(--font-primary);
+    }
+    .trip-form-page .btn-ghost:hover { background: var(--trek-bg); border-color: var(--trek-text-muted); }
+
+    /* === FORM WRAPPER === */
+    .trip-form-page .form-section {
+        background: var(--trek-card-bg);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--trek-border);
+        margin-bottom: 2rem;
+    }
+    .trip-form-page .form-group-wrapper { margin-bottom: 0; }
+    .trip-form-page .error-message {
+        color: #dc2626;
+        font-size: 0.875rem;
+        margin-top: 0.375rem;
+    }
+
+    /* === BUTTONS FOOTER === */
+    .trip-form-page .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--trek-border);
+        justify-content: flex-end;
+        margin-bottom: 6rem; 
+    }
+    .trip-form-page .form-actions .btn { margin: 0; }
+
+    @media (max-width: 768px) {
+        .trip-form-page .form-actions { flex-direction: column; }
+        .trip-form-page .form-grid-half { grid-template-columns: 1fr; }
+        .trip-form-page .page-header h1 { font-size: 1.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trip-form-page">
+
+    <div class="page-header text-center">
+        <h1>{{ page_title }}</h1>
+        <p class="text-muted mb-0">
+            Dựa trên cung đường: 
+            <strong>
+                <a href="{{ object.cung_duong.get_absolute_url|default:cung_duong.get_absolute_url }}">
+                    {{ object.cung_duong.ten|default:cung_duong.ten }}
+                </a>
+            </strong>
+        </p>
+    </div>
+
+    <div class="container my-5" style="max-width: 1000px;">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    <strong>Lỗi:</strong> {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-number">1</div>
+                    <h2>Thông tin chung</h2>
+                </div>
+                
+                <div class="form-grid form-grid-full">
+                    <div>
+                        <label for="{{ form.ten_chuyen_di.id_for_label }}" class="form-label">{{ form.ten_chuyen_di.label }}</label>
+                        {{ form.ten_chuyen_di }}
+                        {% if form.ten_chuyen_di.errors %}<div class="error-message">{{ form.ten_chuyen_di.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.mo_ta.id_for_label }}" class="form-label">{{ form.mo_ta.label }}</label>
+                        {{ form.mo_ta }}
+                    </div>
+                </div>
+
+                <div class="form-grid form-grid-half">
+                    <div>
+                        <label for="{{ form.ngay_bat_dau.id_for_label }}" class="form-label">{{ form.ngay_bat_dau.label }}</label>
+                        {{ form.ngay_bat_dau }}
+                    </div>
+                    <div>
+                        <label for="{{ form.ngay_ket_thuc.id_for_label }}" class="form-label">{{ form.ngay_ket_thuc.label }}</label>
+                        {{ form.ngay_ket_thuc }}
+                        {% if form.ngay_ket_thuc.errors %}<div class="error-message">{{ form.ngay_ket_thuc.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.so_luong_toi_da.id_for_label }}" class="form-label">{{ form.so_luong_toi_da.label }}</label>
+                        {{ form.so_luong_toi_da }}
+                    </div>
+                    <div>
+                        <label for="{{ form.chi_phi_uoc_tinh.id_for_label }}" class="form-label">{{ form.chi_phi_uoc_tinh.label }}</label>
+                        {{ form.chi_phi_uoc_tinh }}
+                    </div>
+                </div>
+
+                <div class="form-grid form-grid-full">
+                    <div>
+                        <label for="{{ form.dia_diem_tap_trung.id_for_label }}" class="form-label">{{ form.dia_diem_tap_trung.label }}</label>
+                        {{ form.dia_diem_tap_trung }}
+                    </div>
+                    <div>
+                        <label for="{{ form.tags.id_for_label }}" class="form-label">{{ form.tags.label }}</label>
+                        {{ form.tags }}
+                    </div>
+                </div>
+                
+                <div class="form-grid form-grid-half">
+                    <div>
+                        <label for="{{ form.che_do_rieng_tu.id_for_label }}" class="form-label">{{ form.che_do_rieng_tu.label }}</label>
+                        {{ form.che_do_rieng_tu }}
+                    </div>
+                    <div class="d-flex align-items-end"> 
+                        <div class="form-check form-switch pb-2">
+                            {{ form.yeu_cau_ly_do }}
+                            <label class="form-check-label" for="{{ form.yeu_cau_ly_do.id_for_label }}">{{ form.yeu_cau_ly_do.label }}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-number">2</div>
+                    <h2>Lịch trình chi tiết</h2>
+                </div>
+                
+                {{ timeline_formset.management_form }}
+                <div id="timeline-forms-container">
+                    {% for form in timeline_formset %}
+                    <div class="timeline-form-row">
+                        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                        <span class="timeline-handle" title="Kéo để sắp xếp"><i class="fas fa-grip-vertical"></i></span>
+                        <div class="timeline-fields">
+                            <div>
+                                <div>
+                                    <label for="{{ form.ngay.id_for_label }}">{{ form.ngay.label }}</label>
+                                    {{ form.ngay }}
+                                </div>
+                                <div>
+                                    <label for="{{ form.thoi_gian.id_for_label }}">{{ form.thoi_gian.label }}</label>
+                                    {{ form.thoi_gian }}
+                                </div>
+                                <div>
+                                    <label for="{{ form.hoat_dong.id_for_label }}">{{ form.hoat_dong.label }}</label>
+                                    {{ form.hoat_dong }}
+                                </div>
+                            </div>
+                            <div>
+                                <label for="{{ form.mo_ta_chi_tiet.id_for_label }}">{{ form.mo_ta_chi_tiet.label }}</label>
+                                {{ form.mo_ta_chi_tiet }}
+                            </div>
+                        </div>
+                        <button type="button" class="delete-timeline-btn" title="Xóa mốc thời gian">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <div style="display: none;">
+                            {% if timeline_formset.can_delete %}{{ form.DELETE }}{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div id="empty-form-template" style="display:none;">
+                    <div class="timeline-form-row">
+                        {% for hidden in timeline_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+                        <span class="timeline-handle"><i class="fas fa-grip-vertical"></i></span>
+                        <div class="timeline-fields">
+                            <div>
+                                <div>
+                                    <label for="{{ timeline_formset.empty_form.ngay.id_for_label }}">{{ timeline_formset.empty_form.ngay.label }}</label>
+                                    {{ timeline_formset.empty_form.ngay }}
+                                </div>
+                                <div>
+                                    <label for="{{ timeline_formset.empty_form.thoi_gian.id_for_label }}">{{ timeline_formset.empty_form.thoi_gian.label }}</label>
+                                    {{ timeline_formset.empty_form.thoi_gian }}
+                                </div>
+                                <div>
+                                    <label for="{{ timeline_formset.empty_form.hoat_dong.id_for_label }}">{{ timeline_formset.empty_form.hoat_dong.label }}</label>
+                                    {{ timeline_formset.empty_form.hoat_dong }}
+                                </div>
+                            </div>
+                            <div>
+                                <label for="{{ timeline_formset.empty_form.mo_ta_chi_tiet.id_for_label }}">{{ timeline_formset.empty_form.mo_ta_chi_tiet.label }}</label>
+                                {{ timeline_formset.empty_form.mo_ta_chi_tiet }}
+                            </div>
+                        </div>
+                        <button type="button" class="delete-timeline-btn"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                
+                <button type="button" id="add-form" class="btn btn-outline">
+                    <i class="fas fa-plus me-1"></i> Thêm mốc thời gian
+                </button>
+            </div>
+            
+            {% if object %}
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-number">3</div>
+                    <h2>Quản lý Media</h2>
+                </div>
+                
+                <div class="media-upload-box" onclick="document.getElementById('trip-media-upload').click()">
+                    <label for="trip-media-upload">
+                        <i class="fas fa-cloud-upload-alt me-2"></i> Tải lên ảnh/video mới
+                    </label>
+                    <p class="small text-muted">Kéo thả hoặc chọn nhiều file cùng lúc</p>
+                    <input type="file" id="trip-media-upload" name="trip_media_files" multiple>
+                </div>
+                
+                <h5 class="mt-4 mb-3" style="font-weight: 600; color: var(--trek-text);">Media hiện có</h5>
+                <div id="media-gallery" class="media-gallery-grid">
+                    {% for media in object.media.all %}
+                    <div class="media-item {% if object.anh_bia_id == media.id %}is-cover{% endif %}" data-media-id="{{ media.id }}">
+                        <img src="{{ media.file.url }}" alt="Trip media">
+                        <div class="media-actions">
+                            <button type="button" class="set-cover-btn {% if object.anh_bia_id == media.id %}active{% endif %}" title="Đặt làm ảnh bìa">
+                                <i class="fas fa-star"></i>
+                            </button>
+                            <button type="button" class="delete-media-btn" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted" style="grid-column: 1/-1;">Chưa có media nào được tải lên cho chuyến đi này.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{{ object.get_absolute_url|default:request.META.HTTP_REFERER|default:'/' }}" class="btn btn-ghost btn-lg">
+                    <i class="fas fa-times me-2"></i> Hủy
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save me-2"></i> Lưu Chuyến đi
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div> {% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Khóa JS vào bên trong .trip-form-page
+        const scope = '.trip-form-page ';
+
+        $(scope + '#id_tags').select2({ theme: 'bootstrap-5' });
+
+        const timelineContainer = $(scope + '#timeline-forms-container');
+        const totalForms = $(scope + '#id_timeline-TOTAL_FORMS');
+
+        $(scope + '#add-form').click(function() {
+            const formIdx = parseInt(totalForms.val());
+            const newFormHtml = $(scope + '#empty-form-template').html().replace(/__prefix__/g, formIdx);
+            timelineContainer.append(newFormHtml);
+            totalForms.val(formIdx + 1);
+        });
+
+        timelineContainer.on('click', '.delete-timeline-btn', function() {
+            if (!confirm('Bạn có chắc muốn xóa mốc thời gian này?')) return;
+            
+            const formRow = $(this).closest('.timeline-form-row');
+            const deleteCheckbox = formRow.find('input[type="checkbox"][id$="-DELETE"]');
+
+            if (deleteCheckbox.length > 0) {
+                deleteCheckbox.prop('checked', true);
+                formRow.slideUp();
+            } else {
+                formRow.remove();
+                totalForms.val(parseInt(totalForms.val()) - 1);
+            }
+        });
+
+        const gallery = $(scope + '#media-gallery');
+        const csrfToken = '{{ csrf_token }}';
+        
+        gallery.on('click', '.set-cover-btn', function() {
+            const mediaItem = $(this).closest('.media-item');
+            const mediaId = mediaItem.data('media-id');
+            const tripId = '{{ object.id }}';
+            if (!tripId) {
+                alert("Vui lòng lưu chuyến đi trước khi quản lý media.");
+                return;
+            }
+            const url = `/trips/${tripId}/media/${mediaId}/set-cover/`;
+            
+            $.post(url, {'csrfmiddlewaretoken': csrfToken}, function(data) {
+                if (data.status === 'success') {
+                    gallery.find('.media-item').removeClass('is-cover');
+                    gallery.find('.set-cover-btn').removeClass('active');
+                    mediaItem.addClass('is-cover');
+                    mediaItem.find('.set-cover-btn').addClass('active');
+                }
+            });
+        });
+
+        gallery.on('click', '.delete-media-btn', function() {
+            if (!confirm('Bạn có chắc muốn xóa vĩnh viễn media này?')) return;
+            
+            const mediaItem = $(this).closest('.media-item');
+            const mediaId = mediaItem.data('media-id');
+            const url = `/trips/media/${mediaId}/delete/`;
+            
+            $.post(url, {'csrfmiddlewaretoken': csrfToken}, function(data) {
+                if (data.status === 'success') {
+                    mediaItem.fadeOut(300, function() { $(this).remove(); });
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

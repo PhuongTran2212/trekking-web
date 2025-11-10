@@ -1,0 +1,18 @@
+<a href="{{ trip.get_absolute_url }}" class="trip-card">
+    <div class="card-img-wrapper">
+        <img src="{{ trip.cover_image_url|default:trip.cung_duong.anh_bia_url }}" class="card-img" alt="{{ trip.ten_chuyen_di }}" loading="lazy">
+        <span class="card-badge">{{ trip.trang_thai.ten }}</span>
+    </div>
+    <div class="card-body">
+        <h5 class="card-title">{{ trip.ten_chuyen_di }}</h5>
+        <p class="card-subtitle text-muted"><i class="fas fa-map-signs me-1"></i> {{ trip.cung_duong.ten }}</p>
+        <div class="card-organizer">
+            <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url }}" class="organizer-avatar" alt="{{ trip.nguoi_to_chuc.username }}">
+            <span>Tổ chức bởi <strong>{{ trip.nguoi_to_chuc.username }}</strong></span>
+        </div>
+    </div>
+    <div class="card-footer text-muted">
+        <span><i class="fas fa-calendar-alt me-1"></i> {{ trip.ngay_bat_dau|date:"d/m/Y" }}</span>
+        <span><i class="fas fa-users me-1"></i> {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}</span>
+    </div>
+</a>

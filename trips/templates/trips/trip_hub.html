@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ page_title|default:"Khám phá Chuyến đi" }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+<style>
+    body { 
+        background-color: var(--gray-50);
+    }
+    .trip-hub-container { 
+        display: grid; 
+        grid-template-columns: 320px 1fr; 
+        gap: var(--spacing-xl);
+        max-width: 1500px; 
+        margin: var(--spacing-xl) auto;
+        padding: 0 var(--spacing-md);
+    }
+    
+    /* Fixed filter-sidebar to prevent overflow */
+    .filter-sidebar { 
+        position: sticky; 
+        top: var(--spacing-xl);
+        height: fit-content;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
+    .filter-card { 
+        background: #fff;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    /* Solid color header - no gradient */
+    .filter-header { 
+        background: #4d7111;
+        color: white; 
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid rgba(255,255,255,0.1); 
+        border-top-left-radius: var(--radius-lg);
+        border-top-right-radius: var(--radius-lg);
+    }
+    .filter-header h3 { 
+        margin: 0; 
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    /* Improved filter-body layout with flexbox */
+    .filter-body { 
+        padding: var(--spacing-lg);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    /* Fix form layout - remove mb-3 margins and use flexbox */
+    .filter-body form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .filter-body .mb-3 {
+        margin-bottom: 0 !important;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    
+    /* Ensure form controls don't overflow */
+    .filter-body input,
+    .filter-body select,
+    .filter-body .select2-container {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    
+    .filter-body .form-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 0;
+    }
+    
+    /* Button spacing in filter */
+    .filter-body .btn {
+        padding: 0.6rem 1rem;
+        font-weight: 500;
+        border-radius: var(--radius-md);
+    }
+    
+    .filter-body .btn-primary {
+        background: #4d7111;
+        border: none;
+        color: white;
+    }
+    
+    .filter-body .btn-primary:hover {
+        background: #3d5a0c;
+    }
+    
+    .filter-body .btn-ghost {
+        background: transparent;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+    }
+    
+    .filter-body .btn-ghost:hover {
+        background: var(--gray-100);
+        color: #212529;
+    }
+    
+    .main-content .header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: var(--spacing-xl);
+        padding-bottom: var(--spacing-md);
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .view-switcher { 
+        display: flex; 
+        gap: var(--spacing-xs);
+        background: var(--gray-100);
+        padding: var(--spacing-xs);
+        border-radius: var(--radius-md);
+    }
+    
+    .view-switcher .btn.btn-ghost {
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        background: transparent;
+        border: none;
+    }
+    
+    .view-switcher .btn.btn-ghost.active {
+        background: white; 
+        color: #4d7111;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    #calendar { 
+        background: white; 
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--gray-200);
+    }
+    
+    /* Select2 styling - no overflow issues */
+    .select2-container--bootstrap-5 .select2-selection {
+        border-radius: var(--radius-md) !important;
+        padding: 0.4rem 0.75rem;
+        min-height: calc(1.5em + 0.9rem + 2px);
+        border: 1px solid #dee2e6 !important;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        background-color: #e8f4d9 !important;
+        border: 1px solid #b8d4a8 !important;
+        color: #4d7111 !important;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+    }
+    
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+    .select2-container--bootstrap-5.select2-container--open .select2-selection {
+        border-color: #4d7111 !important;
+        box-shadow: 0 0 0 3px rgba(77, 113, 17, 0.1) !important;
+    }
+    
+    /* Select2 dropdown z-index and styling */
+    .select2-container--bootstrap-5 .select2-dropdown {
+        z-index: 1050 !important;
+        border: 1px solid #dee2e6;
+        border-top: none;
+    }
+    
+    .trip-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+        gap: 1.5rem; 
+    }
+    
+    .trip-card { 
+        background: #fff; 
+        border-radius: var(--radius-lg); 
+        border: 1px solid var(--gray-200); 
+        text-decoration: none; 
+        color: inherit; 
+        display: flex; 
+        flex-direction: column; 
+        transition: all 0.2s ease-in-out; 
+        box-shadow: var(--shadow-sm); 
+    }
+    
+    .trip-card:hover { 
+        transform: translateY(-5px); 
+        box-shadow: var(--shadow-lg); 
+    }
+    
+    .card-img-wrapper { 
+        height: 180px; 
+        position: relative; 
+    }
+    
+    .card-img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        border-top-left-radius: var(--radius-lg); 
+        border-top-right-radius: var(--radius-lg); 
+    }
+    
+    .card-badge { 
+        position: absolute; 
+        top: 1rem; 
+        right: 1rem; 
+        background: rgba(255,255,255,0.9); 
+        padding: 0.3rem 0.8rem; 
+        border-radius: var(--radius-full); 
+        font-size: 0.8rem; 
+        font-weight: 700; 
+        color: #4d7111; 
+    }
+    
+    .card-body { 
+        padding: var(--spacing-lg); 
+        flex-grow: 1; 
+        display: flex; 
+        flex-direction: column; 
+    }
+    
+    .card-title { 
+        font-size: 1.15rem; 
+        font-weight: 700; 
+        margin-bottom: 0.5rem; 
+        color: #212529; 
+    }
+    
+    .card-subtitle { 
+        font-size: 0.9rem; 
+        color: #6c757d; 
+        margin-bottom: 1rem; 
+        display: -webkit-box; 
+        -webkit-line-clamp: 1; 
+        line-clamp: 1; 
+        -webkit-box-orient: vertical; 
+        overflow: hidden; 
+    }
+    
+    .card-organizer { 
+        display: flex; 
+        align-items: center; 
+        gap: 0.5rem; 
+        font-size: 0.85rem; 
+        color: #495057; 
+    }
+    
+    .organizer-avatar { 
+        width: 28px; 
+        height: 28px; 
+        border-radius: 50%; 
+        object-fit: cover; 
+        border: 2px solid #fff; 
+        box-shadow: 0 0 5px rgba(0,0,0,0.1); 
+    }
+    
+    .card-footer { 
+        border-top: 1px solid var(--gray-100); 
+        padding: var(--spacing-md) var(--spacing-lg); 
+        margin-top: auto; 
+        display: flex; 
+        justify-content: space-between; 
+        font-size: 0.85rem; 
+        color: #6c757d; 
+    }
+    
+    @media (max-width: 992px) { 
+        .trip-hub-container { 
+            grid-template-columns: 1fr; 
+        } 
+        .filter-sidebar { 
+            position: static; 
+            max-height: none;
+        } 
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trip-hub-container">
+    <aside class="filter-sidebar">
+        <div class="filter-card mb-4">
+            <div class="filter-header"><h3 style="color: white;"><i class="fas fa-filter me-2"></i> Lọc Chuyến Đi</h3></div>
+            <div class="filter-body">
+                <form method="get">
+                    <div class="mb-3">
+                        <label for="{{ filter_form.q.id_for_label }}" class="form-label">{{ filter_form.q.label }}</label>
+                        {{ filter_form.q }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ filter_form.cung_duong.id_for_label }}" class="form-label">{{ filter_form.cung_duong.label }}</label>
+                        {{ filter_form.cung_duong }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ filter_form.tinh_thanh.id_for_label }}" class="form-label">{{ filter_form.tinh_thanh.label }}</label>
+                        {{ filter_form.tinh_thanh }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ filter_form.start_date.id_for_label }}" class="form-label">{{ filter_form.start_date.label }}</label>
+                        {{ filter_form.start_date }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ filter_form.tags.id_for_label }}" class="form-label">{{ filter_form.tags.label }}</label>
+                        {{ filter_form.tags }}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Áp dụng</button>
+                    <a href="{% url 'trips:trip_hub' %}" class="btn btn-ghost w-100">Xóa bộ lọc</a>
+                </form>
+            </div>
+        </div>
+        {% if user.is_authenticated %}
+        <div class="filter-card">
+             <div class="filter-body text-center">
+                 <h4>Bạn là người dẫn lối?</h4>
+                 <p class="text-muted small">Hãy tạo chuyến đi của riêng bạn và kết nối với cộng đồng.</p>
+               <a href="{% url 'trips:select_trek_for_trip' %}" class="btn btn-primary w-100"><i class="fas fa-plus me-2"></i> Tạo Chuyến đi Mới</a>
+             </div>
+        </div>
+        {% endif %}
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>{{ page_title }}</h1>
+                <p class="text-muted">Tìm thấy <strong>{{ paginator.count }}</strong> chuyến đi phù hợp.</p>
+            </div>
+            <div class="view-switcher">
+                <button class="btn btn-ghost active" data-view="grid" title="Xem dạng lưới"><i class="fas fa-th-large"></i></button>
+                <button class="btn btn-ghost" data-view="calendar" title="Xem dạng lịch"><i class="fas fa-calendar-alt"></i></button>
+            </div>
+        </div>
+
+        <div id="view-container">
+            <div id="grid-view" class="view-content">
+                <div class="trip-grid">
+                    {% for trip in trips %}
+                        {% include 'trips/partials/trip_card.html' with trip=trip %}
+                    {% empty %}
+                        <div class="alert alert-info" style="grid-column: 1 / -1;">Không tìm thấy chuyến đi nào phù hợp với bộ lọc của bạn.</div>
+                    {% endfor %}
+                </div>
+                {% include 'trips/partials/pagination.html' %}
+            </div>
+            <div id="calendar-view" class="view-content" style="display: none;"><div id='calendar'></div></div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/vi.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#id_cung_duong, #id_tinh_thanh, #id_tags').select2({
+            theme: 'bootstrap-5'
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewSwitcher = document.querySelector('.view-switcher');
+        const gridView = document.getElementById('grid-view');
+        const calendarView = document.getElementById('calendar-view');
+        const calendarEl = document.getElementById('calendar');
+        let calendar;
+
+        function initCalendar() {
+            if (calendar) return;
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'vi',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+                events: "{% url 'trips:trip_events_api' %}",
+                eventDisplay: 'block',
+                eventClick: function(info) {
+                    info.jsEvent.preventDefault();
+                    window.location.href = info.event.url;
+                }
+            });
+            calendar.render();
+        }
+
+        viewSwitcher.addEventListener('click', function(e) {
+            const button = e.target.closest('.btn');
+            if (!button || button.classList.contains('active')) return;
+
+            viewSwitcher.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            const view = button.dataset.view;
+
+            if (view === 'grid') {
+                gridView.style.display = 'block';
+                calendarView.style.display = 'none';
+            } else if (view === 'calendar') {
+                gridView.style.display = 'none';
+                calendarView.style.display = 'block';
+                initCalendar();
+                setTimeout(() => calendar.updateSize(), 10);
+            }
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('view') === 'calendar') {
+            document.querySelector('.btn[data-view="calendar"]').click();
+        }
+    });
+</script>
+{% endblock %}

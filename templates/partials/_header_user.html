@@ -1,5 +1,6 @@
 {% load static %}
 <!-- HEADER TREKKER (Người dùng đã đăng nhập) -->
+
 <nav class="navbar">
     <div class="navbar-container">
         <!-- Logo & Brand -->
@@ -29,9 +30,9 @@
             </li>
 
             <!-- Chuyến đi Dropdown -->
-            <!-- === DROPDOWN "CHUYẾN ĐI" ĐƠN GIẢN HÓA === -->
             <li class="dropdown">
-                <a href="" class="nav-link">
+                <!-- SỬA Ở ĐÂY: Thêm href trỏ đến trang khám phá chung -->
+                <a href="{% url 'trips:trip_hub' %}" class="nav-link">
                     Chuyến đi
                     <svg class="chevron-down" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                         fill="currentColor">
@@ -41,20 +42,25 @@
                     </svg>
                 </a>
                 <div class="dropdown-content">
-                    <a href="" class="dropdown-item">
-                        <i class="fas fa-compass" ></i>
-                        <div><strong>Khám phá Chuyến đi</strong></div>
+                    <a href="{% url 'trips:trip_hub' %}" class="dropdown-item">
+                        <i class="fas fa-compass"></i>
+                        <div>
+                            <strong>Khám phá Chuyến đi</strong>
+                        </div>
                     </a>
 
                     {% if user.is_authenticated %}
                     <div class="dropdown-divider"></div>
-                    <a href="" class="dropdown-item">
-                        <i class="fas fa-route"></i>
-                        <div><strong>Chuyến đi của tôi</strong></div>
+                    <a href="#" class="dropdown-item"> <!-- Thay '#' bằng URL trang "Chuyến đi của tôi" sau này -->
+                        <i class="fas fa-user-circle"></i>
+                        <div>
+                            <strong>Chuyến đi của tôi</strong>
+                        </div>
                     </a>
                     {% endif %}
                 </div>
             </li>
+            <!-- === KẾT THÚC DROPDOWN === -->
 
             <!-- Cộng đồng Dropdown -->
             <li class="dropdown">

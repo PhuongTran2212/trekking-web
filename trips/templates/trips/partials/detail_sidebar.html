@@ -1,0 +1,41 @@
+{% comment %}
+    File: templates/trips/partials/detail_sidebar.html
+    Variables: trip
+{% endcomment %}
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Trưởng đoàn</h5>
+        <div class="d-flex align-items-center">
+            <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url }}" class="rounded-circle me-3" width="50" height="50" alt="Avatar trưởng đoàn">
+            <div>
+                <strong>{{ trip.nguoi_to_chuc.get_full_name|default:trip.nguoi_to_chuc.username }}</strong><br>
+                <a href="#">Xem hồ sơ</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Thông số chuyến đi</h5>
+        <ul class="list-unstyled mb-0">
+            <li class="d-flex justify-content-between"><strong>Trạng thái:</strong> <span class="badge bg-info text-dark">{{ trip.trang_thai.ten }}</span></li>
+            <li class="d-flex justify-content-between"><strong>Thành viên:</strong> <span>{{ trip.so_thanh_vien_tham_gia }} / {{ trip.so_luong_toi_da }}</span></li>
+            <li class="d-flex justify-content-between"><strong>Chi phí (dự kiến):</strong> <span>{{ trip.chi_phi_uoc_tinh|default:"Chưa có" }}</span></li>
+            <li class="d-flex justify-content-between"><strong>Chế độ:</strong> <span>{{ trip.get_che_do_rieng_tu_display }}</span></li>
+        </ul>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title">Thông tin Cung đường</h5>
+        <ul class="list-unstyled mb-0">
+            <li><strong>Tên:</strong> {{ trip.cd_ten }}</li>
+            <li><strong>Độ khó:</strong> {{ trip.cd_do_kho_ten }}</li>
+            <li><strong>Độ dài:</strong> {{ trip.cd_do_dai_km }} km</li>
+            <li><strong>Độ cao leo:</strong> {{ trip.cd_tong_do_cao_leo_m }} m</li>
+        </ul>
+        <a href="{{ trip.cung_duong.get_absolute_url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-3">Xem chi tiết cung đường gốc</a>
+    </div>
+</div>

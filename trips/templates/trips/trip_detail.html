@@ -1,0 +1,441 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ trip.ten_chuyen_di }}{% endblock %}
+
+{% block extra_css %}
+
+<style>
+    .trip-banner-wrap {
+        position: relative;
+        text-align: center;
+        color: white;
+        height: 50vh;
+        background: #333;
+    }
+
+    .trip-banner {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .trip-banner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 20%, transparent 80%);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 2rem;
+    }
+
+    .trip-header-content h1 {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 3rem;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+    }
+
+    .detail-sidebar .card {
+        position: sticky;
+        top: 1.5rem;
+    }
+
+    .member-list-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .member-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        border-left: 2px solid #e9ecef;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -9px;
+        top: 5px;
+        width: 16px;
+        height: 16px;
+        background: #2d5016;
+        border-radius: 50%;
+        border: 3px solid #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="trip-banner-wrap">
+        <img src="{{ trip.cover_image_url }}" class="trip-banner" alt="Banner chuyến đi">
+        <div class="trip-banner-overlay">
+            <div class="trip-header-content text-center">
+                <h1>{{ trip.ten_chuyen_di }}</h1>
+                <p class="lead"><i class="fas fa-calendar-alt me-2"></i>{{ trip.ngay_bat_dau|date:"d/m/Y" }} - {{
+                    trip.ngay_ket_thuc|date:"d/m/Y" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- Cột phụ (Sidebar) -->
+        <div class="col-lg-4 order-lg-2">
+            <div class="detail-sidebar">
+                <!-- PARTIAL: trip_action_button.html -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body text-center" id="main-action-area">
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'accounts:dang-nhap' %}?next={{ request.path }}"
+                            class="btn btn-primary btn-lg w-100">Đăng nhập để tham gia</a>
+                        {% elif is_organizer %}
+                        <a href="{% url 'trips:update_trip' pk=trip.pk slug=trip.slug %}"
+                            class="btn btn-warning btn-lg w-100"><i class="fas fa-edit me-2"></i> Chỉnh sửa Chuyến
+                            đi</a>
+                        {% elif not membership %}
+                        <button id="join-trip-btn" class="btn btn-primary btn-lg w-100" {% if trip.yeu_cau_ly_do %}
+                            data-bs-toggle="modal" data-bs-target="#joinReasonModal" {% endif %}>
+                            Gửi yêu cầu tham gia
+                        </button>
+                        {% elif membership.trang_thai_tham_gia == 'DA_GUI_YEU_CAU' %}
+                        <p class="mb-2"><strong>Yêu cầu đã được gửi.</strong></p>
+                        <button id="cancel-request-btn" class="btn btn-outline-secondary w-100">Hủy yêu cầu</button>
+                        {% elif membership.trang_thai_tham_gia == 'DA_THAM_GIA' %}
+                        <p class="text-success fw-bold"><i class="fas fa-check-circle"></i> Bạn đã là thành viên</p>
+                        <button id="leave-trip-btn" class="btn btn-outline-danger w-100 mt-2">Rời khỏi chuyến
+                            đi</button>
+                        {% elif membership.trang_thai_tham_gia == 'BI_TU_CHOI' %}
+                        <p class="text-danger">Yêu cầu của bạn đã bị từ chối.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- PARTIAL: detail_sidebar.html -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Trưởng đoàn</h5>
+                        <div class="d-flex align-items-center">
+                            <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url }}" class="rounded-circle me-3"
+                                width="50" height="50">
+                            <div>
+                                <strong>{{ trip.nguoi_to_chuc.get_full_name|default:trip.nguoi_to_chuc.username
+                                    }}</strong><br>
+                                <a href="#">Xem hồ sơ</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Thông số chuyến đi</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Trạng thái:</strong> <span class="badge bg-info">{{ trip.trang_thai.ten
+                                    }}</span></li>
+                            <li><strong>Thành viên:</strong> {{ trip.so_thanh_vien_tham_gia }} / {{ trip.so_luong_toi_da
+                                }}</li>
+                            <li><strong>Chi phí (dự kiến):</strong> {{ trip.chi_phi_uoc_tinh|default:"Chưa cập nhật" }}
+                            </li>
+                            <li><strong>Chế độ:</strong> {{ trip.get_che_do_rieng_tu_display }}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Thông tin Cung đường</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Tên:</strong> {{ trip.cd_ten }}</li>
+                            <li><strong>Độ khó:</strong> {{ trip.cd_do_kho_ten }}</li>
+                            <li><strong>Độ dài:</strong> {{ trip.cd_do_dai_km }} km</li>
+                        </ul>
+                        <a href="{{ trip.cung_duong.get_absolute_url }}" class="btn btn-sm btn-outline-primary mt-2">Xem
+                            chi tiết cung đường gốc</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột chính -->
+        <div class="col-lg-8 order-lg-1">
+            <ul class="nav nav-tabs nav-fill mb-3" id="tripTab" role="tablist">
+                <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab"
+                        data-bs-target="#overview-pane">Tổng quan</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#members-pane">Thành viên ({{ trip.so_thanh_vien_tham_gia }})</button></li>
+                {% if is_member or is_organizer %}
+                <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#chat-pane">Thảo luận</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#media-pane">Thư viện</button></li>
+                {% endif %}
+            </ul>
+            <div class="tab-content bg-white p-4 border border-top-0 rounded-bottom">
+                <!-- PARTIAL: detail_tab_overview.html -->
+                <div class="tab-pane fade show active" id="overview-pane">
+                    <h4>Kế hoạch & Mô tả</h4>
+                    <p>{{ trip.mo_ta|safe|linebreaks }}</p>
+                    <hr>
+                    <h4>Lịch trình chi tiết</h4>
+                    {% for item in trip.timeline.all %}
+                    <div class="timeline-item pb-4">
+                        <div class="timeline-marker"></div>
+                        <strong>Ngày {{ item.ngay }} - {{ item.thoi_gian|time:"H:i" }}: {{ item.hoat_dong }}</strong>
+                        {% if item.mo_ta_chi_tiet %}<p class="text-muted small mb-0">{{ item.mo_ta_chi_tiet }}</p>{%
+                        endif %}
+                    </div>
+                    {% empty %}
+                    <p>Trưởng đoàn chưa cập nhật lịch trình chi tiết.</p>
+                    {% endfor %}
+                    <hr>
+                    <h4>Bản đồ</h4>
+                    <div id="trip-map" style="height: 400px; border-radius: 8px;"></div>
+                </div>
+
+                <!-- PARTIAL: detail_tab_members.html -->
+                <div class="tab-pane fade" id="members-pane">
+                    {% if is_organizer and pending_requests %}
+                    <h4>Yêu cầu đang chờ ({{ pending_requests.count }})</h4>
+                    <ul class="list-group mb-4">
+                        {% for req in pending_requests %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="member-list-item">
+                                    <img src="{{ req.user.taikhoanhoso.avatar_url }}" class="member-avatar">
+                                    <div>
+                                        <strong>{{ req.user.username }}</strong>
+                                        {% if req.ly_do_tham_gia %}<p class="small text-muted mb-0">Lý do: "{{
+                                            req.ly_do_tham_gia }}"</p>{% endif %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-success approve-btn"
+                                        data-member-id="{{ req.id }}">Duyệt</button>
+                                    <button class="btn btn-sm btn-danger reject-btn" data-member-id="{{ req.id }}">Từ
+                                        chối</button>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    <h4>Danh sách thành viên</h4>
+                    <ul class="list-group">
+                        {% for member in trip.thanh_vien.all %}
+                        {% if member.trang_thai_tham_gia == 'DA_THAM_GIA' %}
+                        <li class="list-group-item member-list-item">
+                            <img src="{{ member.user.taikhoanhoso.avatar_url }}" class="member-avatar">
+                            <div>
+                                <strong>{{ member.user.username }}</strong>
+                                {% if member.vai_tro == 'TRUONG_DOAN' %}<span class="badge bg-primary">Trưởng
+                                    đoàn</span>{% endif %}
+                            </div>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                {% if is_member or is_organizer %}
+                <div class="tab-pane fade" id="chat-pane">... Giao diện chat ...</div>
+                <div class="tab-pane fade" id="media-pane">... Giao diện gallery media ...</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xin tham gia -->
+<div class="modal fade" id="joinReasonModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lý do tham gia</h5><button type="button" class="btn-close"
+                    data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Trưởng đoàn yêu cầu bạn cho biết lý do muốn tham gia chuyến đi.</p>
+                <textarea id="join-reason" class="form-control" rows="4"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="submit-join-request" class="btn btn-primary">Gửi yêu cầu</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<!-- Leaflet JS cho bản đồ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tripId = '{{ trip.pk }}';
+        const csrfToken = '{{ csrf_token }}';
+        const actionArea = document.getElementById('main-action-area');
+        const membersPane = document.getElementById('members-pane');
+
+        // 🟦 Hàm gửi AJAX chung
+        function sendAjaxRequest(url, method = 'POST', body = null, successCallback = null) {
+            fetch(url, {
+                method: method,
+                headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+                body: body
+            })
+                .then(response => {
+                    if (!response.ok) { return response.json().then(err => Promise.reject(err)); }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        if (successCallback) { successCallback(data); }
+                        else { window.location.reload(); }
+                    }
+                })
+                .catch(error => {
+                    console.error('AJAX Error:', error);
+                    const errorMessage = error.message || 'Đã xảy ra lỗi không mong muốn.';
+                    alert('❌ Lỗi: ' + errorMessage);
+                });
+        }
+
+        // 🟩 Xử lý các nút hành động chính
+        if (actionArea) {
+            actionArea.addEventListener('click', function (e) {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                // === SỬA LỖI 1: GIÁ TRỊ BOOLEAN ===
+                // Django sẽ render ra `true` hoặc `false` (không có dấu ngoặc), là giá trị boolean hợp lệ trong JS.
+                if (target.id === 'join-trip-btn') {
+                    // Kiểm tra xem nút có thuộc tính để mở modal không
+                    const opensModal = target.getAttribute('data-bs-toggle') === 'modal';
+
+                    // Nếu nút không mở modal, nghĩa là có thể gửi yêu cầu trực tiếp
+                    if (!opensModal) {
+                        if (confirm('Bạn có chắc muốn gửi yêu cầu tham gia chuyến đi này?')) {
+                            sendAjaxRequest(`{% url 'trips:join_trip' trip.pk %}`);
+                        }
+                    }
+                    // Nếu nút có mở modal, chúng ta không cần làm gì ở đây cả.
+                    // Bootstrap sẽ tự xử lý việc mở modal, và logic gửi yêu cầu sẽ nằm ở nút "Gửi" trong modal.
+                }
+
+                if (target.id === 'cancel-request-btn') {
+                    if (confirm('Bạn có chắc muốn hủy yêu cầu tham gia?')) {
+                        sendAjaxRequest(`{% url 'trips:cancel_join_request' trip.pk %}`);
+                    }
+                }
+
+                if (target.id === 'leave-trip-btn') {
+                    if (confirm('Bạn có chắc muốn rời khỏi chuyến đi này?')) {
+                        sendAjaxRequest(`{% url 'trips:leave_trip' trip.pk %}`);
+                    }
+                }
+            });
+        }
+
+        // 🟨 Gửi lý do tham gia từ Modal
+        const submitJoinBtn = document.getElementById('submit-join-request');
+        if (submitJoinBtn) {
+            submitJoinBtn.addEventListener('click', function () {
+                const reason = document.getElementById('join-reason').value.trim();
+                const formData = new FormData();
+                formData.append('reason', reason);
+                bootstrap.Modal.getInstance(document.getElementById('joinReasonModal'))?.hide();
+                sendAjaxRequest(`{% url 'trips:join_trip' trip.pk %}`, 'POST', formData);
+            });
+        }
+
+        // 🟧 Duyệt / Từ chối thành viên
+        if (membersPane) {
+            membersPane.addEventListener('click', function (e) {
+                const target = e.target.closest('button');
+                if (!target || !target.dataset.memberId) return;
+
+                const memberId = target.dataset.memberId;
+                if (target.classList.contains('approve-btn')) {
+                    sendAjaxRequest(`{% url 'trips:approve_member' trip.pk 0 %}`.replace('0', memberId));
+                }
+                if (target.classList.contains('reject-btn')) {
+                    sendAjaxRequest(`{% url 'trips:reject_member' trip.pk 0 %}`.replace('0', memberId));
+                }
+            });
+        }
+
+        // 🟥 Khởi tạo bản đồ Leaflet
+        const mapElement = document.getElementById('trip-map');
+        const mapDataJson = JSON.parse(document.getElementById('trip-map-data')?.textContent || 'null');
+
+        // === SỬA LỖI 2: GIÁ TRỊ JSON ===
+        // Dữ liệu JSON `toa_do_tap_trung` được truyền vào từ thẻ script riêng, đảm bảo an toàn.
+        const meetingPointJson = JSON.parse(document.getElementById('trip-meeting-point-data')?.textContent || 'null');
+
+        if (mapElement && mapDataJson && mapDataJson.features) {
+            const overviewTab = document.querySelector('button[data-bs-target="#overview-pane"]');
+            let map; // Khai báo biến map ở ngoài để có thể truy cập sau này
+            let mapInitialized = false;
+
+            function initializeMap() {
+                if (mapInitialized) return;
+
+                map = L.map(mapElement).setView([16.0544, 108.2022], 7);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                const routeLayer = L.geoJSON(mapDataJson, {
+                    style: { color: "#e63946", weight: 4, opacity: 0.8 }
+                }).addTo(map);
+
+                if (meetingPointJson && meetingPointJson.lat && meetingPointJson.lng) {
+                    L.marker([meetingPointJson.lat, meetingPointJson.lng]).addTo(map)
+                        .bindPopup("<b>Điểm tập trung:</b><br>{{ trip.dia_diem_tap_trung|escapejs }}");
+                }
+
+                if (routeLayer.getBounds().isValid()) {
+                    map.fitBounds(routeLayer.getBounds().pad(0.1));
+                }
+
+                mapInitialized = true;
+            }
+
+            // Dùng IntersectionObserver để khởi tạo map khi nó hiển thị
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    initializeMap();
+                    observer.unobserve(mapElement); // Ngừng theo dõi sau khi đã khởi tạo
+                }
+            }, { threshold: 0.1 });
+
+            observer.observe(mapElement);
+
+            // Xử lý khi chuyển tab
+            overviewTab?.addEventListener('shown.bs.tab', function () {
+                if (mapInitialized && map) {
+                    setTimeout(() => map.invalidateSize(), 10);
+                }
+            });
+        }
+    });
+</script>
+
+<!-- CÁC THẺ SCRIPT TRUYỀN DỮ LIỆU AN TOÀN -->
+{{ trip.cd_du_lieu_ban_do_geojson|json_script:"trip-map-data" }}
+{{ trip.toa_do_tap_trung|json_script:"trip-meeting-point-data" }}
+{% endblock %}
