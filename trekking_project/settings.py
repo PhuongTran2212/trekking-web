@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'gamification.apps.GamificationConfig',
     'taggit.apps.TaggitAppConfig',
     'post.apps.PostConfig',
+    'report_admin.apps.ReportAdminConfig',
+    'articles.apps.ArticlesConfig',
 ]
 
 MIDDLEWARE = [

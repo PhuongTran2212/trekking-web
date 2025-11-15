@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ article.tieu_de }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="card shadow-md">
+        <div class="card-body p-5">
+            <div class="mb-4">
+                <p class="badge badge-primary">{{ article.chuyen_muc }}</p>
+                <h1 class="h2 mt-2">{{ article.tieu_de }}</h1>
+                <p class="text-muted">
+                    Bởi <strong>{{ article.tac_gia.username|default:'Vô danh' }}</strong> | Đăng ngày: {{ article.ngay_duyet|date:"d F, Y" }}
+                </p>
+            </div>
+            
+            <hr class="my-4">
+
+            <div class="article-content">
+                {{ article.noi_dung|linebreaks }}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a href="{% url 'knowledge:list' %}" class="btn btn-outline">&larr; Quay lại danh sách</a>
+    </div>
+</div>
+
+<style>
+    .article-content {
+        line-height: 1.8;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}

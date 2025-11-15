@@ -117,8 +117,40 @@
           </a>
         </div>
       </li>
+<!-- Kiến thức Dropdown -->
+      <li class="dropdown">
+        <a href="{% url 'knowledge:list' %}" class="nav-link">
+          Kiến thức
+          <svg
+            class="chevron-down"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </a>
+        <div class="dropdown-content">
+          <a href="{% url 'knowledge:list' %}">
+            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            Xem kho kiến thức
+          </a>
+          <a href="{% url 'knowledge:contribute' %}" class="font-semibold" style="background-color: var(--primary-lightest); color: var(--primary-dark);">
+            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Đóng góp bài viết
+          </a>
+        </div>
+      </li>
 
-      <li><a href="#" class="nav-link">Kiến thức</a></li>
     </ul>
     <!-- Search Bar -->
     <form action="#" method="GET" class="header-search">

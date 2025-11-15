@@ -1,0 +1,51 @@
+{% extends "base.html" %} {# Kế thừa từ template base của người dùng #}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+    <div class="text-center pt-5 mb-4">
+        <h2>{{ page_title }}</h2>
+        <p class="text-muted">Chia sẻ kinh nghiệm và hiểu biết của bạn với cộng đồng trekking.</p>
+    </div>
+
+    <div class="card shadow-md">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ field.errors.as_text }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                
+                <hr class="my-4">
+
+                <div class="d-flex justify-end gap-2">
+                    <a href="{% url 'knowledge:list' %}" class="btn btn-ghost">Hủy</a>
+                    <button type="submit" class="btn btn-primary">Gửi bài viết chờ duyệt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const inputs = form.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            if (!input.classList.contains('btn')) {
+                input.classList.add('form-control');
+            }
+        });
+    });
+</script>
+{% endblock %}

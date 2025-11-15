@@ -1,0 +1,264 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block title %}{{ title }} - TrekViet Admin{% endblock title %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 1.5rem; max-width: 1200px;">
+    <!-- Back Button -->
+    <a href="{% url 'report_admin:report_list' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary-dark); text-decoration: none; font-weight: 500; margin-bottom: 2rem; transition: var(--transition-base);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Quay lại danh sách
+    </a>
+
+    <!-- Main Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 380px; gap: 2rem; margin-bottom: 2rem;">
+        <!-- Main Content -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+            
+            <!-- Report Header Card -->
+            <div class="card" style="padding: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                    <div>
+                        <h1 style="font-size: 2rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.75rem;">
+                            Báo cáo #{{ report.id }}
+                        </h1>
+                        <div style="display: flex; gap: 2rem; font-size: 0.875rem; color: var(--gray-500); flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <span>Báo cáo bởi <strong>@{{ report.nguoi_bao_cao.username }}</strong></span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                                <span>{{ report.ngay_bao_cao|date:"d/m/Y H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Status Badge -->
+                    {% if report.trang_thai == 'Mới' %}
+                        <span class="badge badge-info" style="background-color: #DBEAFE; color: #1E40AF; padding: 0.5rem 1rem; font-size: 0.8rem;">
+                            🆕 Mới
+                        </span>
+                    {% elif report.trang_thai == 'Đang xử lý' %}
+                        <span class="badge" style="background-color: #FEF3C7; color: #92400E; padding: 0.5rem 1rem; font-size: 0.8rem;">
+                            ⏳ Đang xử lý
+                        </span>
+                    {% elif report.trang_thai == 'Đã xử lý' %}
+                        <span class="badge badge-success" style="background-color: #D1FAE5; color: #065F46; padding: 0.5rem 1rem; font-size: 0.8rem;">
+                            ✓ Đã xử lý
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Reported Post Preview -->
+                {% if report.content_object %}
+                    <div style="background-color: var(--gray-50); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 2rem; border-left: 4px solid var(--primary-medium);">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
+                            📄 Bài viết bị báo cáo
+                        </div>
+                        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--gray-900);">
+                            {{ report.content_object.tieu_de }}
+                        </h2>
+                        <p style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 1rem;">
+                            Đăng bởi <strong>@{{ report.content_object.tac_gia.username }}</strong> vào {{ report.content_object.ngay_dang|date:"H:i, d/m/Y" }}
+                        </p>
+                        <div style="color: var(--gray-700); line-height: 1.6; margin-bottom: 1rem;">
+                            {{ report.content_object.noi_dung|linebreaksbr }}
+                        </div>
+                        {% if report.content_object.media.all %}
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                {% for media_item in report.content_object.media.all %}
+                                    <img src="{{ media_item.duong_dan_file.url }}" alt="Media" style="width: 100%; height: 150px; object-fit: cover; border-radius: var(--radius-lg);">
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <!-- Report Reason -->
+                <div>
+                    <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+                        ⚠️ Lý do báo cáo
+                    </h3>
+                    <p style="color: var(--gray-700); line-height: 1.6; background-color: var(--gray-50); padding: 1rem; border-radius: var(--radius-md);">
+                        {{ report.ly_do_bao_cao }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Processing Form -->
+            {% if report.trang_thai != 'Đã xử lý' %}
+                <div class="card" style="padding: 2rem;">
+                    <h2 style="font-size: 1.125rem; font-weight: 600; color: var(--gray-900); margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--gray-200);">
+                        ⚙️ Xử lý báo cáo
+                    </h2>
+
+                    <form method="POST" id="processingForm">
+                        {% csrf_token %}
+
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-900); font-size: 0.875rem;">
+                                Chọn hành động
+                            </label>
+                            <select name="action" class="form-control" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-family: var(--font-primary); font-size: 0.875rem; transition: var(--transition-base);">
+                                <option value="">-- Chọn hành động --</option>
+                                <option value="dismiss">✓ Bác bỏ báo cáo (bài viết không vi phạm)</option>
+                                <option value="hide_and_warn">⚠ Tạm ẩn bài viết và yêu cầu chỉnh sửa</option>
+                                <option value="delete_and_warn">✕ Xóa bài viết</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--gray-900); font-size: 0.875rem;">
+                                Ghi chú xử lý
+                            </label>
+                            <textarea name="ghi_chu_xu_ly" class="form-control" placeholder="Nhập ghi chú về quyết định xử lý..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-family: var(--font-primary); font-size: 0.875rem; min-height: 100px; resize: vertical; transition: var(--transition-base);"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem 1.25rem; background-color: var(--primary-dark); color: white; border: none; border-radius: var(--radius-md); font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: var(--transition-base);" onclick="return confirm('Bạn chắc chắn muốn xử lý báo cáo này?');">
+                            ✓ Xác nhận xử lý
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+            
+            <!-- Report Details Card -->
+            <div class="card" style="padding: 1.5rem;">
+                <h2 style="font-size: 1rem; font-weight: 600; color: var(--gray-900); margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--gray-200);">
+                    📋 Thông tin báo cáo
+                </h2>
+
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--gray-200);">
+                        <span style="color: var(--gray-500); font-weight: 500;">ID báo cáo</span>
+                        <span style="color: var(--gray-900); font-weight: 600;">#{{ report.id }}</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--gray-200);">
+                        <span style="color: var(--gray-500); font-weight: 500;">Trạng thái</span>
+                        <span style="color: var(--gray-900); font-weight: 600;">
+                            {% if report.trang_thai == 'Mới' %}
+                                🆕 Mới
+                            {% elif report.trang_thai == 'Đang xử lý' %}
+                                ⏳ Đang xử lý
+                            {% elif report.trang_thai == 'Đã xử lý' %}
+                                ✓ Đã xử lý
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--gray-200);">
+                        <span style="color: var(--gray-500); font-weight: 500;">Ngày báo cáo</span>
+                        <span style="color: var(--gray-900); font-weight: 600;">{{ report.ngay_bao_cao|date:"d/m/Y" }}</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                        <span style="color: var(--gray-500); font-weight: 500;">Người báo cáo</span>
+                        <span style="color: var(--gray-900); font-weight: 600;">@{{ report.nguoi_bao_cao.username }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Processing Info (if resolved) -->
+            {% if report.trang_thai == 'Đã xử lý' %}
+                <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--primary-lightest), var(--primary-light));">
+                    <h2 style="font-size: 1rem; font-weight: 600; color: var(--primary-darkest); margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(77, 113, 17, 0.2);">
+                        ✓ Kết quả xử lý
+                    </h2>
+
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(77, 113, 17, 0.2);">
+                            <span style="color: var(--primary-darkest); font-weight: 500; opacity: 0.8;">Người xử lý</span>
+                            <span style="color: var(--primary-darkest); font-weight: 600;">@{{ report.nguoi_xu_ly.username }}</span>
+                        </li>
+                        <li style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                            <span style="color: var(--primary-darkest); font-weight: 500; opacity: 0.8;">Ghi chú</span>
+                            <span style="color: var(--primary-darkest); font-weight: 600; text-align: right;">{{ report.ghi_chu_xu_ly|truncatewords:10 }}</span>
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Quick Stats -->
+            <div class="card" style="padding: 1.5rem; background-color: var(--gray-50);">
+                <h2 style="font-size: 1rem; font-weight: 600; color: var(--gray-900); margin-bottom: 1rem;">
+                    📊 Thống kê
+                </h2>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.875rem; color: var(--gray-600);">Loại báo cáo</span>
+                        <span style="font-weight: 600; color: var(--gray-900);">Bài viết</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.875rem; color: var(--gray-600);">Ưu tiên</span>
+                        <span style="font-weight: 600; color: var(--danger);">Cao</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('processingForm').addEventListener('submit', function(e) {
+        const action = document.querySelector('select[name="action"]').value;
+        if (!action) {
+            e.preventDefault();
+            alert('Vui lòng chọn hành động xử lý');
+        }
+    });
+</script>
+
+<style>
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .container {
+            padding: 1.5rem 1rem !important;
+        }
+        
+        div[style*="grid-template-columns: 1fr 380px"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 1.5rem !important;
+        }
+        
+        div[style*="display: flex"][style*="gap: 2rem"] {
+            flex-direction: column !important;
+            gap: 1rem !important;
+        }
+    }
+
+    /* Focus states for accessibility */
+    select.form-control:focus,
+    textarea.form-control:focus {
+        outline: none;
+        border-color: var(--primary-dark);
+        box-shadow: 0 0 0 3px rgba(77, 113, 17, 0.1);
+    }
+
+    button.btn:hover {
+        background-color: var(--primary-darkest) !important;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+</style>
+
+{% endblock content %}

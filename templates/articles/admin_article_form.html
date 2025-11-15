@@ -1,0 +1,51 @@
+{% extends "admin_base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+    <div class="pt-4 mb-4">
+        <h2>{{ page_title }}</h2>
+        <p class="text-muted">Chỉnh sửa nội dung bài viết của người dùng.</p>
+    </div>
+
+    <div class="card shadow-md">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ field.errors.as_text }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                
+                <hr class="my-4">
+
+                <div class="d-flex justify-end gap-2">
+                    <a href="{% url 'articles:admin-list' %}" class="btn btn-ghost">Hủy</a>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const inputs = form.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            if (!input.classList.contains('btn')) {
+                input.classList.add('form-control');
+            }
+        });
+    });
+</script>
+{% endblock %}

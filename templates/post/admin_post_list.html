@@ -1,112 +1,500 @@
-<!-- templates/post/admin_post_list.html (PHIÊN BẢN SỬA LỖI) -->
 {% extends 'admin_base.html' %}
 
 {% block title %}{{ title }} - TrekViet Admin{% endblock title %}
 
 {% block content %}
 <style>
-    /* ... các style khác giữ nguyên ... */
-    .card { background-color: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); }
-    .page-title { font-family: var(--font-heading); font-size: 1.75rem; color: var(--gray-800); }
-    .filter-tabs { display: flex; gap: var(--spacing-sm); border-bottom: 1px solid var(--gray-200); margin-bottom: var(--spacing-lg); }
-    .filter-tab { padding: 0.75rem 1.25rem; border-bottom: 3px solid transparent; font-weight: 600; color: var(--gray-500); transition: all var(--transition-fast); }
-    .filter-tab:hover { color: var(--primary-dark); }
-    .filter-tab.active { color: var(--primary-dark); border-bottom-color: var(--primary-medium); }
-    .table-responsive { overflow-x: auto; }
-    .data-table { width: 100%; border-collapse: collapse; }
-    .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
-    .data-table th { font-size: 0.8rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    .badge { display: inline-block; padding: 0.25rem 0.625rem; font-size: 0.75rem; font-weight: 600; border-radius: var(--radius-full); }
-    .badge-pending { background-color: #FEF3C7; color: #92400E; }
-    .badge-approved { background-color: var(--primary-lightest); color: var(--primary-dark); }
-    .badge-rejected { background-color: #FEE2E2; color: #991B1B; }
+    .container { max-width: 1400px; margin: 0 auto; padding: var(--spacing-lg); }
     
-    .action-btn { background: none; border: 1px solid var(--gray-300); border-radius: var(--radius-md); padding: 0.5rem 0.8rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all var(--transition-fast); margin: 0 0.2rem; }
-    .btn-approve { color: var(--success); border-color: var(--success); }
-    .btn-approve:hover { background-color: var(--success); color: white; }
-    .btn-reject { color: #F59E0B; border-color: #F59E0B; }
-    .btn-reject:hover { background-color: #F59E0B; color: white; }
-    .btn-delete { color: var(--danger); border-color: var(--danger); }
-    .btn-delete:hover { background-color: var(--danger); color: white; }
-
-    /* === SỬA LỖI Ở ĐÂY === */
-    /* Tạo một class riêng cho link tiêu đề */
+    /* Header Section */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+    
+    .page-title {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        color: var(--gray-800);
+        font-weight: 700;
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-card.pending { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat-card.approved { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .stat-card.rejected { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        margin-bottom: var(--spacing-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    /* Main Card */
+    .card {
+        background-color: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    /* Filter Tabs */
+    .filter-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+    
+    .filter-tabs {
+        display: flex;
+        gap: var(--spacing-sm);
+        border-bottom: 2px solid var(--gray-200);
+        flex-wrap: wrap;
+    }
+    
+    .filter-tab {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background: none;
+        font-weight: 600;
+        color: var(--gray-500);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        font-size: 0.95rem;
+    }
+    
+    .filter-tab:hover {
+        color: var(--primary-dark);
+    }
+    
+    .filter-tab.active {
+        color: var(--primary-dark);
+        border-bottom-color: var(--primary-medium);
+    }
+    
+    /* Search Box */
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        background-color: var(--gray-50);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--gray-200);
+    }
+    
+    .search-box input {
+        flex: 1;
+        border: none;
+        background: none;
+        outline: none;
+        font-size: 0.95rem;
+        color: var(--gray-700);
+    }
+    
+    .search-box input::placeholder {
+        color: var(--gray-400);
+    }
+    
+    /* Messages */
+    .alert {
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .alert-success {
+        background-color: #D1FAE5;
+        color: #065F46;
+        border-left: 4px solid #10B981;
+    }
+    
+    .alert-warning {
+        background-color: #FEF3C7;
+        color: #92400E;
+        border-left: 4px solid #F59E0B;
+    }
+    
+    .alert-error {
+        background-color: #FEE2E2;
+        color: #991B1B;
+        border-left: 4px solid #EF4444;
+    }
+    
+    /* Table */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table thead {
+        background-color: var(--gray-50);
+    }
+    
+    .data-table th {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-200);
+    }
+    
+    .data-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--gray-200);
+        vertical-align: middle;
+    }
+    
+    .data-table tbody tr {
+        transition: background-color var(--transition-fast);
+    }
+    
+    .data-table tbody tr:hover {
+        background-color: var(--gray-50);
+    }
+    
+    /* Post Title Link */
     .post-title-link {
         font-weight: 600;
-        color: var(--gray-800);
-        text-decoration: none; /* Bỏ gạch chân mặc định */
-        transition: color var(--transition-fast);
+        color: var(--primary-dark);
+        text-decoration: none;
+        transition: all var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
     }
+    
     .post-title-link:hover {
-        color: var(--primary-dark); /* Đổi màu khi hover */
-        text-decoration: underline; /* Thêm gạch chân khi hover */
+        color: var(--primary-medium);
+        text-decoration: underline;
     }
-    /* ======================= */
+    
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border-radius: var(--radius-full);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-pending {
+        background-color: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .badge-approved {
+        background-color: #D1FAE5;
+        color: #065F46;
+    }
+    
+    .badge-rejected {
+        background-color: #FEE2E2;
+        color: #991B1B;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        background: none;
+        border: 1.5px solid;
+        border-radius: var(--radius-md);
+        padding: 0.5rem 0.9rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all var(--transition-fast);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-approve {
+        color: #10B981;
+        border-color: #10B981;
+    }
+    
+    .btn-approve:hover {
+        background-color: #10B981;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-reject {
+        color: #F59E0B;
+        border-color: #F59E0B;
+    }
+    
+    .btn-reject:hover {
+        background-color: #F59E0B;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+    
+    .btn-delete {
+        color: #EF4444;
+        border-color: #EF4444;
+    }
+    
+    .btn-delete:hover {
+        background-color: #EF4444;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--gray-500);
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .empty-state-text {
+        font-size: 1.1rem;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+        
+        .filter-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-tabs {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .search-box {
+            width: 100%;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-btn {
+            width: 100%;
+        }
+    }
 </style>
 
-<div class="card">
-    <div class="page-header"><h1 class="page-title">{{ title }}</h1></div>
-
-    <!-- Thanh lọc -->
-    <div class="filter-tabs">
-        <a href="{% url 'post_admin:post_list' %}" class="filter-tab {% if not status_filter %}active{% endif %}">Tất cả</a>
-        <a href="?status=cho_duyet" class="filter-tab {% if status_filter == 'cho_duyet' %}active{% endif %}">Chờ duyệt</a>
-        <a href="?status=da_duyet" class="filter-tab {% if status_filter == 'da_duyet' %}active{% endif %}">Đã duyệt</a>
-        <a href="?status=tu_choi" class="filter-tab {% if status_filter == 'tu_choi' %}active{% endif %}">Từ chối</a>
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">{{ title }}</h1>
     </div>
-
-    <!-- Thông báo -->
-    {% if messages %}{% for message in messages %}
-        <div style="margin-bottom: 1rem; padding: 1rem; border-radius: 0.5rem; background-color: {% if message.tags == 'success' %}var(--primary-lightest){% elif message.tags == 'error' %}#fdecec{% else %}#fffbeb{% endif %}; color: {% if message.tags == 'success' %}var(--primary-dark){% elif message.tags == 'error' %}var(--danger){% else %}#b45309{% endif %};">
-            {{ message }}
+    
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Tổng bài viết</div>
+            <div class="stat-value">{{ total_posts }}</div>
         </div>
-    {% endfor %}{% endif %}
-
-    <!-- Bảng dữ liệu -->
-    <div class="table-responsive">
-        <table class="data-table">
-            <thead>
-                <tr><th>Tiêu đề</th><th>Tác giả</th><th>Ngày đăng</th><th>Trạng thái</th><th style="text-align: right;">Hành động</th></tr>
-            </thead>
-            <tbody>
-                {% for post in posts %}
-                <tr>
-                    <td>
-                        <!-- === SỬA LỖI Ở ĐÂY === -->
-                        <a href="{% url 'post_admin:post_detail' post.id %}" class="post-title-link">
-                            {{ post.tieu_de }}
-                        </a>
-                        <!-- ======================= -->
-                    </td>
-                    <td>@{{ post.tac_gia.username }}</td>
-                    <td>{{ post.ngay_dang|date:"d/m/Y H:i" }}</td>
-                    <td>
-                        {% if post.trang_thai == 'cho_duyet' %}<span class="badge badge-pending">Chờ duyệt</span>
-                        {% elif post.trang_thai == 'da_duyet' %}<span class="badge badge-approved">Đã duyệt</span>
-                        {% elif post.trang_thai == 'tu_choi' %}<span class="badge badge-rejected">Từ chối</span>
-                        {% endif %}
-                    </td>
-                    <td style="text-align: right; white-space: nowrap;">
-                        {% if post.trang_thai == 'cho_duyet' %}
-                            <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'da_duyet' %}" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn DUYỆT bài viết này?');">
-                                {% csrf_token %}<button type="submit" class="action-btn btn-approve">Duyệt</button>
-                            </form>
-                            <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'tu_choi' %}" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn TỪ CHỐI bài viết này?');">
-                                {% csrf_token %}<button type="submit" class="action-btn btn-reject">Từ chối</button>
-                            </form>
-                        {% endif %}
-                        <form method="POST" action="{% url 'post_admin:post_delete' post.id %}" style="display: inline;" onsubmit="return confirm('Hành động này không thể hoàn tác! Bạn có chắc chắn muốn XÓA bài viết này?');">
-                            {% csrf_token %}<button type="submit" class="action-btn btn-delete">Xóa</button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" style="text-align: center; padding: 2rem;">Không có bài viết nào.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="stat-card pending">
+            <div class="stat-label">Chờ duyệt</div>
+            <div class="stat-value">{{ pending_count }}</div>
+        </div>
+        <div class="stat-card approved">
+            <div class="stat-label">Đã duyệt</div>
+            <div class="stat-value">{{ approved_count }}</div>
+        </div>
+        <div class="stat-card rejected">
+            <div class="stat-label">Từ chối</div>
+            <div class="stat-value">{{ rejected_count }}</div>
+        </div>
+    </div>
+    
+    <!-- Main Card -->
+    <div class="card">
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-tabs">
+                <a href="{% url 'post_admin:post_list' %}" class="filter-tab {% if not status_filter %}active{% endif %}">Tất cả</a>
+                <a href="?status=cho_duyet" class="filter-tab {% if status_filter == 'cho_duyet' %}active{% endif %}">Chờ duyệt</a>
+                <a href="?status=da_duyet" class="filter-tab {% if status_filter == 'da_duyet' %}active{% endif %}">Đã duyệt</a>
+                <a href="?status=tu_choi" class="filter-tab {% if status_filter == 'tu_choi' %}active{% endif %}">Từ chối</a>
+            </div>
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" placeholder="Tìm kiếm bài viết..." id="searchInput">
+            </div>
+        </div>
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}warning{% endif %}">
+                    <span>{% if message.tags == 'success' %}✓{% elif message.tags == 'error' %}✕{% else %}⚠{% endif %}</span>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Tiêu đề</th>
+                        <th>Tác giả</th>
+                        <th>Ngày đăng</th>
+                        <th>Trạng thái</th>
+                        <th style="text-align: right;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in posts %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'post_admin:post_detail' post.id %}" class="post-title-link">
+                                {{ post.tieu_de|truncatewords:8 }}
+                            </a>
+                        </td>
+                        <td>
+                            <strong>@{{ post.tac_gia.username }}</strong>
+                        </td>
+                        <td>{{ post.ngay_dang|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if post.trang_thai == 'cho_duyet' %}<span class="badge badge-pending">Chờ duyệt</span>
+                            {% elif post.trang_thai == 'da_duyet' %}<span class="badge badge-approved">Đã duyệt</span>
+                            {% elif post.trang_thai == 'tu_choi' %}<span class="badge badge-rejected">Từ chối</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <div class="action-buttons">
+                                {% if post.trang_thai == 'cho_duyet' %}
+                                    <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'da_duyet' %}" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn DUYỆT bài viết này?');">
+                                        {% csrf_token %}<button type="submit" class="action-btn btn-approve">Duyệt</button>
+                                    </form>
+                                    <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'tu_choi' %}" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn TỪ CHỐI bài viết này?');">
+                                        {% csrf_token %}<button type="submit" class="action-btn btn-reject">Từ chối</button>
+                                    </form>
+                                {% endif %}
+                                <form method="POST" action="{% url 'post_admin:post_delete' post.id %}" style="display: inline;" onsubmit="return confirm('Hành động này không thể hoàn tác! Bạn có chắc chắn muốn XÓA bài viết này?');">
+                                    {% csrf_token %}<button type="submit" class="action-btn btn-delete">Xóa</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <div class="empty-state-text">Không có bài viết nào</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.data-table tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    });
+</script>
 {% endblock content %}

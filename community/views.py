@@ -1,3 +1,4 @@
+from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -13,7 +14,9 @@ from .models import (
     CongDongBinhLuan
 )
 from .forms import BaiVietForm, MediaBaiVietForm, BinhLuanForm
-
+from django.contrib.contenttypes.models import ContentType
+from .forms import BaoCaoForm
+from core.models import HeThongBaoCao
 
 def danh_sach_bai_viet(request):
     """Hiển thị danh sách bài viết đã được duyệt"""
@@ -282,3 +285,42 @@ def xoa_binh_luan(request, binh_luan_id):
     messages.success(request, 'Đã xóa bình luận.')
 
     return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet_id)
+
+@login_required
+def bao_cao_bai_viet(request, bai_viet_id):
+    """
+    View để xử lý việc báo cáo một bài viết (CongDongBaiViet).
+    """
+    bai_viet = get_object_or_404(CongDongBaiViet, id=bai_viet_id)
+    
+    # Lấy ContentType của model CongDongBaiViet
+    content_type = ContentType.objects.get_for_model(bai_viet)
+
+    # Kiểm tra xem người dùng đã báo cáo đối tượng này chưa
+    da_bao_cao = HeThongBaoCao.objects.filter(
+        nguoi_bao_cao=request.user,
+        content_type=content_type,
+        object_id=bai_viet.id
+    ).exists()
+
+    if da_bao_cao:
+        messages.warning(request, 'Bạn đã báo cáo bài viết này rồi.')
+        return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet.id)
+
+    if request.method == 'POST':
+        form = BaoCaoForm(request.POST)
+        if form.is_valid():
+            bao_cao = form.save(commit=False)
+            bao_cao.nguoi_bao_cao = request.user
+            # Gán đối tượng bị báo cáo thông qua GenericForeignKey
+            bao_cao.content_object = bai_viet
+            bao_cao.save()
+            messages.success(request, 'Cảm ơn bạn đã gửi báo cáo. Chúng tôi sẽ xem xét sớm nhất có thể.')
+            return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet.id)
+    else:
+        form = BaoCaoForm()
+
+    return render(request, 'community/bao_cao_bai_viet.html', {
+        'form': form,
+        'bai_viet': bai_viet
+    })

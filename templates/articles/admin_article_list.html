@@ -1,0 +1,116 @@
+{% extends "admin_base.html" %} {# Giả định bạn có một file layout chung cho trang admin #}
+
+{% block title %}Quản lý Bài viết Kiến thức{% endblock %}
+
+{% block content %}
+<style>
+    /* Bổ sung CSS cho các badge và nút nếu chưa có trong styles.css */
+    .badge-warning {
+        background-color: var(--warning);
+        color: var(--gray-900);
+    }
+    .badge-success {
+        background-color: var(--success);
+        color: white;
+    }
+    .btn-success {
+        background-color: var(--success);
+        color: white;
+        border-color: var(--success);
+    }
+    .btn-success:hover {
+        background-color: #1a9e4a;
+        border-color: #1a9e4a;
+    }
+    .action-buttons .btn, .action-buttons form {
+        margin: 0 var(--spacing-xs);
+    }
+</style>
+
+<div class="container">
+    <div class="d-flex justify-between align-center mb-4 pt-4">
+        <h2>Danh sách bài hướng dẫn</h2>
+        {# Admin không cần nút "Tạo bài" ở đây vì luồng chính là duyệt bài từ người dùng #}
+    </div>
+
+    {# Hiển thị thông báo (từ messages framework của Django) #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} mb-3">
+                <div class="alert-content">
+                    <p class="alert-message">{{ message }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-md">
+        <div class="card-body p-0">
+            <div class="table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tiêu đề</th>
+                            <th>Tác giả đóng góp</th>
+                            <th>Ngày gửi</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-center" style="width: 280px;">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in articles %}
+                        <tr>
+                            <td><strong>{{ article.tieu_de }}</strong></td>
+                            <td>{{ article.tac_gia.username|default:"Không xác định" }}</td>
+                            <td>{{ article.ngay_dang|date:"d/m/Y, H:i" }}</td>
+                            <td class="text-center">
+                                {% if article.da_duyet %}
+                                    <span class="badge badge-success">Đã duyệt</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Chờ duyệt</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center action-buttons">
+                                {# Nút DUYỆT chỉ hiển thị với bài viết chưa được duyệt #}
+                                {% if not article.da_duyet %}
+                                <form action="{% url 'articles:admin-approve' article.pk %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success">Duyệt bài</button>
+                                </form>
+                                {% endif %}
+                                <a href="{% url 'articles:admin-update' article.pk %}" class="btn btn-sm btn-outline">Sửa</a>
+                                <a href="{% url 'articles:admin-delete' article.pk %}" class="btn btn-sm btn-danger">Xóa</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center p-5">
+                                <p>Hiện chưa có bài viết nào cần duyệt hoặc quản lý.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        {% if is_paginated %}
+        <div class="card-footer d-flex justify-center">
+            <nav class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="pagination-item">Trước</a>
+                {% else %}
+                    <span class="pagination-item disabled">Trước</span>
+                {% endif %}
+                <span class="pagination-item active">Trang {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="pagination-item">Sau</a>
+                {% else %}
+                     <span class="pagination-item disabled">Sau</span>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

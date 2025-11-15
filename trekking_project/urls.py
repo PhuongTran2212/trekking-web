@@ -26,10 +26,14 @@ urlpatterns = [
     path('dashboard/cung-duong/', include('treks.urls', namespace='treks_admin')),
     path("community/", include(("community.urls", "community"), namespace="community")),
     path('dashboard/posts/', include('post.urls', namespace='post_admin')),
+    path('dashboard/reports/', include('report_admin.urls', namespace='report_admin')),   
+    path('dashboard/articles/', include('articles.urls', namespace='articles')), 
+    path('knowledge/', include('knowledge.urls', namespace='knowledge')),
     
 ]
 
 # Chỉ dùng khi DEBUG=True để phục vụ media trong dev
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
     

@@ -1,12 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 from django.utils import timezone
 from core.models import The
 from trips.models import ChuyenDi
 
 class CongDongBaiViet(models.Model):
     """Model cho bài viết trong cộng đồng"""
-    
+    def get_absolute_url(self):
+        """Lấy URL để xem chi tiết bài viết."""
+        return reverse('community:chi-tiet-bai-viet', args=[self.id])
+
+    def get_edit_url(self):
+        """Lấy URL để chỉnh sửa bài viết."""
+        return reverse('community:sua-bai-viet', args=[self.id])
+       
     class TrangThaiBaiViet(models.TextChoices):
         CHO_DUYET = 'cho_duyet', 'Chờ duyệt'
         DA_DUYET = 'da_duyet', 'Đã duyệt'

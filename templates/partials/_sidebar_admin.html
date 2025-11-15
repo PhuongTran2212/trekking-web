@@ -43,17 +43,8 @@
             </a>
         </div>
 
-        <!-- ================================================================= -->
-        <!-- === THAY ĐỔI QUAN TRỌNG NHẤT NẰM Ở ĐÂY === -->
         <!-- Quản lý Cung đường -->
         <div class="nav-item">
-            <!-- 
-              URL pattern: 'admin:<tên_app>_<tên_model>_changelist'
-              - admin: Namespace của trang admin Django
-              - treks: Tên app của bạn (trong apps.py)
-              - cungduongtrek: Tên model CungDuongTrek viết thường
-              - _changelist: Hậu tố để trỏ đến trang danh sách
-            -->
             <a href="{% url 'treks_admin:cung_duong_list' %}" class="nav-link">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
@@ -61,27 +52,28 @@
                 <span class="nav-link-text">Quản lý Cung đường</span>
             </a>
         </div>
-        <!-- ================================================================= -->
-<!-- Quản lý Cộng đồng -->
-<div class="nav-item">
-    <a href="#" class="nav-link submenu-toggle">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
-        </svg>
-        <span class="nav-link-text">Quản lý Cộng đồng</span>
-        <svg class="submenu-toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-    </a>
-    <div class="submenu">
-        <!-- ĐÃ SỬA: URL trỏ đến 'post_admin:post_list' -->
-        <a href="{% url 'post_admin:post_list' %}" class="submenu-item">Bài viết</a>
-        <a href="#" class="submenu-item">Bình luận</a>
-        <a href="#" class="submenu-item">Nội dung bị báo cáo</a>
-    </div>
-</div>
+        
+        <!-- Quản lý Cộng đồng -->
+        <div class="nav-item">
+            <a href="#" class="nav-link submenu-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+                </svg>
+                <span class="nav-link-text">Quản lý Cộng đồng</span>
+                <svg class="submenu-toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </a>
+            <div class="submenu">
+                <a href="{% url 'post_admin:post_list' %}" class="submenu-item">Bài viết</a>
+                <a href="#" class="submenu-item">Bình luận</a>
+                <!-- === ĐÃ SỬA === -->
+                <a href="{% url 'report_admin:report_list' %}" class="submenu-item">Nội dung bị báo cáo</a>
+            </div>
+        </div>
 
         <!-- Quản lý Báo cáo -->
         <div class="nav-item">
-            <a href="#" class="nav-link">
+             <!-- === ĐÃ SỬA === -->
+            <a href="{% url 'report_admin:report_list' %}" class="nav-link">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>
                 </svg>
@@ -99,15 +91,23 @@
             </a>
         </div>
 
-        <!-- Quản lý Kiến thức -->
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                </svg>
-                <span class="nav-link-text">Quản lý Kiến thức</span>
-            </a>
-        </div>
+  <!-- Quản lý Kiến thức -->
+<div class="nav-item">
+    <a href="#" class="nav-link submenu-toggle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+        <span class="nav-link-text">Quản lý Kiến thức</span>
+        <svg class="submenu-toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+    </a>
+    <div class="submenu">
+        <!-- URL này sẽ trỏ đến: /dashboard/articles/list/ -->
+        <a href="{% url 'articles:admin-list' %}" class="submenu-item">Danh sách bài hướng dẫn</a>
+
+        <!-- URL này sẽ trỏ đến: /dashboard/articles/create/ -->
+        <a href="{% url 'articles:admin-create' %}" class="submenu-item">Tạo bài hướng dẫn</a>
+    </div>
+</div>
 
         <!-- Hệ thống -->
         <div class="nav-item">

@@ -26,4 +26,7 @@ urlpatterns = [
     
     # Xóa bình luận
     path('xoa-binh-luan/<int:binh_luan_id>/', views.xoa_binh_luan, name='xoa-binh-luan'),
+
+    # Báo cáo nội dung
+    path('bao-cao-bai-viet/<int:bai_viet_id>/', views.bao_cao_bai_viet, name='bao-cao-bai-viet'),
 ]

@@ -9,14 +9,12 @@
 
 {% block content %}
 <div class="container">
-    <!-- Improved post detail layout with better visual hierarchy -->
     <article class="post-detail">
-        <!-- Post Header Section -->
+        <!-- Post Header Section (KHÔNG THAY ĐỔI) -->
         <header class="post-detail-header">
+            <!-- ... Giữ nguyên toàn bộ nội dung ... -->
             <div class="post-header-content">
                 <h1 class="post-detail-title">{{ bai_viet.tieu_de }}</h1>
-                
-                <!-- Post Meta Information -->
                 <div class="post-detail-meta">
                     <div class="post-author-section">
                         {% if bai_viet.tac_gia.taikhoanhoso.anh_dai_dien %}
@@ -29,74 +27,45 @@
                             <span class="post-date-time">{{ bai_viet.ngay_dang|date:"d/m/Y H:i" }}</span>
                         </div>
                     </div>
-                    
-                    <!-- Status Badge -->
                     <div class="post-status-badge">
                         {% if bai_viet.trang_thai == 'da_duyet' %}
                             <span class="badge badge-success">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Đã duyệt
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Đã duyệt
                             </span>
                         {% elif bai_viet.trang_thai == 'cho_duyet' %}
                             <span class="badge badge-warning">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                                Chờ duyệt
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Chờ duyệt
                             </span>
                         {% else %}
                             <span class="badge badge-danger">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                                </svg>
-                                Từ chối
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Từ chối
                             </span>
                         {% endif %}
                     </div>
                 </div>
-
-                <!-- Trip Info -->
                 {% if bai_viet.chuyen_di %}
                 <div class="post-trip-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    <span>Chuyến đi:</span>
-                    <a href="#_" class="trip-link"><strong>{{ bai_viet.chuyen_di.ten_chuyen_di }}</strong></a>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span>Chuyến đi:</span> <a href="#_" class="trip-link"><strong>{{ bai_viet.chuyen_di.ten_chuyen_di }}</strong></a>
                 </div>
                 {% endif %}
             </div>
         </header>
 
-        <!-- Post Content Section -->
+        <!-- Post Content Section (KHÔNG THAY ĐỔI) -->
         <div class="post-detail-body">
-            <!-- Main Content -->
             <div class="post-content-wrapper">
-                <div class="post-content">
-                    {{ bai_viet.noi_dung|linebreaks }}
-                </div>
-
-                <!-- Tags Section -->
+                <div class="post-content">{{ bai_viet.noi_dung|linebreaks }}</div>
                 {% if bai_viet.tags.all %}
                 <div class="post-tags-section">
                     <h4 class="tags-title">Tags</h4>
                     <div class="post-tags-list">
                         {% for tag in bai_viet.tags.all %}
-                            <a href="{% url 'community:danh-sach-bai-viet' %}?tag={{ tag.slug }}" class="badge badge-primary">
-                                #{{ tag.ten }}
-                            </a>
+                            <a href="{% url 'community:danh-sach-bai-viet' %}?tag={{ tag.slug }}" class="badge badge-primary">#{{ tag.ten }}</a>
                         {% endfor %}
                     </div>
                 </div>
                 {% endif %}
-
-                <!-- Media Gallery Section -->
                 {% if bai_viet.media.all %}
                 <div class="post-media-section">
                     <h4 class="media-title">Hình ảnh & Video</h4>
@@ -106,10 +75,7 @@
                             {% if media.loai_media == 'anh' %}
                                 <img src="{{ media.duong_dan_file.url }}" alt="Hình ảnh bài viết" loading="lazy">
                             {% elif media.loai_media == 'video' %}
-                                <video controls>
-                                    <source src="{{ media.duong_dan_file.url }}" type="video/mp4">
-                                    Trình duyệt của bạn không hỗ trợ video.
-                                </video>
+                                <video controls><source src="{{ media.duong_dan_file.url }}" type="video/mp4">Trình duyệt của bạn không hỗ trợ video.</video>
                             {% endif %}
                         </div>
                         {% endfor %}
@@ -117,138 +83,113 @@
                 </div>
                 {% endif %}
 
-                <!-- Interaction Bar -->
+                <!-- ========================================================= -->
+                <!-- === THAY ĐỔI BẮT ĐẦU TỪ ĐÂY: Interaction Bar === -->
+                <!-- ========================================================= -->
                 <div class="post-interaction-section">
+                    <!-- Nút bình chọn (giữ nguyên) -->
                     <button type="button" id="upvoteBtn" 
                             class="upvote-btn {% if is_approved %}{% if da_upvote %}active{% endif %}{% endif %}" 
                             data-post-id="{{ bai_viet.id }}"
                             {% if not is_approved %}disabled{% endif %}
                             title="{% if is_approved %}Bình chọn cho bài viết này{% else %}Bài viết chưa được duyệt{% endif %}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
                         <span>Bình chọn</span>
                         <span class="upvote-count" id="upvoteCount">{{ bai_viet.luot_binh_chon }}</span>
                     </button>
                     
+                    <!-- Số lượng bình luận (giữ nguyên) -->
                     <div class="comment-count-display">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         <span>{{ bai_viet.so_luong_binh_luan }} bình luận</span>
                     </div>
+
+                    <!-- === THÊM MỚI: NÚT HÀNH ĐỘNG VÀ MENU BÁO CÁO === -->
+                    {% if user.is_authenticated and is_approved %}
+                    <div class="post-actions-menu">
+                        <button class="btn-actions-toggle" aria-label="Tùy chọn khác">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle>
+                            </svg>
+                        </button>
+                        <div class="actions-dropdown">
+                            <a href="{% url 'community:bao-cao-bai-viet' bai_viet.id %}" class="dropdown-item report-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                                Báo cáo bài viết
+                            </a>
+                            <!-- Bạn có thể thêm các hành động khác ở đây, ví dụ: Chia sẻ -->
+                        </div>
+                    </div>
+                    {% endif %}
+                    <!-- ============================================= -->
                 </div>
+                <!-- ========================================================= -->
+                <!-- === THAY ĐỔI KẾT THÚC TẠI ĐÂY === -->
+                <!-- ========================================================= -->
             </div>
         </div>
 
-        <!-- Comments Section -->
+        <!-- Comments Section (KHÔNG THAY ĐỔI) -->
         {% if is_approved %}
         <section class="comments-section">
-            <!-- Comment Form -->
+            <!-- ... Giữ nguyên toàn bộ nội dung ... -->
             <div class="comment-form-container">
                 <h3 class="comments-section-title">Bình luận</h3>
                 {% if user.is_authenticated %}
                 <form method="post" action="{% url 'community:chi-tiet-bai-viet' bai_viet.id %}" class="comment-form">
                     {% csrf_token %}
                     <input type="hidden" name="tra_loi_binh_luan_id" id="tra_loi_binh_luan_id" value="">
-                    <div class="form-group">
-                        {{ form.noi_dung }}
-                    </div>
-                    <!-- Added reply info display and cancel button -->
+                    <div class="form-group">{{ form.noi_dung }}</div>
                     <div id="reply-info" class="reply-info">
                         <span id="reply-info-text"></span>
                         <button type="button" id="cancel-reply-btn" class="btn-cancel-reply">Hủy</button>
                     </div>
                     <div class="comment-form-actions">
                         <button type="submit" class="btn btn-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                             <span id="submit-btn-text">Gửi bình luận</span>
                         </button>
                     </div>
                 </form>
                 {% else %}
                 <div class="alert alert-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                     <p class="mb-0">Vui lòng <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="font-semibold">đăng nhập</a> để bình luận.</p>
                 </div>
                 {% endif %}
             </div>
-
-            <!-- Comments List -->
             {% if binh_luan_goc %}
             <div class="comments-list">
                 <h3 class="comments-list-title">Bình luận ({{ bai_viet.so_luong_binh_luan }})</h3>
                 <div class="comments-container">
                     {% for binh_luan in binh_luan_goc %}
-                    <!-- Updated comment item styling for Facebook-like appearance -->
                     <div class="comment-item" id="comment-{{ binh_luan.id }}">
                         <div class="comment-avatar">
-                            {% if binh_luan.user.taikhoanhoso.anh_dai_dien %}
-                                <img src="{{ binh_luan.user.taikhoanhoso.anh_dai_dien.url }}" alt="{{ binh_luan.user.username }}" class="avatar-img">
-                            {% else %}
-                                <img src="/static/images/default_avatar.png" alt="{{ binh_luan.user.username }}" class="avatar-img">
-                            {% endif %}
+                            {% if binh_luan.user.taikhoanhoso.anh_dai_dien %}<img src="{{ binh_luan.user.taikhoanhoso.anh_dai_dien.url }}" alt="{{ binh_luan.user.username }}" class="avatar-img">{% else %}<img src="/static/images/default_avatar.png" alt="{{ binh_luan.user.username }}" class="avatar-img">{% endif %}
                         </div>
                         <div class="comment-body">
                             <div class="comment-bubble">
-                                <div class="comment-header">
-                                    <strong class="comment-author">{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}</strong>
-                                </div>
-                                <div class="comment-content">
-                                    {{ binh_luan.noi_dung|linebreaks }}
-                                </div>
+                                <div class="comment-header"><strong class="comment-author">{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}</strong></div>
+                                <div class="comment-content">{{ binh_luan.noi_dung|linebreaks }}</div>
                             </div>
                             <div class="comment-meta">
                                 <span class="comment-date">{{ binh_luan.ngay_binh_luan|date:"d/m/Y H:i" }}</span>
-                                {% if user.is_authenticated %}
-                                <button type="button" class="btn-reply" data-comment-id="{{ binh_luan.id }}" data-comment-author="{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}">
-                                    Trả lời
-                                </button>
-                                {% endif %}
-                                {% if user == binh_luan.user or user.is_staff %}
-                                    <form action="{% url 'community:xoa-binh-luan' binh_luan.id %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn-delete">Xóa</button>
-                                    </form>
-                                {% endif %}
+                                {% if user.is_authenticated %}<button type="button" class="btn-reply" data-comment-id="{{ binh_luan.id }}" data-comment-author="{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}">Trả lời</button>{% endif %}
+                                {% if user == binh_luan.user or user.is_staff %}<form action="{% url 'community:xoa-binh-luan' binh_luan.id %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">{% csrf_token %}<button type="submit" class="btn-delete">Xóa</button></form>{% endif %}
                             </div>
-
-                            <!-- Updated reply display with Facebook-style nested comments -->
                             {% if binh_luan.cac_tra_loi.all %}
                             <div class="comment-replies">
                                 {% for tra_loi in binh_luan.cac_tra_loi.all %}
                                 <div class="reply-item" id="comment-{{ tra_loi.id }}">
-                                    <div class="reply-avatar">
-                                        {% if tra_loi.user.taikhoanhoso.anh_dai_dien %}
-                                            <img src="{{ tra_loi.user.taikhoanhoso.anh_dai_dien.url }}" alt="{{ tra_loi.user.username }}" class="avatar-img-sm">
-                                        {% else %}
-                                            <img src="/static/images/default_avatar.png" alt="{{ tra_loi.user.username }}" class="avatar-img-sm">
-                                        {% endif %}
-                                    </div>
+                                    <div class="reply-avatar">{% if tra_loi.user.taikhoanhoso.anh_dai_dien %}<img src="{{ tra_loi.user.taikhoanhoso.anh_dai_dien.url }}" alt="{{ tra_loi.user.username }}" class="avatar-img-sm">{% else %}<img src="/static/images/default_avatar.png" alt="{{ tra_loi.user.username }}" class="avatar-img-sm">{% endif %}</div>
                                     <div class="reply-body">
                                         <div class="reply-bubble">
-                                            <div class="reply-header">
-                                                <strong class="reply-author">{{ tra_loi.user.get_full_name|default:tra_loi.user.username }}</strong>
-                                            </div>
-                                            <div class="reply-content">
-                                                {{ tra_loi.noi_dung|linebreaks }}
-                                            </div>
+                                            <div class="reply-header"><strong class="reply-author">{{ tra_loi.user.get_full_name|default:tra_loi.user.username }}</strong></div>
+                                            <div class="reply-content">{{ tra_loi.noi_dung|linebreaks }}</div>
                                         </div>
                                         <div class="reply-meta">
                                             <span class="reply-date">{{ tra_loi.ngay_binh_luan|date:"d/m/Y H:i" }}</span>
-                                            {% if user == tra_loi.user or user.is_staff %}
-                                                <form action="{% url 'community:xoa-binh-luan' tra_loi.id %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn-delete">Xóa</button>
-                                                </form>
-                                            {% endif %}
+                                            {% if user == tra_loi.user or user.is_staff %}<form action="{% url 'community:xoa-binh-luan' tra_loi.id %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">{% csrf_token %}<button type="submit" class="btn-delete">Xóa</button></form>{% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -264,11 +205,7 @@
         </section>
         {% else %}
         <div class="alert alert-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             <p class="mb-0">Bài viết này đang chờ duyệt. Bình luận sẽ được kích hoạt sau khi bài viết được duyệt.</p>
         </div>
         {% endif %}
@@ -504,6 +441,67 @@
   align-items: center;
   gap: var(--spacing-xs);
 }
+/* === CSS MỚI CHO MENU HÀNH ĐỘNG === */
+.post-interaction-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    position: relative; /* Cần cho dropdown */
+}
+.post-actions-menu {
+    position: relative;
+    margin-left: auto; /* Đẩy menu về phía bên phải */
+}
+.btn-actions-toggle {
+    background: transparent;
+    border: none;
+    color: var(--gray-600);
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    line-height: 1; /* Căn giữa icon */
+    transition: background-color var(--transition-fast);
+}
+.btn-actions-toggle:hover {
+    background-color: var(--gray-100);
+}
+.actions-dropdown {
+    visibility: hidden; /* Ẩn đi mặc định */
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 0.5rem;
+    background-color: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    width: 200px;
+    z-index: 10;
+    padding: 0.5rem 0;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+.post-actions-menu:hover .actions-dropdown,
+.post-actions-menu:focus-within .actions-dropdown {
+    visibility: visible;
+    opacity: 1;
+}
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--gray-700);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background-color var(--transition-fast);
+}
+.dropdown-item:hover {
+    background-color: var(--gray-50);
+    color: var(--gray-900);
+}
+.dropdown-item.report-item { color: var(--destructive); }
+.dropdown-item.report-item:hover { background-color: #FEF2F2; color: #991B1B; }
 </style>
 
 <script>

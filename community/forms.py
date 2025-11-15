@@ -1,6 +1,7 @@
 from django import forms
 from .models import CongDongBaiViet, CongDongBinhLuan, CongDongMediaBaiViet
 from core.models import The
+from core.models import HeThongBaoCao
 # Không cần import ChuyenDi nữa vì đã loại bỏ trường đó
 # from trips.models import ChuyenDi 
 
@@ -90,3 +91,20 @@ class BinhLuanForm(forms.ModelForm):
         if len(noi_dung) < 5:
             raise forms.ValidationError('Bình luận phải có ít nhất 5 ký tự.')
         return noi_dung
+    
+class BaoCaoForm(forms.ModelForm):
+    """Form để người dùng nhập lý do báo cáo."""
+    class Meta:
+        model = HeThongBaoCao
+        fields = ['ly_do_bao_cao']
+        widgets = {
+            'ly_do_bao_cao': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Vui lòng mô tả chi tiết lý do bạn báo cáo nội dung này...',
+                'rows': 5,
+                'required': True,
+            })
+        }
+        labels = {
+            'ly_do_bao_cao': 'Lý do báo cáo'
+        }
