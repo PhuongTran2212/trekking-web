@@ -23,7 +23,10 @@
             <a href="{% url 'knowledge:detail' article.pk %}" class="card trek-card h-100" style="text-decoration: none;">
                 <div class="card-body">
                     <h5 class="card-title">{{ article.tieu_de }}</h5>
-                    <p class="badge badge-primary">{{ article.chuyen_muc }}</p>
+                    <!-- =================================== -->
+                    <!-- === DÒNG ĐÃ SỬA === -->
+                    <p class="badge badge-primary">{{ article.chuyen_muc.ten|default:'Chưa phân loại' }}</p>
+                    <!-- =================================== -->
                     <p class="card-text text-muted mt-2">
                         Đăng bởi <strong>{{ article.tac_gia.username|default:'Vô danh' }}</strong> vào ngày {{ article.ngay_duyet|date:"d/m/Y" }}
                     </p>

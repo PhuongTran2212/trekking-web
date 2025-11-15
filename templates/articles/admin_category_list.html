@@ -1,0 +1,35 @@
+{% extends "admin_base.html" %}
+{% block title %}Quản lý Chuyên mục{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-between align-center mb-4 pt-4">
+        <h2>Quản lý Chuyên mục</h2>
+        <a href="{% url 'articles:admin-category-create' %}" class="btn btn-primary">Thêm chuyên mục mới</a>
+    </div>
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} mb-3"><div class="alert-content"><p class="alert-message">{{ message }}</p></div></div>{% endfor %}{% endif %}
+    <div class="card shadow-md">
+        <div class="card-body p-0">
+            <div class="table">
+                <table>
+                    <thead><tr><th>ID</th><th>Tên chuyên mục</th><th>Slug</th><th class="text-center">Hành động</th></tr></thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>{{ category.id }}</td>
+                            <td><strong>{{ category.ten }}</strong></td>
+                            <td>{{ category.slug }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'articles:admin-category-update' category.pk %}" class="btn btn-sm btn-outline">Sửa</a>
+                                <a href="{% url 'articles:admin-category-delete' category.pk %}" class="btn btn-sm btn-danger">Xóa</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center p-4">Chưa có chuyên mục nào.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

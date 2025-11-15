@@ -8,7 +8,10 @@
     <div class="card shadow-md">
         <div class="card-body p-5">
             <div class="mb-4">
-                <p class="badge badge-primary">{{ article.chuyen_muc }}</p>
+                <!-- =================================== -->
+                <!-- === DÒNG ĐÃ SỬA === -->
+                <p class="badge badge-primary">{{ article.chuyen_muc.ten|default:'Chưa phân loại' }}</p>
+                <!-- =================================== -->
                 <h1 class="h2 mt-2">{{ article.tieu_de }}</h1>
                 <p class="text-muted">
                     Bởi <strong>{{ article.tac_gia.username|default:'Vô danh' }}</strong> | Đăng ngày: {{ article.ngay_duyet|date:"d F, Y" }}
