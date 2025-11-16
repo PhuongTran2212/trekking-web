@@ -1,35 +1,74 @@
 {% extends "admin_base.html" %}
+
 {% block title %}Quản lý Chuyên mục{% endblock %}
+
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-between align-center mb-4 pt-4">
-        <h2>Quản lý Chuyên mục</h2>
-        <a href="{% url 'articles:admin-category-create' %}" class="btn btn-primary">Thêm chuyên mục mới</a>
+    <div class="admin-header">
+        <div>
+            <h1>Quản lý Chuyên mục</h1>
+            <p class="text-muted" style="margin-top: 4px;">Tạo và quản lý các chuyên mục cho bài viết hướng dẫn</p>
+        </div>
+        <a href="{% url 'articles:admin-category-create' %}" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Thêm chuyên mục
+        </a>
     </div>
-    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} mb-3"><div class="alert-content"><p class="alert-message">{{ message }}</p></div></div>{% endfor %}{% endif %}
-    <div class="card shadow-md">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">
+                <p>{{ message }}</p>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card">
         <div class="card-body p-0">
             <div class="table">
                 <table>
-                    <thead><tr><th>ID</th><th>Tên chuyên mục</th><th>Slug</th><th class="text-center">Hành động</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên chuyên mục</th>
+                            <th>Slug</th>
+                            <th style="text-align: center; width: 200px;">Hành động</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for category in categories %}
                         <tr>
                             <td>{{ category.id }}</td>
                             <td><strong>{{ category.ten }}</strong></td>
-                            <td>{{ category.slug }}</td>
-                            <td class="text-center">
+                            <td><code style="background-color: var(--gray-100); padding: 2px 6px; border-radius: 4px;">{{ category.slug }}</code></td>
+                            <td style="text-align: center;">
                                 <a href="{% url 'articles:admin-category-update' category.pk %}" class="btn btn-sm btn-outline">Sửa</a>
                                 <a href="{% url 'articles:admin-category-delete' category.pk %}" class="btn btn-sm btn-danger">Xóa</a>
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="4" class="text-center p-4">Chưa có chuyên mục nào.</td></tr>
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: var(--spacing-lg);">
+                                <p>Chưa có chuyên mục nào. Hãy tạo chuyên mục đầu tiên!</p>
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+
+        {% if is_paginated %}
+        <div class="card-footer d-flex justify-center">
+            <nav class="pagination">
+                {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="pagination-item">← Trước</a>{% else %}<span class="pagination-item disabled">← Trước</span>{% endif %}
+                <span class="pagination-item" style="background-color: transparent; border: none; color: var(--gray-900);">Trang {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="pagination-item">Sau →</a>{% else %}<span class="pagination-item disabled">Sau →</span>{% endif %}
+            </nav>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

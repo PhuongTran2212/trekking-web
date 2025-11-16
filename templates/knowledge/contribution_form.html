@@ -1,51 +1,315 @@
-{% extends "base.html" %} {# Kế thừa từ template base của người dùng #}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đóng góp Kiến Thức - Trekking Leo Núi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}{{ page_title }}{% endblock %}
+        :root {
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --primary-light: #dcfce7;
+            --gray-100: #f8fafc;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-500: #64748b;
+            --gray-900: #0f172a;
+            --danger: #ef4444;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+        }
 
-{% block content %}
-<div class="container" style="max-width: 800px;">
-    <div class="text-center pt-5 mb-4">
-        <h2>{{ page_title }}</h2>
-        <p class="text-muted">Chia sẻ kinh nghiệm và hiểu biết của bạn với cộng đồng trekking.</p>
-    </div>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--gray-100);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
 
-    <div class="card shadow-md">
-        <div class="card-body">
-            <form method="post" novalidate>
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .header-section h1 {
+            font-size: 2rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--gray-900);
+        }
+
+        .header-section p {
+            font-size: 1.1rem;
+            color: var(--gray-500);
+        }
+
+        .form-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: var(--spacing-lg);
+        }
+
+        .form-main {
+            background: white;
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--gray-900);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 200px;
+        }
+
+        .form-help {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-top: var(--spacing-sm);
+        }
+
+        .sidebar-card {
+            background: white;
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-card h3 {
+            font-size: 1rem;
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .sidebar-card ul {
+            list-style: none;
+        }
+
+        .sidebar-card li {
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.9rem;
+        }
+
+        .sidebar-card li:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-card li::before {
+            content: "✓ ";
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: var(--spacing-sm);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: flex-end;
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--gray-500);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-100);
+        }
+
+        .alert {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: 8px;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .invalid-feedback {
+            color: var(--danger);
+            font-size: 0.875rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        @media (max-width: 768px) {
+            .form-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .header-section h1 {
+                font-size: 1.5rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>Đóng góp Kiến Thức</h1>
+            <p>Chia sẻ kinh nghiệm và hiểu biết của bạn với cộng đồng trekking</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">
+                <p>{{ message }}</p>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="form-layout">
+            <form method="post" novalidate class="form-main">
                 {% csrf_token %}
-                
-                {% for field in form %}
-                <div class="form-group">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <div class="invalid-feedback d-block">
-                            {{ field.errors.as_text }}
-                        </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-                
-                <hr class="my-4">
 
-                <div class="d-flex justify-end gap-2">
-                    <a href="{% url 'knowledge:list' %}" class="btn btn-ghost">Hủy</a>
-                    <button type="submit" class="btn btn-primary">Gửi bài viết chờ duyệt</button>
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {% if field.help_text %}
+                            <p class="form-help">{{ field.help_text }}</p>
+                        {% endif %}
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="invalid-feedback">
+                                {{ field.errors.as_text }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <div class="btn-group">
+                    <a href="{% url 'knowledge:list' %}" class="btn btn-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Gửi bài viết chờ duyệt
+                    </button>
                 </div>
             </form>
+
+            <div class="form-sidebar">
+                <div class="sidebar-card">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; color: var(--primary);">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Hướng dẫn
+                    </h3>
+                    <ul>
+                        <li>Viết rõ ràng và chi tiết</li>
+                        <li>Chia sẻ kinh nghiệm thực tế</li>
+                        <li>Cung cấp ví dụ cụ thể</li>
+                        <li>Kiểm tra chính tả</li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; color: var(--primary);">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Quy trình duyệt
+                    </h3>
+                    <ul>
+                        <li>Bài được gửi đi</li>
+                        <li>Admin xem xét</li>
+                        <li>Phê duyệt hoặc sửa</li>
+                        <li>Công bố bài viết</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.querySelector('form');
-        const inputs = form.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => {
-            if (!input.classList.contains('btn')) {
-                input.classList.add('form-control');
-            }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const inputs = form.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (!input.classList.contains('btn')) {
+                    input.classList.add('form-control');
+                }
+            });
         });
-    });
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>

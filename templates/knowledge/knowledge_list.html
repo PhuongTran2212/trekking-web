@@ -1,55 +1,434 @@
-{% extends "base.html" %} {# Kế thừa từ layout chung của người dùng #}
-{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho Kiến Thức Trekking Leo Núi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Kho kiến thức Trekking{% endblock %}
+        :root {
+            --primary: #22c55e;
+            --primary-dark: #16a34a;
+            --primary-light: #dcfce7;
+            --secondary: #64748b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-900: #111827;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+        }
 
-{% block content %}
-<div class="container py-5">
-    <div class="d-flex justify-between align-center mb-4">
-        <div>
-            <h1 class="h2 mb-1">Kho kiến thức Trekking</h1>
-            <p class="text-muted">Khám phá kinh nghiệm, kỹ năng và hướng dẫn từ cộng đồng.</p>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+
+        /* ========== HEADER ========== */
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            padding: var(--spacing-xl) var(--spacing-lg);
+            border-radius: 12px;
+            margin-bottom: var(--spacing-xl);
+            text-align: center;
+        }
+
+        .header-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: var(--spacing-md);
+            font-weight: 700;
+        }
+
+        .header-section p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* ========== SEARCH & FILTER ========== */
+        .search-filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .topic-filter {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .topic-btn {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .topic-btn:hover,
+        .topic-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* ========== ACTION BAR ========== */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            gap: var(--spacing-md);
+        }
+
+        .results-info {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+        }
+
+        /* ========== ARTICLES GRID ========== */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .article-card {
+            background: white;
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--gray-200);
+        }
+
+        .article-card:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(-6px);
+            border-color: var(--primary);
+        }
+
+        .article-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .article-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-official {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .article-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: var(--spacing-md);
+            line-height: 1.4;
+            font-weight: 600;
+        }
+
+        .article-description {
+            font-size: 0.95rem;
+            color: var(--gray-600);
+            margin-bottom: var(--spacing-md);
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .article-meta {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .meta-author {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            background: white;
+            border-radius: 12px;
+            padding: var(--spacing-xl);
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto var(--spacing-lg);
+            color: var(--gray-300);
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--gray-900);
+        }
+
+        .empty-state p {
+            color: var(--gray-500);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        /* ========== BUTTON ========== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+        }
+
+        /* ========== PAGINATION ========== */
+        .pagination {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: center;
+            align-items: center;
+            margin-top: var(--spacing-xl);
+        }
+
+        .pagination-item {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .pagination-item:hover {
+            background: var(--primary-light);
+        }
+
+        .pagination-item.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination-item.disabled {
+            color: var(--gray-300);
+            cursor: not-allowed;
+            border-color: var(--gray-200);
+        }
+
+        @media (max-width: 768px) {
+            .header-section h1 {
+                font-size: 1.75rem;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>Kho Kiến Thức Trekking Leo Núi</h1>
+            <p>Khám phá kinh nghiệm, kỹ năng và hướng dẫn từ cộng đồng trekking</p>
         </div>
-        <a href="{% url 'knowledge:contribute' %}" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>
-            Đóng góp kiến thức
-        </a>
-    </div>
 
-    {% if articles %}
-    <div class="row">
-        {% for article in articles %}
-        <div class="col-12 col-lg-4 mb-4">
-            <a href="{% url 'knowledge:detail' article.pk %}" class="card trek-card h-100" style="text-decoration: none;">
-                <div class="card-body">
-                    <h5 class="card-title">{{ article.tieu_de }}</h5>
-                    <!-- =================================== -->
-                    <!-- === DÒNG ĐÃ SỬA === -->
-                    <p class="badge badge-primary">{{ article.chuyen_muc.ten|default:'Chưa phân loại' }}</p>
-                    <!-- =================================== -->
-                    <p class="card-text text-muted mt-2">
-                        Đăng bởi <strong>{{ article.tac_gia.username|default:'Vô danh' }}</strong> vào ngày {{ article.ngay_duyet|date:"d/m/Y" }}
-                    </p>
+        <!-- === PHẦN TÌM KIẾM VÀ LỌC ĐƯỢC NÂNG CẤP === -->
+        <div class="search-filter-section">
+            <form method="get" action="{% url 'knowledge:list' %}">
+                <div class="search-box">
+                    <!-- name="q" để view có thể nhận diện, value="{{ current_q }}" để giữ lại từ khóa đã tìm -->
+                    <input type="text" name="q" placeholder="Tìm kiếm bài viết..." value="{{ current_q }}">
                 </div>
+                <div class="topic-filter">
+                    <!-- Nút "Tất cả", active khi không có chuyên mục nào được chọn -->
+                    <a href="?q={{ current_q }}" class="topic-btn {% if not current_category %}active{% endif %}">Tất cả</a>
+                    
+                    <!-- === DÙNG VÒNG LẶP ĐỂ TẠO CÁC NÚT CHUYÊN MỤC ĐỘNG === -->
+                    {% for category in all_categories %}
+                    <a href="?category={{ category.slug }}&q={{ current_q }}" 
+                       class="topic-btn {% if current_category == category.slug %}active{% endif %}">
+                        {{ category.ten }}
+                    </a>
+                    {% endfor %}
+                </div>
+                <!-- Bạn có thể thêm một nút submit rõ ràng nếu muốn -->
+                <!-- <button type="submit" class="btn" style="margin-top: 1rem;">Tìm</button> -->
+            </form>
+        </div>
+
+        <div class="action-bar">
+            <div class="results-info">
+                <!-- Sử dụng paginator.count để lấy tổng số kết quả, không chỉ của trang hiện tại -->
+                Tìm thấy <strong>{{ page_obj.paginator.count }}</strong> bài viết
+            </div>
+            <a href="{% url 'knowledge:contribute' %}" class="btn">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                Đóng Góp Bài Viết
             </a>
         </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="card text-center p-5">
-        <p class="h4">Chưa có bài viết nào</p>
-        <p>Hãy là người đầu tiên đóng góp kiến thức cho cộng đồng!</p>
-    </div>
-    {% endif %}
 
-    {% if is_paginated %}
-    <div class="card-footer d-flex justify-center mt-4">
-        <nav class="pagination">
-            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="pagination-item">Trước</a>{% else %}<span class="pagination-item disabled">Trước</span>{% endif %}
-            <span class="pagination-item active">Trang {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="pagination-item">Sau</a>{% else %}<span class="pagination-item disabled">Sau</span>{% endif %}
-        </nav>
+        {% if articles %}
+        <div class="articles-grid">
+            {% for article in articles %}
+            <!-- Sửa href để trỏ đến trang chi tiết bài viết -->
+            <a href="{% url 'knowledge:detail' article.pk %}" class="article-card">
+                <div class="article-header">
+                    <span class="article-badge">{{ article.chuyen_muc.ten|default:"Chưa phân loại" }}</span>
+                    {% if article.tac_gia.is_staff %}
+                        <span class="badge-official">CHÍNH THỨC ✓</span>
+                    {% endif %}
+                </div>
+                <h3>{{ article.tieu_de }}</h3>
+                <!-- Hiển thị một đoạn trích ngắn của nội dung thực tế -->
+                <p class="article-description">{{ article.noi_dung|striptags|truncatewords:25 }}</p>
+                <div class="article-meta">
+                    <div class="meta-author">
+                        <strong>{{ article.tac_gia.username|default:"Vô danh" }}</strong>
+                    </div>
+                    <span>{{ article.ngay_duyet|date:"d/m/Y" }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><!-- ... svg path ... --></svg>
+            <h3>Không tìm thấy bài viết nào</h3>
+            <p>Hiện chưa có bài viết nào phù hợp với tiêu chí của bạn. Hãy thử tìm kiếm hoặc lọc theo chuyên mục khác.</p>
+            <a href="{% url 'knowledge:list' %}" class="btn">Xóa bộ lọc</a>
+        </div>
+        {% endif %}
+
+        <!-- === CẬP NHẬT PAGINATION ĐỂ GIỮ LẠI THAM SỐ LỌC === -->
+        {% if is_paginated %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ current_q }}&category={{ current_category }}" class="pagination-item">← Trước</a>
+            {% else %}
+                <span class="pagination-item disabled">← Trước</span>
+            {% endif %}
+            
+            <span style="padding: 0 var(--spacing-md); color: var(--gray-500); font-weight: 500;">Trang {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ current_q }}&category={{ current_category }}" class="pagination-item">Sau →</a>
+            {% else %}
+                <span class="pagination-item disabled">Sau →</span>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
-</div>
-{% endblock %}
+
+
+    {% comment %} <script>
+        function filterArticles(query) {
+            console.log('Filtering articles with query:', query);
+        }
+
+        function filterByCategory(btn, category) {
+            document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    </script> {% endcomment %}
+</body>
+</html>

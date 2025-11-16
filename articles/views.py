@@ -16,12 +16,38 @@ class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_authenticated and self.request.user.is_staff
 
+# articles/views.py
+
 class AdminArticleListView(AdminRequiredMixin, ListView):
     model = BaiHuongDan
     template_name = 'articles/admin_article_list.html'
     context_object_name = 'articles'
     paginate_by = 10
 
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('tac_gia', 'chuyen_muc')
+        
+        # Lấy tham số từ URL
+        search_query = self.request.GET.get('q', '')
+        category_id = self.request.GET.get('category', '')
+
+        # Lọc theo query tìm kiếm
+        if search_query:
+            queryset = queryset.filter(tieu_de__icontains=search_query)
+        
+        # Lọc theo chuyên mục
+        if category_id:
+            queryset = queryset.filter(chuyen_muc_id=category_id)
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Gửi danh sách chuyên mục và các giá trị filter hiện tại ra template
+        context['categories'] = ChuyenMuc.objects.all()
+        context['current_q'] = self.request.GET.get('q', '')
+        context['current_category'] = self.request.GET.get('category', '')
+        return context
 class AdminArticleUpdateView(AdminRequiredMixin, UpdateView):
     model = BaiHuongDan
     form_class = BaiHuongDanAdminForm

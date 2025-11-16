@@ -18,13 +18,20 @@ class ChuyenMuc(models.Model):
     def __str__(self):
         return self.ten
 
+    # === THAY THẾ PHƯƠNG THỨC NÀY ===
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.ten)
-            for i in itertools.count(1):
-                if not ChuyenMuc.objects.filter(slug=self.slug).exists():
-                    break
-                self.slug = f'{slugify(self.ten)}-{i}'
+        # Luôn tạo slug mới từ 'ten' mỗi khi lưu
+        base_slug = slugify(self.ten)
+        self.slug = base_slug
+        
+        # Vòng lặp để đảm bảo slug là duy nhất
+        for i in itertools.count(1):
+            # Kiểm tra xem có đối tượng nào khác (exclude self.pk) có cùng slug không
+            if not ChuyenMuc.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                break
+            # Nếu có, thêm hậu tố -1, -2, ...
+            self.slug = f'{base_slug}-{i}'
+            
         super().save(*args, **kwargs)
 
 

@@ -1,24 +1,24 @@
 {% extends "admin_base.html" %}
 
-{% block title %}Xác nhận Xóa Bài viết{% endblock %}
+{% block title %}Xác nhận Xóa Bài Viết{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 600px;">
-    <div class="pt-5 mb-4 text-center">
-        <h2>Xác nhận Xóa</h2>
+    <div style="padding: var(--spacing-xl) 0; text-align: center;">
+        <h2 style="margin-bottom: var(--spacing-lg);">Xác nhận Xóa</h2>
     </div>
 
-    <div class="card shadow-md">
+    <div class="card">
         <div class="card-body text-center">
-            <p class="text-lg">Bạn có chắc chắn muốn xóa vĩnh viễn bài viết:</p>
-            <h4 class="text-danger my-3">"{{ object.tieu_de }}"</h4>
-            <p class="text-muted">
-                Tác giả: <strong>{{ object.tac_gia.username|default:"Không xác định" }}</strong>.
+            <p style="font-size: 1.1rem; margin-bottom: var(--spacing-md);">Bạn có chắc chắn muốn xóa vĩnh viễn bài viết:</p>
+            <h3 class="text-danger" style="margin: var(--spacing-lg) 0;">{{ object.tieu_de }}</h3>
+            <p class="text-muted" style="margin-bottom: var(--spacing-lg);">
+                Tác giả: <strong>{{ object.tac_gia.username|default:"Không xác định" }}</strong>
                 <br>
                 Hành động này không thể hoàn tác.
             </p>
             
-            <form method="post" class="mt-4">
+            <form method="post">
                 {% csrf_token %}
                 <div class="d-flex justify-center gap-2">
                     <a href="{% url 'articles:admin-list' %}" class="btn btn-ghost">Hủy bỏ</a>

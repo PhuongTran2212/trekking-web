@@ -5,18 +5,46 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView
 
 # Quan trọng: Import model và form từ các app khác
-from articles.models import BaiHuongDan
+from articles.models import BaiHuongDan, ChuyenMuc
 from .forms import ContributionForm
 
 class KnowledgeListView(ListView):
-    """Hiển thị TẤT CẢ các bài viết ĐÃ ĐƯỢC DUYỆT."""
+    """Hiển thị các bài viết đã duyệt, hỗ trợ tìm kiếm và lọc theo chuyên mục."""
     model = BaiHuongDan
     template_name = 'knowledge/knowledge_list.html'
     context_object_name = 'articles'
     paginate_by = 9
     
-    # Chỉ lấy các bài đã duyệt
-    queryset = BaiHuongDan.objects.filter(da_duyet=True).order_by('-ngay_duyet')
+    def get_queryset(self):
+        # Bắt đầu với queryset cơ bản: chỉ lấy bài đã duyệt
+        queryset = super().get_queryset().filter(da_duyet=True).order_by('-ngay_duyet')
+
+        # Lấy tham số lọc từ URL (ví dụ: ?q=kinh-nghiem&category=co-ban)
+        search_query = self.request.GET.get('q', '').strip()
+        category_slug = self.request.GET.get('category', '')
+
+        # Lọc theo từ khóa tìm kiếm trong tiêu đề
+        if search_query:
+            queryset = queryset.filter(tieu_de__icontains=search_query)
+        
+        # Lọc theo slug của chuyên mục
+        if category_slug:
+            queryset = queryset.filter(chuyen_muc__slug=category_slug)
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        # Lấy context mặc định
+        context = super().get_context_data(**kwargs)
+        
+        # Gửi toàn bộ danh sách chuyên mục ra template để tạo các nút lọc
+        context['all_categories'] = ChuyenMuc.objects.all()
+        
+        # Gửi các tham số lọc hiện tại ra template để giữ trạng thái
+        context['current_category'] = self.request.GET.get('category', '')
+        context['current_q'] = self.request.GET.get('q', '')
+        
+        return context
 
 class KnowledgeDetailView(DetailView):
     """Hiển thị chi tiết một bài viết ĐÃ ĐƯỢC DUYỆT."""

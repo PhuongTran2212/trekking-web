@@ -29,6 +29,7 @@ urlpatterns = [
     path('dashboard/reports/', include('report_admin.urls', namespace='report_admin')),   
     path('dashboard/articles/', include('articles.urls', namespace='articles')), 
     path('knowledge/', include('knowledge.urls', namespace='knowledge')),
+    path('tinymce/', include('tinymce.urls')),
     
 ]
 
