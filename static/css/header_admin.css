@@ -62,10 +62,7 @@
     color: var(--gray-400, #A1A1AA); 
 }
 
-/* Nút "Chế độ User" (nếu có) */
-.header .btn-secondary {
-    /* ... (style cho nút này nếu bạn muốn thêm lại) ... */
-}
+
 
 /* Dropdown của User Menu trong Header */
 .header .profile-menu { 
