@@ -6,867 +6,923 @@
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
 <style>
     :root {
-        --primary-color: #2c7744;
-        --primary-light: #e6f4ea;
-        --primary-dark: #1e5631;
-        --accent-color: #f59e0b;
-        --bg-body: #f8fafc;
-        --text-dark: #1e293b;
-        --text-gray: #64748b;
+        --primary-color: #3e9f5f; /* Teal hiện đại */
+        --primary-dark:  #4D7111;
+        --primary-light: #f0fdfa;
+        --secondary-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-sub: #64748b;
         --border-color: #e2e8f0;
-        --danger: #ef4444;
-        --success: #22c55e;
+        --input-bg: #ffffff;
+        --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        --radius-lg: 16px;
+        --radius-md: 10px;
     }
 
     body {
-        background-color: var(--bg-body);
-        color: var(--text-dark);
+        background-color: #f1f5f9;
+        color: var(--text-main);
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
     .main-wrapper {
-        padding: 1.5rem 0 120px;
+        padding: 2.5rem 0 140px;
     }
 
-    /* Optimized main layout grid with better spacing and balance */
+    /* === LAYOUT GRID 7:3 === */
     .main-content-wrapper {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
+        grid-template-columns: 7fr 3fr;
+        gap: 24px;
         align-items: start;
     }
 
-    /* === HEADER SIMPLE === */
+    /* === HEADER NÂNG CẤP === */
     .page-header {
-        margin-bottom: 1.5rem;
-        padding: 1rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .breadcrumb-nav {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 0.75rem;
-        flex-wrap: wrap;
+        margin-bottom: 2.5rem;
     }
 
     .btn-back {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: var(--primary-light);
-        border-radius: 50px;
-        color: var(--primary-color);
+        gap: 8px;
+        color: var(--text-sub);
         text-decoration: none;
-        font-size: 0.875rem;
         font-weight: 600;
+        font-size: 0.9rem;
+        padding: 8px 16px;
+        background: white;
+        border-radius: 50px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         transition: all 0.2s ease;
-        border: none;
-        cursor: pointer;
     }
 
     .btn-back:hover {
-        background: var(--primary-color);
-        color: white;
-    }
-
-    .badge-route {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: var(--primary-light);
         color: var(--primary-color);
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 0.875rem;
+        transform: translateX(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
 
     .page-title {
         font-weight: 800;
-        font-size: 1.75rem;
-        color: var(--text-dark);
-        margin: 0;
+        font-size: 2.25rem;
+        color: var(--text-main);
+        margin-top: 1rem;
+        letter-spacing: -0.025em;
+        line-height: 1.2;
     }
 
-    .btn-view-page {
+    .subtitle {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.625rem 1.25rem;
-        background: white;
-        color: var(--text-dark);
-        border: 1px solid var(--border-color);
-        border-radius: 50px;
+        gap: 6px;
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
         font-weight: 600;
-        text-decoration: none;
-        transition: all 0.2s ease;
+        margin-top: 0.75rem;
     }
 
-    .btn-view-page:hover {
-        border-color: var(--primary-color);
-        color: var(--primary-color);
-    }
-
-    /* === ALERT === */
-    .alert-modern {
-        background: #fef2f2;
-        border: none;
-        border-left: 4px solid var(--danger);
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-        grid-column: 1 / -1;
-    }
-
-    .alert-icon {
-        width: 40px;
-        height: 40px;
-        background: var(--danger);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        flex-shrink: 0;
-    }
-
-    /* === CARDS === */
+    /* === CARDS UI MỚI (CLEAN) === */
     .card-modern {
         background: white;
-        border: 1px solid var(--border-color);
-        border-radius: 16px;
+        border: 1px solid white;
+        border-radius: var(--radius-lg);
         margin-bottom: 1.5rem;
+        box-shadow: var(--card-shadow);
         overflow: hidden;
-        transition: all 0.2s ease;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    }
-
-    .card-modern:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        border-color: var(--border-color);
+        transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .card-header-modern {
-        background: linear-gradient(135deg, #fafafa 0%, #f3f4f6 100%);
-        padding: 1.25rem;
+        padding: 1.25rem 1.5rem;
         border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        background: white;
     }
 
     .header-title {
-        font-size: 0.95rem;
+        font-size: 1.1rem;
         font-weight: 700;
+        color: var(--text-main);
         display: flex;
         align-items: center;
-        gap: 12px;
-        color: var(--text-dark);
-        margin: 0;
+        gap: 10px;
     }
 
-    .step-icon {
+    .header-icon-box {
         width: 36px;
         height: 36px;
-        background: var(--primary-color);
-        color: white;
-        border-radius: 10px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.9rem;
-        flex-shrink: 0;
+        font-size: 1.1rem;
     }
-
-    .step-icon.accent {
-        background: var(--accent-color);
-    }
-
-    .step-icon.dark {
-        background: #374151;
-    }
+    
+    .bg-icon-info { background: #e0e7ff; color: #4338ca; }
+    .bg-icon-map { background: #dcfce7; color: #15803d; }
+    .bg-icon-calendar { background: #ffedd5; color: #c2410c; }
+    .bg-icon-setting { background: #f1f5f9; color: #475569; }
+    .bg-icon-image { background: #fae8ff; color: #a21caf; }
 
     .card-body-modern {
         padding: 1.5rem;
     }
 
-    /* === FORM INPUTS === */
-    .form-label-modern {
-        display: block;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--text-gray);
-        margin-bottom: 0.75rem;
+    /* === INPUTS ĐẸP HƠN === */
+    .form-group {
+        margin-bottom: 1.25rem;
     }
 
-    .form-control, .form-select {
-        border-radius: 10px;
+    .form-label-modern {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.5rem;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .form-control, .form-select, .select2-selection {
+        height: 48px !important;
+        border-radius: var(--radius-md);
         border: 1px solid var(--border-color);
-        padding: 0.875rem 1rem;
+        padding: 0.6rem 1rem;
         font-size: 0.95rem;
-        transition: all 0.2s ease;
-        background-color: white;
+        background-color: var(--input-bg);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--text-main);
     }
 
     .form-control:focus, .form-select:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(44, 119, 68, 0.1);
-        outline: none;
+        box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15);
+        background-color: white;
     }
 
-    .form-floating > .form-control {
-        padding: 1.25rem 1rem 0.5rem;
+    textarea.form-control {
+        height: auto !important;
+        min-height: 120px;
+        line-height: 1.6;
+        padding: 1rem;
+        resize: vertical;
+    }
+    
+    .input-group-text {
+        background-color: #f8fafc;
+        border-color: var(--border-color);
+        color: var(--text-sub);
     }
 
-    .form-floating > label {
-        padding: 0.75rem 1rem;
-        color: var(--text-gray);
-        font-size: 0.9rem;
-    }
-
-    .input-group .input-group-text {
-        background: #fafafa;
-        border: 1px solid var(--border-color);
-        color: var(--text-gray);
-        font-size: 0.9rem;
-    }
-
-    .form-group-modern {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-text {
-        font-size: 0.8rem;
-        color: var(--text-gray);
-        margin-top: 0.5rem;
-    }
-
-    /* === TIMELINE DRAGGABLE === */
+    /* === TIMELINE PRO === */
     .timeline-container {
         position: relative;
-        padding-left: 24px;
+        padding: 1rem 0 0 0;
     }
 
+    /* Đường kẻ dọc nối các mốc */
     .timeline-container::before {
         content: '';
         position: absolute;
+        left: 19px; /* Căn giữa dot */
         top: 20px;
         bottom: 20px;
-        left: 11px;
         width: 2px;
-        background: linear-gradient(to bottom, var(--primary-color), var(--border-color));
-        border-radius: 2px;
+        background: #e2e8f0;
+        z-index: 0;
     }
 
     .timeline-item {
         position: relative;
-        padding-left: 32px;
-        margin-bottom: 1.25rem;
-        cursor: grab;
-        transition: transform 0.2s ease;
+        padding-left: 50px; /* Chừa chỗ cho dot */
+        margin-bottom: 2rem;
     }
 
-    .timeline-item:active {
-        cursor: grabbing;
-    }
-
-    .timeline-item.sortable-ghost {
-        opacity: 0.4;
-    }
-
-    .timeline-item.sortable-drag {
-        opacity: 1;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-        z-index: 100;
-    }
-
-    .timeline-dot {
+    /* Chấm tròn số thứ tự */
+    .timeline-index-badge {
         position: absolute;
         left: 0;
-        top: 16px;
-        width: 24px;
-        height: 24px;
-        background: var(--primary-color);
-        border-radius: 50%;
-        z-index: 1;
-        box-shadow: 0 0 0 4px white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 0.7rem;
-        font-weight: 700;
-    }
-
-    .timeline-card {
-        background: #fafafa;
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1.25rem;
-        position: relative;
-        transition: all 0.2s ease;
-    }
-
-    .timeline-card:hover {
+        top: 0;
+        width: 40px;
+        height: 40px;
         background: white;
-        border-color: var(--primary-color);
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    }
-
-    .btn-delete-row {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background: #fee2e2;
-        color: var(--danger);
-        border: none;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        border-radius: 50%;
+        font-size: 1rem;
+        font-weight: 800;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        z-index: 10;
+        z-index: 1;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
     }
-
-    .btn-delete-row:hover {
-        background: var(--danger);
+    
+    .timeline-item:hover .timeline-index-badge {
+        background: var(--primary-color);
         color: white;
         transform: scale(1.1);
     }
 
-    .timeline-fields {
-        padding-right: 40px;
-    }
-
-    .btn-add-timeline {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: var(--primary-light);
-        color: var(--primary-color);
-        border: none;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 0.85rem;
+    .timeline-card {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        position: relative;
         transition: all 0.2s ease;
-        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
-    .btn-add-timeline:hover {
-        background: var(--primary-color);
+    .timeline-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 10px 20px rgba(13, 148, 136, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .timeline-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px dashed var(--border-color);
+    }
+
+    .timeline-title-label {
+        font-weight: 700;
+        color: var(--text-main);
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-delete-row {
+        color: #ef4444;
+        background: white;
+        border: 1px solid #fee2e2;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-delete-row:hover {
+        background: #ef4444;
         color: white;
+        border-color: #ef4444;
+    }
+
+    /* Ẩn triệt để checkbox mặc định */
+    .hidden-checkbox {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute;
     }
 
     /* === UPLOAD ZONE === */
     .upload-zone {
-        border: 2px dashed var(--border-color);
-        border-radius: 12px;
-        background: #fafafa;
-        padding: 2rem 1rem;
+        border: 2px dashed #cbd5e1;
+        border-radius: var(--radius-md);
+        padding: 2.5rem 1rem;
         text-align: center;
+        background: #f8fafc;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
     }
 
     .upload-zone:hover {
         border-color: var(--primary-color);
-        background: var(--primary-light);
+        background: #f0fdfa;
     }
-
-    .upload-icon {
-        font-size: 2.5rem;
-        color: var(--text-gray);
-        margin-bottom: 0.75rem;
-        transition: all 0.2s ease;
+    
+    .upload-zone i {
+        color: #94a3b8;
+        transition: all 0.3s;
     }
-
-    .upload-zone:hover .upload-icon {
+    
+    .upload-zone:hover i {
         color: var(--primary-color);
-        transform: scale(1.1);
-    }
-
-    .preview-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-        gap: 10px;
-        margin-top: 1rem;
-    }
-
-    .preview-img {
-        width: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        transition: transform 0.2s ease;
-    }
-
-    .preview-img:hover {
-        transform: scale(1.05);
-    }
-
-    /* === SETTINGS === */
-    .setting-box {
-        background: #fafafa;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border: 1px solid var(--border-color);
-        transition: all 0.2s ease;
-    }
-
-    .setting-box:hover {
-        background: white;
-        border-color: var(--primary-color);
-    }
-
-    .form-switch-modern {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem;
-        background: #fafafa;
-        border-radius: 10px;
-        border: 1px solid var(--border-color);
-        transition: all 0.2s ease;
-    }
-
-    .form-switch-modern:hover {
-        background: white;
-        border-color: var(--primary-color);
-    }
-
-    .form-switch-modern .form-check-input {
-        width: 44px;
-        height: 24px;
-        cursor: pointer;
-    }
-
-    .form-switch-modern .form-check-input:checked {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
+        transform: scale(1.2);
     }
 
     /* === STICKY FOOTER === */
     .sticky-footer {
         position: fixed;
-        bottom: 20px;
+        bottom: 24px;
         left: 50%;
         transform: translateX(-50%);
-        width: calc(100% - 40px);
-        max-width: 1200px;
+        width: 95%;
+        max-width: 900px;
         background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        padding: 1rem 1.5rem;
+        backdrop-filter: blur(12px);
+        padding: 12px 24px;
         border-radius: 100px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(255,255,255,0.8);
         display: flex;
         justify-content: space-between;
         align-items: center;
         z-index: 1000;
     }
 
-    .footer-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--text-gray);
-        font-size: 0.875rem;
-    }
-
-    .footer-info i {
-        color: var(--success);
-    }
-
-    .btn-cancel {
-        padding: 0.75rem 1.75rem;
-        background: #f1f5f9;
-        color: var(--text-dark);
-        border: none;
-        border-radius: 50px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .btn-cancel:hover {
-        background: #e2e8f0;
-        color: var(--text-dark);
-    }
-
-    .btn-save {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.75rem;
-        background: var(--primary-color);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        font-weight: 700;
-        box-shadow: 0 4px 15px rgba(44, 119, 68, 0.3);
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .btn-save:hover {
-        background: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(44, 119, 68, 0.4);
-    }
-
-    /* === SELECT2 === */
-    .select2-container--bootstrap-5 .select2-selection {
-        border-radius: 10px !important;
-        border: 1px solid var(--border-color) !important;
-        min-height: 44px !important;
-    }
-
-    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
-        border-color: var(--primary-color) !important;
-        box-shadow: 0 0 0 3px rgba(44, 119, 68, 0.1) !important;
-    }
-
-    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
-        background: var(--primary-light) !important;
-        border: none !important;
-        border-radius: 50px !important;
-        color: var(--primary-color) !important;
-        font-weight: 600 !important;
-    }
-
-    /* Enhanced responsive design for 2-column layout */
-    @media (max-width: 1200px) {
-        .main-content-wrapper {
-            gap: 1.5rem;
-        }
-    }
-
+    /* === RESPONSIVE === */
     @media (max-width: 992px) {
         .main-content-wrapper {
             grid-template-columns: 1fr;
-            gap: 2rem;
-        }
-
-        .alert-modern {
-            grid-column: 1;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .main-wrapper {
-            padding: 1rem 0 120px;
-        }
-
-        .main-content-wrapper {
             gap: 1.5rem;
         }
-
-        .page-title {
-            font-size: 1.5rem;
+        
+        .timeline-container::before {
+            left: 14px;
         }
-
-        .sticky-footer {
-            flex-direction: column;
-            gap: 1rem;
-            padding: 1rem;
-            border-radius: 20px;
+        
+        .timeline-index-badge {
+            width: 30px;
+            height: 30px;
+            font-size: 0.85rem;
         }
-
-        .footer-info {
-            display: none;
-        }
-
-        .timeline-fields {
-            padding-right: 0;
-        }
-
-        .row g-3 > div {
-            min-width: 0;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .page-header {
-            padding: 0.75rem 0;
-        }
-
-        .breadcrumb-nav {
-            gap: 0.5rem;
-        }
-
-        .btn-back, .badge-route {
-            font-size: 0.75rem;
-            padding: 0.375rem 0.75rem;
-        }
-
-        .card-body-modern {
-            padding: 1rem;
-        }
-
+        
         .timeline-item {
-            padding-left: 24px;
-            margin-bottom: 1rem;
-        }
-
-        .preview-grid {
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 8px;
+            padding-left: 40px;
         }
     }
+    /* === SETTINGS CARD STYLING === */
+.settings-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.setting-item {
+    display: flex;
+    align-items: center; /* Căn giữa theo chiều dọc */
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px dashed #e2e8f0;
+    transition: background-color 0.2s ease;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-item:hover {
+    background-color: #f8fafc;
+}
+
+/* Icon Style */
+.setting-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0; /* Không cho icon bị co lại */
+    margin-right: 0; /* Bỏ margin phải cũ vì đã dùng gap ở cha */
+    transition: transform 0.2s;
+}
+
+.setting-item:hover .setting-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.setting-icon.privacy-icon { background: #e0f2fe; color: #0284c7; }
+.setting-icon.reason-icon { background: #fff7ed; color: #ea580c; }
+
+/* Content Text */
+.setting-content {
+    flex: 1; /* Chiếm toàn bộ không gian trống */
+    margin: 0 16px; /* Tạo khoảng cách đều 2 bên */
+    min-width: 0; /* Fix lỗi text tràn trong flexbox */
+}
+
+.setting-label {
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 3px;
+    display: block;
+    font-size: 0.95rem;
+    white-space: nowrap; /* Giữ tiêu đề trên 1 dòng */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.setting-desc {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+    line-height: 1.3;
+    /* Cho phép mô tả xuống dòng nếu cần nhưng gọn gàng */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Action Area (Select box & Switch) */
+.setting-action {
+    flex-shrink: 0; /* Không bị co lại khi màn hình nhỏ */
+    display: flex;
+    justify-content: flex-end;
+    width: 160px; /* Đặt chiều rộng cố định hợp lý cho vùng thao tác */
+}
+
+/* Custom Select Styling */
+.setting-action select {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 12px; /* Padding gọn hơn */
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    background-color: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    background-position: right 10px center; /* Chỉnh lại icon mũi tên mặc định nếu có */
+}
+
+.setting-action select:hover {
+    border-color: var(--primary-color);
+}
+
+.setting-action select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(62, 159, 95, 0.15);
+}
+
+/* Switch Toggle Styling */
+.form-check.form-switch {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 0;
+}
+
+.form-check-input {
+    width: 3em !important; 
+    height: 1.6em !important;
+    cursor: pointer;
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+    margin-top: 0; /* Fix lỗi lệch dòng bootstrap */
+    margin-left: 0 !important;
+    float: none; /* Fix lỗi float của bootstrap */
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+/* === STICKY FOOTER (RE-DESIGNED) === */
+.sticky-footer {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    background: #ffffff;
+    padding: 10px 24px;
+    border-radius: 50px; /* Bo tròn mạnh tạo hình viên thuốc */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translate(-50%, 100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.footer-status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-icon {
+    width: 32px;
+    height: 32px;
+    background-color: #f0fdfa; /* Xanh nhạt */
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    border: 1px solid #ccfbf1;
+}
+
+.status-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.status-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.status-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-cancel {
+    padding: 8px 20px;
+    border-radius: 50px;
+    color: var(--text-sub);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.btn-cancel:hover {
+    background-color: #f1f5f9;
+    color: var(--text-main);
+    border-color: #e2e8f0;
+}
+
+.btn-save {
+    padding: 8px 28px;
+    border-radius: 50px;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    box-shadow: 0 4px 6px rgba(62, 159, 95, 0.2);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-save:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(62, 159, 95, 0.3);
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container main-wrapper">
 
-    <!-- Page Header -->
+    <!-- Header -->
     <div class="page-header">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-            <div>
-                <div class="breadcrumb-nav">
-                    <a href="{% url 'treks:cung_duong_list' %}" class="btn-back">
-                        <i class="fas fa-arrow-left"></i> Quay lại
-                    </a>
-                    <span class="badge-route">
-                        <i class="fas fa-map-signs"></i> {{ object.cung_duong.ten|default:cung_duong.ten }}
-                    </span>
-                </div>
-                <h1 class="page-title">{{ page_title }}</h1>
-            </div>
-            {% if is_edit %}
-            <a href="{{ object.get_absolute_url }}" class="btn-view-page mt-3 mt-md-0">
-                <i class="far fa-eye"></i> Xem trang hiển thị
+        <div class="d-flex flex-column align-items-start">
+            <a href="{% url 'treks:cung_duong_list' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Quay lại
             </a>
-            {% endif %}
+            <h1 class="page-title">{{ page_title }}</h1>
+            <div class="subtitle">
+                <i class="fas fa-map-marked-alt"></i> 
+                {{ object.cung_duong.ten|default:cung_duong.ten }}
+            </div>
         </div>
+        {% if is_edit %}
+        <div class="position-absolute top-0 end-0 mt-5 me-5 d-none d-lg-block">
+            <a href="{{ object.get_absolute_url }}" class="btn btn-outline-dark rounded-pill px-4 fw-bold">
+                <i class="far fa-eye me-2"></i>Xem trước
+            </a>
+        </div>
+        {% endif %}
     </div>
 
     <form method="post" enctype="multipart/form-data" id="tripForm">
         {% csrf_token %}
 
         {% if form.errors or timeline_formset.errors %}
-        <div class="alert-modern">
-            <div class="alert-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div>
-                <h6 class="fw-bold mb-1" style="color: var(--danger);">Vui lòng kiểm tra lại thông tin!</h6>
-                <p class="text-muted small mb-0">Có vẻ như bạn đã bỏ sót trường bắt buộc hoặc nhập sai định dạng.</p>
-                <div class="small mt-1" style="color: var(--danger);">
-                    {{ form.non_field_errors }}
-                    {{ timeline_formset.non_form_errors }}
+        <div class="alert alert-danger shadow-sm border-0 rounded-3 mb-4 p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-white text-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-1">Có thông tin chưa hợp lệ</h6>
+                    <div class="small opacity-75">Vui lòng kiểm tra lại các trường được đánh dấu đỏ bên dưới.</div>
                 </div>
             </div>
+            {% if form.non_field_errors %}
+            <div class="mt-2 small ps-5">{{ form.non_field_errors }}</div>
+            {% endif %}
         </div>
         {% endif %}
 
-        <!-- Two-column layout wrapper using CSS Grid for optimal balance -->
         <div class="main-content-wrapper">
 
-            <!-- LEFT COLUMN: Thông tin chi tiết + Timeline + Upload ảnh -->
+            <!-- CỘT TRÁI (7 PHẦN) -->
             <div class="col-left">
-
-                <!-- Thông tin chung -->
+                
+                <!-- Card 1: Thông tin chung -->
                 <div class="card-modern">
                     <div class="card-header-modern">
                         <div class="header-title">
-                            <span class="step-icon"><i class="fas fa-info"></i></span>
-                            Thông tin chi tiết
+                            <span class="header-icon-box bg-icon-info"><i class="fas fa-info"></i></span>
+                            Thông tin cơ bản
                         </div>
                     </div>
                     <div class="card-body-modern">
-                        <div class="form-group-modern">
-                             <label class="form-label-modern">
-                                   <i class="fa-solid fa-file-signature"></i> Tên chuyến đi
-                                </label>
-                            <div class="form-floating">
-                                {{ form.ten_chuyen_di }}
-                            </div>
+                        <div class="form-group">
+                            <label class="form-label-modern">Tên chuyến đi <span class="text-danger">*</span></label>
+                            {{ form.ten_chuyen_di }}
                             {% if form.ten_chuyen_di.errors %}
-                            <div class="text-danger small mt-1">{{ form.ten_chuyen_di.errors.0 }}</div>
+                            <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle me-1"></i>{{ form.ten_chuyen_di.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label-modern">
-                                    <i class="fas fa-map-marker-alt text-danger me-1"></i> Điểm tập trung
-                                </label>
+
+                        <div class="row g-4">
+                            <div class="col-md-7">
+                                <label class="form-label-modern"><i class="fas fa-map-marker-alt"></i> Điểm tập trung</label>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class=""></i></span>
+                                    <span class="input-group-text"></span>
                                     {{ form.dia_diem_tap_trung }}
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label-modern">
-                                    <i class="fas fa-tags me-1"></i> Tags (Từ khóa)
-                                </label>
+                            <div class="col-md-5">
+                                <label class="form-label-modern"><i class="fa-solid fa-tag"></i> Tags (Phân loại)</label>
                                 {{ form.tags }}
                             </div>
                         </div>
 
-                        <div class="form-group-modern mt-3">
-                            <label class="form-label-modern">
-                                <i class="fas fa-align-left me-1"></i> Mô tả & Kế hoạch
-                            </label>
+                        <div class="form-group mt-4">
+                            <label class="form-label-modern">Mô tả & Ghi chú</label>
                             {{ form.mo_ta }}
-                            <div class="form-text">
-                                <i class="fas fa-lightbulb text-warning me-1"></i>
-                                Mô tả càng chi tiết càng thu hút nhiều thành viên tham gia hơn.
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Timeline Draggable -->
+                <!-- Card 2: Lịch trình (Timeline) -->
                 <div class="card-modern">
                     <div class="card-header-modern">
                         <div class="header-title">
-                            <span class="step-icon"><i class="fas fa-route"></i></span>
+                            <span class="header-icon-box bg-icon-map"><i class="fas fa-route"></i></span>
                             Lịch trình chi tiết
                         </div>
-                        <button type="button" id="add-timeline-btn" class="btn-add-timeline">
-                            <i class="fas fa-plus"></i> Thêm mốc
+                        <button type="button" id="add-timeline-btn" class="btn btn-primary rounded-pill fw-bold px-4 shadow-sm" style="background: var(--primary-color); border:none;">
+                            <i class="fas fa-plus me-2"></i>Thêm hoạt động
                         </button>
                     </div>
-                    <div class="card-body-modern">
+                    <div class="card-body-modern bg-light bg-opacity-25">
                         {{ timeline_formset.management_form }}
-
+                        
                         <div id="timeline-container" class="timeline-container">
                             {% for subform in timeline_formset %}
                             <div class="timeline-item timeline-row" data-index="{{ forloop.counter }}">
-                                <div class="timeline-dot">{{ forloop.counter }}</div>
+                                <div class="timeline-index-badge">{{ forloop.counter }}</div>
+                                
                                 <div class="timeline-card">
                                     {% for hidden in subform.hidden_fields %}{{ hidden }}{% endfor %}
                                     
-                                    {% if timeline_formset.can_delete %}
-                                    <div class="d-none">{{ subform.DELETE }}</div>
-                                    {% endif %}
-                                    <button type="button" class="btn-delete-row btn-delete" title="Xóa mốc này">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    <!-- Ẩn triệt để checkbox DELETE -->
+                                    <div class="hidden-checkbox">
+                                        {{ subform.DELETE }}
+                                    </div>
 
-                                    <div class="timeline-fields">
-                                        <div class="row g-2 align-items-center mb-2">
-                                            <div class="col-md-3 col-6">
-                                                <div class="input-group input-group-sm">
-                                                    <span class="input-group-text bg-light text-muted fw-bold">Ngày</span>
-                                                    {{ subform.ngay }}
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3 col-6">
-                                                <div class="input-group input-group-sm">
-                                                    <span class="input-group-text bg-light"><i class="far fa-clock"></i></span>
-                                                    {{ subform.thoi_gian }}
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6 col-12">
-                                                {{ subform.hoat_dong }}
-                                            </div>
+                                    <!-- Header cho từng mốc -->
+                                    <div class="timeline-header-row">
+                                        <div class="timeline-title-label">
+                                            <i class="fas fa-flag-checkered text-warning"></i>
+                                            Hoạt động #<span class="row-number">{{ forloop.counter }}</span>
                                         </div>
-                                        <div>
-                                            {{ subform.mo_ta_chi_tiet }}
+                                        <button type="button" class="btn-delete-row btn-delete">
+                                            <i class="far fa-trash-alt"></i> Xóa
+                                        </button>
+                                    </div>
+
+                                    <!-- Row ngang hàng: Ngày | Giờ | Tiêu đề -->
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-3 col-6">
+                                            <label class="form-label-modern small text-muted">Ngày thứ</label>
+                                            {{ subform.ngay }}
                                         </div>
+                                        <div class="col-md-3 col-6">
+                                            <label class="form-label-modern small text-muted">Giờ (HH:MM)</label>
+                                            {{ subform.thoi_gian }}
+                                        </div>
+                                        <div class="col-md-6 col-12">
+                                            <label class="form-label-modern small text-muted">Tên hoạt động</label>
+                                            {{ subform.hoat_dong }}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Chi tiết -->
+                                    <div>
+                                        <label class="form-label-modern small text-muted">Chi tiết hoạt động</label>
+                                        {{ subform.mo_ta_chi_tiet }}
                                     </div>
 
                                     {% if subform.errors %}
-                                    <div class="text-danger small mt-1">{{ subform.errors }}</div>
+                                    <div class="alert alert-danger mt-2 py-2 small mb-0">
+                                        {{ subform.errors }}
+                                    </div>
                                     {% endif %}
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
 
-                        <!-- Empty form template -->
+                        <!-- Empty Form Template -->
                         <div id="empty-form-template" class="d-none">
                             <div class="timeline-item timeline-row">
-                                <div class="timeline-dot"></div>
+                                <div class="timeline-index-badge"></div>
                                 <div class="timeline-card">
                                     {% for hidden in timeline_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
                                     
-                                    <div class="d-none">{{ timeline_formset.empty_form.DELETE }}</div>
-                                    <button type="button" class="btn-delete-row btn-delete">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    <div class="hidden-checkbox">
+                                        {{ timeline_formset.empty_form.DELETE }}
+                                    </div>
 
-                                    <div class="timeline-fields">
-                                        <div class="row g-2 align-items-center mb-2">
-                                            <div class="col-md-3 col-6">
-                                                <div class="input-group input-group-sm">
-                                                    <span class="input-group-text bg-light text-muted fw-bold">Ngày</span>
-                                                    {{ timeline_formset.empty_form.ngay }}
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3 col-6">
-                                                <div class="input-group input-group-sm">
-                                                    <span class="input-group-text bg-light"><i class="far fa-clock"></i></span>
-                                                    {{ timeline_formset.empty_form.thoi_gian }}
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6 col-12">
-                                                {{ timeline_formset.empty_form.hoat_dong }}
-                                            </div>
+                                    <div class="timeline-header-row">
+                                        <div class="timeline-title-label">
+                                            <i class="fas fa-flag-checkered text-warning"></i>
+                                            Hoạt động #<span class="row-number"></span>
                                         </div>
-                                        <div>
-                                            {{ timeline_formset.empty_form.mo_ta_chi_tiet }}
+                                        <button type="button" class="btn-delete-row btn-delete">
+                                            <i class="far fa-trash-alt"></i> Xóa
+                                        </button>
+                                    </div>
+
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-3 col-6">
+                                            <label class="form-label-modern small text-muted">Ngày thứ</label>
+                                            {{ timeline_formset.empty_form.ngay }}
                                         </div>
+                                        <div class="col-md-3 col-6">
+                                            <label class="form-label-modern small text-muted">Giờ (HH:MM)</label>
+                                            {{ timeline_formset.empty_form.thoi_gian }}
+                                        </div>
+                                        <div class="col-md-6 col-12">
+                                            <label class="form-label-modern small text-muted">Tên hoạt động</label>
+                                            {{ timeline_formset.empty_form.hoat_dong }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label-modern small text-muted">Chi tiết hoạt động</label>
+                                        {{ timeline_formset.empty_form.mo_ta_chi_tiet }}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Upload ảnh -->
+            <!-- CỘT PHẢI (3 PHẦN) -->
+            <div class="col-right">
+                
+                <!-- Card: Kế hoạch -->
                 <div class="card-modern">
                     <div class="card-header-modern">
                         <div class="header-title">
-                            <span class="step-icon" style="background: #8b5cf6;"><i class="fas fa-images"></i></span>
+                            <span class="header-icon-box bg-icon-calendar"><i class="far fa-calendar-alt"></i></span>
+                            Kế hoạch & Chi phí
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="form-group">
+                            <label class="form-label-modern">Ngày bắt đầu</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"></span>
+                                {{ form.ngay_bat_dau }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label-modern">Ngày kết thúc</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"></span>
+                                {{ form.ngay_ket_thuc }}
+                            </div>
+                        </div>
+                        
+                        <div class="my-4 border-top border-dashed"></div>
+
+                        <div class="form-group">
+                            <label class="form-label-modern">Chi phí dự kiến (VND)</label>
+                            <div class="input-group">
+                                {{ form.chi_phi_uoc_tinh }}
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                         <label class="form-label-modern mb-2"><i class="fas fa-users"></i> Số lượng tối đa</label>
+                            <div class="input-group">
+                                {{ form.so_luong_toi_da }}
+                                <span class="input-group-text"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+ <div class="card-modern">
+    <div class="card-header-modern">
+        <div class="header-title">
+            <span class="header-icon-box bg-icon-setting"><i class="fas fa-cog"></i></span>
+            Thiết lập
+        </div>
+    </div>
+    
+    <div class="card-body-modern p-0"> 
+        <div class="settings-list">
+            
+            <div class="setting-item">
+                <div class="setting-icon privacy-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="setting-content">
+                    <label class="setting-label">Quyền riêng tư</label>
+                    <div class="setting-desc">Ai có thể xem chuyến đi này?</div>
+                </div>
+                <div class="setting-action">
+                    <div class="custom-select-wrapper">
+                        {{ form.che_do_rieng_tu }} 
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-icon reason-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="setting-content">
+                    <label class="setting-label" for="{{ form.yeu_cau_ly_do.id_for_label }}">Yêu cầu lý do</label>
+                    <div class="setting-desc">Bắt buộc nhập lý do khi đăng ký</div>
+                </div>
+                <div class="setting-action">
+                    <div class="form-check form-switch m-0 p-0 d-flex justify-content-end">
+                        {{ form.yeu_cau_ly_do }}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+                <!-- Card: Ảnh -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title">
+                            <span class="header-icon-box bg-icon-image"><i class="far fa-images"></i></span>
                             Thư viện ảnh
                         </div>
                     </div>
                     <div class="card-body-modern">
                         <div class="upload-zone" onclick="document.getElementById('media-input').click()">
-                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                            <div class="fw-bold text-dark">Kéo thả hoặc bấm để tải ảnh</div>
-                            <div class="small text-muted">JPG, PNG tối đa 10MB</div>
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                            <div class="fw-bold">Tải ảnh lên</div>
+                            <div class="small text-muted mt-1">Kéo thả hoặc bấm để chọn</div>
                             <input type="file" id="media-input" name="trip_media_files" multiple hidden accept="image/*">
                         </div>
-                        <div id="upload-preview" class="preview-grid"></div>
+                        <div id="upload-preview" class="d-flex flex-wrap gap-2 mt-3"></div>
 
                         {% if object and object.media.exists %}
-                        <div class="mt-3 pt-3 border-top">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <small class="text-muted fw-bold">
-                                    <i class="fas fa-image me-1"></i> Ảnh đã có
-                                </small>
-                                <span class="badge" style="background: var(--primary-light); color: var(--primary-color);">
-                                    {{ object.media.count }}
-                                </span>
-                            </div>
-                            <div class="preview-grid">
+                        <div class="mt-4 pt-3 border-top">
+                            <label class="form-label-modern text-muted mb-2">Đã tải lên</label>
+                            <div class="d-flex flex-wrap gap-2">
                                 {% for m in object.media.all|slice:":6" %}
-                                <img src="{{ m.file.url }}" class="preview-img">
+                                <div class="position-relative">
+                                    <img src="{{ m.file.url }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>
@@ -875,95 +931,24 @@
                 </div>
 
             </div>
-
-            <!-- RIGHT COLUMN: Kế hoạch + Cài đặt (sticky on desktop) -->
-            <div class="col-right">
-
-                <!-- Kế hoạch -->
-                <div class="card-modern">
-                    <div class="card-header-modern">
-                        <div class="header-title">
-                            <span class="step-icon accent"><i class="far fa-calendar-alt"></i></span>
-                            Kế hoạch
-                        </div>
-                    </div>
-                    <div class="card-body-modern">
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <label class="form-label-modern">
-                                    <i class="fas fa-play text-success me-1"></i> Ngày bắt đầu
-                                </label>
-                                {{ form.ngay_bat_dau }}
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label-modern">
-                                    <i class="fas fa-flag-checkered text-danger me-1"></i> Ngày kết thúc
-                                </label>
-                                {{ form.ngay_ket_thuc }}
-                            </div>
-                        </div>
-
-                        <div class="setting-box mt-3">
-                            <label class="form-label-modern">
-                                <i class="fas fa-coins text-warning me-1"></i> Chi phí dự kiến (VND)
-                            </label>
-                            <div class="input-group">
-                                {{ form.chi_phi_uoc_tinh }}
-                                <span class="input-group-text fw-bold" style="color: var(--success);"></span>
-                            </div>
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">
-                                <i class="fas fa-users me-1"></i> Số thành viên tối đa
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text"></span>
-                                {{ form.so_luong_toi_da }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cài đặt -->
-                <div class="card-modern">
-                    <div class="card-header-modern">
-                        <div class="header-title">
-                            <span class="step-icon dark"><i class="fas fa-sliders"></i></span>
-                            Cài đặt
-                        </div>
-                    </div>
-                    <div class="card-body-modern">
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">
-                                <i class="fas fa-lock me-1"></i> Quyền riêng tư
-                            </label>
-                            {{ form.che_do_rieng_tu }}
-                        </div>
-
-                        <div class="form-switch-modern form-check form-switch">
-                            <label class="form-check-label fw-bold" for="{{ form.yeu_cau_ly_do.id_for_label }}">
-                                <i class="fas fa-user-check me-2" style="color: #3b82f6;"></i>
-                                Duyệt thành viên
-                            </label>
-                            {{ form.yeu_cau_ly_do }}
-                        </div>
-                    </div>
-                </div>
-
-            </div>
         </div>
 
-        <!-- Sticky Footer -->
+           <!-- Sticky Footer (Đã cập nhật HTML mới) -->
         <div class="sticky-footer">
-            <div class="footer-info d-none d-md-flex">
-                <i class="fas fa-check-circle"></i>
-                <span class="fw-medium">Mọi thay đổi sẽ được lưu</span>
+            <div class="footer-status-wrapper">
+                <div class="status-icon">
+                    <i class="fas fa-pen"></i>
+                </div>
+                <div class="status-text">
+                    <span class="status-title">Chế độ chỉnh sửa</span>
+                    <span class="status-subtitle">Thay đổi chưa được lưu</span>
+                </div>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'trips:trip_hub' %}" class="btn-cancel">Hủy</a>
+            
+            <div class="footer-actions">
+                <a href="{% url 'trips:trip_hub' %}" class="btn-cancel">Hủy bỏ</a>
                 <button type="submit" class="btn-save">
-                    <i class="fas fa-save"></i> Lưu Chuyến đi
+                    <i class="fas fa-save"></i> Lưu lại
                 </button>
             </div>
         </div>
@@ -979,28 +964,53 @@
 
 <script>
     $(document).ready(function () {
+        // Init Select2
         $('#id_tags').select2({
             theme: 'bootstrap-5',
             width: '100%',
-            placeholder: "Chọn từ khóa..."
+            placeholder: "Chọn từ khóa...",
+            selectionCssClass: 'select2-custom-height'
         });
 
-        $('#tripForm input, #tripForm select, #tripForm textarea').addClass('form-control');
+        // Add Bootstrap Classes & Attributes
+        $('#tripForm input:not([type="checkbox"]):not([type="file"]), #tripForm select, #tripForm textarea').addClass('form-control');
         $('#tripForm select').addClass('form-select');
-        $('#tripForm input[type="checkbox"]').removeClass('form-control').addClass('form-check-input');
+        $('#tripForm input[type="checkbox"]').addClass('form-check-input').css({'width': '3em', 'height': '1.5em', 'margin-left': '0'});
+        
+        // Remove borders from input groups internal elements
+        $('.input-group .form-control').css('border-left', 'none');
 
-        $('input[name$="hoat_dong"]').attr('placeholder', 'VD: Check-in đỉnh núi, Ăn trưa...');
-        $('textarea[name$="mo_ta_chi_tiet"]').attr('placeholder', 'Mô tả chi tiết hoạt động...');
-        $('textarea[name$="mo_ta_chi_tiet"]').attr('rows', '2');
+        // Placeholders
+        $('input[name$="hoat_dong"]').attr('placeholder', 'VD: Check-in đỉnh núi...');
+        $('textarea[name$="mo_ta_chi_tiet"]').attr('placeholder', 'Mô tả chi tiết hoạt động, lưu ý...');
+        
+        // === FORMAT DATETIME FUNCTION (Giữ HH:MM, bỏ giây) ===
+        function formatDateTimeInputs() {
+            $('input[type="datetime-local"], input[type="time"]').each(function() {
+                let val = $(this).val();
+                if (val && val.length > 16) { // YYYY-MM-DDTHH:MM:SS
+                    $(this).val(val.substring(0, 16)); // Cắt bỏ :SS
+                }
+            });
+        }
+        // Chạy khi load
+        formatDateTimeInputs();
+        // Chạy khi change để đảm bảo
+        $(document).on('change', 'input[type="datetime-local"]', function() {
+             formatDateTimeInputs();
+        });
 
+        // Timeline Logic
         const container = $('#timeline-container');
         const totalForms = $('#id_timeline-TOTAL_FORMS');
         const template = $('#empty-form-template').html();
 
         function updateTimelineNumbers() {
             container.find('.timeline-row:visible').each(function(index) {
-                $(this).find('.timeline-dot').text(index + 1);
-                $(this).attr('data-index', index + 1);
+                const num = index + 1;
+                $(this).find('.timeline-index-badge').text(num);
+                $(this).find('.row-number').text(num);
+                $(this).attr('data-index', num);
             });
         }
 
@@ -1009,73 +1019,65 @@
             let newRowHtml = template.replace(/__prefix__/g, idx);
             container.append(newRowHtml);
             totalForms.val(idx + 1);
-
+            
+            // Re-apply classes
             let newRow = container.children().last();
             newRow.find('input, select, textarea').addClass('form-control');
             newRow.find('input[name$="hoat_dong"]').attr('placeholder', 'VD: Hoạt động tiếp theo...');
-            newRow.find('textarea[name$="mo_ta_chi_tiet"]').attr('rows', '2');
             
             updateTimelineNumbers();
-            newRow[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Scroll to new item
+            $('html, body').animate({
+                scrollTop: newRow.offset().top - 150
+            }, 500);
         });
 
         container.on('click', '.btn-delete', function () {
             const row = $(this).closest('.timeline-row');
             const delInput = row.find('input[name$="-DELETE"]');
-
-            if (delInput.length > 0) {
+            
+            if (delInput.length) {
+                // Check hidden box
                 delInput.prop('checked', true);
-                row.fadeOut(300, function() {
+                row.slideUp(300, function() {
                     updateTimelineNumbers();
                 });
             } else {
-                row.slideUp(300, function() {
-                    $(this).remove();
-                    updateTimelineNumbers();
-                });
-            }
-        });
-
-        new Sortable(document.getElementById('timeline-container'), {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
-            handle: '.timeline-card',
-            onEnd: function() {
+                row.remove();
                 updateTimelineNumbers();
             }
         });
 
+        // Sortable
+        new Sortable(document.getElementById('timeline-container'), {
+            animation: 150,
+            handle: '.timeline-card', 
+            ghostClass: 'bg-light',
+            onEnd: updateTimelineNumbers
+        });
+
+        // Image Preview
         $('#media-input').change(function () {
             const preview = $('#upload-preview');
             preview.empty();
             if (this.files) {
-                Array.from(this.files).forEach((f, index) => {
+                Array.from(this.files).forEach(f => {
                     if (f.type.startsWith('image/')) {
                         const reader = new FileReader();
                         reader.onload = (e) => {
-                            const img = $(`<img src="${e.target.result}" class="preview-img" style="opacity: 0; transform: scale(0.9);">`);
-                            preview.append(img);
-                            setTimeout(() => {
-                                img.css({
-                                    'opacity': '1',
-                                    'transform': 'scale(1)',
-                                    'transition': 'all 0.2s ease'
-                                });
-                            }, index * 80);
+                            preview.append(`
+                                <div class="position-relative animate__animated animate__fadeIn">
+                                    <img src="${e.target.result}" style="width:70px; height:70px; object-fit:cover; border-radius:10px; border:2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                </div>
+                            `);
                         }
                         reader.readAsDataURL(f);
                     }
                 });
             }
         });
-
-        if ($('.alert-modern').length) {
-            $('html, body').animate({
-                scrollTop: $('.alert-modern').offset().top - 100
-            }, 400);
-        }
-
+        
         updateTimelineNumbers();
     });
 </script>
