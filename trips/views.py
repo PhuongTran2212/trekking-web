@@ -28,16 +28,24 @@ class TripHubView(ListView):
     paginate_by = 9
 
     def get_queryset(self):
+        # Lấy tất cả chuyến đi công khai
         queryset = ChuyenDi.objects.filter(
             che_do_rieng_tu='CONG_KHAI',
-            trang_thai__ten__in=['Đang tuyển thành viên', 'Sắp diễn ra'],
-            ngay_bat_dau__gte=datetime.date.today()
+            # Bỏ lọc theo trạng thái nếu bạn muốn hiện cả chuyến đã kết thúc/đã hủy
+            # Hoặc giữ lại nếu chỉ muốn hiện chuyến đang hoạt động:
+            # trang_thai__ten__in=['Đang tuyển thành viên', 'Sắp diễn ra', 'Đã đóng', 'Đang diễn ra'], 
         ).select_related(
             'cung_duong__tinh_thanh', 'cung_duong__do_kho', 'nguoi_to_chuc__taikhoanhoso', 'trang_thai', 'anh_bia'
         ).annotate(
             so_thanh_vien_tham_gia=Count('thanh_vien', filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA'))
-        ).order_by('ngay_bat_dau')
+        )
+        
+        # --- SẮP XẾP ---
+        # 'ngay_tao': Tạo trước lên đầu (Cũ -> Mới)
+        # '-ngay_tao': Tạo sau lên đầu (Mới -> Cũ)
+        queryset = queryset.order_by('ngay_tao') 
 
+        # --- BỘ LỌC ---
         self.filter_form = TripFilterForm(self.request.GET)
         if self.filter_form.is_valid():
             cleaned_data = self.filter_form.cleaned_data
@@ -58,6 +66,7 @@ class TripHubView(ListView):
         context['page_title'] = "Khám phá Chuyến đi"
         context['filter_form'] = self.filter_form
         return context
+
 
 def trip_events_api(request):
     public_trips = Q(che_do_rieng_tu='CONG_KHAI')
