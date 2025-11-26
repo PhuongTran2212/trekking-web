@@ -4,16 +4,22 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block extra_css %}
+<!-- Select2 & FontAwesome -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
+<!-- LEAFLET MAP & GEOCODER (MỚI) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+<!-- LIGHTGALLERY CSS (MỚI) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
+
 <style>
     :root {
-        --primary-color: #3e9f5f; /* Teal hiện đại */
+        --primary-color: #3e9f5f;
         --primary-dark:  #4D7111;
-        --primary-light: #f0fdfa;
-        --secondary-bg: #f8fafc;
         --text-main: #0f172a;
         --text-sub: #64748b;
         --border-color: #e2e8f0;
@@ -23,585 +29,150 @@
         --radius-md: 10px;
     }
 
-    body {
-        background-color: #f1f5f9;
-        color: var(--text-main);
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-
-    .main-wrapper {
-        padding: 2.5rem 0 140px;
-    }
-
-    /* === LAYOUT GRID 7:3 === */
-    .main-content-wrapper {
-        display: grid;
-        grid-template-columns: 7fr 3fr;
-        gap: 24px;
-        align-items: start;
-    }
-
-    /* === HEADER NÂNG CẤP === */
-    .page-header {
-        margin-bottom: 2.5rem;
-    }
-
-    .btn-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--text-sub);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.9rem;
-        padding: 8px 16px;
-        background: white;
-        border-radius: 50px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        transition: all 0.2s ease;
-    }
-
-    .btn-back:hover {
-        color: var(--primary-color);
-        transform: translateX(-2px);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-
-    .page-title {
-        font-weight: 800;
-        font-size: 2.25rem;
-        color: var(--text-main);
-        margin-top: 1rem;
-        letter-spacing: -0.025em;
-        line-height: 1.2;
-    }
-
-    .subtitle {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: #e0f2fe;
-        color: #0369a1;
-        padding: 4px 12px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-top: 0.75rem;
-    }
-
-    /* === CARDS UI MỚI (CLEAN) === */
-    .card-modern {
-        background: white;
-        border: 1px solid white;
-        border-radius: var(--radius-lg);
-        margin-bottom: 1.5rem;
-        box-shadow: var(--card-shadow);
-        overflow: hidden;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .card-header-modern {
-        padding: 1.25rem 1.5rem;
-        border-bottom: 1px solid var(--border-color);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: white;
-    }
-
-    .header-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--text-main);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .header-icon-box {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-    }
+    body { background-color: #f1f5f9; color: var(--text-main); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .main-wrapper { padding: 2.5rem 0 140px; }
+    .main-content-wrapper { display: grid; grid-template-columns: 7fr 3fr; gap: 24px; align-items: start; }
     
+    /* Header & General UI (Giữ nguyên) */
+    .page-header { margin-bottom: 2.5rem; }
+    .btn-back { display: inline-flex; align-items: center; gap: 8px; color: var(--text-sub); text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 8px 16px; background: white; border-radius: 50px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease; }
+    .btn-back:hover { color: var(--primary-color); transform: translateX(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .page-title { font-weight: 800; font-size: 2.25rem; color: var(--text-main); margin-top: 1rem; letter-spacing: -0.025em; line-height: 1.2; }
+    .subtitle { display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; margin-top: 0.75rem; }
+
+    /* Cards (Giữ nguyên) */
+    .card-modern { background: white; border: 1px solid white; border-radius: var(--radius-lg); margin-bottom: 1.5rem; box-shadow: var(--card-shadow); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+    .card-header-modern { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: white; }
+    .header-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+    .header-icon-box { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .card-body-modern { padding: 1.5rem; }
+
+    /* Icons Color */
     .bg-icon-info { background: #e0e7ff; color: #4338ca; }
     .bg-icon-map { background: #dcfce7; color: #15803d; }
     .bg-icon-calendar { background: #ffedd5; color: #c2410c; }
     .bg-icon-setting { background: #f1f5f9; color: #475569; }
     .bg-icon-image { background: #fae8ff; color: #a21caf; }
 
-    .card-body-modern {
-        padding: 1.5rem;
-    }
+    /* Inputs */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label-modern { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 0.025em; }
+    .form-control, .form-select, .select2-selection { height: 48px !important; border-radius: var(--radius-md); border: 1px solid var(--border-color); padding: 0.6rem 1rem; font-size: 0.95rem; background-color: var(--input-bg); color: var(--text-main); }
+    .form-control:focus, .form-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15); background-color: white; }
+    textarea.form-control { height: auto !important; min-height: 120px; resize: vertical; }
+    .input-group-text { background-color: #f8fafc; border-color: var(--border-color); color: var(--text-sub); }
 
-    /* === INPUTS ĐẸP HƠN === */
-    .form-group {
-        margin-bottom: 1.25rem;
-    }
-
-    .form-label-modern {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #475569;
-        margin-bottom: 0.5rem;
-        display: block;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-
-    .form-control, .form-select, .select2-selection {
-        height: 48px !important;
+    /* === MAP STYLING (MỚI) === */
+    #map {
+        height: 350px;
+        width: 100%;
         border-radius: var(--radius-md);
-        border: 1px solid var(--border-color);
-        padding: 0.6rem 1rem;
-        font-size: 0.95rem;
-        background-color: var(--input-bg);
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        color: var(--text-main);
+        border: 2px solid var(--border-color);
+        margin-top: 10px;
+        z-index: 1; /* Để không che đè dropdown */
     }
+    /* Tùy chỉnh thanh tìm kiếm của Leaflet cho đẹp hơn */
+    .leaflet-control-geocoder { z-index: 1000; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .leaflet-touch .leaflet-control-geocoder { min-width: 300px; }
 
-    .form-control:focus, .form-select:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15);
-        background-color: white;
-    }
-
-    textarea.form-control {
-        height: auto !important;
-        min-height: 120px;
-        line-height: 1.6;
-        padding: 1rem;
-        resize: vertical;
-    }
-    
-    .input-group-text {
-        background-color: #f8fafc;
-        border-color: var(--border-color);
-        color: var(--text-sub);
-    }
-
-    /* === TIMELINE PRO === */
-    .timeline-container {
-        position: relative;
-        padding: 1rem 0 0 0;
-    }
-
-    /* Đường kẻ dọc nối các mốc */
-    .timeline-container::before {
-        content: '';
-        position: absolute;
-        left: 19px; /* Căn giữa dot */
-        top: 20px;
-        bottom: 20px;
-        width: 2px;
-        background: #e2e8f0;
-        z-index: 0;
-    }
-
-    .timeline-item {
-        position: relative;
-        padding-left: 50px; /* Chừa chỗ cho dot */
-        margin-bottom: 2rem;
-    }
-
-    /* Chấm tròn số thứ tự */
-    .timeline-index-badge {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 40px;
-        height: 40px;
-        background: white;
-        border: 2px solid var(--primary-color);
-        color: var(--primary-color);
-        border-radius: 50%;
-        font-size: 1rem;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        transition: all 0.3s ease;
-    }
-    
-    .timeline-item:hover .timeline-index-badge {
-        background: var(--primary-color);
-        color: white;
-        transform: scale(1.1);
-    }
-
-    .timeline-card {
-        background: #fff;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        position: relative;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-
-    .timeline-card:hover {
-        border-color: var(--primary-color);
-        box-shadow: 0 10px 20px rgba(13, 148, 136, 0.1);
-        transform: translateY(-2px);
-    }
-
-    .timeline-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.25rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px dashed var(--border-color);
-    }
-
-    .timeline-title-label {
-        font-weight: 700;
-        color: var(--text-main);
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .btn-delete-row {
-        color: #ef4444;
-        background: white;
-        border: 1px solid #fee2e2;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .btn-delete-row:hover {
-        background: #ef4444;
-        color: white;
-        border-color: #ef4444;
-    }
-
-    /* Ẩn triệt để checkbox mặc định */
-    .hidden-checkbox {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        position: absolute;
-    }
-
-    /* === UPLOAD ZONE === */
+    /* === IMAGE UPLOAD PREVIEW (MỚI) === */
     .upload-zone {
-        border: 2px dashed #cbd5e1;
-        border-radius: var(--radius-md);
-        padding: 2.5rem 1rem;
-        text-align: center;
-        background: #f8fafc;
-        cursor: pointer;
-        transition: all 0.3s;
+        border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 2.5rem 1rem;
+        text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s;
+        position: relative; overflow: hidden;
+    }
+    .upload-zone:hover { border-color: var(--primary-color); background: #f0fdfa; }
+    .upload-zone:hover i { color: var(--primary-color); transform: scale(1.2); }
+    
+    .image-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .preview-item {
         position: relative;
+        padding-top: 100%; /* Tạo hình vuông */
+        border-radius: 8px;
         overflow: hidden;
-    }
-
-    .upload-zone:hover {
-        border-color: var(--primary-color);
-        background: #f0fdfa;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    .upload-zone i {
-        color: #94a3b8;
-        transition: all 0.3s;
+    .preview-item img {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
     }
     
-    .upload-zone:hover i {
-        color: var(--primary-color);
-        transform: scale(1.2);
+    .btn-remove-img {
+        position: absolute; top: 2px; right: 2px;
+        width: 20px; height: 20px;
+        background: rgba(239, 68, 68, 0.9); color: white;
+        border-radius: 50%; font-size: 10px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; border: none; z-index: 10;
+        transition: transform 0.2s;
+    }
+    .btn-remove-img:hover { transform: scale(1.2); background: red; }
+    
+    .img-meta {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: rgba(0,0,0,0.6); color: white;
+        font-size: 9px; padding: 2px; text-align: center;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    /* === STICKY FOOTER === */
-    .sticky-footer {
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 95%;
-        max-width: 900px;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(12px);
-        padding: 12px 24px;
-        border-radius: 100px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        border: 1px solid rgba(255,255,255,0.8);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 1000;
-    }
+    /* Timeline Styling (Giữ nguyên) */
+    .timeline-container { position: relative; padding: 1rem 0 0 0; }
+    .timeline-container::before { content: ''; position: absolute; left: 19px; top: 20px; bottom: 20px; width: 2px; background: #e2e8f0; z-index: 0; }
+    .timeline-item { position: relative; padding-left: 50px; margin-bottom: 2rem; }
+    .timeline-index-badge { position: absolute; left: 0; top: 0; width: 40px; height: 40px; background: white; border: 2px solid var(--primary-color); color: var(--primary-color); border-radius: 50%; font-size: 1rem; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s ease; }
+    .timeline-item:hover .timeline-index-badge { background: var(--primary-color); color: white; transform: scale(1.1); }
+    .timeline-card { background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; position: relative; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .timeline-card:hover { border-color: var(--primary-color); box-shadow: 0 10px 20px rgba(13, 148, 136, 0.1); transform: translateY(-2px); }
+    .timeline-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border-color); }
+    .timeline-title-label { font-weight: 700; color: var(--text-main); font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+    .btn-delete-row { color: #ef4444; background: white; border: 1px solid #fee2e2; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+    .btn-delete-row:hover { background: #ef4444; color: white; border-color: #ef4444; }
+    .hidden-checkbox { display: none !important; }
 
-    /* === RESPONSIVE === */
+    /* Settings & Footer (Giữ nguyên) */
+    .settings-list { display: flex; flex-direction: column; }
+    .setting-item { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px dashed #e2e8f0; transition: background-color 0.2s ease; }
+    .setting-item:last-child { border-bottom: none; }
+    .setting-item:hover { background-color: #f8fafc; }
+    .setting-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; margin-right: 0; transition: transform 0.2s; }
+    .setting-item:hover .setting-icon { transform: scale(1.1) rotate(5deg); }
+    .setting-icon.privacy-icon { background: #e0f2fe; color: #0284c7; }
+    .setting-icon.reason-icon { background: #fff7ed; color: #ea580c; }
+    .setting-content { flex: 1; margin: 0 16px; min-width: 0; }
+    .setting-label { font-weight: 700; color: var(--text-main); margin-bottom: 3px; display: block; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .setting-desc { font-size: 0.8rem; color: var(--text-sub); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .setting-action { flex-shrink: 0; display: flex; justify-content: flex-end; width: 160px; }
+    .setting-action select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; font-weight: 600; background-color: #fff; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .form-check.form-switch { display: flex; align-items: center; justify-content: flex-end; margin: 0; padding: 0; }
+    .form-check-input { width: 3em !important; height: 1.6em !important; cursor: pointer; background-color: #e2e8f0; border-color: #cbd5e1; margin-top: 0; margin-left: 0 !important; float: none; }
+    .form-check-input:checked { background-color: var(--primary-color); border-color: var(--primary-color); }
+
+    .sticky-footer { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 800px; background: #ffffff; padding: 10px 24px; border-radius: 50px; box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; z-index: 1000; animation: slideUp 0.3s ease-out; }
+    @keyframes slideUp { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+    .footer-status-wrapper { display: flex; align-items: center; gap: 12px; }
+    .status-icon { width: 32px; height: 32px; background-color: #f0fdfa; color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; border: 1px solid #ccfbf1; }
+    .status-text { display: flex; flex-direction: column; line-height: 1.25; }
+    .status-title { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+    .status-subtitle { font-size: 0.75rem; color: var(--text-sub); }
+    .footer-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-cancel { padding: 8px 20px; border-radius: 50px; color: var(--text-sub); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: all 0.2s; background: transparent; border: 1px solid transparent; }
+    .btn-cancel:hover { background-color: #f1f5f9; color: var(--text-main); border-color: #e2e8f0; }
+    .btn-save { padding: 8px 28px; border-radius: 50px; background-color: var(--primary-color); color: white; font-weight: 600; font-size: 0.9rem; border: none; box-shadow: 0 4px 6px rgba(62, 159, 95, 0.2); transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .btn-save:hover { background-color: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(62, 159, 95, 0.3); }
+
     @media (max-width: 992px) {
-        .main-content-wrapper {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-        }
-        
-        .timeline-container::before {
-            left: 14px;
-        }
-        
-        .timeline-index-badge {
-            width: 30px;
-            height: 30px;
-            font-size: 0.85rem;
-        }
-        
-        .timeline-item {
-            padding-left: 40px;
-        }
+        .main-content-wrapper { grid-template-columns: 1fr; gap: 1.5rem; }
+        .timeline-container::before { left: 14px; }
+        .timeline-index-badge { width: 30px; height: 30px; font-size: 0.85rem; }
+        .timeline-item { padding-left: 40px; }
     }
-    /* === SETTINGS CARD STYLING === */
-.settings-list {
-    display: flex;
-    flex-direction: column;
-}
-
-.setting-item {
-    display: flex;
-    align-items: center; /* Căn giữa theo chiều dọc */
-    justify-content: space-between;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px dashed #e2e8f0;
-    transition: background-color 0.2s ease;
-}
-
-.setting-item:last-child {
-    border-bottom: none;
-}
-
-.setting-item:hover {
-    background-color: #f8fafc;
-}
-
-/* Icon Style */
-.setting-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
-    flex-shrink: 0; /* Không cho icon bị co lại */
-    margin-right: 0; /* Bỏ margin phải cũ vì đã dùng gap ở cha */
-    transition: transform 0.2s;
-}
-
-.setting-item:hover .setting-icon {
-    transform: scale(1.1) rotate(5deg);
-}
-
-.setting-icon.privacy-icon { background: #e0f2fe; color: #0284c7; }
-.setting-icon.reason-icon { background: #fff7ed; color: #ea580c; }
-
-/* Content Text */
-.setting-content {
-    flex: 1; /* Chiếm toàn bộ không gian trống */
-    margin: 0 16px; /* Tạo khoảng cách đều 2 bên */
-    min-width: 0; /* Fix lỗi text tràn trong flexbox */
-}
-
-.setting-label {
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 3px;
-    display: block;
-    font-size: 0.95rem;
-    white-space: nowrap; /* Giữ tiêu đề trên 1 dòng */
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.setting-desc {
-    font-size: 0.8rem;
-    color: var(--text-sub);
-    line-height: 1.3;
-    /* Cho phép mô tả xuống dòng nếu cần nhưng gọn gàng */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-/* Action Area (Select box & Switch) */
-.setting-action {
-    flex-shrink: 0; /* Không bị co lại khi màn hình nhỏ */
-    display: flex;
-    justify-content: flex-end;
-    width: 160px; /* Đặt chiều rộng cố định hợp lý cho vùng thao tác */
-}
-
-/* Custom Select Styling */
-.setting-action select {
-    width: 100%;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 8px 12px; /* Padding gọn hơn */
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-main);
-    background-color: #fff;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    background-position: right 10px center; /* Chỉnh lại icon mũi tên mặc định nếu có */
-}
-
-.setting-action select:hover {
-    border-color: var(--primary-color);
-}
-
-.setting-action select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(62, 159, 95, 0.15);
-}
-
-/* Switch Toggle Styling */
-.form-check.form-switch {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    margin: 0;
-    padding: 0;
-}
-
-.form-check-input {
-    width: 3em !important; 
-    height: 1.6em !important;
-    cursor: pointer;
-    background-color: #e2e8f0;
-    border-color: #cbd5e1;
-    margin-top: 0; /* Fix lỗi lệch dòng bootstrap */
-    margin-left: 0 !important;
-    float: none; /* Fix lỗi float của bootstrap */
-}
-
-.form-check-input:checked {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-/* === STICKY FOOTER (RE-DESIGNED) === */
-.sticky-footer {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 800px;
-    background: #ffffff;
-    padding: 10px 24px;
-    border-radius: 50px; /* Bo tròn mạnh tạo hình viên thuốc */
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05);
-    border: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 1000;
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-    from { transform: translate(-50%, 100%); opacity: 0; }
-    to { transform: translate(-50%, 0); opacity: 1; }
-}
-
-.footer-status-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.status-icon {
-    width: 32px;
-    height: 32px;
-    background-color: #f0fdfa; /* Xanh nhạt */
-    color: var(--primary-color);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    border: 1px solid #ccfbf1;
-}
-
-.status-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.25;
-}
-
-.status-title {
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--text-main);
-}
-
-.status-subtitle {
-    font-size: 0.75rem;
-    color: var(--text-sub);
-}
-
-.footer-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.btn-cancel {
-    padding: 8px 20px;
-    border-radius: 50px;
-    color: var(--text-sub);
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-decoration: none;
-    transition: all 0.2s;
-    background: transparent;
-    border: 1px solid transparent;
-}
-
-.btn-cancel:hover {
-    background-color: #f1f5f9;
-    color: var(--text-main);
-    border-color: #e2e8f0;
-}
-
-.btn-save {
-    padding: 8px 28px;
-    border-radius: 50px;
-    background-color: var(--primary-color);
-    color: white;
-    font-weight: 600;
-    font-size: 0.9rem;
-    border: none;
-    box-shadow: 0 4px 6px rgba(62, 159, 95, 0.2);
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-save:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(62, 159, 95, 0.3);
-}
 </style>
 {% endblock %}
 
@@ -609,6 +180,7 @@
 <div class="container main-wrapper">
 
     <!-- Header -->
+<!-- Header -->
     <div class="page-header">
         <div class="d-flex flex-column align-items-start">
             <a href="{% url 'treks:cung_duong_list' %}" class="btn-back">
@@ -617,7 +189,15 @@
             <h1 class="page-title">{{ page_title }}</h1>
             <div class="subtitle">
                 <i class="fas fa-map-marked-alt"></i> 
-                {{ object.cung_duong.ten|default:cung_duong.ten }}
+                
+                <!-- SỬA ĐOẠN NÀY ĐỂ TRÁNH LỖI KHI EDIT -->
+                {% if is_edit %}
+                    {{ object.cung_duong.ten }}
+                {% else %}
+                    {{ cung_duong.ten }}
+                {% endif %}
+                <!-- KẾT THÚC SỬA -->
+                
             </div>
         </div>
         {% if is_edit %}
@@ -654,7 +234,7 @@
             <!-- CỘT TRÁI (7 PHẦN) -->
             <div class="col-left">
                 
-                <!-- Card 1: Thông tin chung -->
+                <!-- Card 1: Thông tin chung (CẬP NHẬT: THÊM MAP) -->
                 <div class="card-modern">
                     <div class="card-header-modern">
                         <div class="header-title">
@@ -671,18 +251,27 @@
                             {% endif %}
                         </div>
 
-                        <div class="row g-4">
-                            <div class="col-md-7">
-                                <label class="form-label-modern"><i class="fas fa-map-marker-alt"></i> Điểm tập trung</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"></span>
-                                    {{ form.dia_diem_tap_trung }}
-                                </div>
+                        <!-- SECTION ĐIỂM TẬP TRUNG + MAP -->
+                        <div class="form-group">
+                            <label class="form-label-modern"><i class="fas fa-map-marker-alt"></i> Điểm tập trung</label>
+                            <div class="input-group">
+                                <span class="input-group-text"></span>
+                                {{ form.dia_diem_tap_trung }}
                             </div>
-                            <div class="col-md-5">
-                                <label class="form-label-modern"><i class="fa-solid fa-tag"></i> Tags (Phân loại)</label>
-                                {{ form.tags }}
+                            
+                            <!-- Bản đồ Leaflet -->
+                            <div id="map"></div>
+                            <div class="small text-muted mt-2 fst-italic">
+                                <i class="fas fa-lightbulb text-warning"></i> Gõ tên địa điểm vào ô tìm kiếm trên bản đồ hoặc click trực tiếp lên bản đồ để ghim vị trí.
                             </div>
+                            
+                            <!-- Input ẩn chứa JSON tọa độ (Backend cần form field: toa_do_tap_trung) -->
+                            {{ form.toa_do_tap_trung }} 
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label class="form-label-modern"><i class="fa-solid fa-tag"></i> Tags (Phân loại)</label>
+                            {{ form.tags }}
                         </div>
 
                         <div class="form-group mt-4">
@@ -692,7 +281,7 @@
                     </div>
                 </div>
 
-                <!-- Card 2: Lịch trình (Timeline) -->
+                <!-- Card 2: Lịch trình (Timeline) (GIỮ NGUYÊN) -->
                 <div class="card-modern">
                     <div class="card-header-modern">
                         <div class="header-title">
@@ -713,13 +302,7 @@
                                 
                                 <div class="timeline-card">
                                     {% for hidden in subform.hidden_fields %}{{ hidden }}{% endfor %}
-                                    
-                                    <!-- Ẩn triệt để checkbox DELETE -->
-                                    <div class="hidden-checkbox">
-                                        {{ subform.DELETE }}
-                                    </div>
-
-                                    <!-- Header cho từng mốc -->
+                                    <div class="hidden-checkbox">{{ subform.DELETE }}</div>
                                     <div class="timeline-header-row">
                                         <div class="timeline-title-label">
                                             <i class="fas fa-flag-checkered text-warning"></i>
@@ -729,8 +312,6 @@
                                             <i class="far fa-trash-alt"></i> Xóa
                                         </button>
                                     </div>
-
-                                    <!-- Row ngang hàng: Ngày | Giờ | Tiêu đề -->
                                     <div class="row g-3 mb-3">
                                         <div class="col-md-3 col-6">
                                             <label class="form-label-modern small text-muted">Ngày thứ</label>
@@ -745,17 +326,12 @@
                                             {{ subform.hoat_dong }}
                                         </div>
                                     </div>
-                                    
-                                    <!-- Chi tiết -->
                                     <div>
                                         <label class="form-label-modern small text-muted">Chi tiết hoạt động</label>
                                         {{ subform.mo_ta_chi_tiet }}
                                     </div>
-
                                     {% if subform.errors %}
-                                    <div class="alert alert-danger mt-2 py-2 small mb-0">
-                                        {{ subform.errors }}
-                                    </div>
+                                    <div class="alert alert-danger mt-2 py-2 small mb-0">{{ subform.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -768,39 +344,20 @@
                                 <div class="timeline-index-badge"></div>
                                 <div class="timeline-card">
                                     {% for hidden in timeline_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
-                                    
-                                    <div class="hidden-checkbox">
-                                        {{ timeline_formset.empty_form.DELETE }}
-                                    </div>
-
+                                    <div class="hidden-checkbox">{{ timeline_formset.empty_form.DELETE }}</div>
                                     <div class="timeline-header-row">
                                         <div class="timeline-title-label">
                                             <i class="fas fa-flag-checkered text-warning"></i>
                                             Hoạt động #<span class="row-number"></span>
                                         </div>
-                                        <button type="button" class="btn-delete-row btn-delete">
-                                            <i class="far fa-trash-alt"></i> Xóa
-                                        </button>
+                                        <button type="button" class="btn-delete-row btn-delete"><i class="far fa-trash-alt"></i> Xóa</button>
                                     </div>
-
                                     <div class="row g-3 mb-3">
-                                        <div class="col-md-3 col-6">
-                                            <label class="form-label-modern small text-muted">Ngày thứ</label>
-                                            {{ timeline_formset.empty_form.ngay }}
-                                        </div>
-                                        <div class="col-md-3 col-6">
-                                            <label class="form-label-modern small text-muted">Giờ (HH:MM)</label>
-                                            {{ timeline_formset.empty_form.thoi_gian }}
-                                        </div>
-                                        <div class="col-md-6 col-12">
-                                            <label class="form-label-modern small text-muted">Tên hoạt động</label>
-                                            {{ timeline_formset.empty_form.hoat_dong }}
-                                        </div>
+                                        <div class="col-md-3 col-6"><label class="form-label-modern small text-muted">Ngày thứ</label>{{ timeline_formset.empty_form.ngay }}</div>
+                                        <div class="col-md-3 col-6"><label class="form-label-modern small text-muted">Giờ (HH:MM)</label>{{ timeline_formset.empty_form.thoi_gian }}</div>
+                                        <div class="col-md-6 col-12"><label class="form-label-modern small text-muted">Tên hoạt động</label>{{ timeline_formset.empty_form.hoat_dong }}</div>
                                     </div>
-                                    <div>
-                                        <label class="form-label-modern small text-muted">Chi tiết hoạt động</label>
-                                        {{ timeline_formset.empty_form.mo_ta_chi_tiet }}
-                                    </div>
+                                    <div><label class="form-label-modern small text-muted">Chi tiết hoạt động</label>{{ timeline_formset.empty_form.mo_ta_chi_tiet }}</div>
                                 </div>
                             </div>
                         </div>
@@ -811,110 +368,60 @@
             <!-- CỘT PHẢI (3 PHẦN) -->
             <div class="col-right">
                 
-                <!-- Card: Kế hoạch -->
+                <!-- Card: Kế hoạch (GIỮ NGUYÊN) -->
                 <div class="card-modern">
                     <div class="card-header-modern">
-                        <div class="header-title">
-                            <span class="header-icon-box bg-icon-calendar"><i class="far fa-calendar-alt"></i></span>
-                            Kế hoạch & Chi phí
-                        </div>
+                        <div class="header-title"><span class="header-icon-box bg-icon-calendar"><i class="far fa-calendar-alt"></i></span> Kế hoạch & Chi phí</div>
                     </div>
                     <div class="card-body-modern">
-                        <div class="form-group">
-                            <label class="form-label-modern">Ngày bắt đầu</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"></span>
-                                {{ form.ngay_bat_dau }}
+                        <div class="form-group"><label class="form-label-modern">Ngày bắt đầu</label><div class="input-group"><span class="input-group-text bg-white"></span>{{ form.ngay_bat_dau }}</div></div>
+                        <div class="form-group"><label class="form-label-modern">Ngày kết thúc</label><div class="input-group"><span class="input-group-text bg-white"></span>{{ form.ngay_ket_thuc }}</div></div>
+                        <div class="my-4 border-top border-dashed"></div>
+                        <div class="form-group"><label class="form-label-modern">Chi phí dự kiến (VND)</label><div class="input-group">{{ form.chi_phi_uoc_tinh }}</div></div>
+                        <div class="form-group mb-0"><label class="form-label-modern mb-2"><i class="fas fa-users"></i> Số lượng tối đa</label><div class="input-group">{{ form.so_luong_toi_da }}<span class="input-group-text"></span></div></div>
+                    </div>
+                </div>
+
+                <!-- Card: Cài đặt (GIỮ NGUYÊN) -->
+                <div class="card-modern">
+                    <div class="card-header-modern"><div class="header-title"><span class="header-icon-box bg-icon-setting"><i class="fas fa-cog"></i></span> Thiết lập</div></div>
+                    <div class="card-body-modern p-0"> 
+                        <div class="settings-list">
+                            <div class="setting-item">
+                                <div class="setting-icon privacy-icon"><i class="fas fa-shield-alt"></i></div>
+                                <div class="setting-content"><label class="setting-label">Quyền riêng tư</label><div class="setting-desc">Ai có thể xem chuyến đi này?</div></div>
+                                <div class="setting-action"><div class="custom-select-wrapper">{{ form.che_do_rieng_tu }}</div></div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-icon reason-icon"><i class="fas fa-clipboard-check"></i></div>
+                                <div class="setting-content"><label class="setting-label">Yêu cầu lý do</label><div class="setting-desc">Bắt buộc nhập lý do khi đăng ký</div></div>
+                                <div class="setting-action"><div class="form-check form-switch m-0 p-0 d-flex justify-content-end">{{ form.yeu_cau_ly_do }}</div></div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label-modern">Ngày kết thúc</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"></span>
-                                {{ form.ngay_ket_thuc }}
-                            </div>
+                    </div>
+                </div>
+                
+                <!-- Card: Ảnh (CẬP NHẬT: LIGHTGALLERY STYLE + LOGIC XÓA/LIMIT) -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title"><span class="header-icon-box bg-icon-image"><i class="far fa-images"></i></span> Thư viện ảnh</div>
+                        <span class="badge bg-light text-dark border"><span id="img-count">0</span>/10</span>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="upload-zone" id="drop-zone">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-secondary"></i>
+                            <div class="fw-bold text-dark">Tải ảnh lên</div>
+                            <div class="small text-muted mt-1">Tối đa 10 ảnh, 20MB/ảnh</div>
+                            <input type="file" id="trip_media_files" name="trip_media_files" multiple hidden accept="image/*">
                         </div>
                         
-                        <div class="my-4 border-top border-dashed"></div>
+                        <!-- Vùng hiển thị lỗi -->
+                        <div id="upload-error" class="text-danger small mt-2 fw-bold text-center"></div>
 
-                        <div class="form-group">
-                            <label class="form-label-modern">Chi phí dự kiến (VND)</label>
-                            <div class="input-group">
-                                {{ form.chi_phi_uoc_tinh }}
-                            </div>
-                        </div>
+                        <!-- Vùng Preview ảnh mới -->
+                        <div id="upload-preview" class="image-preview-grid"></div>
 
-                        <div class="form-group mb-0">
-                         <label class="form-label-modern mb-2"><i class="fas fa-users"></i> Số lượng tối đa</label>
-                            <div class="input-group">
-                                {{ form.so_luong_toi_da }}
-                                <span class="input-group-text"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
- <div class="card-modern">
-    <div class="card-header-modern">
-        <div class="header-title">
-            <span class="header-icon-box bg-icon-setting"><i class="fas fa-cog"></i></span>
-            Thiết lập
-        </div>
-    </div>
-    
-    <div class="card-body-modern p-0"> 
-        <div class="settings-list">
-            
-            <div class="setting-item">
-                <div class="setting-icon privacy-icon">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <div class="setting-content">
-                    <label class="setting-label">Quyền riêng tư</label>
-                    <div class="setting-desc">Ai có thể xem chuyến đi này?</div>
-                </div>
-                <div class="setting-action">
-                    <div class="custom-select-wrapper">
-                        {{ form.che_do_rieng_tu }} 
-                    </div>
-                </div>
-            </div>
-
-            <div class="setting-item">
-                <div class="setting-icon reason-icon">
-                    <i class="fas fa-clipboard-check"></i>
-                </div>
-                <div class="setting-content">
-                    <label class="setting-label" for="{{ form.yeu_cau_ly_do.id_for_label }}">Yêu cầu lý do</label>
-                    <div class="setting-desc">Bắt buộc nhập lý do khi đăng ký</div>
-                </div>
-                <div class="setting-action">
-                    <div class="form-check form-switch m-0 p-0 d-flex justify-content-end">
-                        {{ form.yeu_cau_ly_do }}
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-                <!-- Card: Ảnh -->
-                <div class="card-modern">
-                    <div class="card-header-modern">
-                        <div class="header-title">
-                            <span class="header-icon-box bg-icon-image"><i class="far fa-images"></i></span>
-                            Thư viện ảnh
-                        </div>
-                    </div>
-                    <div class="card-body-modern">
-                        <div class="upload-zone" onclick="document.getElementById('media-input').click()">
-                            <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
-                            <div class="fw-bold">Tải ảnh lên</div>
-                            <div class="small text-muted mt-1">Kéo thả hoặc bấm để chọn</div>
-                            <input type="file" id="media-input" name="trip_media_files" multiple hidden accept="image/*">
-                        </div>
-                        <div id="upload-preview" class="d-flex flex-wrap gap-2 mt-3"></div>
-
+                        <!-- Ảnh đã có (Khi Edit) -->
                         {% if object and object.media.exists %}
                         <div class="mt-4 pt-3 border-top">
                             <label class="form-label-modern text-muted mb-2">Đã tải lên</label>
@@ -922,6 +429,7 @@
                                 {% for m in object.media.all|slice:":6" %}
                                 <div class="position-relative">
                                     <img src="{{ m.file.url }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                    <!-- Nếu muốn xóa ảnh cũ, cần thêm logic ajax ở đây -->
                                 </div>
                                 {% endfor %}
                             </div>
@@ -933,23 +441,15 @@
             </div>
         </div>
 
-           <!-- Sticky Footer (Đã cập nhật HTML mới) -->
+        <!-- Sticky Footer (GIỮ NGUYÊN) -->
         <div class="sticky-footer">
             <div class="footer-status-wrapper">
-                <div class="status-icon">
-                    <i class="fas fa-pen"></i>
-                </div>
-                <div class="status-text">
-                    <span class="status-title">Chế độ chỉnh sửa</span>
-                    <span class="status-subtitle">Thay đổi chưa được lưu</span>
-                </div>
+                <div class="status-icon"><i class="fas fa-pen"></i></div>
+                <div class="status-text"><span class="status-title">Chế độ chỉnh sửa</span><span class="status-subtitle">Thay đổi chưa được lưu</span></div>
             </div>
-            
             <div class="footer-actions">
                 <a href="{% url 'trips:trip_hub' %}" class="btn-cancel">Hủy bỏ</a>
-                <button type="submit" class="btn-save">
-                    <i class="fas fa-save"></i> Lưu lại
-                </button>
+                <button type="submit" class="btn-save"><i class="fas fa-save"></i> Lưu lại</button>
             </div>
         </div>
 
@@ -962,45 +462,169 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
+<!-- Scripts cho Map & Geocoder -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
 <script>
     $(document).ready(function () {
-        // Init Select2
-        $('#id_tags').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            placeholder: "Chọn từ khóa...",
-            selectionCssClass: 'select2-custom-height'
-        });
-
-        // Add Bootstrap Classes & Attributes
+        // --- CONFIG CHUNG ---
+        $('#id_tags').select2({ theme: 'bootstrap-5', width: '100%', placeholder: "Chọn từ khóa...", selectionCssClass: 'select2-custom-height' });
+        
+        // Thêm class bootstrap
         $('#tripForm input:not([type="checkbox"]):not([type="file"]), #tripForm select, #tripForm textarea').addClass('form-control');
         $('#tripForm select').addClass('form-select');
         $('#tripForm input[type="checkbox"]').addClass('form-check-input').css({'width': '3em', 'height': '1.5em', 'margin-left': '0'});
-        
-        // Remove borders from input groups internal elements
         $('.input-group .form-control').css('border-left', 'none');
 
-        // Placeholders
-        $('input[name$="hoat_dong"]').attr('placeholder', 'VD: Check-in đỉnh núi...');
-        $('textarea[name$="mo_ta_chi_tiet"]').attr('placeholder', 'Mô tả chi tiết hoạt động, lưu ý...');
-        
-        // === FORMAT DATETIME FUNCTION (Giữ HH:MM, bỏ giây) ===
-        function formatDateTimeInputs() {
-            $('input[type="datetime-local"], input[type="time"]').each(function() {
-                let val = $(this).val();
-                if (val && val.length > 16) { // YYYY-MM-DDTHH:MM:SS
-                    $(this).val(val.substring(0, 16)); // Cắt bỏ :SS
+        // =========================================================
+        // === 1. LEAFLET MAP & REVERSE GEOCODING ===
+        // =========================================================
+        const savedCoordsStr = $('#id_toa_do_tap_trung').val();
+        let initialLat = 10.8231; // HCM
+        let initialLng = 106.6297;
+        let zoomLevel = 10;
+        let hasSavedPoint = false;
+
+        try {
+            if (savedCoordsStr && savedCoordsStr !== '{}' && savedCoordsStr !== 'null') {
+                const parsed = JSON.parse(savedCoordsStr);
+                if (parsed.lat && parsed.lng) {
+                    initialLat = parsed.lat;
+                    initialLng = parsed.lng;
+                    zoomLevel = 16;
+                    hasSavedPoint = true;
                 }
-            });
+            }
+        } catch(e) { console.log("JSON parse error", e); }
+
+        const map = L.map('map').setView([initialLat, initialLng], zoomLevel);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker;
+        if (hasSavedPoint) {
+            marker = L.marker([initialLat, initialLng]).addTo(map);
         }
-        // Chạy khi load
-        formatDateTimeInputs();
-        // Chạy khi change để đảm bảo
-        $(document).on('change', 'input[type="datetime-local"]', function() {
-             formatDateTimeInputs();
+
+        function updateHiddenCoords(lat, lng) {
+            $('#id_toa_do_tap_trung').val(JSON.stringify({ lat: lat, lng: lng }));
+        }
+
+        // Click bản đồ -> Lấy địa chỉ
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+
+            if (marker) marker.setLatLng(e.latlng);
+            else marker = L.marker(e.latlng).addTo(map);
+            
+            updateHiddenCoords(lat, lng);
+
+            const locationInput = $('#id_dia_diem_tap_trung');
+            // Chỉ tự động điền nếu ô đang trống hoặc đang chứa tọa độ cũ
+            if(locationInput.val() === "" || locationInput.val().includes("Tọa độ:") || locationInput.val().includes("Đang lấy")) {
+                locationInput.val("Đang lấy địa chỉ...");
+                locationInput.addClass('text-muted fst-italic');
+
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        locationInput.removeClass('text-muted fst-italic');
+                        if (data && data.display_name) {
+                            locationInput.val(data.display_name);
+                        } else {
+                            locationInput.val(`Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+                        }
+                    })
+                    .catch(() => {
+                        locationInput.removeClass('text-muted fst-italic');
+                        locationInput.val(`Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+                    });
+            }
         });
 
-        // Timeline Logic
+        // Search Bar
+        L.Control.geocoder({
+            defaultMarkGeocode: false, placeholder: "Tìm vị trí...", errorMessage: "Không thấy."
+        })
+        .on('markgeocode', function(e) {
+            const center = e.geocode.center;
+            map.fitBounds(e.geocode.bbox);
+            if (marker) marker.setLatLng(center);
+            else marker = L.marker(center).addTo(map);
+            
+            updateHiddenCoords(center.lat, center.lng);
+            $('#id_dia_diem_tap_trung').val(e.geocode.name);
+        })
+        .addTo(map);
+
+        // =========================================================
+        // === 2. IMAGE UPLOAD (Giới hạn 10MB) ===
+        // =========================================================
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('trip_media_files');
+        const previewContainer = document.getElementById('upload-preview');
+        const errorMsg = document.getElementById('upload-error');
+        const imgCountBadge = document.getElementById('img-count');
+        
+        const dt = new DataTransfer();
+        const MAX_FILES = 10;
+        const MAX_SIZE_MB = 10; 
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+        function handleFiles(files) {
+            errorMsg.textContent = '';
+            if (dt.items.length + files.length > MAX_FILES) {
+                errorMsg.textContent = `Chỉ được upload tối đa ${MAX_FILES} ảnh.`;
+                return;
+            }
+            Array.from(files).forEach(file => {
+                if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+                    errorMsg.textContent = `File ${file.name} quá lớn (>10MB).`;
+                    return;
+                }
+                if (!file.type.startsWith('image/')) {
+                    errorMsg.textContent = `File ${file.name} không phải ảnh.`;
+                    return;
+                }
+                dt.items.add(file);
+            });
+            fileInput.files = dt.files;
+            renderPreview();
+        }
+
+        function renderPreview() {
+            previewContainer.innerHTML = '';
+            imgCountBadge.textContent = dt.items.length;
+            Array.from(dt.files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item animate__animated animate__fadeIn';
+                    div.innerHTML = `
+                        <img src="${e.target.result}">
+                        <div class="img-meta">${(file.size/1024/1024).toFixed(1)} MB</div>
+                        <button type="button" class="btn-remove-img" onclick="removeFile(${index})"><i class="fas fa-times"></i></button>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        window.removeFile = function(index) {
+            dt.items.remove(index);
+            fileInput.files = dt.files;
+            renderPreview();
+        }
+
+        // =========================================================
+        // === 3. TIMELINE LOGIC ===
+        // =========================================================
         const container = $('#timeline-container');
         const totalForms = $('#id_timeline-TOTAL_FORMS');
         const template = $('#empty-form-template').html();
@@ -1019,63 +643,24 @@
             let newRowHtml = template.replace(/__prefix__/g, idx);
             container.append(newRowHtml);
             totalForms.val(idx + 1);
-            
-            // Re-apply classes
-            let newRow = container.children().last();
-            newRow.find('input, select, textarea').addClass('form-control');
-            newRow.find('input[name$="hoat_dong"]').attr('placeholder', 'VD: Hoạt động tiếp theo...');
-            
+            container.children().last().find('input, select, textarea').addClass('form-control');
             updateTimelineNumbers();
-            
-            // Scroll to new item
-            $('html, body').animate({
-                scrollTop: newRow.offset().top - 150
-            }, 500);
         });
 
         container.on('click', '.btn-delete', function () {
             const row = $(this).closest('.timeline-row');
             const delInput = row.find('input[name$="-DELETE"]');
-            
             if (delInput.length) {
-                // Check hidden box
                 delInput.prop('checked', true);
-                row.slideUp(300, function() {
-                    updateTimelineNumbers();
-                });
+                row.slideUp(300, updateTimelineNumbers);
             } else {
                 row.remove();
                 updateTimelineNumbers();
             }
         });
 
-        // Sortable
         new Sortable(document.getElementById('timeline-container'), {
-            animation: 150,
-            handle: '.timeline-card', 
-            ghostClass: 'bg-light',
-            onEnd: updateTimelineNumbers
-        });
-
-        // Image Preview
-        $('#media-input').change(function () {
-            const preview = $('#upload-preview');
-            preview.empty();
-            if (this.files) {
-                Array.from(this.files).forEach(f => {
-                    if (f.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            preview.append(`
-                                <div class="position-relative animate__animated animate__fadeIn">
-                                    <img src="${e.target.result}" style="width:70px; height:70px; object-fit:cover; border-radius:10px; border:2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                </div>
-                            `);
-                        }
-                        reader.readAsDataURL(f);
-                    }
-                });
-            }
+            animation: 150, handle: '.timeline-card', ghostClass: 'bg-light', onEnd: updateTimelineNumbers
         });
         
         updateTimelineNumbers();

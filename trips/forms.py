@@ -57,18 +57,36 @@ class ChuyenDiForm(forms.ModelForm):
         model = ChuyenDi
         fields = [
             'ten_chuyen_di', 'mo_ta', 'ngay_bat_dau', 'ngay_ket_thuc', 'so_luong_toi_da', 
-            'chi_phi_uoc_tinh', 'che_do_rieng_tu', 'yeu_cau_ly_do', 'dia_diem_tap_trung', 'tags'
+            'chi_phi_uoc_tinh', 'che_do_rieng_tu', 'yeu_cau_ly_do', 
+            'dia_diem_tap_trung', 'toa_do_tap_trung', 'tags'  # <--- Đã thêm toa_do_tap_trung
         ]
         widgets = {
             'ten_chuyen_di': forms.TextInput(attrs={'class': 'form-control'}),
             'mo_ta': forms.Textarea(attrs={'rows': 5, 'class': 'form-control', 'placeholder': 'Giới thiệu về chuyến đi, lịch trình dự kiến, chi phí bao gồm những gì, yêu cầu về thể lực...'}),
-            'ngay_bat_dau': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'ngay_ket_thuc': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'ngay_bat_dau': forms.DateTimeInput(
+                attrs={
+                    'type': 'datetime-local', 
+                    'class': 'form-control'
+                    # Không cần step='any' nữa, mặc định nó sẽ là step theo phút
+                },
+                format='%Y-%m-%dT%H:%M'  # Định dạng hiển thị: Năm-Tháng-NgàyTGiờ:Phút (Bỏ giây)
+            ),
+            'ngay_ket_thuc': forms.DateTimeInput(
+                attrs={
+                    'type': 'datetime-local', 
+                    'class': 'form-control'
+                },
+                format='%Y-%m-%dT%H:%M'  # Định dạng hiển thị: Năm-Tháng-NgàyTGiờ:Phút (Bỏ giây)
+            ),
             'so_luong_toi_da': forms.NumberInput(attrs={'class': 'form-control'}),
             'chi_phi_uoc_tinh': forms.NumberInput(attrs={'class': 'form-control'}),
             'che_do_rieng_tu': forms.Select(attrs={'class': 'form-select'}),
             'yeu_cau_ly_do': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'dia_diem_tap_trung': forms.TextInput(attrs={'class': 'form-control'}),
+            'dia_diem_tap_trung': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên địa điểm...'}),
+            
+            # Widget ẩn để chứa JSON tọa độ từ Leaflet Map
+            'toa_do_tap_trung': forms.HiddenInput(), 
+            
             'tags': forms.SelectMultiple(attrs={'class': 'form-control select2'}),
         }
         labels = {
@@ -83,7 +101,11 @@ class ChuyenDiForm(forms.ModelForm):
             'dia_diem_tap_trung': 'Địa điểm tập trung',
             'tags': 'Chủ đề (Hashtag)',
         }
-    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Báo cho Django biết chỉ chấp nhận định dạng Giờ:Phút khi lưu
+        self.fields['ngay_bat_dau'].input_formats = ['%Y-%m-%dT%H:%M']
+        self.fields['ngay_ket_thuc'].input_formats = ['%Y-%m-%dT%H:%M']   
     def clean(self):
         cleaned_data = super().clean()
         start_date = cleaned_data.get("ngay_bat_dau")
@@ -121,10 +143,11 @@ TimelineFormSet = forms.inlineformset_factory(
     ChuyenDi, 
     ChuyenDiTimeline, 
     form=ChuyenDiTimelineForm,
-    extra=1,  # Luôn hiển thị 1 form trống để người dùng thêm mới
-    can_delete=True, # Cho phép xóa các mốc đã có
-    can_order=False, # Không cần sắp xếp
+    extra=1,
+    can_delete=True,
+    can_order=False,
 )
+
 # === FORM MỚI CHO TRANG CHỌN CUNG ĐƯỜNG ===
 class SelectTrekFilterForm(forms.Form):
     q = forms.CharField(

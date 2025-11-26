@@ -28,4 +28,5 @@ urlpatterns = [
     path('<int:pk>/media/<int:media_id>/set-cover/', views.set_trip_cover, name='set_trip_cover'),
     path('media/<int:media_id>/delete/', views.delete_trip_media, name='delete_trip_media'),
     path('chon-cung-duong/', views.SelectTrekForTripView.as_view(), name='select_trek_for_trip'),
+    path('chuyen-di/<int:pk>/<slug:slug>/', views.TripDetailView.as_view(), name='chuyen_di_detail'),
 ]
