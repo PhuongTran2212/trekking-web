@@ -1,564 +1,1082 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
 <style>
-    /* TẤT CẢ CSS ĐỀU ĐƯỢC "KHÓA" BÊN TRONG CLASS ".trip-form-page"
-      Sẽ không ảnh hưởng đến Header nữa.
-    */
-
-    /* Bọc các biến trong class cha, thay vì :root */
-    .trip-form-page {
-        --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-        --font-heading: 'Montserrat', 'Inter', sans-serif;
-        --trek-primary: #2d5016;
-        --trek-primary-hover: #1f3810;
-        --trek-accent: #7cb342;
-        --trek-bg: #fafafa;
-        --trek-card-bg: #ffffff;
-        --trek-text: #1a1a1a;
-        --trek-text-muted: #666666;
-        --trek-border: #e5e5e5;
-        --trek-shadow: rgba(0, 0, 0, 0.08);
-        --trek-shadow-hover: rgba(0, 0, 0, 0.12);
-        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        
-        /* Đảm bảo font chính được áp dụng CHỈ trong trang này */
-        font-family: var(--font-primary);
+    :root {
+        --primary-color: #2c7744;
+        --primary-light: #e6f4ea;
+        --primary-dark: #1e5631;
+        --accent-color: #f59e0b;
+        --bg-body: #f8fafc;
+        --text-dark: #1e293b;
+        --text-gray: #64748b;
+        --border-color: #e2e8f0;
+        --danger: #ef4444;
+        --success: #22c55e;
     }
 
-    /* === PAGE HEADER === */
-    .trip-form-page .page-header {
-        background: white;
-        padding: 2.5rem 0 2rem;
-        margin-bottom: 3rem;
-        border-bottom: 2px solid var(--trek-border);
+    body {
+        background-color: var(--bg-body);
+        color: var(--text-dark);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
-    .trip-form-page .page-header h1 {
-        font-family: var(--font-heading);
-        font-size: 2.25rem;
-        font-weight: 700;
-        color: var(--trek-text);
-        margin-bottom: 0.75rem;
-    }
-    .trip-form-page .page-header p {
-        color: var(--trek-text-muted);
-        font-size: 1rem;
-        margin: 0 auto;
-        max-width: 700px;
-    }
-    .trip-form-page .page-header a { color: var(--trek-primary); text-decoration: none; font-weight: 600; }
-    .trip-form-page .page-header a:hover { color: var(--trek-primary-hover); }
 
-    /* === SECTION HEADERS === */
-    .trip-form-page .section-header {
+    .main-wrapper {
+        padding: 1.5rem 0 120px;
+    }
+
+    /* Optimized main layout grid with better spacing and balance */
+    .main-content-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    /* === HEADER SIMPLE === */
+    .page-header {
+        margin-bottom: 1.5rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .breadcrumb-nav {
         display: flex;
         align-items: center;
         gap: 1rem;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid var(--trek-border);
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
     }
-    .trip-form-page .section-number {
-        width: 36px;
-        height: 36px;
-        background: var(--trek-primary);
-        color: white;
-        border-radius: 50%;
-        display: flex;
+
+    .btn-back {
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.125rem;
-        flex-shrink: 0;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--primary-light);
+        border-radius: 50px;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
     }
-    .trip-form-page .section-header h2 {
-        font-family: var(--font-heading);
-        font-size: 1.375rem;
-        font-weight: 700;
-        color: var(--trek-text);
+
+    .btn-back:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .badge-route {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--primary-light);
+        color: var(--primary-color);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .page-title {
+        font-weight: 800;
+        font-size: 1.75rem;
+        color: var(--text-dark);
         margin: 0;
     }
 
-    /* === FORM CONTROLS === */
-    .trip-form-page .form-control, 
-    .trip-form-page .form-select, 
-    .trip-form-page .form-check-input {
-        font-family: var(--font-primary);
-        border: 1px solid var(--trek-border) !important;
-        border-radius: 8px !important;
-        font-size: 0.95rem;
-        transition: var(--transition-smooth);
-    }
-    .trip-form-page .form-control:focus, 
-    .trip-form-page .form-select:focus, 
-    .trip-form-page .form-check-input:focus {
-        border-color: var(--trek-accent) !important;
-        box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1) !important;
-    }
-    .trip-form-page .form-label {
-        font-family: var(--font-primary);
+    .btn-view-page {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: white;
+        color: var(--text-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 50px;
         font-weight: 600;
-        font-size: 0.875rem;
-        color: var(--trek-text-muted);
-        margin-bottom: 0.5rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    /* Select2 override */
-    .trip-form-page .select2-container--bootstrap-5 .select2-selection {
-        border-radius: 8px !important;
-        border: 1px solid var(--trek-border) !important;
-        font-family: var(--font-primary);
-    }
-    .trip-form-page .select2-container--bootstrap-5.select2-container--focus .select2-selection {
-        border-color: var(--trek-accent) !important;
-        box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1) !important;
-    }
-    .trip-form-page .form-check-label {
-        font-family: var(--font-primary);
-        font-weight: 400;
-        text-transform: none;
-        letter-spacing: 0;
+        text-decoration: none;
+        transition: all 0.2s ease;
     }
 
-    /* === CARD WRAPPER === */
-    .trip-form-page .card {
-        border: 1px solid var(--trek-border);
+    .btn-view-page:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    /* === ALERT === */
+    .alert-modern {
+        background: #fef2f2;
+        border: none;
+        border-left: 4px solid var(--danger);
         border-radius: 12px;
-        background: var(--trek-card-bg);
-        box-shadow: var(--trek-shadow);
-        transition: var(--transition-smooth);
-        margin-bottom: 2rem;
-    }
-    .trip-form-page .card:hover { box-shadow: var(--trek-shadow-hover); }
-
-    /* === FORM GRID === */
-    .trip-form-page .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1.5rem;
-    }
-    .trip-form-page .form-grid.form-grid-full { grid-template-columns: 1fr; }
-    .trip-form-page .form-grid.form-grid-half { grid-template-columns: repeat(2, 1fr); }
-    @media (max-width: 768px) {
-        .trip-form-page .form-grid, .trip-form-page .form-grid-half { grid-template-columns: 1fr; }
-    }
-
-    /* Timeline formset */
-    .trip-form-page .timeline-form-row {
-        position: relative;
-        padding: 1.25rem;
-        background: var(--trek-bg);
-        border: 1px solid var(--trek-border);
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        display: grid;
-        grid-template-columns: 40px 1fr 40px;
-        gap: 1rem;
-        align-items: flex-start;
-        transition: var(--transition-smooth);
-    }
-    .trip-form-page .timeline-form-row:hover { background: white; border-color: var(--trek-accent); }
-    .trip-form-page .timeline-handle { color: var(--trek-text-muted); cursor: grab; display: flex; align-items: center; justify-content: center; height: 40px; flex-shrink: 0; }
-    .trip-form-page .timeline-handle:active { cursor: grabbing; }
-    .trip-form-page .timeline-fields { display: flex; flex-direction: column; gap: 1rem; }
-    .trip-form-page .timeline-fields > div:first-child { display: grid; grid-template-columns: 120px 150px 1fr; gap: 0.75rem; }
-    @media (max-width: 768px) { .trip-form-page .timeline-fields > div:first-child { grid-template-columns: 1fr; } }
-    .trip-form-page .timeline-fields label { font-weight: 600; font-size: 0.8rem; color: var(--trek-text-muted); margin-bottom: 0.25rem; }
-    .trip-form-page .timeline-fields input, .trip-form-page .timeline-fields textarea { font-size: 0.95rem !important; }
-    .trip-form-page .delete-timeline-btn {
-        width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;
-        background: #fee; border: 1px solid #fca5a5; color: #dc2626;
-        border-radius: 8px; cursor: pointer; transition: var(--transition-smooth); flex-shrink: 0;
-    }
-    .trip-form-page .delete-timeline-btn:hover { background: #fca5a5; color: white; }
-    .trip-form-page #add-form {
-        background: white; border: 2px solid var(--trek-border); color: var(--trek-primary);
-        font-weight: 600; border-radius: 8px; padding: 0.75rem 1.5rem;
-        transition: var(--transition-smooth); margin-top: 1rem;
-    }
-    .trip-form-page #add-form:hover { border-color: var(--trek-primary); background: var(--trek-bg); }
-
-    /* Media */
-    .trip-form-page .media-upload-box {
-        border: 2px dashed var(--trek-border); border-radius: 12px; padding: 2.5rem;
-        background: linear-gradient(135deg, var(--trek-bg) 0%, var(--trek-card-bg) 100%);
-        text-align: center; transition: var(--transition-smooth); cursor: pointer;
-    }
-    .trip-form-page .media-upload-box:hover { border-color: var(--trek-accent); background: var(--trek-bg); }
-    .trip-form-page .media-upload-box label { font-weight: 600; color: var(--trek-primary); font-size: 1.125rem; margin-bottom: 0.5rem; cursor: pointer; }
-    .trip-form-page .media-upload-box p { color: var(--trek-text-muted); font-size: 0.875rem; margin: 0; }
-    .trip-form-page .media-upload-box input[type="file"] { display: none; }
-    .trip-form-page .media-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.25rem; margin-top: 1.5rem; }
-    .trip-form-page .media-item {
-        position: relative; border: 3px solid transparent; border-radius: 10px;
-        overflow: hidden; aspect-ratio: 1/1; cursor: pointer;
-        transition: var(--transition-smooth); background: var(--trek-bg);
-    }
-    .trip-form-page .media-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-    .trip-form-page .media-item:hover img { transform: scale(1.05); }
-    .trip-form-page .media-item.is-cover { border-color: var(--trek-primary); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--trek-primary); }
-    .trip-form-page .media-actions {
-        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6);
-        display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-        opacity: 0; transition: opacity 0.2s ease;
-    }
-    .trip-form-page .media-item:hover .media-actions { opacity: 1; }
-    .trip-form-page .media-actions button {
-        width: 44px; height: 44px; border-radius: 8px; border: none;
-        background: rgba(255, 255, 255, 0.95); cursor: pointer; display: flex;
-        align-items: center; justify-content: center; transition: var(--transition-smooth);
-        font-size: 1.125rem;
-    }
-    .trip-form-page .media-actions button:hover { transform: scale(1.1); background: white; }
-    .trip-form-page .media-actions .set-cover-btn { color: var(--trek-text-muted); }
-    .trip-form-page .media-actions .set-cover-btn.active { color: var(--trek-primary); }
-    .trip-form-page .media-actions .delete-media-btn { color: #dc2626; }
-
-    /* === BUTTONS (KHÓA LẠI) === */
-    .trip-form-page .btn-primary {
-        background: var(--trek-primary); border: none; color: white;
-        font-weight: 600; border-radius: 8px; padding: 0.875rem 1.75rem;
-        transition: var(--transition-smooth); font-family: var(--font-primary);
-    }
-    .trip-form-page .btn-primary:hover {
-        background: var(--trek-primary-hover);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(45, 80, 22, 0.2);
-    }
-    .trip-form-page .btn-ghost {
-        background: transparent; border: 1px solid var(--trek-border);
-        color: var(--trek-text); font-weight: 600; border-radius: 8px;
-        padding: 0.875rem 1.75rem; transition: var(--trek-shadow);
-        font-family: var(--font-primary);
-    }
-    .trip-form-page .btn-ghost:hover { background: var(--trek-bg); border-color: var(--trek-text-muted); }
-
-    /* === FORM WRAPPER === */
-    .trip-form-page .form-section {
-        background: var(--trek-card-bg);
-        padding: 2rem;
-        border-radius: 12px;
-        border: 1px solid var(--trek-border);
-        margin-bottom: 2rem;
-    }
-    .trip-form-page .form-group-wrapper { margin-bottom: 0; }
-    .trip-form-page .error-message {
-        color: #dc2626;
-        font-size: 0.875rem;
-        margin-top: 0.375rem;
-    }
-
-    /* === BUTTONS FOOTER === */
-    .trip-form-page .form-actions {
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
         display: flex;
+        align-items: flex-start;
         gap: 1rem;
-        margin-top: 2rem;
-        padding-top: 2rem;
-        border-top: 1px solid var(--trek-border);
-        justify-content: flex-end;
-        margin-bottom: 6rem; 
+        grid-column: 1 / -1;
     }
-    .trip-form-page .form-actions .btn { margin: 0; }
+
+    .alert-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--danger);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    /* === CARDS === */
+    .card-modern {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .card-modern:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        border-color: var(--border-color);
+    }
+
+    .card-header-modern {
+        background: linear-gradient(135deg, #fafafa 0%, #f3f4f6 100%);
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .header-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .step-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .step-icon.accent {
+        background: var(--accent-color);
+    }
+
+    .step-icon.dark {
+        background: #374151;
+    }
+
+    .card-body-modern {
+        padding: 1.5rem;
+    }
+
+    /* === FORM INPUTS === */
+    .form-label-modern {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-gray);
+        margin-bottom: 0.75rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background-color: white;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(44, 119, 68, 0.1);
+        outline: none;
+    }
+
+    .form-floating > .form-control {
+        padding: 1.25rem 1rem 0.5rem;
+    }
+
+    .form-floating > label {
+        padding: 0.75rem 1rem;
+        color: var(--text-gray);
+        font-size: 0.9rem;
+    }
+
+    .input-group .input-group-text {
+        background: #fafafa;
+        border: 1px solid var(--border-color);
+        color: var(--text-gray);
+        font-size: 0.9rem;
+    }
+
+    .form-group-modern {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-text {
+        font-size: 0.8rem;
+        color: var(--text-gray);
+        margin-top: 0.5rem;
+    }
+
+    /* === TIMELINE DRAGGABLE === */
+    .timeline-container {
+        position: relative;
+        padding-left: 24px;
+    }
+
+    .timeline-container::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        bottom: 20px;
+        left: 11px;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--primary-color), var(--border-color));
+        border-radius: 2px;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 32px;
+        margin-bottom: 1.25rem;
+        cursor: grab;
+        transition: transform 0.2s ease;
+    }
+
+    .timeline-item:active {
+        cursor: grabbing;
+    }
+
+    .timeline-item.sortable-ghost {
+        opacity: 0.4;
+    }
+
+    .timeline-item.sortable-drag {
+        opacity: 1;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        z-index: 100;
+    }
+
+    .timeline-dot {
+        position: absolute;
+        left: 0;
+        top: 16px;
+        width: 24px;
+        height: 24px;
+        background: var(--primary-color);
+        border-radius: 50%;
+        z-index: 1;
+        box-shadow: 0 0 0 4px white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .timeline-card {
+        background: #fafafa;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+    .timeline-card:hover {
+        background: white;
+        border-color: var(--primary-color);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .btn-delete-row {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #fee2e2;
+        color: var(--danger);
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    .btn-delete-row:hover {
+        background: var(--danger);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .timeline-fields {
+        padding-right: 40px;
+    }
+
+    .btn-add-timeline {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--primary-light);
+        color: var(--primary-color);
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .btn-add-timeline:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /* === UPLOAD ZONE === */
+    .upload-zone {
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        background: #fafafa;
+        padding: 2rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .upload-zone:hover {
+        border-color: var(--primary-color);
+        background: var(--primary-light);
+    }
+
+    .upload-icon {
+        font-size: 2.5rem;
+        color: var(--text-gray);
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .upload-zone:hover .upload-icon {
+        color: var(--primary-color);
+        transform: scale(1.1);
+    }
+
+    .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        margin-top: 1rem;
+    }
+
+    .preview-img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease;
+    }
+
+    .preview-img:hover {
+        transform: scale(1.05);
+    }
+
+    /* === SETTINGS === */
+    .setting-box {
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .setting-box:hover {
+        background: white;
+        border-color: var(--primary-color);
+    }
+
+    .form-switch-modern {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: #fafafa;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .form-switch-modern:hover {
+        background: white;
+        border-color: var(--primary-color);
+    }
+
+    .form-switch-modern .form-check-input {
+        width: 44px;
+        height: 24px;
+        cursor: pointer;
+    }
+
+    .form-switch-modern .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    /* === STICKY FOOTER === */
+    .sticky-footer {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 40px);
+        max-width: 1200px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 1rem 1.5rem;
+        border-radius: 100px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .footer-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-gray);
+        font-size: 0.875rem;
+    }
+
+    .footer-info i {
+        color: var(--success);
+    }
+
+    .btn-cancel {
+        padding: 0.75rem 1.75rem;
+        background: #f1f5f9;
+        color: var(--text-dark);
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+        background: #e2e8f0;
+        color: var(--text-dark);
+    }
+
+    .btn-save {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.75rem;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(44, 119, 68, 0.3);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .btn-save:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(44, 119, 68, 0.4);
+    }
+
+    /* === SELECT2 === */
+    .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 10px !important;
+        border: 1px solid var(--border-color) !important;
+        min-height: 44px !important;
+    }
+
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(44, 119, 68, 0.1) !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        background: var(--primary-light) !important;
+        border: none !important;
+        border-radius: 50px !important;
+        color: var(--primary-color) !important;
+        font-weight: 600 !important;
+    }
+
+    /* Enhanced responsive design for 2-column layout */
+    @media (max-width: 1200px) {
+        .main-content-wrapper {
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .main-content-wrapper {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .alert-modern {
+            grid-column: 1;
+        }
+    }
 
     @media (max-width: 768px) {
-        .trip-form-page .form-actions { flex-direction: column; }
-        .trip-form-page .form-grid-half { grid-template-columns: 1fr; }
-        .trip-form-page .page-header h1 { font-size: 1.75rem; }
+        .main-wrapper {
+            padding: 1rem 0 120px;
+        }
+
+        .main-content-wrapper {
+            gap: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .sticky-footer {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 20px;
+        }
+
+        .footer-info {
+            display: none;
+        }
+
+        .timeline-fields {
+            padding-right: 0;
+        }
+
+        .row g-3 > div {
+            min-width: 0;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .page-header {
+            padding: 0.75rem 0;
+        }
+
+        .breadcrumb-nav {
+            gap: 0.5rem;
+        }
+
+        .btn-back, .badge-route {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .card-body-modern {
+            padding: 1rem;
+        }
+
+        .timeline-item {
+            padding-left: 24px;
+            margin-bottom: 1rem;
+        }
+
+        .preview-grid {
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 8px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="trip-form-page">
+<div class="container main-wrapper">
 
-    <div class="page-header text-center">
-        <h1>{{ page_title }}</h1>
-        <p class="text-muted mb-0">
-            Dựa trên cung đường: 
-            <strong>
-                <a href="{{ object.cung_duong.get_absolute_url|default:cung_duong.get_absolute_url }}">
-                    {{ object.cung_duong.ten|default:cung_duong.ten }}
-                </a>
-            </strong>
-        </p>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div>
+                <div class="breadcrumb-nav">
+                    <a href="{% url 'treks:cung_duong_list' %}" class="btn-back">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                    <span class="badge-route">
+                        <i class="fas fa-map-signs"></i> {{ object.cung_duong.ten|default:cung_duong.ten }}
+                    </span>
+                </div>
+                <h1 class="page-title">{{ page_title }}</h1>
+            </div>
+            {% if is_edit %}
+            <a href="{{ object.get_absolute_url }}" class="btn-view-page mt-3 mt-md-0">
+                <i class="far fa-eye"></i> Xem trang hiển thị
+            </a>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="container my-5" style="max-width: 1000px;">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
-                    <strong>Lỗi:</strong> {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-            
-            <div class="form-section">
-                <div class="section-header">
-                    <div class="section-number">1</div>
-                    <h2>Thông tin chung</h2>
-                </div>
-                
-                <div class="form-grid form-grid-full">
-                    <div>
-                        <label for="{{ form.ten_chuyen_di.id_for_label }}" class="form-label">{{ form.ten_chuyen_di.label }}</label>
-                        {{ form.ten_chuyen_di }}
-                        {% if form.ten_chuyen_di.errors %}<div class="error-message">{{ form.ten_chuyen_di.errors.as_text }}</div>{% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.mo_ta.id_for_label }}" class="form-label">{{ form.mo_ta.label }}</label>
-                        {{ form.mo_ta }}
-                    </div>
-                </div>
+    <form method="post" enctype="multipart/form-data" id="tripForm">
+        {% csrf_token %}
 
-                <div class="form-grid form-grid-half">
-                    <div>
-                        <label for="{{ form.ngay_bat_dau.id_for_label }}" class="form-label">{{ form.ngay_bat_dau.label }}</label>
-                        {{ form.ngay_bat_dau }}
-                    </div>
-                    <div>
-                        <label for="{{ form.ngay_ket_thuc.id_for_label }}" class="form-label">{{ form.ngay_ket_thuc.label }}</label>
-                        {{ form.ngay_ket_thuc }}
-                        {% if form.ngay_ket_thuc.errors %}<div class="error-message">{{ form.ngay_ket_thuc.errors.as_text }}</div>{% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.so_luong_toi_da.id_for_label }}" class="form-label">{{ form.so_luong_toi_da.label }}</label>
-                        {{ form.so_luong_toi_da }}
-                    </div>
-                    <div>
-                        <label for="{{ form.chi_phi_uoc_tinh.id_for_label }}" class="form-label">{{ form.chi_phi_uoc_tinh.label }}</label>
-                        {{ form.chi_phi_uoc_tinh }}
-                    </div>
-                </div>
-
-                <div class="form-grid form-grid-full">
-                    <div>
-                        <label for="{{ form.dia_diem_tap_trung.id_for_label }}" class="form-label">{{ form.dia_diem_tap_trung.label }}</label>
-                        {{ form.dia_diem_tap_trung }}
-                    </div>
-                    <div>
-                        <label for="{{ form.tags.id_for_label }}" class="form-label">{{ form.tags.label }}</label>
-                        {{ form.tags }}
-                    </div>
-                </div>
-                
-                <div class="form-grid form-grid-half">
-                    <div>
-                        <label for="{{ form.che_do_rieng_tu.id_for_label }}" class="form-label">{{ form.che_do_rieng_tu.label }}</label>
-                        {{ form.che_do_rieng_tu }}
-                    </div>
-                    <div class="d-flex align-items-end"> 
-                        <div class="form-check form-switch pb-2">
-                            {{ form.yeu_cau_ly_do }}
-                            <label class="form-check-label" for="{{ form.yeu_cau_ly_do.id_for_label }}">{{ form.yeu_cau_ly_do.label }}</label>
-                        </div>
-                    </div>
+        {% if form.errors or timeline_formset.errors %}
+        <div class="alert-modern">
+            <div class="alert-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h6 class="fw-bold mb-1" style="color: var(--danger);">Vui lòng kiểm tra lại thông tin!</h6>
+                <p class="text-muted small mb-0">Có vẻ như bạn đã bỏ sót trường bắt buộc hoặc nhập sai định dạng.</p>
+                <div class="small mt-1" style="color: var(--danger);">
+                    {{ form.non_field_errors }}
+                    {{ timeline_formset.non_form_errors }}
                 </div>
             </div>
+        </div>
+        {% endif %}
 
-            <div class="form-section">
-                <div class="section-header">
-                    <div class="section-number">2</div>
-                    <h2>Lịch trình chi tiết</h2>
-                </div>
-                
-                {{ timeline_formset.management_form }}
-                <div id="timeline-forms-container">
-                    {% for form in timeline_formset %}
-                    <div class="timeline-form-row">
-                        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-                        <span class="timeline-handle" title="Kéo để sắp xếp"><i class="fas fa-grip-vertical"></i></span>
-                        <div class="timeline-fields">
-                            <div>
-                                <div>
-                                    <label for="{{ form.ngay.id_for_label }}">{{ form.ngay.label }}</label>
-                                    {{ form.ngay }}
-                                </div>
-                                <div>
-                                    <label for="{{ form.thoi_gian.id_for_label }}">{{ form.thoi_gian.label }}</label>
-                                    {{ form.thoi_gian }}
-                                </div>
-                                <div>
-                                    <label for="{{ form.hoat_dong.id_for_label }}">{{ form.hoat_dong.label }}</label>
-                                    {{ form.hoat_dong }}
+        <!-- Two-column layout wrapper using CSS Grid for optimal balance -->
+        <div class="main-content-wrapper">
+
+            <!-- LEFT COLUMN: Thông tin chi tiết + Timeline + Upload ảnh -->
+            <div class="col-left">
+
+                <!-- Thông tin chung -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title">
+                            <span class="step-icon"><i class="fas fa-info"></i></span>
+                            Thông tin chi tiết
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="form-group-modern">
+                             <label class="form-label-modern">
+                                   <i class="fa-solid fa-file-signature"></i> Tên chuyến đi
+                                </label>
+                            <div class="form-floating">
+                                {{ form.ten_chuyen_di }}
+                            </div>
+                            {% if form.ten_chuyen_di.errors %}
+                            <div class="text-danger small mt-1">{{ form.ten_chuyen_di.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-modern">
+                                    <i class="fas fa-map-marker-alt text-danger me-1"></i> Điểm tập trung
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class=""></i></span>
+                                    {{ form.dia_diem_tap_trung }}
                                 </div>
                             </div>
-                            <div>
-                                <label for="{{ form.mo_ta_chi_tiet.id_for_label }}">{{ form.mo_ta_chi_tiet.label }}</label>
-                                {{ form.mo_ta_chi_tiet }}
+                            <div class="col-md-6">
+                                <label class="form-label-modern">
+                                    <i class="fas fa-tags me-1"></i> Tags (Từ khóa)
+                                </label>
+                                {{ form.tags }}
                             </div>
                         </div>
-                        <button type="button" class="delete-timeline-btn" title="Xóa mốc thời gian">
-                            <i class="fas fa-trash"></i>
+
+                        <div class="form-group-modern mt-3">
+                            <label class="form-label-modern">
+                                <i class="fas fa-align-left me-1"></i> Mô tả & Kế hoạch
+                            </label>
+                            {{ form.mo_ta }}
+                            <div class="form-text">
+                                <i class="fas fa-lightbulb text-warning me-1"></i>
+                                Mô tả càng chi tiết càng thu hút nhiều thành viên tham gia hơn.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Draggable -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title">
+                            <span class="step-icon"><i class="fas fa-route"></i></span>
+                            Lịch trình chi tiết
+                        </div>
+                        <button type="button" id="add-timeline-btn" class="btn-add-timeline">
+                            <i class="fas fa-plus"></i> Thêm mốc
                         </button>
-                        <div style="display: none;">
-                            {% if timeline_formset.can_delete %}{{ form.DELETE }}{% endif %}
-                        </div>
                     </div>
-                    {% endfor %}
-                </div>
-                
-                <div id="empty-form-template" style="display:none;">
-                    <div class="timeline-form-row">
-                        {% for hidden in timeline_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
-                        <span class="timeline-handle"><i class="fas fa-grip-vertical"></i></span>
-                        <div class="timeline-fields">
-                            <div>
-                                <div>
-                                    <label for="{{ timeline_formset.empty_form.ngay.id_for_label }}">{{ timeline_formset.empty_form.ngay.label }}</label>
-                                    {{ timeline_formset.empty_form.ngay }}
-                                </div>
-                                <div>
-                                    <label for="{{ timeline_formset.empty_form.thoi_gian.id_for_label }}">{{ timeline_formset.empty_form.thoi_gian.label }}</label>
-                                    {{ timeline_formset.empty_form.thoi_gian }}
-                                </div>
-                                <div>
-                                    <label for="{{ timeline_formset.empty_form.hoat_dong.id_for_label }}">{{ timeline_formset.empty_form.hoat_dong.label }}</label>
-                                    {{ timeline_formset.empty_form.hoat_dong }}
+                    <div class="card-body-modern">
+                        {{ timeline_formset.management_form }}
+
+                        <div id="timeline-container" class="timeline-container">
+                            {% for subform in timeline_formset %}
+                            <div class="timeline-item timeline-row" data-index="{{ forloop.counter }}">
+                                <div class="timeline-dot">{{ forloop.counter }}</div>
+                                <div class="timeline-card">
+                                    {% for hidden in subform.hidden_fields %}{{ hidden }}{% endfor %}
+                                    
+                                    {% if timeline_formset.can_delete %}
+                                    <div class="d-none">{{ subform.DELETE }}</div>
+                                    {% endif %}
+                                    <button type="button" class="btn-delete-row btn-delete" title="Xóa mốc này">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+
+                                    <div class="timeline-fields">
+                                        <div class="row g-2 align-items-center mb-2">
+                                            <div class="col-md-3 col-6">
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text bg-light text-muted fw-bold">Ngày</span>
+                                                    {{ subform.ngay }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-6">
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text bg-light"><i class="far fa-clock"></i></span>
+                                                    {{ subform.thoi_gian }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-12">
+                                                {{ subform.hoat_dong }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            {{ subform.mo_ta_chi_tiet }}
+                                        </div>
+                                    </div>
+
+                                    {% if subform.errors %}
+                                    <div class="text-danger small mt-1">{{ subform.errors }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
-                            <div>
-                                <label for="{{ timeline_formset.empty_form.mo_ta_chi_tiet.id_for_label }}">{{ timeline_formset.empty_form.mo_ta_chi_tiet.label }}</label>
-                                {{ timeline_formset.empty_form.mo_ta_chi_tiet }}
+                            {% endfor %}
+                        </div>
+
+                        <!-- Empty form template -->
+                        <div id="empty-form-template" class="d-none">
+                            <div class="timeline-item timeline-row">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-card">
+                                    {% for hidden in timeline_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                    
+                                    <div class="d-none">{{ timeline_formset.empty_form.DELETE }}</div>
+                                    <button type="button" class="btn-delete-row btn-delete">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+
+                                    <div class="timeline-fields">
+                                        <div class="row g-2 align-items-center mb-2">
+                                            <div class="col-md-3 col-6">
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text bg-light text-muted fw-bold">Ngày</span>
+                                                    {{ timeline_formset.empty_form.ngay }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-6">
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text bg-light"><i class="far fa-clock"></i></span>
+                                                    {{ timeline_formset.empty_form.thoi_gian }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-12">
+                                                {{ timeline_formset.empty_form.hoat_dong }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            {{ timeline_formset.empty_form.mo_ta_chi_tiet }}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <button type="button" class="delete-timeline-btn"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-                
-                <button type="button" id="add-form" class="btn btn-outline">
-                    <i class="fas fa-plus me-1"></i> Thêm mốc thời gian
-                </button>
-            </div>
-            
-            {% if object %}
-            <div class="form-section">
-                <div class="section-header">
-                    <div class="section-number">3</div>
-                    <h2>Quản lý Media</h2>
-                </div>
-                
-                <div class="media-upload-box" onclick="document.getElementById('trip-media-upload').click()">
-                    <label for="trip-media-upload">
-                        <i class="fas fa-cloud-upload-alt me-2"></i> Tải lên ảnh/video mới
-                    </label>
-                    <p class="small text-muted">Kéo thả hoặc chọn nhiều file cùng lúc</p>
-                    <input type="file" id="trip-media-upload" name="trip_media_files" multiple>
-                </div>
-                
-                <h5 class="mt-4 mb-3" style="font-weight: 600; color: var(--trek-text);">Media hiện có</h5>
-                <div id="media-gallery" class="media-gallery-grid">
-                    {% for media in object.media.all %}
-                    <div class="media-item {% if object.anh_bia_id == media.id %}is-cover{% endif %}" data-media-id="{{ media.id }}">
-                        <img src="{{ media.file.url }}" alt="Trip media">
-                        <div class="media-actions">
-                            <button type="button" class="set-cover-btn {% if object.anh_bia_id == media.id %}active{% endif %}" title="Đặt làm ảnh bìa">
-                                <i class="fas fa-star"></i>
-                            </button>
-                            <button type="button" class="delete-media-btn" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
+
+                <!-- Upload ảnh -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title">
+                            <span class="step-icon" style="background: #8b5cf6;"><i class="fas fa-images"></i></span>
+                            Thư viện ảnh
                         </div>
                     </div>
-                    {% empty %}
-                    <p class="text-muted" style="grid-column: 1/-1;">Chưa có media nào được tải lên cho chuyến đi này.</p>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
+                    <div class="card-body-modern">
+                        <div class="upload-zone" onclick="document.getElementById('media-input').click()">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <div class="fw-bold text-dark">Kéo thả hoặc bấm để tải ảnh</div>
+                            <div class="small text-muted">JPG, PNG tối đa 10MB</div>
+                            <input type="file" id="media-input" name="trip_media_files" multiple hidden accept="image/*">
+                        </div>
+                        <div id="upload-preview" class="preview-grid"></div>
 
-            <div class="form-actions">
-                <a href="{{ object.get_absolute_url|default:request.META.HTTP_REFERER|default:'/' }}" class="btn btn-ghost btn-lg">
-                    <i class="fas fa-times me-2"></i> Hủy
-                </a>
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save me-2"></i> Lưu Chuyến đi
+                        {% if object and object.media.exists %}
+                        <div class="mt-3 pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted fw-bold">
+                                    <i class="fas fa-image me-1"></i> Ảnh đã có
+                                </small>
+                                <span class="badge" style="background: var(--primary-light); color: var(--primary-color);">
+                                    {{ object.media.count }}
+                                </span>
+                            </div>
+                            <div class="preview-grid">
+                                {% for m in object.media.all|slice:":6" %}
+                                <img src="{{ m.file.url }}" class="preview-img">
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Kế hoạch + Cài đặt (sticky on desktop) -->
+            <div class="col-right">
+
+                <!-- Kế hoạch -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title">
+                            <span class="step-icon accent"><i class="far fa-calendar-alt"></i></span>
+                            Kế hoạch
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label-modern">
+                                    <i class="fas fa-play text-success me-1"></i> Ngày bắt đầu
+                                </label>
+                                {{ form.ngay_bat_dau }}
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-modern">
+                                    <i class="fas fa-flag-checkered text-danger me-1"></i> Ngày kết thúc
+                                </label>
+                                {{ form.ngay_ket_thuc }}
+                            </div>
+                        </div>
+
+                        <div class="setting-box mt-3">
+                            <label class="form-label-modern">
+                                <i class="fas fa-coins text-warning me-1"></i> Chi phí dự kiến (VND)
+                            </label>
+                            <div class="input-group">
+                                {{ form.chi_phi_uoc_tinh }}
+                                <span class="input-group-text fw-bold" style="color: var(--success);"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">
+                                <i class="fas fa-users me-1"></i> Số thành viên tối đa
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"></span>
+                                {{ form.so_luong_toi_da }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cài đặt -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title">
+                            <span class="step-icon dark"><i class="fas fa-sliders"></i></span>
+                            Cài đặt
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">
+                                <i class="fas fa-lock me-1"></i> Quyền riêng tư
+                            </label>
+                            {{ form.che_do_rieng_tu }}
+                        </div>
+
+                        <div class="form-switch-modern form-check form-switch">
+                            <label class="form-check-label fw-bold" for="{{ form.yeu_cau_ly_do.id_for_label }}">
+                                <i class="fas fa-user-check me-2" style="color: #3b82f6;"></i>
+                                Duyệt thành viên
+                            </label>
+                            {{ form.yeu_cau_ly_do }}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Sticky Footer -->
+        <div class="sticky-footer">
+            <div class="footer-info d-none d-md-flex">
+                <i class="fas fa-check-circle"></i>
+                <span class="fw-medium">Mọi thay đổi sẽ được lưu</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'trips:trip_hub' %}" class="btn-cancel">Hủy</a>
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i> Lưu Chuyến đi
                 </button>
             </div>
-        </form>
-    </div>
+        </div>
 
-</div> {% endblock %}
+    </form>
+</div>
+{% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 <script>
-    $(document).ready(function() {
-        // Khóa JS vào bên trong .trip-form-page
-        const scope = '.trip-form-page ';
-
-        $(scope + '#id_tags').select2({ theme: 'bootstrap-5' });
-
-        const timelineContainer = $(scope + '#timeline-forms-container');
-        const totalForms = $(scope + '#id_timeline-TOTAL_FORMS');
-
-        $(scope + '#add-form').click(function() {
-            const formIdx = parseInt(totalForms.val());
-            const newFormHtml = $(scope + '#empty-form-template').html().replace(/__prefix__/g, formIdx);
-            timelineContainer.append(newFormHtml);
-            totalForms.val(formIdx + 1);
+    $(document).ready(function () {
+        $('#id_tags').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: "Chọn từ khóa..."
         });
 
-        timelineContainer.on('click', '.delete-timeline-btn', function() {
-            if (!confirm('Bạn có chắc muốn xóa mốc thời gian này?')) return;
-            
-            const formRow = $(this).closest('.timeline-form-row');
-            const deleteCheckbox = formRow.find('input[type="checkbox"][id$="-DELETE"]');
+        $('#tripForm input, #tripForm select, #tripForm textarea').addClass('form-control');
+        $('#tripForm select').addClass('form-select');
+        $('#tripForm input[type="checkbox"]').removeClass('form-control').addClass('form-check-input');
 
-            if (deleteCheckbox.length > 0) {
-                deleteCheckbox.prop('checked', true);
-                formRow.slideUp();
+        $('input[name$="hoat_dong"]').attr('placeholder', 'VD: Check-in đỉnh núi, Ăn trưa...');
+        $('textarea[name$="mo_ta_chi_tiet"]').attr('placeholder', 'Mô tả chi tiết hoạt động...');
+        $('textarea[name$="mo_ta_chi_tiet"]').attr('rows', '2');
+
+        const container = $('#timeline-container');
+        const totalForms = $('#id_timeline-TOTAL_FORMS');
+        const template = $('#empty-form-template').html();
+
+        function updateTimelineNumbers() {
+            container.find('.timeline-row:visible').each(function(index) {
+                $(this).find('.timeline-dot').text(index + 1);
+                $(this).attr('data-index', index + 1);
+            });
+        }
+
+        $('#add-timeline-btn').click(function () {
+            let idx = parseInt(totalForms.val());
+            let newRowHtml = template.replace(/__prefix__/g, idx);
+            container.append(newRowHtml);
+            totalForms.val(idx + 1);
+
+            let newRow = container.children().last();
+            newRow.find('input, select, textarea').addClass('form-control');
+            newRow.find('input[name$="hoat_dong"]').attr('placeholder', 'VD: Hoạt động tiếp theo...');
+            newRow.find('textarea[name$="mo_ta_chi_tiet"]').attr('rows', '2');
+            
+            updateTimelineNumbers();
+            newRow[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        container.on('click', '.btn-delete', function () {
+            const row = $(this).closest('.timeline-row');
+            const delInput = row.find('input[name$="-DELETE"]');
+
+            if (delInput.length > 0) {
+                delInput.prop('checked', true);
+                row.fadeOut(300, function() {
+                    updateTimelineNumbers();
+                });
             } else {
-                formRow.remove();
-                totalForms.val(parseInt(totalForms.val()) - 1);
+                row.slideUp(300, function() {
+                    $(this).remove();
+                    updateTimelineNumbers();
+                });
             }
         });
 
-        const gallery = $(scope + '#media-gallery');
-        const csrfToken = '{{ csrf_token }}';
-        
-        gallery.on('click', '.set-cover-btn', function() {
-            const mediaItem = $(this).closest('.media-item');
-            const mediaId = mediaItem.data('media-id');
-            const tripId = '{{ object.id }}';
-            if (!tripId) {
-                alert("Vui lòng lưu chuyến đi trước khi quản lý media.");
-                return;
+        new Sortable(document.getElementById('timeline-container'), {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            handle: '.timeline-card',
+            onEnd: function() {
+                updateTimelineNumbers();
             }
-            const url = `/trips/${tripId}/media/${mediaId}/set-cover/`;
-            
-            $.post(url, {'csrfmiddlewaretoken': csrfToken}, function(data) {
-                if (data.status === 'success') {
-                    gallery.find('.media-item').removeClass('is-cover');
-                    gallery.find('.set-cover-btn').removeClass('active');
-                    mediaItem.addClass('is-cover');
-                    mediaItem.find('.set-cover-btn').addClass('active');
-                }
-            });
         });
 
-        gallery.on('click', '.delete-media-btn', function() {
-            if (!confirm('Bạn có chắc muốn xóa vĩnh viễn media này?')) return;
-            
-            const mediaItem = $(this).closest('.media-item');
-            const mediaId = mediaItem.data('media-id');
-            const url = `/trips/media/${mediaId}/delete/`;
-            
-            $.post(url, {'csrfmiddlewaretoken': csrfToken}, function(data) {
-                if (data.status === 'success') {
-                    mediaItem.fadeOut(300, function() { $(this).remove(); });
-                } else {
-                    alert('Lỗi: ' + data.message);
-                }
-            });
+        $('#media-input').change(function () {
+            const preview = $('#upload-preview');
+            preview.empty();
+            if (this.files) {
+                Array.from(this.files).forEach((f, index) => {
+                    if (f.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = $(`<img src="${e.target.result}" class="preview-img" style="opacity: 0; transform: scale(0.9);">`);
+                            preview.append(img);
+                            setTimeout(() => {
+                                img.css({
+                                    'opacity': '1',
+                                    'transform': 'scale(1)',
+                                    'transition': 'all 0.2s ease'
+                                });
+                            }, index * 80);
+                        }
+                        reader.readAsDataURL(f);
+                    }
+                });
+            }
         });
+
+        if ($('.alert-modern').length) {
+            $('html, body').animate({
+                scrollTop: $('.alert-modern').offset().top - 100
+            }, 400);
+        }
+
+        updateTimelineNumbers();
     });
 </script>
 {% endblock %}
