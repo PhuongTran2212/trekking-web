@@ -479,7 +479,42 @@
         animation: fadeInUp 0.6s ease-out 0.1s both;
         backdrop-filter: blur(10px);
     }
+   .booking-card .chat-cta-card {
+    padding: 1.2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(62,159,95,0.08);
+    margin-top: 1.25rem;
+    background: linear-gradient(135deg, rgba(62,159,95,0.06), rgba(16,185,129,0.03));
+    border: 1px solid rgba(62,159,95,0.08);
+    text-align: center;
+}
 
+.booking-card .chat-cta-card .chat-icon-wrapper {
+    width: 56px;
+    height: 56px;
+}
+
+.booking-card .chat-cta-card .chat-title {
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
+}
+
+.booking-card .chat-cta-card .chat-description {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+}
+
+.booking-card .chat-cta-card .btn {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 1024px) {
+    .booking-card .chat-cta-card {
+        margin-top: 1rem;
+    }
+}
     @media (max-width: 1024px) {
         .booking-card {
             position: static;
@@ -1350,6 +1385,29 @@
                 {% endif %}
             {% endif %}
         </div>
+<!-- CHAT CARD (moved into right sidebar) -->
+<div class="chat-cta-card">
+    <div class="chat-icon-wrapper"><i class="fas fa-comments"></i></div>
+    <div class="chat-title">Thảo luận nhóm</div>
+    {% if is_member or is_organizer %}
+        <div class="chat-description">Trao đổi, kế hoạch và chia sẻ khoảnh khắc với nhóm chuyến đi này.</div>
+        {% if trip.get_chat_url %}
+            <a href="{{ trip.get_chat_url }}" class="btn btn-primary w-100 mb-2">
+                <i class="fas fa-external-link-alt me-2"></i> Truy cập Group Chat
+            </a>
+        {% else %}
+            <button class="btn btn-secondary w-100 mb-2" disabled>
+                <i class="fas fa-tools me-2"></i> Kênh chat chưa sẵn sàng
+            </button>
+        {% endif %}
+        <small class="text-muted d-block text-center">Chỉ dành cho thành viên chuyến đi</small>
+    {% else %}
+        <div class="chat-description">Kênh chat chỉ dành cho thành viên. Đăng ký để tham gia.</div>
+        <button class="btn btn-primary w-100" onclick="document.getElementById('join-trip-btn').click()">
+            <i class="fas fa-paper-plane me-2"></i> Đăng ký tham gia
+        </button>
+    {% endif %}
+</div>
 
         <!-- Organizer Info -->
         <div class="organizer-section">
