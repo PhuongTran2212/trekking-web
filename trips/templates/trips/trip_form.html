@@ -54,13 +54,88 @@
     .bg-icon-setting { background: #f1f5f9; color: #475569; }
     .bg-icon-image { background: #fae8ff; color: #a21caf; }
 
-    /* Inputs */
+    /* Inputs Base */
     .form-group { margin-bottom: 1.25rem; }
     .form-label-modern { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 0.025em; }
-    .form-control, .form-select, .select2-selection { height: 48px !important; border-radius: var(--radius-md); border: 1px solid var(--border-color); padding: 0.6rem 1rem; font-size: 0.95rem; background-color: var(--input-bg); color: var(--text-main); }
-    .form-control:focus, .form-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15); background-color: white; }
-    textarea.form-control { height: auto !important; min-height: 120px; resize: vertical; }
     .input-group-text { background-color: #f8fafc; border-color: var(--border-color); color: var(--text-sub); }
+
+    /* === [ĐÃ SỬA LẠI CSS FORM CONTROL] === */
+    
+    /* 1. Input thường và Select Single giữ chiều cao 48px */
+    .form-control, .form-select, .select2-container--bootstrap-5 .select2-selection--single { 
+        height: 48px !important; 
+        border-radius: var(--radius-md); 
+        border: 1px solid var(--border-color); 
+        padding: 0.6rem 1rem; 
+        font-size: 0.95rem; 
+        background-color: var(--input-bg); 
+        color: var(--text-main); 
+    }
+    
+    .form-control:focus, .form-select:focus { 
+        border-color: var(--primary-color); 
+        box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15); 
+        background-color: white; 
+    }
+
+    textarea.form-control { height: auto !important; min-height: 120px; resize: vertical; }
+
+    /* 2. [FIX QUAN TRỌNG] Select2 Multiple (Tags) - BẮT BUỘC giãn chiều cao */
+    .select2-container--bootstrap-5 .select2-selection--multiple {
+        min-height: 48px !important;
+        height: auto !important; /* Quan trọng: để nó tự giãn khi xuống dòng */
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--input-bg);
+        padding: 4px 8px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap; /* Cho phép các tag rớt dòng */
+        overflow: visible !important; /* Đảm bảo không bị ẩn nội dung tràn */
+    }
+
+    /* Vùng chứa các tag bên trong */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        gap: 6px; /* Khoảng cách giữa các tag */
+    }
+
+    /* Style cho từng Tag (Chip) */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        font-size: 0.9rem;
+        margin: 0 !important; /* Reset margin mặc định gây lệch */
+        padding: 4px 8px;
+        background-color: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+    }
+
+    /* Nút xóa (x) trong tag */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+        margin-right: 6px;
+        border: none;
+        background: transparent;
+        color: #ef4444;
+        font-weight: bold;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    /* Ô input tìm kiếm (chỗ con trỏ nhấp nháy) */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-search .select2-search__field {
+        height: 32px !important;
+        margin-top: 0 !important;
+        line-height: 1.5;
+        min-width: 150px; /* Đủ rộng để gõ */
+    }
 
     /* === MAP STYLING (MỚI) === */
     #map {
