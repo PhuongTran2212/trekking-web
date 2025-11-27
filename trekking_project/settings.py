@@ -14,7 +14,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LANGUAGE_CODE = 'vi' 
+USE_I18N = True
+USE_L10N = True
+USE_THOUSAND_SEPARATOR = True 
 
+NUMBER_GROUPING = 3
+THOUSAND_SEPARATOR = '.'
+DECIMAL_SEPARATOR = ','
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -33,6 +40,7 @@ INSTALLED_APPS = [
     'community.apps.CommunityConfig',
     'knowledge.apps.KnowledgeConfig',
     'gamification.apps.GamificationConfig',
+     'django.contrib.humanize', 
 ]
 
 MIDDLEWARE = [

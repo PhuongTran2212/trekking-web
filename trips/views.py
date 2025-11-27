@@ -213,10 +213,17 @@ class TripDetailView(DetailView):
     template_name = 'trips/trip_detail.html'
     context_object_name = 'trip'
 
+    def get_queryset(self):
+        # Prefetch media để hiển thị Gallery và người tổ chức
+        return super().get_queryset().select_related(
+            'nguoi_to_chuc__taikhoanhoso', 'cung_duong__tinh_thanh', 'cung_duong__do_kho', 'anh_bia'
+        ).prefetch_related('timeline', 'media', 'thanh_vien__user__taikhoanhoso')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         trip = self.object
         user = self.request.user
+        trip.so_thanh_vien_tham_gia = trip.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
         
         context['is_organizer'] = (user.is_authenticated and trip.nguoi_to_chuc == user)
         membership = None
@@ -230,7 +237,7 @@ class TripDetailView(DetailView):
             context['pending_requests'] = trip.thanh_vien.filter(trang_thai_tham_gia='DA_GUI_YEU_CAU')
         
         return context
-
+    
 @login_required
 @require_POST
 def join_trip_request(request, pk):
