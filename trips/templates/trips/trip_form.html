@@ -173,6 +173,12 @@
         .timeline-index-badge { width: 30px; height: 30px; font-size: 0.85rem; }
         .timeline-item { padding-left: 40px; }
     }
+
+    /* TINYMCE CUSTOM STYLE */
+    .tox-tinymce {
+        border-radius: var(--radius-md) !important;
+        border: 1px solid var(--border-color) !important;
+    }
 </style>
 {% endblock %}
 
@@ -466,13 +472,45 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
+<!-- TINYMCE SCRIPT (MỚI) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+
 <script>
     $(document).ready(function () {
+        
+        // =========================================================
+        // === 1. TÍCH HỢP TINYMCE CHO TRƯỜNG MÔ TẢ (MỚI) ===
+        // =========================================================
+        // Django mặc định ID cho field mo_ta là id_mo_ta
+        if ($('#id_mo_ta').length) {
+            tinymce.init({
+                selector: '#id_mo_ta',
+                height: 350,
+                menubar: false,
+                branding: false,
+                statusbar: true,
+                plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+                toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link | removeformat',
+                content_style: 'body { font-family: "Inter", system-ui, -apple-system, sans-serif; font-size: 14px; color: #0f172a; }',
+                setup: function (editor) {
+                    // Sự kiện này đảm bảo khi người dùng gõ, dữ liệu được đồng bộ ngay vào textarea gốc
+                    // giúp form submit không bị mất dữ liệu
+                    editor.on('change', function () {
+                        editor.save(); 
+                    });
+                }
+            });
+        }
+
         // --- CONFIG CHUNG ---
         $('#id_tags').select2({ theme: 'bootstrap-5', width: '100%', placeholder: "Chọn từ khóa...", selectionCssClass: 'select2-custom-height' });
         
         // Thêm class bootstrap
         $('#tripForm input:not([type="checkbox"]):not([type="file"]), #tripForm select, #tripForm textarea').addClass('form-control');
+        
+        // QUAN TRỌNG: Chỉ thêm class form-control cho các textarea KHÔNG PHẢI là mô tả (để tránh xung đột với TinyMCE)
+        $('#tripForm textarea:not(#id_mo_ta)').addClass('form-control');
+
         $('#tripForm select').addClass('form-select');
         $('#tripForm input[type="checkbox"]').addClass('form-check-input').css({'width': '3em', 'height': '1.5em', 'margin-left': '0'});
         $('.input-group .form-control').css('border-left', 'none');
@@ -523,26 +561,25 @@
             updateHiddenCoords(lat, lng);
 
             const locationInput = $('#id_dia_diem_tap_trung');
-            // Chỉ tự động điền nếu ô đang trống hoặc đang chứa tọa độ cũ
-            if(locationInput.val() === "" || locationInput.val().includes("Tọa độ:") || locationInput.val().includes("Đang lấy")) {
-                locationInput.val("Đang lấy địa chỉ...");
-                locationInput.addClass('text-muted fst-italic');
+            
+            // Xóa logic kiểm tra cũ, luôn thực hiện fetch khi click
+            locationInput.val("Đang lấy địa chỉ...");
+            locationInput.addClass('text-muted fst-italic');
 
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        locationInput.removeClass('text-muted fst-italic');
-                        if (data && data.display_name) {
-                            locationInput.val(data.display_name);
-                        } else {
-                            locationInput.val(`Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-                        }
-                    })
-                    .catch(() => {
-                        locationInput.removeClass('text-muted fst-italic');
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+                .then(res => res.json())
+                .then(data => {
+                    locationInput.removeClass('text-muted fst-italic');
+                    if (data && data.display_name) {
+                        locationInput.val(data.display_name);
+                    } else {
                         locationInput.val(`Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-                    });
-            }
+                    }
+                })
+                .catch(() => {
+                    locationInput.removeClass('text-muted fst-italic');
+                    locationInput.val(`Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+                });
         });
 
         // Search Bar
