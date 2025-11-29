@@ -171,6 +171,8 @@ class ChuyenDi(models.Model):
 
         # 3. Ảnh mặc định cuối cùng
         return "https://via.placeholder.com/400x250?text=Trekking+Vietnam"
+
+    
 # ==========================================================
 # === 2. MODEL TIMELINE ===
 # ==========================================================

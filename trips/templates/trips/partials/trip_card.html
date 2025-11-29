@@ -2,27 +2,39 @@
 
 <a href="{{ trip.get_absolute_url }}" class="trip-card">
     <div class="card-img-wrapper">
-        <img src="{{ trip.cover_url }}" class="card-img" alt="{{ trip.ten_chuyen_di }}" loading="lazy">
+        <!-- 1. ẢNH BÌA (Dùng hàm cover_url trong model) -->
+        <img src="{{ trip.cover_url }}" 
+             class="card-img" 
+             alt="{{ trip.ten_chuyen_di }}" 
+             loading="lazy">
         
-        <span class="badge-status" style="background-color: {{ trip.status_color }};">
+        <!-- 2. TRẠNG THÁI (Lấy màu động từ status_color) -->
+        <span class="badge rounded-pill badge-status" style="background-color: {{ trip.status_color }};">
             {{ trip.status_name }}
         </span>
         
+        <!-- 3. GIÁ TIỀN -->
         <span class="badge-price">
+            <i class="fas fa-tag me-1"></i>
             {% if trip.chi_phi_uoc_tinh > 0 %}
-                {{ trip.chi_phi_uoc_tinh|intcomma }}<small>đ</small>
+                {{ trip.chi_phi_uoc_tinh|intcomma }}<small>VND</small>
             {% else %}
                 Miễn phí
             {% endif %}
         </span>
 
+        <!-- 4. ĐỘ KHÓ (Nếu có) -->
         {% if trip.cung_duong.do_kho %}
-        <span class="badge-level">{{ trip.cung_duong.do_kho.ten }}</span>
+        <span class="badge-level">
+            <i class="fas fa-mountain me-1"></i>{{ trip.cung_duong.do_kho.ten }}
+        </span>
         {% endif %}
     </div>
 
     <div class="card-body">
-        <h3 class="card-title" title="{{ trip.ten_chuyen_di }}">{{ trip.ten_chuyen_di }}</h3>
+        <h3 class="card-title" title="{{ trip.ten_chuyen_di }}">
+            {{ trip.ten_chuyen_di }}
+        </h3>
         
         <div class="card-location">
             <i class="fas fa-map-marker-alt text-danger"></i>
@@ -41,6 +53,7 @@
             </div>
         </div>
 
+        <!-- 5. HASHTAGS (Hiển thị tối đa 3 thẻ) -->
         {% if trip.tags.all %}
         <div class="card-tags">
             {% for tag in trip.tags.all|slice:":3" %} 
@@ -51,27 +64,28 @@
             {% endif %}
         </div>
         {% endif %}
+    </div>
 
-        <div class="card-footer">
-            <div class="organizer">
-                {% if trip.nguoi_to_chuc.taikhoanhoso.avatar %}
-                    <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar.url }}" alt="Avatar">
-                {% else %}
-                    <div class="default-avatar">
-                        {{ trip.nguoi_to_chuc.username|slice:":1"|upper }}
-                    </div>
-                {% endif %}
-                <div class="organizer-info">
-                    <span class="label">Tổ chức bởi</span>
-                    <span class="name">{{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}</span>
+    <div class="card-footer">
+        <div class="organizer">
+            {% if trip.nguoi_to_chuc.taikhoanhoso.avatar %}
+                <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar.url }}" alt="Avatar">
+            {% else %}
+                <div class="default-avatar">
+                    {{ trip.nguoi_to_chuc.username|slice:":1"|upper }}
                 </div>
+            {% endif %}
+            <div class="organizer-info">
+                <span class="label">Tổ chức bởi</span>
+                <span class="name">{{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}</span>
             </div>
-            
-            <div class="slots {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-success{% endif %}" 
-                 title="Đã tham gia / Tổng số chỗ">
-                <i class="fas fa-user-friends me-1"></i> 
-                {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}
-            </div>
+        </div>
+        
+        <!-- 6. SLOT (Màu đỏ nếu full, màu xanh nếu còn chỗ) -->
+        <div class="slots {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-success{% endif %}" 
+             title="Đã tham gia / Tổng số chỗ">
+            <i class="fas fa-user-friends"></i> 
+            {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}
         </div>
     </div>
 </a>
