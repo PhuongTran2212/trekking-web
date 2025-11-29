@@ -122,20 +122,28 @@ class ChuyenDi(models.Model):
                 num += 1
             self.slug = unique_slug
         super().save(*args, **kwargs)
-# ==========================================================
-    # === [QUAN TRỌNG] CÁC HÀM HỖ TRỢ TEMPLATE MỚI ===
+    # ==========================================================
+    # === CÁC HÀM TRỢ GIÚP (STATUS, COVER, THỜI GIAN) ===
     # ==========================================================
 
     @property
     def status_color(self):
-        """Lấy màu trạng thái (Dùng: trip.status_color)"""
-        if self.trang_thai and hasattr(self.trang_thai, 'mau_sac') and self.trang_thai.mau_sac:
-            return self.trang_thai.mau_sac
-        return '#10b981' # Màu xanh lá mặc định
+        """Trả về màu theo trạng thái chuyến đi."""
+        mapping = {
+            "Đang tuyển thành viên": "#10b981",   # Xanh lá
+            "Đã đủ người / Chốt đoàn": "#f59e0b", # Vàng/cam
+            "Đang diễn ra": "#3b82f6",            # Xanh dương
+            "Đã kết thúc": "#6b7280",             # Xám
+            "Đã hủy": "#ef4444",                  # Đỏ
+        }
+
+        if self.trang_thai:
+            return mapping.get(self.trang_thai.ten, "#10b981")
+
+        return "#10b981"
 
     @property
     def status_name(self):
-        """Lấy tên trạng thái (Dùng: trip.status_name)"""
         if self.trang_thai:
             return self.trang_thai.ten
         return "Sắp diễn ra"

@@ -9,13 +9,21 @@
              loading="lazy">
         
         <!-- 2. TRẠNG THÁI (Lấy màu động từ status_color) -->
-        <span class="badge rounded-pill badge-status" style="background-color: {{ trip.status_color }};">
-            {{ trip.status_name }}
-        </span>
+<span class="badge rounded-pill shadow-sm text-white fw-bold trip-status-badge"
+      data-color="{{ trip.status_color|default_if_none:'#10b981'|escape }}"
+      style="
+         position: absolute;
+         top: 12px;
+         right: 12px;
+         z-index: 10;
+         letter-spacing: 0.5px;
+         backdrop-filter: blur(2px);
+      ">
+    {{ trip.status_name|default:"Sắp diễn ra" }}
+</span>
         
         <!-- 3. GIÁ TIỀN -->
         <span class="badge-price">
-            <i class="fas fa-tag me-1"></i>
             {% if trip.chi_phi_uoc_tinh > 0 %}
                 {{ trip.chi_phi_uoc_tinh|intcomma }}<small>VND</small>
             {% else %}
@@ -89,3 +97,19 @@
         </div>
     </div>
 </a>
+{% comment %} Ensure badges get their dynamic color without putting Django expressions inside style attr (avoids template/parser highlighting issues) {% endcomment %}
+<script>
+(function(){
+    // set background-color from data-color for all badges in this partial
+    document.querySelectorAll('.trip-status-badge').forEach(function(el){
+        try {
+            var c = el.dataset.color;
+            if (c) {
+                el.style.backgroundColor = c;
+                // ensure readable text
+                el.classList.add('text-white');
+            }
+        } catch(e) { /* ignore */ }
+    });
+})();
+</script>
