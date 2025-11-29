@@ -12,6 +12,7 @@ from django.utils.text import slugify
 from django.utils import timezone
 from core.models import TrangThaiChuyenDi, The
 from treks.models import CungDuongTrek
+from datetime import timedelta
 
 # ==========================================================
 # === HELPER FUNCTIONS & VALIDATORS ===
@@ -121,7 +122,55 @@ class ChuyenDi(models.Model):
                 num += 1
             self.slug = unique_slug
         super().save(*args, **kwargs)
+# ==========================================================
+    # === [QUAN TRỌNG] CÁC HÀM HỖ TRỢ TEMPLATE MỚI ===
+    # ==========================================================
 
+    @property
+    def status_color(self):
+        """Lấy màu trạng thái (Dùng: trip.status_color)"""
+        if self.trang_thai and hasattr(self.trang_thai, 'mau_sac') and self.trang_thai.mau_sac:
+            return self.trang_thai.mau_sac
+        return '#10b981' # Màu xanh lá mặc định
+
+    @property
+    def status_name(self):
+        """Lấy tên trạng thái (Dùng: trip.status_name)"""
+        if self.trang_thai:
+            return self.trang_thai.ten
+        return "Sắp diễn ra"
+
+    @property
+    def thoi_gian_display(self):
+        """Hiển thị thời gian tiếng Việt (VD: 2 ngày, Trong ngày)"""
+        if not self.ngay_bat_dau or not self.ngay_ket_thuc:
+            return "Chưa xác định"
+            
+        delta = self.ngay_ket_thuc - self.ngay_bat_dau
+        days = delta.days
+        
+        # Nếu đi về trong ngày
+        if days == 0:
+            return "Trong ngày"
+        
+        # Đi qua đêm tính là ngày tiếp theo
+        return f"{days + 1} ngày"
+
+    @property
+    def cover_url(self):
+        """Tự động lấy link ảnh bìa"""
+        # 1. Ưu tiên ảnh bìa riêng của Chuyến đi (nếu người tạo đã upload)
+        if self.anh_bia and self.anh_bia.file:
+            return self.anh_bia.file.url
+        
+        # 2. Nếu không có, lấy ảnh từ Cung đường gốc
+        if self.cung_duong:
+            # Trong treks/models.py bạn đã định nghĩa property 'anh_bia_url'
+            # Nó trả về string (URL) luôn rồi, nên không cần .url nữa
+            return self.cung_duong.anh_bia_url
+
+        # 3. Ảnh mặc định cuối cùng
+        return "https://via.placeholder.com/400x250?text=Trekking+Vietnam"
 # ==========================================================
 # === 2. MODEL TIMELINE ===
 # ==========================================================
@@ -242,4 +291,3 @@ class ChuyenDiNhatKyHanhTrinh(models.Model):
             models.Index(fields=['chuyen_di', 'thoi_gian_checkin']),
             models.Index(fields=['vi_do', 'kinh_do']),
         ]
-    

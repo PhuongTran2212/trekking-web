@@ -7,26 +7,20 @@ from treks.models import CungDuongTrek
 from core.models import DoKho, TinhThanh, The
 
 # ==========================================================
-# === FORM LỌC CHUYẾN ĐI (TRANG HUB) ===
+# === 1. FORM LỌC CHUYẾN ĐI (TRANG HUB) - BẢN FULL ===
 # ==========================================================
 class TripFilterForm(forms.Form):
+    # 1. Tìm kiếm cơ bản
     q = forms.CharField(
-        label="Tìm theo tên", 
+        label="Tìm kiếm", 
         required=False,
         widget=forms.TextInput(attrs={
-            'placeholder': 'Tên chuyến đi, cung đường...',
+            'placeholder': 'Tên chuyến đi, địa điểm...',
             'class': 'form-control form-control-sm'
         })
     )
     
-    cung_duong = forms.ModelChoiceField(
-        label="Cung đường cụ thể",
-        queryset=CungDuongTrek.objects.filter(trang_thai='DA_DUYET').order_by('ten'),
-        required=False,
-        empty_label="Tất cả cung đường",
-        widget=forms.Select(attrs={'class': 'form-select form-select-sm select2'})
-    )
-
+    # 2. Địa điểm
     tinh_thanh = forms.ModelChoiceField(
         label="Tỉnh thành",
         queryset=TinhThanh.objects.order_by('ten'),
@@ -35,19 +29,71 @@ class TripFilterForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select form-select-sm select2'})
     )
     
+    # 3. Ngày khởi hành
     start_date = forms.DateField(
-        label="Khởi hành từ ngày",
+        label="Khởi hành sau ngày",
         required=False,
         widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'})
     )
     
-    tags = forms.ModelMultipleChoiceField(
-        label="Chủ đề (Hashtag)",
-        queryset=The.objects.all(),
+    # 4. Ngân sách (Min - Max)
+    price_min = forms.DecimalField(
+        required=False, 
+        min_value=0, 
+        widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Từ (đ)'})
+    )
+    price_max = forms.DecimalField(
+        required=False, 
+        min_value=0, 
+        widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Đến (đ)'})
+    )
+    
+    # 5. Thời lượng (Số ngày)
+    duration_min = forms.IntegerField(
+        required=False, 
+        min_value=1, 
+        widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Từ'})
+    )
+    duration_max = forms.IntegerField(
+        required=False, 
+        min_value=1, 
+        widget=forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Đến'})
+    )
+    
+    # 6. Độ khó (Checkbox List)
+    do_kho = forms.ModelMultipleChoiceField(
+        queryset=DoKho.objects.all(),
         required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select form-select-sm select2'})
+        label="Cấp độ Trekking",
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'})
     )
 
+    # 7. Tùy chọn nâng cao
+    con_cho = forms.BooleanField(
+        required=False, 
+        label="Chỉ hiện chuyến còn chỗ",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+    # 8. Sắp xếp
+    SORT_CHOICES = [
+        ('newest', 'Mới đăng nhất'),
+        ('date_asc', 'Ngày đi: Gần -> Xa'),
+        ('price_asc', 'Giá: Thấp -> Cao'),
+        ('price_desc', 'Giá: Cao -> Thấp'),
+    ]
+    sort_by = forms.ChoiceField(
+        choices=SORT_CHOICES, 
+        required=False, 
+        label="Sắp xếp theo",
+        widget=forms.Select(attrs={'class': 'form-select form-select-sm'})
+    )
+    tags = forms.ModelMultipleChoiceField(
+        queryset=The.objects.all(),
+        required=False,
+        label="Chủ đề (Hashtag)",
+        widget=forms.SelectMultiple(attrs={'class': 'form-select select2', 'data-placeholder': 'Chọn chủ đề...'})
+    )
 
 # ==========================================================
 # === FORM CHÍNH ĐỂ TẠO / SỬA CHUYẾN ĐI ===

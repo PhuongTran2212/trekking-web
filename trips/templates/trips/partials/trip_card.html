@@ -1,18 +1,77 @@
+{% load humanize %}
+
 <a href="{{ trip.get_absolute_url }}" class="trip-card">
     <div class="card-img-wrapper">
-        <img src="{{ trip.cover_image_url|default:trip.cung_duong.anh_bia_url }}" class="card-img" alt="{{ trip.ten_chuyen_di }}" loading="lazy">
-        <span class="card-badge">{{ trip.trang_thai.ten }}</span>
+        <img src="{{ trip.cover_url }}" class="card-img" alt="{{ trip.ten_chuyen_di }}" loading="lazy">
+        
+        <span class="badge-status" style="background-color: {{ trip.status_color }};">
+            {{ trip.status_name }}
+        </span>
+        
+        <span class="badge-price">
+            {% if trip.chi_phi_uoc_tinh > 0 %}
+                {{ trip.chi_phi_uoc_tinh|intcomma }}<small>đ</small>
+            {% else %}
+                Miễn phí
+            {% endif %}
+        </span>
+
+        {% if trip.cung_duong.do_kho %}
+        <span class="badge-level">{{ trip.cung_duong.do_kho.ten }}</span>
+        {% endif %}
     </div>
+
     <div class="card-body">
-        <h5 class="card-title">{{ trip.ten_chuyen_di }}</h5>
-        <p class="card-subtitle text-muted"><i class="fas fa-map-signs me-1"></i> {{ trip.cung_duong.ten }}</p>
-        <div class="card-organizer">
-            <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url }}" class="organizer-avatar" alt="{{ trip.nguoi_to_chuc.username }}">
-            <span>Tổ chức bởi <strong>{{ trip.nguoi_to_chuc.username }}</strong></span>
+        <h3 class="card-title" title="{{ trip.ten_chuyen_di }}">{{ trip.ten_chuyen_di }}</h3>
+        
+        <div class="card-location">
+            <i class="fas fa-map-marker-alt text-danger"></i>
+            <span>{{ trip.cung_duong.tinh_thanh.ten }} • {{ trip.cung_duong.ten }}</span>
         </div>
-    </div>
-    <div class="card-footer text-muted">
-        <span><i class="fas fa-calendar-alt me-1"></i> {{ trip.ngay_bat_dau|date:"d/m/Y" }}</span>
-        <span><i class="fas fa-users me-1"></i> {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}</span>
+
+        <div class="card-meta">
+            <div class="meta-item" title="Ngày khởi hành">
+                <i class="far fa-calendar-alt text-primary"></i>
+                {{ trip.ngay_bat_dau|date:"d/m/Y" }}
+            </div>
+            
+            <div class="meta-item" title="Tổng thời gian">
+                <i class="far fa-clock text-warning"></i>
+                {{ trip.thoi_gian_display }}
+            </div>
+        </div>
+
+        {% if trip.tags.all %}
+        <div class="card-tags">
+            {% for tag in trip.tags.all|slice:":3" %} 
+            <span class="tag-badge">#{{ tag.ten }}</span>
+            {% endfor %}
+            {% if trip.tags.count > 3 %}
+            <span class="tag-badge">+{{ trip.tags.count|add:"-3" }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="card-footer">
+            <div class="organizer">
+                {% if trip.nguoi_to_chuc.taikhoanhoso.avatar %}
+                    <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar.url }}" alt="Avatar">
+                {% else %}
+                    <div class="default-avatar">
+                        {{ trip.nguoi_to_chuc.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+                <div class="organizer-info">
+                    <span class="label">Tổ chức bởi</span>
+                    <span class="name">{{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}</span>
+                </div>
+            </div>
+            
+            <div class="slots {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-success{% endif %}" 
+                 title="Đã tham gia / Tổng số chỗ">
+                <i class="fas fa-user-friends me-1"></i> 
+                {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}
+            </div>
+        </div>
     </div>
 </a>

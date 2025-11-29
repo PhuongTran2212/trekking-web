@@ -1,354 +1,768 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}{{ page_title|default:"Khám phá Chuyến đi" }}{% endblock %}
+{% load static humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
 
 {% block extra_css %}
-<!-- Đã bỏ FullCalendar CSS, chỉ giữ Select2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
 <style>
+    :root {
+        --primary-color: #10b981;
+        --primary-hover: #059669;
+        --primary-light: #d1fae5;
+        --text-dark: #111827;
+        --text-muted: #6b7280;
+        --bg-light: #f9fafb;
+        --border-color: #e5e7eb;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+        --radius-lg: 20px;
+        --radius-md: 12px;
+    }
+    
     body { 
-        background-color: var(--gray-50);
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    .trip-hub-container { 
-        display: grid; 
-        grid-template-columns: 320px 1fr; 
-        gap: var(--spacing-xl);
-        max-width: 1500px; 
-        margin: var(--spacing-xl) auto;
-        padding: 0 var(--spacing-md);
+
+    .trip-hub-container {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 2.5rem;
+        align-items: start;
     }
-    
-    /* Fixed filter-sidebar */
-    .filter-sidebar { 
-        position: sticky; 
-        top: var(--spacing-xl);
-        height: fit-content;
-        max-height: calc(100vh - 40px);
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
-    
-    .filter-card { 
-        background: #fff;
+
+    /* ========== SIDEBAR STYLING ========== */
+    .filter-sidebar {
+        background: white;
         border-radius: var(--radius-lg);
-        border: 1px solid var(--gray-200);
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--shadow-lg);
+        position: sticky;
+        top: 2rem;
+        overflow: hidden;
+        border: 1px solid rgba(16, 185, 129, 0.1);
     }
     
-    /* Filter Header */
-    .filter-header { 
-        background: #4d7111;
-        color: white; 
-        padding: var(--spacing-lg);
-        border-bottom: 1px solid rgba(255,255,255,0.1); 
-        border-top-left-radius: var(--radius-lg);
-        border-top-right-radius: var(--radius-lg);
-    }
-    .filter-header h3 { 
-        margin: 0; 
-        font-size: 1.25rem;
-        font-weight: 600;
-    }
-    
-    /* Filter Body */
-    .filter-body { 
-        padding: var(--spacing-lg);
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-md);
-    }
-    
-    .filter-body form {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-md);
-    }
-    
-    .filter-body .mb-3 {
-        margin-bottom: 0 !important;
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-    }
-    
-    /* Ensure form controls don't overflow */
-    .filter-body input,
-    .filter-body select,
-    .filter-body .select2-container {
-        width: 100% !important;
-        box-sizing: border-box;
-    }
-    
-    .filter-body .form-label {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #212529;
-        margin-bottom: 0;
-    }
-    
-    /* Button styling */
-    .filter-body .btn {
-        padding: 0.6rem 1rem;
-        font-weight: 500;
-        border-radius: var(--radius-md);
-    }
-    
-    .filter-body .btn-primary {
-        background: #4d7111;
-        border: none;
+    .filter-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #059669 100%);
         color: white;
-    }
-    
-    .filter-body .btn-primary:hover {
-        background: #3d5a0c;
-    }
-    
-    .filter-body .btn-ghost {
-        background: transparent;
-        color: #6c757d;
-        border: 1px solid #dee2e6;
-        text-align: center;
-        text-decoration: none;
-        display: block;
-    }
-    
-    .filter-body .btn-ghost:hover {
-        background: var(--gray-100);
-        color: #212529;
-    }
-    
-    /* Main Content Header - Simplified */
-    .main-content .header { 
+        padding: 1.5rem 1.75rem;
+        font-weight: 700;
+        font-size: 1.1rem;
         display: flex; 
-        justify-content: space-between; 
         align-items: center; 
-        margin-bottom: var(--spacing-xl);
-        padding-bottom: var(--spacing-md);
-        border-bottom: 1px solid var(--gray-200);
+        gap: 0.75rem;
+        letter-spacing: -0.02em;
     }
     
-    /* Select2 styling fixes */
-    .select2-container--bootstrap-5 .select2-selection {
-        border-radius: var(--radius-md) !important;
-        padding: 0.4rem 0.75rem;
-        min-height: calc(1.5em + 0.9rem + 2px);
-        border: 1px solid #dee2e6 !important;
+    .filter-header i {
+        font-size: 1.3rem;
+        opacity: 0.9;
     }
     
-    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
-        background-color: #e8f4d9 !important;
-        border: 1px solid #b8d4a8 !important;
-        color: #4d7111 !important;
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--radius-sm);
+    .filter-body { 
+        padding: 1.75rem 2rem; 
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
     }
     
-    .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-    .select2-container--bootstrap-5.select2-container--open .select2-selection {
-        border-color: #4d7111 !important;
-        box-shadow: 0 0 0 3px rgba(77, 113, 17, 0.1) !important;
+    .filter-body::-webkit-scrollbar { width: 6px; }
+    .filter-body::-webkit-scrollbar-track { background: #f3f4f6; }
+    .filter-body::-webkit-scrollbar-thumb { background: #d1d5db36; border-radius: 10px; }
+    
+    .form-label { 
+        font-size: 0.75rem; 
+        font-weight: 700; 
+        color: var(--text-dark); 
+        text-transform: uppercase; 
+        margin-bottom: 0.6rem; 
+        letter-spacing: 0.8px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-left: 4px;
     }
     
-    .select2-container--bootstrap-5 .select2-dropdown {
-        z-index: 1050 !important;
-        border: 1px solid #dee2e6;
-        border-top: none;
+    .form-control, .form-select { 
+        border-radius: var(--radius-md); 
+        font-size: 0.95rem; 
+        border: 1.5px solid var(--border-color);
+        padding: 0.65rem 1rem;
+        transition: all 0.2s;
+        background: #fafafa;
     }
     
-    /* Trip Grid & Cards */
-    .trip-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-        gap: 1.5rem; 
+    .form-control:focus, .form-select:focus { 
+        border-color: var(--primary-color); 
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
+        background: white;
     }
     
-    .trip-card { 
-        background: #fff; 
-        border-radius: var(--radius-lg); 
-        border: 1px solid var(--gray-200); 
-        text-decoration: none; 
-        color: inherit; 
-        display: flex; 
-        flex-direction: column; 
-        transition: all 0.2s ease-in-out; 
-        box-shadow: var(--shadow-sm); 
-        height: 100%; /* Đảm bảo các card bằng nhau */
-    }
-    
-    .trip-card:hover { 
-        transform: translateY(-5px); 
-        box-shadow: var(--shadow-lg); 
-    }
-    
-    .card-img-wrapper { 
-        height: 180px; 
-        position: relative; 
-    }
-    
-    .card-img { 
+    .btn-primary { 
+        background: linear-gradient(135deg, var(--primary-color) 0%, #059669 100%);
+        border: none; 
+        font-weight: 700; 
+        padding: 0.9rem; 
+        border-radius: var(--radius-md); 
         width: 100%; 
-        height: 100%; 
-        object-fit: cover; 
-        border-top-left-radius: var(--radius-lg); 
-        border-top-right-radius: var(--radius-lg); 
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
     
-    .card-badge { 
-        position: absolute; 
-        top: 1rem; 
-        right: 1rem; 
-        background: rgba(255,255,255,0.9); 
-        padding: 0.3rem 0.8rem; 
-        border-radius: var(--radius-full); 
-        font-size: 0.8rem; 
-        font-weight: 700; 
-        color: #4d7111; 
+    .btn-primary:hover { 
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .checkbox-group-scroll { 
+        max-height: 180px; 
+        overflow-y: auto; 
+        padding-right: 8px;
+        padding-left: 12px;
     }
     
-    .card-body { 
-        padding: var(--spacing-lg); 
-        flex-grow: 1; 
-        display: flex; 
-        flex-direction: column; 
+    .checkbox-group-scroll::-webkit-scrollbar { width: 5px; }
+    .checkbox-group-scroll::-webkit-scrollbar-thumb { 
+        background: var(--primary-color); 
+        border-radius: 10px; 
     }
     
-    .card-title { 
-        font-size: 1.15rem; 
-        font-weight: 700; 
-        margin-bottom: 0.5rem; 
-        color: #212529; 
+    .form-check { 
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        transition: background 0.2s;
     }
     
-    .card-subtitle { 
-        font-size: 0.9rem; 
-        color: #6c757d; 
-        margin-bottom: 1rem; 
-        display: -webkit-box; 
-        -webkit-line-clamp: 1; 
-        line-clamp: 1; 
-        -webkit-box-orient: vertical; 
-        overflow: hidden; 
+    .form-check:hover {
+        background: var(--primary-light);
     }
     
-    .card-organizer { 
-        display: flex; 
-        align-items: center; 
-        gap: 0.5rem; 
-        font-size: 0.85rem; 
-        color: #495057; 
+    .form-check-input { 
+        width: 1.1rem; 
+        height: 1.1rem;
+        border: 2px solid #d1d5db;
+        cursor: pointer;
     }
     
-    .organizer-avatar { 
-        width: 28px; 
-        height: 28px; 
-        border-radius: 50%; 
-        object-fit: cover; 
-        border: 2px solid #fff; 
-        box-shadow: 0 0 5px rgba(0,0,0,0.1); 
+    .form-check-input:checked { 
+        background-color: var(--primary-color); 
+        border-color: var(--primary-color);
     }
     
-    .card-footer { 
-        border-top: 1px solid var(--gray-100); 
-        padding: var(--spacing-md) var(--spacing-lg); 
-        margin-top: auto; 
-        display: flex; 
-        justify-content: space-between; 
-        font-size: 0.85rem; 
-        color: #6c757d; 
+    .form-check-label {
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-dark);
+        margin-left: 0.5rem;
+    }
+
+    hr.divider {
+        border: none;
+        height: 1px;
+        background: #d1d5db;
+        margin: 1.5rem 0;
+    }
+
+    .create-trip-cta {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        padding: 1.5rem;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        text-align: center;
+        border-top: 1px solid rgba(251, 191, 36, 0.2);
     }
     
-    @media (max-width: 992px) { 
-        .trip-hub-container { 
-            grid-template-columns: 1fr; 
-        } 
-        .filter-sidebar { 
-            position: static; 
+    .create-trip-cta p {
+        font-size: 0.8rem;
+        color: #78350f;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.75rem;
+    }
+    
+    .create-trip-cta .btn {
+        background: white;
+        color: #d97706;
+        font-weight: 700;
+        border: none;
+        padding: 0.7rem 1.5rem;
+        border-radius: 100px;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .create-trip-cta .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    main {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header {
+        background: white;
+        padding: 2rem 2.5rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 2.5rem;
+        border-left: 5px solid var(--primary-color);
+    }
+    
+    .page-header h1 {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.03em;
+    }
+    
+    .page-header p {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+    
+    .page-header strong {
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    /* ========== TRIP GRID ========== */
+    .trip-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+
+    /* ========== TRIP CARD REDESIGN ========== */
+    .trip-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .trip-card:hover {
+        transform: translateY(-8px) scale(1.01);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        border-color: var(--primary-color);
+    }
+    
+    .trip-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), #fbbf24);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .trip-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Card Image */
+    .card-img-wrapper {
+        height: 220px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    }
+    
+    .card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .trip-card:hover .card-img {
+        transform: scale(1.08) rotate(1deg);
+    }
+    
+    .card-img-wrapper::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.3));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .trip-card:hover .card-img-wrapper::after {
+        opacity: 1;
+    }
+
+    /* Badges */
+    .badge-status {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 2;
+    }
+    
+    .badge-price {
+        position: absolute;
+        bottom: 14px;
+        right: 14px;
+        background: white;
+        color: var(--primary-color);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-weight: 900;
+        font-size: 1rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+    
+    .badge-price small {
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+    
+    .badge-level {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 6px 12px;
+        border-radius: 100px;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: #78350f;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+        z-index: 2;
+    }
+
+    /* Card Body */
+    .card-body {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        letter-spacing: -0.02em;
+        transition: color 0.3s;
+    }
+    
+    .trip-card:hover .card-title {
+        color: var(--primary-color);
+    }
+    
+    .card-location {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+    }
+    
+    .card-location i {
+        font-size: 1rem;
+    }
+
+    /* Card Meta */
+    .card-meta {
+        display: flex;
+        gap: 10px;
+        font-size: 0.85rem;
+        flex-wrap: wrap;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        padding: 6px 12px;
+        border-radius: 100px;
+        font-weight: 600;
+        color: var(--text-dark);
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+    }
+    
+    .trip-card:hover .meta-item {
+        background: var(--primary-light);
+        border-color: var(--primary-color);
+    }
+    
+    .meta-item i {
+        font-size: 0.9rem;
+    }
+
+    /* Tags */
+    .card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: auto;
+    }
+    
+    .tag-badge {
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        color: #374151;
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-weight: 700;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    
+    .trip-card:hover .tag-badge {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* Card Footer */
+    .card-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fafafa;
+        margin-top: auto;
+    }
+    
+    .organizer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .organizer img,
+    .default-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .default-avatar {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #059669 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 800;
+    }
+    
+    .organizer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .organizer-info .label {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .organizer-info .name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    
+    .slots {
+        font-size: 0.9rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 100px;
+        background: white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    
+    .slots i {
+        font-size: 1rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .empty-state i {
+        font-size: 5rem;
+        color: #d1d5db;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-state h4 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-state p {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .trip-hub-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        .filter-sidebar {
+            position: static;
+        }
+        
+        .filter-body {
             max-height: none;
-        } 
+        }
+        
+        .trip-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .trip-hub-container {
+            padding: 1.5rem 1rem;
+        }
+        
+        .page-header {
+            padding: 1.5rem;
+        }
+        
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+        
+        .trip-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="trip-hub-container">
-    <!-- Sidebar -->
+    
     <aside class="filter-sidebar">
-        <div class="filter-card mb-4">
-            <div class="filter-header"><h3 style="color: white;"><i class="fas fa-filter me-2"></i> Lọc Chuyến Đi</h3></div>
-            <div class="filter-body">
-                <form method="get">
-                    <div class="mb-3">
-                        <label for="{{ filter_form.q.id_for_label }}" class="form-label">{{ filter_form.q.label }}</label>
-                        {{ filter_form.q }}
+        <div class="filter-header">
+            <i class="fas fa-sliders-h"></i>
+            <span>Bộ Lọc Tìm Kiếm</span>
+        </div>
+        
+        <div class="filter-body">
+            <form method="get">
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-search"></i> Từ khóa
+                    </label>
+                    {{ filter_form.q }}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-map-marked-alt"></i> Tỉnh thành
+                    </label>
+                    {{ filter_form.tinh_thanh }}
+                </div>
+
+                <hr class="divider">
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-sort-amount-down"></i> Sắp xếp
+                    </label>
+                    {{ filter_form.sort_by }}
+                </div>
+                
+                <div class="form-check mb-3">
+                    {{ filter_form.con_cho }}
+                    <label class="form-check-label" for="{{ filter_form.con_cho.id_for_label }}">
+                        Chỉ hiện chuyến còn chỗ
+                    </label>
+                </div>
+
+                <hr class="divider">
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-mountain"></i> Cấp độ
+                    </label>
+                    <div class="checkbox-group-scroll d-flex flex-column gap-1">
+                        {% for checkbox in filter_form.do_kho %}
+                        <div class="form-check">
+                            {{ checkbox.tag }}
+                            <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                {{ checkbox.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="mb-3">
-                        <label for="{{ filter_form.cung_duong.id_for_label }}" class="form-label">{{ filter_form.cung_duong.label }}</label>
-                        {{ filter_form.cung_duong }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ filter_form.tinh_thanh.id_for_label }}" class="form-label">{{ filter_form.tinh_thanh.label }}</label>
-                        {{ filter_form.tinh_thanh }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ filter_form.start_date.id_for_label }}" class="form-label">{{ filter_form.start_date.label }}</label>
-                        {{ filter_form.start_date }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ filter_form.tags.id_for_label }}" class="form-label">{{ filter_form.tags.label }}</label>
-                        {{ filter_form.tags }}
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100">Áp dụng</button>
-                    <a href="{% url 'trips:trip_hub' %}" class="btn btn-ghost w-100">Xóa bộ lọc</a>
-                </form>
-            </div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="mb-2">
+                    <label class="form-label">
+                        <i class="fas fa-wallet"></i> Ngân sách (VNĐ)
+                    </label>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    {{ filter_form.price_min }}
+                    {{ filter_form.price_max }}
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-day"></i> Số ngày
+                    </label>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    {{ filter_form.duration_min }}
+                    {{ filter_form.duration_max }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-check"></i> Khởi hành sau
+                    </label>
+                    {{ filter_form.start_date }}
+                </div>
+
+                <hr class="divider">
+
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="fas fa-hashtag"></i> Chủ đề
+                    </label>
+                    {{ filter_form.tags }}
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
+                
+                <a href="{% url 'trips:trip_hub' %}" class="btn btn-link w-100 text-decoration-none text-muted small mt-2" style="font-weight: 600;">
+                    <i class="fas fa-redo-alt me-1"></i> Đặt lại bộ lọc
+                </a>
+            </form>
         </div>
         
         {% if user.is_authenticated %}
-        <div class="filter-card">
-             <div class="filter-body text-center">
-                 <h4 style="font-size: 1.1rem; font-weight: 700; color: #4d7111;">Bạn là người dẫn lối?</h4>
-                 <p class="text-muted small">Hãy tạo chuyến đi của riêng bạn và kết nối với cộng đồng.</p>
-               <a href="{% url 'trips:select_trek_for_trip' %}" class="btn btn-primary w-100"><i class="fas fa-plus me-2"></i> Tạo Chuyến đi Mới</a>
-             </div>
+        <div class="create-trip-cta">
+            <p>Bạn là Leader?</p>
+            <a href="{% url 'trips:select_trek_for_trip' %}" class="btn">
+                <i class="fas fa-plus-circle me-2"></i>Tạo chuyến mới
+            </a>
         </div>
         {% endif %}
     </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="header">
-            <div>
-                <h1 style="font-weight: 800; color: #212529;">{{ page_title }}</h1>
-                <p class="text-muted mb-0">
-    Tìm thấy <strong>
-        {% if is_paginated %}
-            {{ paginator.count }}
-        {% else %}
-            {{ trips.count }}
-        {% endif %}
-    </strong> chuyến đi phù hợp.
-</p>
-            </div>
-            <!-- Đã xóa View Switcher (Nút chuyển Grid/Calendar) -->
+    <main>
+        <div class="page-header">
+            <h1>{{ page_title }}</h1>
+            <p>
+                Tìm thấy <strong>{{ paginator.count|default:trips.count }}</strong> chuyến đi phù hợp với bạn
+            </p>
         </div>
 
-        <!-- Chỉ giữ lại Grid View -->
         <div class="trip-grid">
             {% for trip in trips %}
                 {% include 'trips/partials/trip_card.html' with trip=trip %}
             {% empty %}
-                <div class="alert alert-info" style="grid-column: 1 / -1; padding: 2rem; text-align: center;">
-                    <i class="far fa-folder-open fa-2x mb-3"></i>
-                    <br>
-                    Không tìm thấy chuyến đi nào phù hợp với bộ lọc của bạn.
+                <div class="empty-state">
+                    <i class="far fa-compass"></i>
+                    <h4>Chưa tìm thấy chuyến đi nào</h4>
+                    <p>Thử thay đổi bộ lọc hoặc tìm kiếm từ khóa khác nhé!</p>
+                    <a href="{% url 'trips:trip_hub' %}" class="btn btn-primary" style="width: auto; padding: 0.75rem 2rem;">
+                        <i class="fas fa-redo-alt me-2"></i>Xóa bộ lọc
+                    </a>
                 </div>
             {% endfor %}
         </div>
-        
-        {% include 'trips/partials/pagination.html' %}
+
+        {% if is_paginated %}
+        <div class="mt-5 d-flex justify-content-center">
+            {% include 'trips/partials/pagination.html' %}
+        </div>
+        {% endif %}
     </main>
 </div>
 {% endblock %}
@@ -356,14 +770,13 @@
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<!-- Đã xóa FullCalendar JS -->
-
 <script>
     $(document).ready(function() {
-        // Init Select2
-        $('#id_cung_duong, #id_tinh_thanh, #id_tags').select2({
+        $('#id_tinh_thanh, #id_tags').select2({
             theme: 'bootstrap-5',
-            width: '100%'
+            width: '100%',
+            allowClear: true,
+            placeholder: 'Chọn...'
         });
     });
 </script>

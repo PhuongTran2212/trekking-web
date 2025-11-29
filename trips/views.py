@@ -12,11 +12,12 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Count
 from django.utils import timezone
-
+from django.db.models import F, ExpressionWrapper, DurationField
 from treks.models import CungDuongTrek
 from core.models import TrangThaiChuyenDi
 from .models import ChuyenDi, ChuyenDiThanhVien, ChuyenDiMedia
 from .forms import TripFilterForm, ChuyenDiForm, TimelineFormSet, SelectTrekFilterForm
+
 import json
 
 # ... (Giữ nguyên TripHubView và trip_events_api) ...
@@ -24,37 +25,111 @@ class TripHubView(ListView):
     model = ChuyenDi
     template_name = 'trips/trip_hub.html'
     context_object_name = 'trips'
-    paginate_by = 9
+    paginate_by = 12 
 
     def get_queryset(self):
+        # =========================================================
+        # 1. QUERY CƠ BẢN & TỐI ƯU HÓA (Eager Loading)
+        # =========================================================
         queryset = ChuyenDi.objects.filter(che_do_rieng_tu='CONG_KHAI').select_related(
-            'cung_duong__tinh_thanh', 'cung_duong__do_kho', 'nguoi_to_chuc__taikhoanhoso', 'trang_thai', 'anh_bia'
+            'cung_duong', 
+            'cung_duong__tinh_thanh', 
+            'cung_duong__do_kho',        # Để lọc độ khó nhanh hơn
+            'nguoi_to_chuc__taikhoanhoso', 
+            'trang_thai', 
+            'anh_bia'
+        ).prefetch_related(
+            'tags'                       # [QUAN TRỌNG] Lấy Hashtag để hiển thị ở Card
         ).annotate(
-            so_thanh_vien_tham_gia=Count('thanh_vien', filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA'))
-        ).order_by('ngay_tao') 
+            # Đếm số thành viên ĐÃ tham gia (để lọc full slot)
+            so_thanh_vien_tham_gia=Count('thanh_vien', filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA')),
+            
+            # Tính thời lượng (Duration) = Ngày về - Ngày đi
+            # Kết quả trả về dạng timedelta
+            duration=ExpressionWrapper(
+                F('ngay_ket_thuc') - F('ngay_bat_dau'),
+               output_field=DurationField()
+            )
+        )
 
+        # =========================================================
+        # 2. XỬ LÝ FORM LỌC (FILTER)
+        # =========================================================
         self.filter_form = TripFilterForm(self.request.GET)
+        
         if self.filter_form.is_valid():
-            cleaned_data = self.filter_form.cleaned_data
-            if q := cleaned_data.get('q'):
+            data = self.filter_form.cleaned_data
+            
+            # --- TÌM KIẾM CƠ BẢN ---
+            if q := data.get('q'):
                 queryset = queryset.filter(Q(ten_chuyen_di__icontains=q) | Q(cung_duong__ten__icontains=q))
-            if cung_duong := cleaned_data.get('cung_duong'):
-                queryset = queryset.filter(cung_duong=cung_duong)
-            if tinh_thanh := cleaned_data.get('tinh_thanh'):
+            
+            # --- ĐỊA ĐIỂM & THỜI GIAN ---
+            if tinh_thanh := data.get('tinh_thanh'):
                 queryset = queryset.filter(cung_duong__tinh_thanh=tinh_thanh)
-            if start_date := cleaned_data.get('start_date'):
+            
+            if start_date := data.get('start_date'):
                 queryset = queryset.filter(ngay_bat_dau__date__gte=start_date)
-            if tags := cleaned_data.get('tags'):
-                queryset = queryset.filter(tags__in=tags).distinct()
-        return queryset
+
+            # --- HASHTAG (CHỦ ĐỀ) ---
+            if tags := data.get('tags'):
+                # Lọc theo quan hệ nhiều-nhiều (M2M)
+                queryset = queryset.filter(tags__in=tags)
+
+            # --- ĐỘ KHÓ ---
+            if do_kho_list := data.get('do_kho'):
+                queryset = queryset.filter(cung_duong__do_kho__in=do_kho_list)
+
+            # --- KHOẢNG GIÁ ---
+            if data.get('price_min'):
+                queryset = queryset.filter(chi_phi_uoc_tinh__gte=data.get('price_min'))
+            if data.get('price_max'):
+                queryset = queryset.filter(chi_phi_uoc_tinh__lte=data.get('price_max'))
+            
+            # --- THỜI LƯỢNG (SỐ NGÀY) ---
+            # duration_min/max là số nguyên (ngày), cần đổi sang timedelta để so sánh
+            if data.get('duration_min'):
+                # Ví dụ: Nhập 2 ngày -> Lọc các chuyến >= 1 ngày (để cover trường hợp làm tròn)
+                min_delta = datetime.timedelta(days=data.get('duration_min') - 1) 
+                queryset = queryset.filter(duration__gte=min_delta)
+            
+            if data.get('duration_max'):
+                max_delta = datetime.timedelta(days=data.get('duration_max'))
+                queryset = queryset.filter(duration__lte=max_delta)
+
+            # --- TRẠNG THÁI: CÒN CHỖ ---
+            if data.get('con_cho'):
+                # Lọc những chuyến mà số người tham gia < số lượng tối đa
+                queryset = queryset.filter(so_thanh_vien_tham_gia__lt=F('so_luong_toi_da'))
+
+            # =========================================================
+            # 3. SẮP XẾP (SORTING)
+            # =========================================================
+            sort_by = data.get('sort_by')
+            if sort_by == 'price_asc':
+                queryset = queryset.order_by('chi_phi_uoc_tinh')
+            elif sort_by == 'price_desc':
+                queryset = queryset.order_by('-chi_phi_uoc_tinh')
+            elif sort_by == 'date_asc':
+                queryset = queryset.order_by('ngay_bat_dau')
+            else:
+                # Mặc định: Mới tạo nhất lên đầu
+                queryset = queryset.order_by('-ngay_tao')
+
+        else:
+            # Nếu không lọc gì cả, mặc định sắp xếp mới nhất
+            queryset = queryset.order_by('-ngay_tao')
+
+        # Dùng distinct() để loại bỏ các bản ghi trùng lặp 
+        # (quan trọng khi lọc theo Tags hoặc Độ khó nhiều lựa chọn)
+        return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Khám phá Chuyến đi"
         context['filter_form'] = self.filter_form
         return context
-
-
+    
 def trip_events_api(request):
     public_trips = Q(che_do_rieng_tu='CONG_KHAI')
     user_trips = Q()
