@@ -605,6 +605,95 @@
         .chat-cta-card { padding: 2.5rem 1.5rem; }
     }
     .leaflet-control-attribution { background: rgba(255, 255, 255, 0.9) !important; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; }
+    .custom-pin-marker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+/* === FANCY SVG MARKER CSS === */
+.svg-marker-container {
+    position: relative;
+    width: 50px;
+    height: 60px;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); /* Đổ bóng cho toàn bộ ghim */
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.svg-marker-container:hover {
+    transform: translateY(-5px) scale(1.1);
+    cursor: pointer;
+    z-index: 999;
+}
+
+/* Phần hình vẽ cái ghim (SVG) */
+.svg-pin-shape {
+    width: 100%;
+    height: 100%;
+    fill: var(--pin-color); /* Màu nền */
+    stroke: white;          /* Viền trắng */
+    stroke-width: 2px;
+}
+
+/* Phần Icon nằm đè lên trên */
+.svg-pin-icon {
+    position: absolute;
+    top: 38%;         /* Căn chỉnh vị trí dọc */
+    left: 50%;        /* Căn giữa ngang */
+    transform: translate(-50%, -50%); /* Kỹ thuật căn giữa tuyệt đối */
+    font-size: 18px;
+    color: white;
+    z-index: 10;
+}
+
+/* Hiệu ứng sóng (Pulse) cho điểm tập trung */
+.pulse-animation {
+    position: absolute;
+    width: 100%;
+    height: 40px;
+    background: var(--pin-color);
+    border-radius: 50%;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    transform: scale(0.5);
+    animation: pulse-effect 2s infinite;
+    opacity: 0;
+}
+
+@keyframes pulse-effect {
+    0% { transform: scale(0.2) translateY(20px); opacity: 0.8; }
+    100% { transform: scale(1.5) translateY(20px); opacity: 0; }
+}
+/* Thêm vào phần style hiện có */
+.progress {
+    height: 12px !important; /* Cao hơn chút cho dễ nhìn */
+    background-color: #e9ecef;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    height: 100%;
+    /* Gradient xanh lá đẹp mắt */
+    background: linear-gradient(90deg, #3e9f5f 0%, #10b981 100%);
+    /* Hiệu ứng trượt mượt mà */
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 20px;
+    /* Đảm bảo luôn hiện màu */
+    opacity: 1 !important; 
+    display: block !important;
+}
+
+/* Màu đỏ khi full */
+.progress-bar.bg-danger {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%) !important;
+}
 </style>
 {% endblock %}
 
@@ -689,18 +778,61 @@
 </div>
                         </div>
 
-                        <div class="section-divider">
-                            <h4 class="section-title">
-                                 Bản đồ & Điểm tập trung
-                            </h4>
+<div class="section-divider">
+    <h4 class="section-title">Bản đồ & Địa điểm</h4>
 
-                            <div class="map-label" style="margin-bottom: 1rem;">
-                                <i class="fas fa-map-pin"></i> 
-                                <strong>Điểm tập trung:</strong> {{ trip.dia_diem_tap_trung }}
-                            </div>
+    <!-- PHẦN 1: ĐIỂM TẬP TRUNG -->
+    <div class="mb-5">
+        <h5 class="fw-bold text-dark mb-3">
+            <i class="fas fa-map-pin text-danger me-2"></i>1. Điểm tập trung
+        </h5>
+        
+        {% if trip.dia_diem_tap_trung %}
+            <p class="text-muted mb-3"><i class="fas fa-location-arrow me-1"></i> {{ trip.dia_diem_tap_trung }}</p>
+        {% else %}
+            <p class="text-muted fst-italic mb-3">Chưa cập nhật địa chỉ cụ thể.</p>
+        {% endif %}
 
-                            <div id="trip-map"></div>
-                        </div>
+        {% if trip.toa_do_tap_trung.lat %}
+            <div id="map-meeting" style="height: 300px; width: 100%; border-radius: var(--radius-lg); border: 1px solid var(--border-color);"></div>
+        {% else %}
+            <div class="alert alert-secondary border-0 small">
+                <i class="fas fa-eye-slash me-2"></i>Chưa có tọa độ bản đồ cho điểm tập trung.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- PHẦN 2: CUNG ĐƯỜNG TREKKING -->
+    <div>
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="fw-bold text-dark mb-0">
+               <i class="fa-regular fa-map" style="color: #06a23a"></i> 2. Lộ trình Trekking
+            </h5>
+            
+            <!-- TAG KHOẢNG CÁCH (Yêu cầu của bạn) -->
+            {% if trip.cd_do_dai_km > 0 %}
+            <span class="badge bg-success rounded-pill px-3 py-2" style="font-size: 0.9rem;">
+               <i class="fa-solid fa-route me-2"></i> Tổng độ dài: {{ trip.cd_do_dai_km }} km
+            </span>
+            {% endif %}
+        </div>
+
+        {% if trip.cd_du_lieu_ban_do_geojson %}
+            <div id="map-trek" style="height: 350px; width: 100%; border-radius: var(--radius-lg); border: 1px solid var(--border-color);"></div>
+            
+            <!-- Chú thích nhỏ -->
+            <div class="d-flex gap-3 mt-2 small text-muted justify-content-center">
+                <div><i class="fas fa-map-marker-alt text-success"></i> Xuất phát</div>
+                <div><i class="fas fa-long-arrow-alt-right text-muted"></i></div>
+                <div><i class="fas fa-flag-checkered text-danger"></i> Kết thúc</div>
+            </div>
+        {% else %}
+            <div class="alert alert-secondary border-0 small">
+                <i class="fas fa-map-signs me-2"></i>Chưa cập nhật dữ liệu bản đồ cung đường.
+            </div>
+        {% endif %}
+    </div>
+</div>
                     </div>
 
                     <!-- Tab Thành viên -->
@@ -821,15 +953,27 @@
                 </div>
 
                 <!-- Progress Bar -->
-                {% widthratio trip.so_thanh_vien_tham_gia|default:0 trip.so_luong_toi_da 100 as percent %}
-                <div class="progress mb-4" style="height: 6px; border-radius: 10px;">
-                    <div class="progress-bar {% if percent|add:'0' >= 100 %}bg-danger{% else %}bg-success{% endif %}" 
-                         role="progressbar"
-                         data-percent="{{ percent|default:'0' }}"
-                         style="width: 0%;"
-                         aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
+<!-- Tính toán phần trăm -->
+{% widthratio trip.so_thanh_vien_tham_gia|default:0 trip.so_luong_toi_da 100 as percent %}
 
+<div class="d-flex justify-content-between align-items-end mb-1">
+    <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tiến độ đăng ký</small>
+    <!-- Hiển thị số % bằng text (để đối chiếu) -->
+    <small class="fw-bold text-success" id="progress-text">{{ percent|default:"0" }}%</small>
+</div>
+
+<div class="progress">
+    <!-- Style width để 0% ban đầu để tạo hiệu ứng chạy -->
+    <div id="trip-progress-bar" 
+         class="progress-bar" 
+         role="progressbar" 
+         style="width: 0%" 
+         aria-valuenow="{{ percent|default:'0' }}" 
+         aria-valuemin="0" 
+         aria-valuemax="100"
+         data-percent="{{ percent|default:'0' }}">
+    </div>
+</div>
                 <!-- ACTION BUTTONS -->
                 <div id="main-action-area">
                     {% if not user.is_authenticated %}
@@ -953,7 +1097,6 @@
 {{ trip.toa_do_tap_trung|json_script:"trip-meeting-point-data" }}
 
 {% endblock %}
-
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.0/lightgallery.umd.min.js"></script>
@@ -971,6 +1114,10 @@
     document.addEventListener('DOMContentLoaded', function () {
         const csrfToken = '{{ csrf_token }}';
         
+        // ==========================================
+        // 1. CÁC HÀM HELPER
+        // ==========================================
+        
         // Helper: Gửi AJAX
         const sendAjax = (url, method='POST', body=null) => {
             return fetch(url, {
@@ -987,7 +1134,31 @@
             }).catch(err => console.error(err));
         };
 
-        // Xử lý Join/Leave
+        // Helper: Tạo Icon SVG Đẹp cho bản đồ
+        function createFancyIcon(iconClass, color, withPulse = false) {
+            const pinPath = "M24 0C10.7 0 0 10.7 0 24c0 18.2 24 40 24 40s24-21.8 24-40C48 10.7 37.3 0 24 0z";
+            
+            return L.divIcon({
+                className: 'custom-div-icon',
+                html: `
+                    <div class="svg-marker-container" style="--pin-color: ${color};">
+                        ${withPulse ? '<div class="pulse-animation"></div>' : ''}
+                        <svg viewBox="0 0 48 64" class="svg-pin-shape">
+                            <path d="${pinPath}"></path>
+                        </svg>
+                        <i class="fas ${iconClass} svg-pin-icon"></i>
+                    </div>
+                `,
+                iconSize: [50, 60],
+                iconAnchor: [25, 60],
+                popupAnchor: [0, -55]
+            });
+        }
+
+        // ==========================================
+        // 2. XỬ LÝ NÚT BẤM (JOIN/LEAVE/DUYỆT)
+        // ==========================================
+        
         const actionArea = document.getElementById('main-action-area');
         if(actionArea) {
             actionArea.addEventListener('click', e => {
@@ -1002,7 +1173,6 @@
             });
         }
 
-        // Submit Lý do tham gia
         document.getElementById('submit-join-request')?.addEventListener('click', () => {
             const reason = document.getElementById('join-reason').value;
             const fd = new FormData(); fd.append('reason', reason);
@@ -1012,7 +1182,6 @@
             sendAjax(`{% url 'trips:join_trip' trip.pk %}`, 'POST', fd);
         });
 
-        // Duyệt thành viên
         const membersPane = document.getElementById('members');
         if(membersPane) {
             membersPane.addEventListener('click', e => {
@@ -1024,33 +1193,75 @@
             });
         }
 
-        // Map
-        const mapEl = document.getElementById('trip-map');
-        if(mapEl) {
-            const initMap = () => {
-                const mapData = JSON.parse(document.getElementById('trip-map-data').textContent || 'null');
-                const meetPoint = JSON.parse(document.getElementById('trip-meeting-point-data').textContent || 'null');
+        // ==========================================
+        // 3. XỬ LÝ BẢN ĐỒ (LEAFLET)
+        // ==========================================
+
+        // Map 1: Điểm tập trung
+        const meetingMapEl = document.getElementById('map-meeting');
+        if (meetingMapEl) {
+            const rawMeetPoint = document.getElementById('trip-meeting-point-data').textContent;
+            const meetPoint = rawMeetPoint ? JSON.parse(rawMeetPoint) : null;
+
+            if (meetPoint && meetPoint.lat) {
+                const map1 = L.map(meetingMapEl).setView([meetPoint.lat, meetPoint.lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map1);
                 
-                const map = L.map(mapEl).setView([16.0, 108.0], 6);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                const meetIcon = createFancyIcon('fa-users', '#3b82f6', true); // Xanh dương
+
+                L.marker([meetPoint.lat, meetPoint.lng], { icon: meetIcon })
+                 .addTo(map1)
+                 .bindPopup('<b>📍 ĐIỂM TẬP TRUNG</b><br>Tập hợp tại đây.')
+                 .openPopup();
                 
-                if(mapData && Object.keys(mapData).length > 0) {
-                    const layer = L.geoJSON(mapData, { style: { color: '#3e9f5f', weight: 4, opacity: 0.8 } }).addTo(map);
-                    try { map.fitBounds(layer.getBounds()); } catch(e){}
-                }
-                if(meetPoint && meetPoint.lat) {
-                    L.marker([meetPoint.lat, meetPoint.lng]).addTo(map).bindPopup('<b>Điểm tập trung</b>').openPopup();
-                }
-                setTimeout(() => map.invalidateSize(), 200);
-            };
-            
-            const observer = new IntersectionObserver(entries => {
-                if(entries[0].isIntersecting) { initMap(); observer.disconnect(); }
-            });
-            observer.observe(mapEl);
+                setTimeout(() => map1.invalidateSize(), 500); 
+            }
         }
 
-        // Initialize LightGallery
+        // Map 2: Cung đường Trek
+        const trekMapEl = document.getElementById('map-trek');
+        if (trekMapEl) {
+            const rawMapData = document.getElementById('trip-map-data').textContent;
+            const mapData = rawMapData ? JSON.parse(rawMapData) : null;
+
+            if (mapData && Object.keys(mapData).length > 0) {
+                const map2 = L.map(trekMapEl);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map2);
+
+                const routeLayer = L.geoJSON(mapData, {
+                    style: { color: '#16a34a', weight: 5, opacity: 0.8 }
+                }).addTo(map2);
+
+                let coordinates = [];
+                if (mapData.features && mapData.features.length > 0) {
+                    const geom = mapData.features[0].geometry;
+                    coordinates = (geom.type === 'LineString') ? geom.coordinates : geom.coordinates[0];
+                } else if (mapData.type === 'LineString') {
+                    coordinates = mapData.coordinates;
+                }
+
+                if (coordinates.length > 0) {
+                    const start = [coordinates[0][1], coordinates[0][0]];
+                    const end = [coordinates[coordinates.length - 1][1], coordinates[coordinates.length - 1][0]];
+
+                    const startIcon = createFancyIcon('fa-hiking', '#10b981'); // Xanh lá
+                    const endIcon = createFancyIcon('fa-flag-checkered', '#ef4444'); // Đỏ
+
+                    L.marker(start, { icon: startIcon }).addTo(map2).bindPopup('<b>🚩 XUẤT PHÁT</b><br>Bắt đầu hành trình.');
+                    L.marker(end, { icon: endIcon }).addTo(map2).bindPopup('<b>🏁 KẾT THÚC</b><br>Hoàn thành.');
+                }
+
+                map2.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+                setTimeout(() => map2.invalidateSize(), 500);
+            } else {
+                const map2 = L.map(trekMapEl).setView([16.0, 108.0], 5);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map2);
+            }
+        }
+
+        // ==========================================
+        // 4. KHỞI TẠO LIGHTGALLERY
+        // ==========================================
         const lgRoot = document.getElementById('light-gallery');
         if (lgRoot) {
             lightGallery(lgRoot, {
@@ -1066,13 +1277,45 @@
                 getCaptionFromTitleOrAlt: false
             });
         }
-    });
 
-    // Set progress bar width
-    document.querySelectorAll('.progress-bar[data-percent]').forEach(el => {
-        const pct = Math.max(0, Math.min(100, Number(el.getAttribute('data-percent') || 0)));
-        el.style.width = pct + '%';
-        el.setAttribute('aria-valuenow', String(pct));
-    });
+   // ==========================================
+    // 5. HIỆU ỨNG PROGRESS BAR (FIX LỖI KHÔNG CHẠY)
+    // ==========================================
+    
+    // Tìm phần tử
+    const progressBar = document.getElementById('trip-progress-bar');
+    const progressText = document.getElementById('progress-text');
+
+    if (progressBar) {
+        // Lấy giá trị phần trăm từ data-percent
+        // Ép kiểu float để tránh lỗi text
+        let percent = parseFloat(progressBar.getAttribute('data-percent')) || 0;
+        
+        // Giới hạn max 100
+        if (percent > 100) percent = 100;
+
+        // Debug: Xem console trình duyệt có in ra số này không
+        console.log("Javscript: Đang set width thành " + percent + "%");
+
+        // Logic đổi màu: Nếu >= 100% thì chuyển màu đỏ
+        if (percent >= 100) {
+            progressBar.classList.add('bg-danger');
+            if(progressText) {
+                progressText.classList.remove('text-success');
+                progressText.classList.add('text-danger');
+                progressText.innerHTML = 'HẾT CHỖ';
+            }
+        }
+
+        // Kỹ thuật ép trình duyệt vẽ lại (Reflow) trước khi chạy animation
+        // Giúp đảm bảo hiệu ứng trượt từ 0 -> X% hoạt động
+        void progressBar.offsetWidth; 
+
+        // Đặt độ trễ nhỏ 100ms rồi mới set width
+        setTimeout(() => {
+            progressBar.style.width = percent + "%";
+        }, 100);
+        } 
+  });
 </script>
 {% endblock %}
