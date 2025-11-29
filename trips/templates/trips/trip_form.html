@@ -254,6 +254,65 @@
         border-radius: var(--radius-md) !important;
         border: 1px solid var(--border-color) !important;
     }
+
+    .existing-media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 12px;
+        margin-top: 1rem;
+    }
+    
+    .media-item {
+        position: relative;
+        padding-top: 100%; /* Hình vuông */
+        border-radius: 8px;
+        overflow: hidden;
+        border: 3px solid transparent;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Hiệu ứng khi là ảnh bìa */
+    .media-item.is-cover {
+        border-color: #fbbf24; /* Màu vàng */
+        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
+    }
+    
+    .media-item img {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+    
+    .media-actions {
+        position: absolute; top: 5px; right: 5px; display: flex; gap: 5px; z-index: 10;
+    }
+    
+    .btn-media-action {
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        border: none;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; cursor: pointer;
+        transition: transform 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .btn-media-action:hover { transform: scale(1.15); }
+    
+    /* Nút Set Cover (Ngôi sao) */
+    .btn-set-cover { background: rgba(255, 255, 255, 0.9); color: #cbd5e1; }
+    .btn-set-cover.active, .btn-set-cover:hover { background: #fbbf24; color: white; }
+    
+    /* Nút Xóa */
+    .btn-delete-media { background: rgba(255, 255, 255, 0.9); color: #ef4444; }
+    .btn-delete-media:hover { background: #ef4444; color: white; }
+    
+    /* Badge chữ 'ẢNH BÌA' */
+    .cover-badge {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: rgba(251, 191, 36, 0.95); color: white;
+        font-size: 9px; padding: 3px; text-align: center; font-weight: 800;
+        letter-spacing: 0.5px;
+    }
 </style>
 {% endblock %}
 
@@ -483,37 +542,66 @@
                 </div>
                 
                 <!-- Card: Ảnh (CẬP NHẬT: LIGHTGALLERY STYLE + LOGIC XÓA/LIMIT) -->
+<!-- Card: Ảnh (CẬP NHẬT: QUẢN LÝ ẢNH CŨ + SET COVER) -->
                 <div class="card-modern">
                     <div class="card-header-modern">
                         <div class="header-title"><span class="header-icon-box bg-icon-image"><i class="far fa-images"></i></span> Thư viện ảnh</div>
-                        <span class="badge bg-light text-dark border"><span id="img-count">0</span>/10</span>
+                        <span class="badge bg-light text-dark border"><span id="img-count">0</span>/10 mới</span>
                     </div>
                     <div class="card-body-modern">
+                        <!-- Vùng Upload Mới -->
                         <div class="upload-zone" id="drop-zone">
                             <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-secondary"></i>
-                            <div class="fw-bold text-dark">Tải ảnh lên</div>
+                            <div class="fw-bold text-dark">Tải ảnh mới lên</div>
                             <div class="small text-muted mt-1">Tối đa 10 ảnh, 20MB/ảnh</div>
                             <input type="file" id="trip_media_files" name="trip_media_files" multiple hidden accept="image/*">
                         </div>
-                        
-                        <!-- Vùng hiển thị lỗi -->
                         <div id="upload-error" class="text-danger small mt-2 fw-bold text-center"></div>
-
-                        <!-- Vùng Preview ảnh mới -->
                         <div id="upload-preview" class="image-preview-grid"></div>
 
-                        <!-- Ảnh đã có (Khi Edit) -->
-                        {% if object and object.media.exists %}
+                        <!-- Vùng Hiển Thị Ảnh Cũ (CHỈ HIỆN KHI SỬA) -->
+                        {% if is_edit and object.media.exists %}
                         <div class="mt-4 pt-3 border-top">
-                            <label class="form-label-modern text-muted mb-2">Đã tải lên</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                {% for m in object.media.all|slice:":6" %}
-                                <div class="position-relative">
-                                    <img src="{{ m.file.url }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
-                                    <!-- Nếu muốn xóa ảnh cũ, cần thêm logic ajax ở đây -->
-                                </div>
-                                {% endfor %}
-                            </div>
+                            <label class="form-label-modern text-muted mb-2 d-flex justify-content-between align-items-center">
+                                <span>Ảnh đã tải lên</span>
+                                <span class="badge bg-secondary rounded-pill">{{ object.media.count }} ảnh</span>
+                            </label>
+
+ <div class="existing-media-grid" id="existing-media-container">
+    {% for m in object.media.all %}
+    <div class="media-item {% if object.anh_bia_id == m.id %}is-cover{% endif %}" id="media-{{ m.id }}">
+        
+        <a href="{{ m.file.url }}" 
+           data-src="{{ m.file.url }}"
+           class="media-link d-block w-100 h-100" 
+           title="Nhấn để xem ảnh lớn">
+            <img src="{{ m.file.url }}" loading="lazy" alt="Trip Image">
+        </a>
+        
+        <div class="media-actions">
+<button 
+    type="button"
+    class="btn-media-action btn-set-cover"
+    data-url="{% url 'trips:set_trip_cover' object.pk m.id %}"
+    onclick="setTripCover(this.dataset.url, '{{ m.id }}')">
+    <i class="fas fa-star"></i>
+</button>
+            
+            <button type="button"
+                    class="btn-media-action btn-delete-media"
+                    data-url="{% url 'trips:delete_trip_media' m.id %}"
+                    onclick="deleteTripMedia(this.dataset.url, '{{ m.id }}')"
+                    title="Xóa ảnh này">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+
+        {% if object.anh_bia_id == m.id %}
+            <div class="cover-badge">ẢNH BÌA</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
                         </div>
                         {% endif %}
                     </div>
@@ -521,19 +609,45 @@
 
             </div>
         </div>
-
-        <!-- Sticky Footer (GIỮ NGUYÊN) -->
+<!-- Sticky Footer (CẬP NHẬT LOGIC TẠO/SỬA) -->
         <div class="sticky-footer">
             <div class="footer-status-wrapper">
-                <div class="status-icon"><i class="fas fa-pen"></i></div>
-                <div class="status-text"><span class="status-title">Chế độ chỉnh sửa</span><span class="status-subtitle">Thay đổi chưa được lưu</span></div>
+                {% if is_edit %}
+                    <!-- Trạng thái khi Đang Sửa -->
+                    <div class="status-icon" style="color: #f59e0b; border-color: #fcd34d; background: #fffbeb;">
+                        <i class="fas fa-pen"></i>
+                    </div>
+                    <div class="status-text">
+                        <span class="status-title">Chế độ chỉnh sửa</span>
+                        <span class="status-subtitle">Đang sửa: {{ object.ten_chuyen_di|truncatechars:30 }}</span>
+                    </div>
+                {% else %}
+                    <!-- Trạng thái khi Tạo Mới -->
+                    <div class="status-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="status-text">
+                        <span class="status-title">Tạo chuyến đi mới</span>
+                        <span class="status-subtitle">Hãy điền đầy đủ thông tin</span>
+                    </div>
+                {% endif %}
             </div>
+            
             <div class="footer-actions">
-                <a href="{% url 'trips:trip_hub' %}" class="btn-cancel">Hủy bỏ</a>
-                <button type="submit" class="btn-save"><i class="fas fa-save"></i> Lưu lại</button>
+                <!-- Nút Hủy: Nếu sửa thì về chi tiết, nếu tạo thì về Hub -->
+                <a href="{% if is_edit %}{{ object.get_absolute_url }}{% else %}{% url 'trips:trip_hub' %}{% endif %}" class="btn-cancel">
+                    Hủy bỏ
+                </a>
+                
+                <button type="submit" class="btn-save">
+                    {% if is_edit %}
+                        <i class="fas fa-save"></i> Lưu thay đổi
+                    {% else %}
+                        <i class="fas fa-paper-plane"></i> Hoàn tất tạo mới
+                    {% endif %}
+                </button>
             </div>
         </div>
-
     </form>
 </div>
 {% endblock %}
@@ -543,20 +657,19 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-<!-- Scripts cho Map & Geocoder -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-<!-- TINYMCE SCRIPT (MỚI) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/zoom/lg-zoom.min.js"></script>
 
 <script>
     $(document).ready(function () {
         
-        // =========================================================
-        // === 1. TÍCH HỢP TINYMCE CHO TRƯỜNG MÔ TẢ (MỚI) ===
-        // =========================================================
-        // Django mặc định ID cho field mo_ta là id_mo_ta
+        // --- 1. CONFIG TINYMCE (Đã fix lỗi update) ---
         if ($('#id_mo_ta').length) {
             tinymce.init({
                 selector: '#id_mo_ta',
@@ -568,112 +681,66 @@
                 toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link | removeformat',
                 content_style: 'body { font-family: "Inter", system-ui, -apple-system, sans-serif; font-size: 14px; color: #0f172a; }',
                 setup: function (editor) {
-                    // Sự kiện này đảm bảo khi người dùng gõ, dữ liệu được đồng bộ ngay vào textarea gốc
-                    // giúp form submit không bị mất dữ liệu
-                    editor.on('change', function () {
+                    editor.on('change keyup paste', function () {
                         editor.save(); 
                     });
                 }
             });
         }
 
-        // --- CONFIG CHUNG ---
+        // --- 2. CONFIG UI CHUNG ---
         $('#id_tags').select2({ theme: 'bootstrap-5', width: '100%', placeholder: "Chọn từ khóa...", selectionCssClass: 'select2-custom-height' });
-        
-        // Thêm class bootstrap
         $('#tripForm input:not([type="checkbox"]):not([type="file"]), #tripForm select, #tripForm textarea').addClass('form-control');
-        
-        // QUAN TRỌNG: Chỉ thêm class form-control cho các textarea KHÔNG PHẢI là mô tả (để tránh xung đột với TinyMCE)
         $('#tripForm textarea:not(#id_mo_ta)').addClass('form-control');
-
         $('#tripForm select').addClass('form-select');
         $('#tripForm input[type="checkbox"]').addClass('form-check-input').css({'width': '3em', 'height': '1.5em', 'margin-left': '0'});
         $('.input-group .form-control').css('border-left', 'none');
 
-        // =========================================================
-        // === 1. LEAFLET MAP & REVERSE GEOCODING ===
-        // =========================================================
+        // --- 3. MAP LOGIC (Đã lược bớt cho gọn, giữ nguyên logic cũ của bạn) ---
         const savedCoordsStr = $('#id_toa_do_tap_trung').val();
-        let initialLat = 10.8231; // HCM
-        let initialLng = 106.6297;
-        let zoomLevel = 10;
-        let hasSavedPoint = false;
+        let initialLat = 10.8231, initialLng = 106.6297, zoomLevel = 10, hasSavedPoint = false;
 
         try {
             if (savedCoordsStr && savedCoordsStr !== '{}' && savedCoordsStr !== 'null') {
                 const parsed = JSON.parse(savedCoordsStr);
                 if (parsed.lat && parsed.lng) {
-                    initialLat = parsed.lat;
-                    initialLng = parsed.lng;
+                    initialLat = parseFloat(parsed.lat);
+                    initialLng = parseFloat(parsed.lng);
                     zoomLevel = 16;
                     hasSavedPoint = true;
                 }
             }
-        } catch(e) { console.log("JSON parse error", e); }
+        } catch(e) {}
 
         const map = L.map('map').setView([initialLat, initialLng], zoomLevel);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+        let marker = hasSavedPoint ? L.marker([initialLat, initialLng]).addTo(map) : null;
 
-        let marker;
-        if (hasSavedPoint) {
-            marker = L.marker([initialLat, initialLng]).addTo(map);
-        }
+        function updateHiddenCoords(lat, lng) { $('#id_toa_do_tap_trung').val(JSON.stringify({ lat: lat, lng: lng })); }
 
-        function updateHiddenCoords(lat, lng) {
-            $('#id_toa_do_tap_trung').val(JSON.stringify({ lat: lat, lng: lng }));
-        }
-
-        // Click bản đồ -> Lấy địa chỉ
         map.on('click', function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-
-            if (marker) marker.setLatLng(e.latlng);
-            else marker = L.marker(e.latlng).addTo(map);
-            
+            const { lat, lng } = e.latlng;
+            if (marker) marker.setLatLng(e.latlng); else marker = L.marker(e.latlng).addTo(map);
             updateHiddenCoords(lat, lng);
-
             const locationInput = $('#id_dia_diem_tap_trung');
-            
-            // Xóa logic kiểm tra cũ, luôn thực hiện fetch khi click
-            locationInput.val("Đang lấy địa chỉ...");
-            locationInput.addClass('text-muted fst-italic');
-
+            locationInput.val("Đang lấy địa chỉ...").addClass('text-muted fst-italic');
             fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
                 .then(res => res.json())
-                .then(data => {
-                    locationInput.removeClass('text-muted fst-italic');
-                    if (data && data.display_name) {
-                        locationInput.val(data.display_name);
-                    } else {
-                        locationInput.val(`Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-                    }
-                })
-                .catch(() => {
-                    locationInput.removeClass('text-muted fst-italic');
-                    locationInput.val(`Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-                });
+                .then(data => locationInput.val(data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`).removeClass('text-muted fst-italic'))
+                .catch(() => locationInput.val(`${lat.toFixed(5)}, ${lng.toFixed(5)}`).removeClass('text-muted fst-italic'));
         });
 
-        // Search Bar
-        L.Control.geocoder({
-            defaultMarkGeocode: false, placeholder: "Tìm vị trí...", errorMessage: "Không thấy."
-        })
+        L.Control.geocoder({ defaultMarkGeocode: false, placeholder: "Tìm vị trí..." })
         .on('markgeocode', function(e) {
             const center = e.geocode.center;
             map.fitBounds(e.geocode.bbox);
-            if (marker) marker.setLatLng(center);
-            else marker = L.marker(center).addTo(map);
-            
+            if (marker) marker.setLatLng(center); else marker = L.marker(center).addTo(map);
             updateHiddenCoords(center.lat, center.lng);
             $('#id_dia_diem_tap_trung').val(e.geocode.name);
-        })
-        .addTo(map);
+        }).addTo(map);
 
         // =========================================================
-        // === 2. IMAGE UPLOAD (Giới hạn 10MB) ===
+        // === 4. IMAGE UPLOAD PREVIEW (FIX: CLICK ĐỂ ZOOM) ===
         // =========================================================
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('trip_media_files');
@@ -684,9 +751,14 @@
         const dt = new DataTransfer();
         const MAX_FILES = 10;
         const MAX_SIZE_MB = 10; 
+        
+        // Biến lưu instance LightGallery cho phần preview
+        let previewGallery = null;
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+        if(dropZone && fileInput) {
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+        }
 
         function handleFiles(files) {
             errorMsg.textContent = '';
@@ -712,21 +784,71 @@
         function renderPreview() {
             previewContainer.innerHTML = '';
             imgCountBadge.textContent = dt.items.length;
+            
+            // Promise để đợi tất cả ảnh load xong mới init gallery
+            const readers = [];
+
             Array.from(dt.files).forEach((file, index) => {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    const div = document.createElement('div');
-                    div.className = 'preview-item animate__animated animate__fadeIn';
-                    div.innerHTML = `
-                        <img src="${e.target.result}">
-                        <div class="img-meta">${(file.size/1024/1024).toFixed(1)} MB</div>
-                        <button type="button" class="btn-remove-img" onclick="removeFile(${index})"><i class="fas fa-times"></i></button>
-                    `;
-                    previewContainer.appendChild(div);
-                };
+                const promise = new Promise((resolve) => {
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item animate__animated animate__fadeIn';
+                        
+                        // [QUAN TRỌNG] Thêm thẻ <a> bao quanh ảnh để LightGallery hoạt động
+                        // Nút xóa để bên ngoài thẻ <a> hoặc dùng z-index để không bị click nhầm
+                        div.innerHTML = `
+                            <a href="${e.target.result}" class="d-block w-100 h-100 glightbox">
+                                <img src="${e.target.result}" style="cursor: zoom-in;">
+                            </a>
+                            <div class="img-meta">${(file.size/1024/1024).toFixed(1)} MB</div>
+                            <button type="button" class="btn-remove-img" onclick="event.stopPropagation(); removeFile(${index})" title="Xóa ảnh"><i class="fas fa-times"></i></button>
+                        `;
+                        previewContainer.appendChild(div);
+                        resolve();
+                    };
+                });
+                readers.push(promise);
                 reader.readAsDataURL(file);
             });
+
+            // Sau khi render xong HTML, khởi tạo LightGallery
+            Promise.all(readers).then(() => {
+                refreshLightGallery();
+            });
         }
+
+        // Hàm khởi tạo/refresh LightGallery cho vùng preview
+        function refreshLightGallery() {
+            const el = document.getElementById('upload-preview');
+            // Hủy instance cũ nếu có
+            if (previewGallery) {
+                previewGallery.destroy(true); 
+                previewGallery = null;
+            }
+            // Tạo instance mới
+            if (el && el.querySelectorAll('a').length > 0) {
+                previewGallery = lightGallery(el, {
+                    selector: 'a', // Chỉ chọn các thẻ a
+                    plugins: [lgZoom, lgThumbnail],
+                    speed: 500,
+                });
+            }
+        }
+
+        // Khởi tạo LightGallery cho ảnh cũ (nếu có - khi edit)
+const existingMedia = document.getElementById('existing-media-container');
+if (existingMedia) {
+    lightGallery(existingMedia, {
+        selector: '.media-link', // Chọn đúng class trong thẻ A
+        plugins: [lgZoom, lgThumbnail], // Gọi plugin
+        speed: 500,
+        thumbnail: true,
+        allowMediaOverlap: true,
+        toggleThumb: true,
+        exThumbImage: 'data-src' // Bắt buộc lấy thumbnail từ data-src
+    });
+}
 
         window.removeFile = function(index) {
             dt.items.remove(index);
@@ -734,26 +856,22 @@
             renderPreview();
         }
 
-        // =========================================================
-        // === 3. TIMELINE LOGIC ===
-        // =========================================================
+        // --- 5. TIMELINE FORMSET (Giữ nguyên) ---
         const container = $('#timeline-container');
         const totalForms = $('#id_timeline-TOTAL_FORMS');
         const template = $('#empty-form-template').html();
-
+        
         function updateTimelineNumbers() {
             container.find('.timeline-row:visible').each(function(index) {
-                const num = index + 1;
-                $(this).find('.timeline-index-badge').text(num);
-                $(this).find('.row-number').text(num);
-                $(this).attr('data-index', num);
+                $(this).find('.timeline-index-badge, .row-number').text(index + 1);
+                $(this).attr('data-index', index + 1);
             });
         }
 
         $('#add-timeline-btn').click(function () {
+            if(!template) return;
             let idx = parseInt(totalForms.val());
-            let newRowHtml = template.replace(/__prefix__/g, idx);
-            container.append(newRowHtml);
+            container.append(template.replace(/__prefix__/g, idx));
             totalForms.val(idx + 1);
             container.children().last().find('input, select, textarea').addClass('form-control');
             updateTimelineNumbers();
@@ -761,9 +879,8 @@
 
         container.on('click', '.btn-delete', function () {
             const row = $(this).closest('.timeline-row');
-            const delInput = row.find('input[name$="-DELETE"]');
-            if (delInput.length) {
-                delInput.prop('checked', true);
+            if (row.find('input[name$="-DELETE"]').length) {
+                row.find('input[name$="-DELETE"]').prop('checked', true);
                 row.slideUp(300, updateTimelineNumbers);
             } else {
                 row.remove();
@@ -771,11 +888,98 @@
             }
         });
 
-        new Sortable(document.getElementById('timeline-container'), {
-            animation: 150, handle: '.timeline-card', ghostClass: 'bg-light', onEnd: updateTimelineNumbers
-        });
-        
+        if(document.getElementById('timeline-container')) {
+            new Sortable(document.getElementById('timeline-container'), {
+                animation: 150, handle: '.timeline-card', ghostClass: 'bg-light', onEnd: updateTimelineNumbers
+            });
+        }
         updateTimelineNumbers();
     });
+
+    // --- 6. AJAX FUNCTIONS (Giữ nguyên) ---
+ window.setTripCover = function(actionUrl, mediaId) {
+    // Ngăn chặn sự kiện click lan ra ngoài (nếu có)
+    if(event) event.stopPropagation();
+
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfInput) { console.error("Lỗi: Không tìm thấy CSRF Token"); return; }
+
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfInput.value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("HTTP Error " + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            // 1. Reset giao diện cũ (Bỏ vàng, bỏ badge)
+            document.querySelectorAll('.media-item').forEach(el => {
+                el.classList.remove('is-cover');
+                el.querySelector('.cover-badge')?.remove();
+                el.querySelector('.btn-set-cover').classList.remove('active');
+            });
+
+            // 2. Cập nhật giao diện cho ảnh mới được chọn
+            const activeItem = document.getElementById(`media-${mediaId}`);
+            if (activeItem) {
+                activeItem.classList.add('is-cover');
+                activeItem.querySelector('.btn-set-cover').classList.add('active');
+                // Thêm badge chữ "ẢNH BÌA"
+                if(!activeItem.querySelector('.cover-badge')) {
+                    activeItem.insertAdjacentHTML('beforeend', '<div class="cover-badge animate__animated animate__fadeInUp">ẢNH BÌA</div>');
+                }
+            }
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Không thể ghim ảnh. Vui lòng thử lại.");
+    });
+}
+
+// Hàm 2: Xóa ảnh
+// actionUrl: Đường dẫn do Django tạo (VD: /trips/media/5/delete/)
+window.deleteTripMedia = function(actionUrl, mediaId) {
+    if(event) event.stopPropagation();
+    if(!confirm("Bạn có chắc chắn muốn xóa ảnh này không?")) return;
+
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfInput.value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("HTTP Error " + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            const item = document.getElementById(`media-${mediaId}`);
+            if(item) { 
+                // Hiệu ứng thu nhỏ dần rồi biến mất
+                item.style.transition = "all 0.3s";
+                item.style.transform = "scale(0)"; 
+                setTimeout(() => item.remove(), 300); 
+            }
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Không thể xóa ảnh. Vui lòng thử lại.");
+    });
+}
 </script>
 {% endblock %}

@@ -18,9 +18,8 @@ from core.models import TrangThaiChuyenDi
 from .models import ChuyenDi, ChuyenDiThanhVien, ChuyenDiMedia
 from .forms import TripFilterForm, ChuyenDiForm, TimelineFormSet, SelectTrekFilterForm
 import json
-# ==========================================================
-# === 1. TRANG HUB "KHÁM PHÁ CHUYẾN ĐI" ===
-# ==========================================================
+
+# ... (Giữ nguyên TripHubView và trip_events_api) ...
 class TripHubView(ListView):
     model = ChuyenDi
     template_name = 'trips/trip_hub.html'
@@ -28,24 +27,12 @@ class TripHubView(ListView):
     paginate_by = 9
 
     def get_queryset(self):
-        # Lấy tất cả chuyến đi công khai
-        queryset = ChuyenDi.objects.filter(
-            che_do_rieng_tu='CONG_KHAI',
-            # Bỏ lọc theo trạng thái nếu bạn muốn hiện cả chuyến đã kết thúc/đã hủy
-            # Hoặc giữ lại nếu chỉ muốn hiện chuyến đang hoạt động:
-            # trang_thai__ten__in=['Đang tuyển thành viên', 'Sắp diễn ra', 'Đã đóng', 'Đang diễn ra'], 
-        ).select_related(
+        queryset = ChuyenDi.objects.filter(che_do_rieng_tu='CONG_KHAI').select_related(
             'cung_duong__tinh_thanh', 'cung_duong__do_kho', 'nguoi_to_chuc__taikhoanhoso', 'trang_thai', 'anh_bia'
         ).annotate(
             so_thanh_vien_tham_gia=Count('thanh_vien', filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA'))
-        )
-        
-        # --- SẮP XẾP ---
-        # 'ngay_tao': Tạo trước lên đầu (Cũ -> Mới)
-        # '-ngay_tao': Tạo sau lên đầu (Mới -> Cũ)
-        queryset = queryset.order_by('ngay_tao') 
+        ).order_by('ngay_tao') 
 
-        # --- BỘ LỌC ---
         self.filter_form = TripFilterForm(self.request.GET)
         if self.filter_form.is_valid():
             cleaned_data = self.filter_form.cleaned_data
@@ -87,8 +74,9 @@ def trip_events_api(request):
     return JsonResponse(events, safe=False)
 
 # ==========================================================
-# === 2. LUỒNG TẠO & SỬA CHUYẾN ĐI (ĐÃ FIX LOGIC) ===
+# === 2. LUỒNG TẠO & SỬA CHUYẾN ĐI (ĐÃ CẬP NHẬT) ===
 # ==========================================================
+
 @login_required
 def create_trip_view(request):
     cung_duong_slug = request.GET.get('cung_duong')
@@ -99,17 +87,14 @@ def create_trip_view(request):
 
     if request.method == 'POST':
         form = ChuyenDiForm(request.POST)
-        # [FIX] Lấy dữ liệu Timeline từ POST
         timeline_formset = TimelineFormSet(request.POST)
 
-        # [FIX] Kiểm tra cả 2 form
         if form.is_valid() and timeline_formset.is_valid():
             with transaction.atomic():
                 chuyen_di = form.save(commit=False)
                 chuyen_di.nguoi_to_chuc = request.user
                 chuyen_di.cung_duong = cung_duong
                 
-                # Set trạng thái mặc định
                 try:
                     chuyen_di.trang_thai = TrangThaiChuyenDi.objects.get(ten='Đang tuyển thành viên')
                 except TrangThaiChuyenDi.DoesNotExist:
@@ -126,40 +111,46 @@ def create_trip_view(request):
                 chuyen_di.cd_du_lieu_ban_do_geojson = cung_duong.du_lieu_ban_do_geojson
                 
                 chuyen_di.save()
-                form.save_m2m() # Lưu tags
+                form.save_m2m()
 
-                # [FIX] Lưu Timeline Formset
                 timeline_formset.instance = chuyen_di
                 timeline_formset.save()
 
-                # Tạo trưởng đoàn
                 ChuyenDiThanhVien.objects.create(
                     chuyen_di=chuyen_di, user=request.user, 
                     vai_tro='TRUONG_DOAN', trang_thai_tham_gia='DA_THAM_GIA'
                 )
 
-                # Lưu ảnh upload lúc tạo
                 if request.FILES.getlist('trip_media_files'):
                      for f in request.FILES.getlist('trip_media_files'):
                         ChuyenDiMedia.objects.create(chuyen_di=chuyen_di, user=request.user, file=f)
 
-                messages.success(request, f"Đã tạo chuyến đi '{chuyen_di.ten_chuyen_di}' thành công!")
-                return redirect('trips:update_trip', pk=chuyen_di.pk, slug=chuyen_di.slug)
+                # --- REDIRECT SANG TRANG SUCCESS ---
+                return redirect('trips:trip_create_success', pk=chuyen_di.pk)
         else:
             messages.error(request, "Có lỗi xảy ra, vui lòng kiểm tra lại thông tin bên dưới.")
     else:
         form = ChuyenDiForm()
-        timeline_formset = TimelineFormSet() # Formset rỗng
+        timeline_formset = TimelineFormSet()
 
     context = {
         'form': form, 
-        'timeline_formset': timeline_formset, # Truyền xuống template
+        'timeline_formset': timeline_formset, 
         'cung_duong': cung_duong, 
         'page_title': 'Lên kế hoạch Chuyến đi',
         'is_edit': False
-     
     }
     return render(request, 'trips/trip_form.html', context)
+
+# --- VIEW THÀNH CÔNG MỚI ---
+class TripCreateSuccessView(LoginRequiredMixin, DetailView):
+    model = ChuyenDi
+    template_name = 'trips/trip_success.html'
+    context_object_name = 'trip'
+
+    def get_queryset(self):
+        # Chỉ cho phép người tạo xem trang success của mình
+        return super().get_queryset().filter(nguoi_to_chuc=self.request.user)
 
 class TripUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = ChuyenDi
@@ -183,18 +174,16 @@ class TripUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context = self.get_context_data()
         timeline_formset = context['timeline_formset']
         
-        # [FIX] Kiểm tra cả timeline_formset
         if form.is_valid() and timeline_formset.is_valid():
             with transaction.atomic():
                 self.object = form.save()
-                
-                # Lưu Timeline
                 timeline_formset.instance = self.object
                 timeline_formset.save()
                 
-                # Lưu ảnh mới
-                for f in self.request.FILES.getlist('trip_media_files'):
-                    ChuyenDiMedia.objects.create(chuyen_di=self.object, user=self.request.user, file=f)
+                # Lưu ảnh mới (nếu có)
+                if self.request.FILES.getlist('trip_media_files'):
+                    for f in self.request.FILES.getlist('trip_media_files'):
+                        ChuyenDiMedia.objects.create(chuyen_di=self.object, user=self.request.user, file=f)
             
             messages.success(self.request, "Đã cập nhật chuyến đi thành công.")
             return super().form_valid(form)
@@ -206,15 +195,15 @@ class TripUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return self.object.get_absolute_url()
 
 # ==========================================================
-# === 3. CÁC VIEW KHÁC (GIỮ NGUYÊN) ===
+# === 3. CÁC VIEW CHI TIẾT & API (Giữ nguyên phần lớn) ===
 # ==========================================================
+
 class TripDetailView(DetailView):
     model = ChuyenDi
     template_name = 'trips/trip_detail.html'
     context_object_name = 'trip'
 
     def get_queryset(self):
-        # Prefetch media để hiển thị Gallery và người tổ chức
         return super().get_queryset().select_related(
             'nguoi_to_chuc__taikhoanhoso', 'cung_duong__tinh_thanh', 'cung_duong__do_kho', 'anh_bia'
         ).prefetch_related('timeline', 'media', 'thanh_vien__user__taikhoanhoso')
@@ -237,7 +226,10 @@ class TripDetailView(DetailView):
             context['pending_requests'] = trip.thanh_vien.filter(trang_thai_tham_gia='DA_GUI_YEU_CAU')
         
         return context
-    
+
+# ... (Giữ nguyên các hàm API: join_trip_request, leave_trip, approve_member...) ...
+# ... COPY LẠI CÁC HÀM API TỪ FILE CŨ NẾU CẦN, HOẶC GIỮ NGUYÊN NẾU ĐÃ CÓ ...
+
 @login_required
 @require_POST
 def join_trip_request(request, pk):
