@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.8.0/css/lightgallery-bundle.min.css"/>
 
 <style>
+    /* === GIỮ NGUYÊN CSS CỦA BẠN === */
     :root {
         --primary: #3e9f5f;
         --primary-dark: #2d7a46;
@@ -98,7 +99,6 @@
         align-items: center;
     }
 
-    /* Enhanced meta badges with more polished design */
     .meta-badge {
         background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(10px);
@@ -122,10 +122,19 @@
         border-color: rgba(255, 255, 255, 0.35);
         transform: translateY(-2px);
     }
-
-    .meta-badge i {
-        font-size: 1rem;
+    
+    /* Style riêng cho nút Copy */
+    .meta-badge.copy-btn {
+        cursor: pointer;
+        background: rgba(245, 158, 11, 0.2);
+        border-color: rgba(245, 158, 11, 0.4);
+        color: #fcd34d;
     }
+    .meta-badge.copy-btn:hover {
+        background: rgba(245, 158, 11, 0.3);
+    }
+
+    .meta-badge i { font-size: 1rem; }
 
     .trip-title {
         font-weight: 900;
@@ -147,14 +156,8 @@
     }
 
     @keyframes slideInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     /* === MAIN LAYOUT === */
@@ -173,14 +176,10 @@
     }
 
     @media (max-width: 1024px) {
-        .main-grid {
-            grid-template-columns: 1fr;
-            gap: 2rem;
-        }
+        .main-grid { grid-template-columns: 1fr; gap: 2rem; }
     }
 
     /* === CONTENT CARD === */
-    /* Improved card design with enhanced shadows and border styling */
     .content-card {
         background: white;
         border-radius: var(--radius-xl);
@@ -192,22 +191,13 @@
     }
 
     @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    .content-inner {
-        padding: 2.5rem;
-    }
+    .content-inner { padding: 2.5rem; }
 
     /* === TABS === */
-    /* Enhanced tab styling with better hover and active states */
     .custom-tabs {
         display: flex;
         gap: 0;
@@ -258,90 +248,87 @@
     }
 
     @keyframes expandWidth {
-        from {
-            width: 0;
-            left: 50%;
-        }
-        to {
-            width: 100%;
-            left: 0;
-        }
+        from { width: 0; left: 50%; }
+        to { width: 100%; left: 0; }
     }
 
-    .tab-content {
-        padding: 2.5rem;
-        min-height: 500px;
-    }
-
-    .tab-pane {
-        animation: fadeIn 0.4s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
+    .tab-content { padding: 2.5rem; min-height: 500px; }
+    .tab-pane { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* === TIMELINE === */
-    /* Enhanced timeline with better visual hierarchy */
-    .timeline {
-        position: relative;
-        padding-left: 2.5rem;
-    }
+ /* === TIMELINE STYLE MỚI === */
+.timeline {
+    position: relative;
+    padding-left: 3.5rem; /* Tăng khoảng cách lề trái để chứa cục tròn to */
+}
 
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 10px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 50%, transparent 100%);
-    }
+/* Đường kẻ dọc */
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 19px; /* Căn giữa theo chiều rộng của dot (40px / 2 - 1px border) */
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 50%, transparent 100%);
+    z-index: 0;
+}
 
-    .timeline-item {
-        position: relative;
-        margin-bottom: 2.8rem;
-        padding-bottom: 1.5rem;
-        transition: transform 0.3s ease;
-    }
+.timeline-item {
+    position: relative;
+    margin-bottom: 2.8rem;
+    padding-bottom: 1.5rem;
+    transition: transform 0.3s ease;
+}
 
-    .timeline-item:hover {
-        transform: translateX(4px);
-    }
+.timeline-item:hover {
+    transform: translateX(4px);
+}
 
-    .timeline-item:last-child {
-        margin-bottom: 0;
-    }
+/* Dấu chấm tròn chứa số */
+.timeline-dot {
+    position: absolute;
+    left: -3.5rem; /* Kéo ra lề trái trùng với padding của cha */
+    top: 0;
+    width: 40px;   /* Kích thước to hơn */
+    height: 40px;
+    background: white;
+    border: 3px solid var(--primary); /* Viền xanh */
+    border-radius: 50%;
+    z-index: 2;
+    
+    /* Flexbox để căn số vào giữa */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Style cho số */
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 10px rgba(62, 159, 95, 0.2); /* Đổ bóng nhẹ cho đẹp */
+    transition: all 0.3s ease;
+}
 
-    .timeline-dot {
-        position: absolute;
-        left: -2.15rem;
-        top: 5px;
-        width: 24px;
-        height: 24px;
-        background: white;
-        border: 3px solid var(--primary);
-        border-radius: 50%;
-        z-index: 2;
-        box-shadow: 0 0 0 6px var(--primary-light);
-        transition: all 0.3s ease;
-    }
+/* Hiệu ứng khi hover vào item */
+.timeline-item:hover .timeline-dot {
+    background: var(--primary);
+    color: white; /* Đổi số thành màu trắng */
+    transform: scale(1.1);
+    box-shadow: 0 0 0 6px var(--primary-light);
+}
 
-    .timeline-item:hover .timeline-dot {
-        background: var(--primary);
-        box-shadow: 0 0 0 8px var(--primary-light);
-        transform: scale(1.2);
-    }
+.timeline-time {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding-top: 8px; /* Căn chỉnh ngang hàng với số 1 */
+}
 
-    .timeline-time {
-        font-weight: 700;
-        color: var(--primary);
-        font-size: 0.8rem;
-        margin-bottom: 0.5rem;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-    }
 
     .timeline-title {
         font-weight: 700;
@@ -362,7 +349,6 @@
     }
 
     /* === GALLERY === */
-    /* Improved gallery grid with better hover effects */
     .gallery-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -378,6 +364,7 @@
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
         transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         background: var(--bg-lighter);
+        display: block; /* Fix for LightGallery anchor tags */
     }
 
     .gallery-item:hover {
@@ -392,9 +379,7 @@
         transition: transform 0.4s ease;
     }
 
-    .gallery-item:hover .gallery-img {
-        transform: scale(1.1);
-    }
+    .gallery-item:hover .gallery-img { transform: scale(1.1); }
 
     .gallery-overlay {
         position: absolute;
@@ -409,13 +394,9 @@
         font-size: 0.85rem;
         font-weight: 600;
     }
-
-    .gallery-item:hover .gallery-overlay {
-        opacity: 1;
-    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
 
     /* === CHAT CARD === */
-    /* Enhanced CTA card with better visual appeal */
     .chat-cta-card {
         background: linear-gradient(135deg, var(--primary-light) 0%, #a7f3d0 100%);
         border: 1px solid rgba(62, 159, 95, 0.2);
@@ -425,11 +406,7 @@
         box-shadow: 0 8px 32px rgba(62, 159, 95, 0.15);
         transition: all 0.3s ease;
     }
-
-    .chat-cta-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(62, 159, 95, 0.2);
-    }
+    .chat-cta-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(62, 159, 95, 0.2); }
 
     .chat-icon-wrapper {
         display: inline-flex;
@@ -443,31 +420,13 @@
         box-shadow: 0 8px 24px rgba(62, 159, 95, 0.2);
         transition: all 0.3s ease;
     }
+    .chat-cta-card:hover .chat-icon-wrapper { transform: scale(1.1); }
+    .chat-icon-wrapper i { font-size: 2.5rem; color: var(--primary); }
 
-    .chat-cta-card:hover .chat-icon-wrapper {
-        transform: scale(1.1);
-    }
-
-    .chat-icon-wrapper i {
-        font-size: 2.5rem;
-        color: var(--primary);
-    }
-
-    .chat-title {
-        font-weight: 800;
-        font-size: 1.6rem;
-        color: var(--text-dark);
-        margin-bottom: 1rem;
-    }
-
-    .chat-description {
-        color: var(--text-muted);
-        margin-bottom: 1.8rem;
-        line-height: 1.7;
-    }
+    .chat-title { font-weight: 800; font-size: 1.6rem; color: var(--text-dark); margin-bottom: 1rem; }
+    .chat-description { color: var(--text-muted); margin-bottom: 1.8rem; line-height: 1.7; }
 
     /* === BOOKING CARD (SIDEBAR) === */
-    /* Enhanced sidebar card with sticky positioning */
     .booking-card {
         background: white;
         border-radius: var(--radius-xl);
@@ -479,47 +438,25 @@
         animation: fadeInUp 0.6s ease-out 0.1s both;
         backdrop-filter: blur(10px);
     }
-   .booking-card .chat-cta-card {
-    padding: 1.2rem;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(62,159,95,0.08);
-    margin-top: 1.25rem;
-    background: linear-gradient(135deg, rgba(62,159,95,0.06), rgba(16,185,129,0.03));
-    border: 1px solid rgba(62,159,95,0.08);
-    text-align: center;
-}
-
-.booking-card .chat-cta-card .chat-icon-wrapper {
-    width: 56px;
-    height: 56px;
-}
-
-.booking-card .chat-cta-card .chat-title {
-    font-size: 1.05rem;
-    margin-bottom: 0.5rem;
-}
-
-.booking-card .chat-cta-card .chat-description {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    margin-bottom: 0.6rem;
-}
-
-.booking-card .chat-cta-card .btn {
-    padding: 0.75rem;
-    font-size: 0.9rem;
-}
-
-@media (max-width: 1024px) {
+    /* Chat card inside sidebar overrides */
     .booking-card .chat-cta-card {
-        margin-top: 1rem;
+        padding: 1.2rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(62,159,95,0.08);
+        margin-top: 1.25rem;
+        background: linear-gradient(135deg, rgba(62,159,95,0.06), rgba(16,185,129,0.03));
+        border: 1px solid rgba(62,159,95,0.08);
+        text-align: center;
     }
-}
+    .booking-card .chat-cta-card .chat-icon-wrapper { width: 56px; height: 56px; margin-bottom: 1rem;}
+    .booking-card .chat-cta-card .chat-icon-wrapper i { font-size: 1.5rem; }
+    .booking-card .chat-cta-card .chat-title { font-size: 1.05rem; margin-bottom: 0.5rem; }
+    .booking-card .chat-cta-card .chat-description { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.6rem; }
+    .booking-card .chat-cta-card .btn { padding: 0.75rem; font-size: 0.9rem; }
+
     @media (max-width: 1024px) {
-        .booking-card {
-            position: static;
-            top: auto;
-        }
+        .booking-card .chat-cta-card { margin-top: 1rem; }
+        .booking-card { position: static; top: auto; }
     }
 
     .price-section {
@@ -531,14 +468,7 @@
         border-bottom: 2px solid var(--border-color);
     }
 
-    .price-label {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        font-weight: 700;
-        color: var(--text-muted);
-        letter-spacing: 1px;
-    }
-
+    .price-label { font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; }
     .price-amount {
         font-size: 2.2rem;
         font-weight: 900;
@@ -547,15 +477,9 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
-
-    .price-unit {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--text-muted);
-    }
+    .price-unit { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); -webkit-text-fill-color: var(--text-muted); }
 
     /* === BOOKING STATS === */
-    /* Improved stats display with better styling */
     .booking-stats {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -574,560 +498,121 @@
         border-radius: var(--radius-md);
         transition: all 0.3s ease;
     }
+    .stat-box:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(62, 159, 95, 0.1); }
+    .stat-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 0.5rem; letter-spacing: 0.8px; }
+    .stat-value { font-weight: 800; font-size: 1.6rem; color: var(--primary); }
 
-    .stat-box:hover {
-        border-color: var(--primary);
-        box-shadow: 0 4px 12px rgba(62, 159, 95, 0.1);
-    }
+    /* === BUTTONS === */
+    #main-action-area { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; }
+    .btn { border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem; padding: 1rem 1.8rem; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.6px; cursor: pointer; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 6px 20px rgba(62, 159, 95, 0.3); }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(62, 159, 95, 0.4); color: white; }
+    .btn-warning { background: var(--warning); color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2); }
+    .btn-warning:hover { background: #d97706; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3); color: white; }
+    .btn-danger { background: transparent; color: var(--danger); border: 2px solid var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: white; box-shadow: 0 6px 20px rgba(220, 38, 38, 0.2); }
+    .btn-secondary { background: var(--border-color); color: var(--text-muted); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+    .btn-secondary:hover { background: var(--bg-lighter); color: var(--text-dark); }
+    .btn-lg { padding: 1.1rem 1.8rem; font-size: 1rem; }
 
-    .stat-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        letter-spacing: 0.8px;
-    }
-
-    .stat-value {
-        font-weight: 800;
-        font-size: 1.6rem;
-        color: var(--primary);
-    }
-
-    /* === ACTION BUTTONS === */
-    #main-action-area {
-        display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
-        margin-bottom: 2rem;
-    }
-
-    /* Enhanced button styling with better hover effects */
-    .btn {
-        border: none;
-        border-radius: var(--radius-md);
-        font-weight: 700;
-        font-size: 0.95rem;
-        padding: 1rem 1.8rem;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-        cursor: pointer;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        color: white;
-        box-shadow: 0 6px 20px rgba(62, 159, 95, 0.3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(62, 159, 95, 0.4);
-        color: white;
-    }
-
-    .btn-primary:active {
-        transform: translateY(-1px);
-    }
-
-    .btn-warning {
-        background: var(--warning);
-        color: white;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-    }
-
-    .btn-warning:hover {
-        background: #d97706;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
-        color: white;
-    }
-
-    .btn-danger {
-        background: transparent;
-        color: var(--danger);
-        border: 2px solid var(--danger);
-        transition: all 0.3s ease;
-    }
-
-    .btn-danger:hover {
-        background: var(--danger);
-        color: white;
-        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.2);
-    }
-
-    .btn-secondary {
-        background: var(--border-color);
-        color: var(--text-muted);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .btn-secondary:hover {
-        background: var(--bg-lighter);
-        color: var(--text-dark);
-    }
-
-    .btn-lg {
-        padding: 1.1rem 1.8rem;
-        font-size: 1rem;
-    }
-
-    /* === ALERT BOXES === */
-    /* Enhanced alert styling with better visual hierarchy */
-    .alert {
-        border: none;
-        border-radius: var(--radius-lg);
-        border-left: 5px solid;
-        padding: 1.3rem 1.8rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .alert-info {
-        background: rgba(6, 182, 212, 0.08);
-        border-left-color: var(--info);
-        color: #0c4a6e;
-    }
-
-    .alert-success {
-        background: rgba(62, 159, 95, 0.08);
-        border-left-color: var(--primary);
-        color: var(--primary-dark);
-    }
-
-    .alert-warning {
-        background: rgba(245, 158, 11, 0.08);
-        border-left-color: var(--warning);
-        color: #78350f;
-    }
-
-    .alert-danger {
-        background: rgba(220, 38, 38, 0.08);
-        border-left-color: var(--danger);
-        color: #7f1d1d;
-    }
+    /* === ALERTS === */
+    .alert { border: none; border-radius: var(--radius-lg); border-left: 5px solid; padding: 1.3rem 1.8rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+    .alert-info { background: rgba(6, 182, 212, 0.08); border-left-color: var(--info); color: #0c4a6e; }
+    .alert-success { background: rgba(62, 159, 95, 0.08); border-left-color: var(--primary); color: var(--primary-dark); }
+    .alert-warning { background: rgba(245, 158, 11, 0.08); border-left-color: var(--warning); color: #78350f; }
+    .alert-danger { background: rgba(220, 38, 38, 0.08); border-left-color: var(--danger); color: #7f1d1d; }
 
     /* === MEMBER CARDS === */
-    /* Improved member card design with better interactions */
-    .member-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .member-card {
-        background: linear-gradient(135deg, #f0fdf4 0%, var(--bg-light) 100%);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        text-align: center;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .member-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 24px rgba(62, 159, 95, 0.15);
-        border-color: var(--primary);
-    }
-
-    .member-avatar {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin: 0 auto 1rem;
-        border: 3px solid var(--primary-light);
-        transition: transform 0.3s ease;
-    }
-
-    .member-card:hover .member-avatar {
-        transform: scale(1.1);
-    }
-
-    .member-name {
-        font-weight: 700;
-        color: var(--text-dark);
-        margin-bottom: 0.5rem;
-        font-size: 1rem;
-    }
-
-    .member-role {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        font-weight: 500;
-    }
+    .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.5rem; }
+    .member-card { background: linear-gradient(135deg, #f0fdf4 0%, var(--bg-light) 100%); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; transition: all 0.3s ease; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+    .member-card:hover { transform: translateY(-8px); box-shadow: 0 12px 24px rgba(62, 159, 95, 0.15); border-color: var(--primary); }
+    .member-avatar { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem; border: 3px solid var(--primary-light); transition: transform 0.3s ease; }
+    .member-card:hover .member-avatar { transform: scale(1.1); }
+    .member-name { font-weight: 700; color: var(--text-dark); margin-bottom: 0.5rem; font-size: 1rem; }
+    .member-role { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
 
     /* === ORGANIZER INFO === */
-    .organizer-section {
-        border-top: 2px solid var(--border-color);
-        padding-top: 2rem;
-        margin-top: 2rem;
-    }
-
-    .organizer-profile {
-        display: flex;
-        align-items: center;
-        gap: 1.2rem;
-    }
-
-    .organizer-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid var(--primary-light);
-        flex-shrink: 0;
-        transition: transform 0.3s ease;
-    }
-
-    .organizer-profile:hover .organizer-avatar {
-        transform: scale(1.1);
-    }
-
-    .organizer-info {
-        flex: 1;
-    }
-
-    .organizer-label {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        font-weight: 700;
-        margin-bottom: 0.4rem;
-        letter-spacing: 0.8px;
-    }
-
-    .organizer-name {
-        font-weight: 700;
-        color: var(--text-dark);
-        font-size: 1rem;
-    }
-
-    .organizer-link {
-        color: var(--text-muted);
-        margin-top: 1.2rem;
-        text-align: center;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.9rem;
-        display: inline-block;
-        width: 100%;
-        padding: 0.6rem 0;
-        transition: color 0.3s ease;
-    }
-
-    .organizer-link:hover {
-        color: var(--primary);
-    }
+    .organizer-section { border-top: 2px solid var(--border-color); padding-top: 2rem; margin-top: 2rem; }
+    .organizer-profile { display: flex; align-items: center; gap: 1.2rem; }
+    .organizer-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-light); flex-shrink: 0; transition: transform 0.3s ease; }
+    .organizer-profile:hover .organizer-avatar { transform: scale(1.1); }
+    .organizer-info { flex: 1; }
+    .organizer-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.4rem; letter-spacing: 0.8px; }
+    .organizer-name { font-weight: 700; color: var(--text-dark); font-size: 1rem; }
+    .organizer-link { color: var(--text-muted); margin-top: 1.2rem; text-align: center; text-decoration: none; font-weight: 600; font-size: 0.9rem; display: inline-block; width: 100%; padding: 0.6rem 0; transition: color 0.3s ease; }
+    .organizer-link:hover { color: var(--primary); }
 
     /* === MAP === */
-    #trip-map {
-        height: 400px;
-        width: 100%;
-        border-radius: var(--radius-lg);
-        border: 2px solid var(--border-color);
-        z-index: 1;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .map-label {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        margin-top: 1rem;
-        font-weight: 500;
-    }
-
-    .map-label i {
-        color: var(--danger);
-        margin-right: 0.6rem;
-    }
+    #trip-map { height: 400px; width: 100%; border-radius: var(--radius-lg); border: 2px solid var(--border-color); z-index: 1; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .map-label { font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem; font-weight: 500; }
+    .map-label i { color: var(--danger); margin-right: 0.6rem; }
 
     /* === EMPTY STATE === */
-    .empty-state {
-        background: linear-gradient(135deg, var(--bg-lighter) 0%, #ffffff 100%);
-        border: 2px dashed var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 3.5rem 2rem;
-        text-align: center;
-        color: var(--text-muted);
-    }
-
-    .empty-state i {
-        font-size: 3.5rem;
-        margin-bottom: 1rem;
-        opacity: 0.4;
-        color: var(--primary);
-    }
-
-    .empty-state p {
-        margin: 0;
-        font-weight: 500;
-        font-size: 0.95rem;
-    }
+    .empty-state { background: linear-gradient(135deg, var(--bg-lighter) 0%, #ffffff 100%); border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 3.5rem 2rem; text-align: center; color: var(--text-muted); }
+    .empty-state i { font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.4; color: var(--primary); }
+    .empty-state p { margin: 0; font-weight: 500; font-size: 0.95rem; }
 
     /* === MEMBER REQUEST CARD === */
-    /* Enhanced request card with better layout */
-    .request-card {
-        background: linear-gradient(135deg, #ffffff 0%, var(--bg-lighter) 100%);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        padding: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 1.2rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
+    .request-card { background: linear-gradient(135deg, #ffffff 0%, var(--bg-lighter) 100%); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; display: flex; align-items: center; gap: 1.2rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+    .request-card:hover { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); border-color: var(--primary); }
+    .request-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--primary-light); }
+    .request-info { flex: 1; }
+    .request-name { font-weight: 700; color: var(--text-dark); margin-bottom: 0.3rem; font-size: 0.95rem; }
+    .request-reason { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
+    .request-actions { display: flex; gap: 0.6rem; }
+    .request-actions .btn { padding: 0.6rem 1.2rem; font-size: 0.8rem; }
 
-    .request-card:hover {
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        border-color: var(--primary);
-    }
+    /* === UTILS === */
+    .section-divider { border-top: 2px solid var(--border-color); padding-top: 2rem; margin-top: 2.5rem; }
+    .section-divider--compact { border-top: 1px solid rgba(226,232,240,0.9); padding-top: 1rem; margin-top: 1.25rem; }
+    .section-title { display: flex; align-items: center; gap: 0.6rem; font-weight: 800; color: var(--text-dark); margin-bottom: 1rem; }
+    .progress { transform: translateY(-8px); margin-bottom: 0.75rem; }
+    .progress-bar { transition: width 0.5s ease; }
 
-    .request-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        object-fit: cover;
-        flex-shrink: 0;
-        border: 2px solid var(--primary-light);
-    }
+    /* === LIGHTGALLERY OVERRIDES === */
+    .lg-backdrop { background-color: rgba(0, 0, 0, 0.95) !important; }
+    .lg-toolbar { background: transparent !important; height: 0 !important; }
+    .lg-toolbar .lg-close { position: fixed !important; top: 20px !important; right: 20px !important; width: 50px !important; height: 50px !important; background: rgba(255, 255, 255, 0.2) !important; border-radius: 50%; cursor: pointer; z-index: 999999 !important; display: flex !important; align-items: center; justify-content: center; transition: transform 0.2s; text-decoration: none; }
+    .lg-toolbar .lg-close:hover { background: rgba(255, 255, 255, 0.4) !important; transform: scale(1.1); }
+    .lg-toolbar .lg-close:after { content: "\00d7"; font-size: 40px; line-height: 1; color: #fff; font-family: Arial, sans-serif; font-weight: 300; margin-top: -4px; }
+    .lg-counter, .lg-download, .lg-maximize { display: none !important; }
+    .lg-outer .lg-image { max-width: 90vw !important; max-height: 90vh !important; }
+    .lg-actions .lg-next, .lg-actions .lg-prev { background-color: rgba(0,0,0,0.4); border-radius: 50%; width: 50px; height: 50px; }
+    .lg-actions .lg-next:hover, .lg-actions .lg-prev:hover { background-color: var(--primary); }
 
-    .request-info {
-        flex: 1;
-    }
-
-    .request-name {
-        font-weight: 700;
-        color: var(--text-dark);
-        margin-bottom: 0.3rem;
-        font-size: 0.95rem;
-    }
-
-    .request-reason {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-        font-style: italic;
-    }
-
-    .request-actions {
-        display: flex;
-        gap: 0.6rem;
-    }
-
-    .request-actions .btn {
-        padding: 0.6rem 1.2rem;
-        font-size: 0.8rem;
-    }
-
-    /* === RESPONSIVE === */
+    /* RESPONSIVE */
     @media (max-width: 768px) {
-        .trip-title {
-            font-size: 1.8rem;
-        }
-
-        .hero-badges {
-            gap: 0.5rem;
-        }
-
-        .meta-badge {
-            font-size: 0.8rem;
-            padding: 0.4rem 0.8rem;
-        }
-
-        .content-inner,
-        .tab-content {
-            padding: 1.8rem;
-        }
-
-        .custom-tabs {
-            overflow-x: auto;
-        }
-
-        .custom-tabs .nav-link {
-            padding: 1.1rem 1.5rem;
-            font-size: 0.85rem;
-        }
-
-        .gallery-grid {
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 1rem;
-        }
-
-        .member-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .booking-card {
-            padding: 2rem;
-        }
-
-        .main-grid {
-            gap: 1.5rem;
-        }
+        .trip-title { font-size: 1.8rem; }
+        .hero-badges { gap: 0.5rem; }
+        .meta-badge { font-size: 0.8rem; padding: 0.4rem 0.8rem; }
+        .content-inner, .tab-content { padding: 1.8rem; }
+        .custom-tabs { overflow-x: auto; }
+        .custom-tabs .nav-link { padding: 1.1rem 1.5rem; font-size: 0.85rem; }
+        .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
+        .member-grid { grid-template-columns: repeat(2, 1fr); }
+        .booking-card { padding: 2rem; }
+        .main-grid { gap: 1.5rem; }
     }
-
     @media (max-width: 480px) {
-        .trip-title {
-            font-size: 1.4rem;
-        }
-
-        .meta-badge {
-            font-size: 0.75rem;
-            padding: 0.3rem 0.6rem;
-        }
-
-        .content-inner,
-        .tab-content {
-            padding: 1.2rem;
-        }
-
-        .gallery-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.8rem;
-        }
-
-        .member-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .request-card {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .request-actions {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .request-actions .btn {
-            flex: 1;
-        }
-
-        .chat-cta-card {
-            padding: 2.5rem 1.5rem;
-        }
+        .trip-title { font-size: 1.4rem; }
+        .meta-badge { font-size: 0.75rem; padding: 0.3rem 0.6rem; }
+        .content-inner, .tab-content { padding: 1.2rem; }
+        .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
+        .member-grid { grid-template-columns: 1fr; }
+        .request-card { flex-direction: column; text-align: center; }
+        .request-actions { width: 100%; justify-content: center; }
+        .request-actions .btn { flex: 1; }
+        .chat-cta-card { padding: 2.5rem 1.5rem; }
     }
-
-    /* === Leaflet Overrides === */
-    .leaflet-control-attribution {
-        background: rgba(255, 255, 255, 0.9) !important;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    }
-       .booking-card .progress {
-       transform: translateY(-8px); /* kéo lên 8px — giảm/increase giá trị nếu muốn lên/ xuống nhiều hơn */
-       margin-bottom: 0.75rem;
-   }
-
-   .booking-card .progress .progress-bar {
-     transition: width 0.5s ease; /* mượt khi cập nhật width bằng JS */
- }
- /* section separators to visually match booking-card */
-.section-divider {
-    border-top: 2px solid var(--border-color);
-    padding-top: 2rem;
-    margin-top: 2.5rem;
-}
-
-.section-divider--compact {
-    border-top: 1px solid rgba(226,232,240,0.9);
-    padding-top: 1rem;
-    margin-top: 1.25rem;
-}
-
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-weight: 800;
-    color: var(--text-dark);
-    margin-bottom: 1rem;
-}
-.lg-backdrop {
-        background-color: rgba(0, 0, 0, 0.95) !important;
-    }
-
-    /* Ẩn toolbar mặc định nhưng giữ lại nút close */
-    .lg-toolbar {
-        background: transparent !important;
-        height: 0 !important; /* Thu gọn toolbar để không chắn ảnh */
-    }
-
-    /* Cưỡng chế hiển thị nút đóng */
-    .lg-toolbar .lg-close {
-        position: fixed !important; /* Cố định theo màn hình */
-        top: 20px !important;
-        right: 20px !important;
-        width: 50px !important;
-        height: 50px !important;
-        background: rgba(255, 255, 255, 0.2) !important; /* Nền mờ để dễ nhìn */
-        border-radius: 50%;
-        cursor: pointer;
-        z-index: 999999 !important;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.2s;
-        text-decoration: none;
-    }
-    
-    .lg-toolbar .lg-close:hover {
-        background: rgba(255, 255, 255, 0.4) !important;
-        transform: scale(1.1);
-    }
-
-    /* Dùng ký tự 'X' thay vì icon để tránh lỗi font */
-    .lg-toolbar .lg-close:after {
-        content: "\00d7"; /* Ký tự nhân (×) */
-        font-size: 40px;
-        line-height: 1;
-        color: #fff;
-        font-family: Arial, sans-serif;
-        font-weight: 300;
-        margin-top: -4px; /* Căn chỉnh nhẹ */
-    }
-
-    /* Ẩn các nút không cần thiết khác */
-    .lg-counter, .lg-download, .lg-maximize {
-        display: none !important;
-    }
-
-    /* Ảnh hiển thị gọn gàng */
-    .lg-outer .lg-image {
-        max-width: 90vw !important;
-        max-height: 90vh !important;
-    }
-
-    /* Nút Next/Prev to và rõ hơn */
-    .lg-actions .lg-next, .lg-actions .lg-prev {
-        background-color: rgba(0,0,0,0.4);
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-    }
-    .lg-actions .lg-next:hover, .lg-actions .lg-prev:hover {
-        background-color: var(--primary);
-    }
+    .leaflet-control-attribution { background: rgba(255, 255, 255, 0.9) !important; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important; }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- 1. HERO BANNER -->
 <div class="trip-hero">
-    {% if trip.anh_bia %}
-        <img src="{{ trip.anh_bia.file.url }}" class="trip-hero-img" alt="{{ trip.ten_chuyen_di }}">
-    {% else %}
-        <div class="trip-hero-img" style="background: linear-gradient(135deg, #3e9f5f, #10b981); display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-image" style="font-size: 5rem; opacity: 0.3; color: white;"></i>
-        </div>
-    {% endif %}
+    <!-- CẬP NHẬT 1: Dùng cover_url tự động lấy ảnh -->
+    <img src="{{ trip.cover_url }}" class="trip-hero-img" alt="{{ trip.ten_chuyen_di }}">
     
     <div class="trip-hero-content">
         <div class="container">
@@ -1141,6 +626,11 @@
                     <div class="meta-badge"><i class="fas fa-map-marker-alt"></i> {{ trip.cung_duong.tinh_thanh.ten }}</div>
                     <div class="meta-badge"><i class="far fa-calendar-alt"></i> {{ trip.ngay_bat_dau|date:"d/m/Y H:i" }}</div>
                     <div class="meta-badge"><i class="fas fa-clock"></i> {{ trip.ngay_ket_thuc|date:"d/m/Y H:i" }}</div>
+                    
+                    <!-- CẬP NHẬT 2: Nút COPY mã chuyến đi -->
+                    <div class="meta-badge copy-btn" onclick="copyTripCode('{{ trip.ma_moi }}')" title="Sao chép mã chuyến đi">
+                        <i class="fas fa-fingerprint"></i> Mã: {{ trip.ma_moi|slice:":8" }} <i class="far fa-copy ms-1"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1166,46 +656,51 @@
                 <div class="tab-content">
                     <!-- Tab Tổng quan -->
                     <div class="tab-pane fade show active" id="overview" role="tabpanel">
-<div class="intro-block">
-    <h4 class="section-title" style="margin-top:0;">Giới thiệu chuyến đi</h4>
-    <div style="color: var(--text-muted); margin-bottom: 2.5rem; line-height: 1.7; white-space: pre-line;">
-        {{ trip.mo_ta }}
+                        <div class="intro-block">
+                            <h4 class="section-title" style="margin-top:0;">Giới thiệu chuyến đi</h4>
+                            <!-- CẬP NHẬT 3: Dùng safe để hiển thị HTML từ TinyMCE, bỏ pre-line -->
+                            <div style="color: var(--text-muted); margin-bottom: 2.5rem; line-height: 1.7;">
+                                {{ trip.mo_ta|safe }}
+                            </div>
+                        </div>
+
+                        <div class="section-divider">
+                            <h4 class="section-title"> Lịch trình chi tiết</h4>
+<div class="timeline">
+    {% for item in trip.timeline.all %}
+    <div class="timeline-item">
+        <!-- ĐƯA SỐ THỨ TỰ VÀO TRONG DOT -->
+        <div class="timeline-dot">{{ forloop.counter }}</div>
+        
+        <!-- BỎ SỐ THỨ TỰ Ở ĐÂY, CHỈ GIỮ NGÀY GIỜ -->
+        <div class="timeline-time">Ngày {{ item.ngay }} - {{ item.thoi_gian|time:"H:i" }}</div>
+        
+        <div class="timeline-title">{{ item.hoat_dong }}</div>
+        {% if item.mo_ta_chi_tiet %}
+            <div class="timeline-content">{{ item.mo_ta_chi_tiet }}</div>
+        {% endif %}
     </div>
+    {% empty %}
+    <div class="empty-state" style="padding: 2rem 1rem;">
+        <i class="fas fa-calendar-alt"></i>
+        <p>Chưa có lịch trình chi tiết.</p>
+    </div>
+    {% endfor %}
 </div>
-    </div>
-
-        <div class="section-divider">
-            <h4 class="section-title"> Lịch trình chi tiết</h4>
-            <div class="timeline">
-                            {% for item in trip.timeline.all %}
-                            <div class="timeline-item">
-                                <div class="timeline-dot"></div>
-                                <div class="timeline-time">Ngày {{ item.ngay }} - {{ item.thoi_gian|time:"H:i" }}</div>
-                                <div class="timeline-title">{{ item.hoat_dong }}</div>
-                                {% if item.mo_ta_chi_tiet %}
-                                    <div class="timeline-content">{{ item.mo_ta_chi_tiet }}</div>
-                                {% endif %}
-                            </div>
-                            {% empty %}
-                            <div class="empty-state" style="padding: 2rem 1rem;">
-                                <i class="fas fa-calendar-alt"></i>
-                                <p>Chưa có lịch trình chi tiết.</p>
-                            </div>
-                            {% endfor %}
                         </div>
 
-                    <div class="section-divider">
-                        <h4 class="section-title">
-                             Bản đồ & Điểm tập trung
-                        </h4>
+                        <div class="section-divider">
+                            <h4 class="section-title">
+                                 Bản đồ & Điểm tập trung
+                            </h4>
 
-                        <div class="map-label" style="margin-bottom: 1rem;">
-                            <i class="fas fa-map-pin"></i> 
-                            <strong>Điểm tập trung:</strong> {{ trip.dia_diem_tap_trung }}
+                            <div class="map-label" style="margin-bottom: 1rem;">
+                                <i class="fas fa-map-pin"></i> 
+                                <strong>Điểm tập trung:</strong> {{ trip.dia_diem_tap_trung }}
+                            </div>
+
+                            <div id="trip-map"></div>
                         </div>
-
-                        <div id="trip-map"></div>
-                    </div>
                     </div>
 
                     <!-- Tab Thành viên -->
@@ -1232,7 +727,7 @@
                         {% endif %}
 
                         <div class="section-divider">
-                            <h5 class="section-title" style="font: size 1.5rem;">Danh sách tham gia ({{ trip.so_thanh_vien_tham_gia }})</h5>
+                            <h5 class="section-title" style="font-size: 1.2rem;">Danh sách tham gia ({{ trip.so_thanh_vien_tham_gia }})</h5>
                             <div class="member-grid">
                                 {% for member in trip.thanh_vien.all %}
                                     {% if member.trang_thai_tham_gia == 'DA_THAM_GIA' %}
@@ -1258,8 +753,7 @@
                         {% endif %}
                     </div>
 
-
-                    <!-- Tab Thư viện / Media -->
+                    <!-- Tab Thư viện -->
                     <div class="tab-pane fade" id="media" role="tabpanel">
                        <div class="section-divider">
                            <h4 class="section-title">Thư viện ảnh ({{ trip.media.count }})</h4>
@@ -1298,133 +792,138 @@
             </div>
         </div>
 
-    <!-- CỘT PHẢI: BOOKING CARD (Sticky) -->
-<div>
-    <div class="booking-card">
-        <div class="price-section">
-            <div>
-                <div class="price-label">Chi phí dự kiến</div>
-                <!-- Thêm intcomma để format số tiền -->
-                <div class="price-amount">{{ trip.chi_phi_uoc_tinh|intcomma|default:"0" }}<span class="price-unit"> vnđ</span></div>
-            </div>
-        </div>
-
-        <div class="booking-stats">
-            <div class="stat-box">
-                <div class="stat-label">Đã tham gia</div>
-                <!-- Thêm default:"0" để tránh lỗi hiển thị rỗng -->
-                <div class="stat-value">{{ trip.so_thanh_vien_tham_gia|default:"0" }}</div>
-            </div>
-            <div class="stat-box" style="border-left: 1px solid var(--border-color);">
-                <div class="stat-label">Tối đa</div>
-                <div class="stat-value">{{ trip.so_luong_toi_da }}</div>
-            </div>
-        </div>
-
-        <!-- Progress Bar: Hiển thị mức độ đầy chỗ -->
-        {% widthratio trip.so_thanh_vien_tham_gia|default:0 trip.so_luong_toi_da 100 as percent %}
-        <div class="progress mb-4" style="height: 6px; border-radius: 10px;">
-            <div class="progress-bar {% if percent|add:'0' >= 100 %}bg-danger{% else %}bg-success{% endif %}" 
-                 role="progressbar"
-                 data-percent="{{ percent|default:'0' }}"
-                 style="width: 0%;"
-                 aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-
-        <!-- ACTION BUTTONS -->
-        <div id="main-action-area">
-            {% if not user.is_authenticated %}
-                <a href="{% url 'accounts:dang-nhap' %}?next={{ request.path }}" class="btn btn-primary btn-lg w-100">
-                    <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập để tham gia
-                </a>
-            {% elif is_organizer %}
-                <a href="{% url 'trips:update_trip' pk=trip.pk slug=trip.slug %}" class="btn btn-warning btn-lg w-100">
-                    <i class="fas fa-edit me-2"></i> Chỉnh sửa chuyến đi
-                </a>
-            {% else %}
-                <!-- Logic kiểm tra trạng thái thành viên -->
-                {% if not membership %}
-                    {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}
-                         <button class="btn btn-secondary btn-lg w-100" disabled>
-                             <i class="fas fa-ban me-2"></i> Đã đủ thành viên
-                         </button>
-                    {% else %}
-                        <button id="join-trip-btn" class="btn btn-primary btn-lg w-100"
-                            {% if trip.yeu_cau_ly_do %} data-bs-toggle="modal" data-bs-target="#joinReasonModal" {% endif %}>
-                            <i class="fas fa-paper-plane me-2"></i> Tham gia ngay
-                        </button>
-                    {% endif %}
-                {% elif membership.trang_thai_tham_gia == 'DA_GUI_YEU_CAU' %}
-                    <div class="alert alert-info text-center py-2 mb-2 fw-bold">
-                        <i class="fas fa-hourglass-half me-2"></i> Đang chờ duyệt
+        <!-- CỘT PHẢI: BOOKING CARD (Sticky) -->
+        <div>
+            <div class="booking-card">
+                <div class="price-section">
+                    <div>
+                        <div class="price-label">Chi phí dự kiến</div>
+                        <!-- CẬP NHẬT 5: Logic hiển thị Miễn phí hoặc Giá tiền -->
+                        <div class="price-amount">
+                            {% if trip.chi_phi_uoc_tinh > 0 %}
+                                {{ trip.chi_phi_uoc_tinh|intcomma }}<span class="price-unit"> vnđ</span>
+                            {% else %}
+                                <span style="font-size: 1.8rem; color: var(--success);">Miễn phí</span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <button id="cancel-request-btn" class="btn btn-outline-danger btn-sm w-100">
-                        <i class="fas fa-times me-2"></i> Hủy yêu cầu
-                    </button>
-                {% elif membership.trang_thai_tham_gia == 'DA_THAM_GIA' %}
-                    <div class="alert alert-success text-center py-2 mb-2 fw-bold">
-                        <i class="fas fa-check-circle me-2"></i> Bạn đã tham gia
-                    </div>
-                    <button id="leave-trip-btn" class="btn btn-outline-danger btn-sm w-100">
-                        <i class="fas fa-sign-out-alt me-2"></i> Rời khỏi chuyến đi
-                    </button>
-                {% elif membership.trang_thai_tham_gia == 'BI_TU_CHOI' %}
-                    <div class="alert alert-danger text-center py-2 mb-0 fw-bold">
-                        <i class="fas fa-times-circle me-2"></i> Yêu cầu bị từ chối
-                    </div>
-                {% elif membership.trang_thai_tham_gia == 'DA_ROI_DI' %}
-                    <div class="alert alert-secondary text-center py-2 mb-2 small">
-                        Bạn đã rời khỏi chuyến đi này
-                    </div>
-                    {% if trip.so_thanh_vien_tham_gia < trip.so_luong_toi_da %}
-                        <button id="join-trip-btn" class="btn btn-primary btn-lg w-100" 
-                            {% if trip.yeu_cau_ly_do %} data-bs-toggle="modal" data-bs-target="#joinReasonModal" {% endif %}>
-                            Tham gia lại
-                        </button>
-                    {% endif %}
-                {% endif %}
-            {% endif %}
-        </div>
-<!-- CHAT CARD (moved into right sidebar) -->
-<div class="chat-cta-card">
-    <div class="chat-icon-wrapper"><i class="fas fa-comments"></i></div>
-    <div class="chat-title">Thảo luận nhóm</div>
-    {% if is_member or is_organizer %}
-        <div class="chat-description">Trao đổi, kế hoạch và chia sẻ khoảnh khắc với nhóm chuyến đi này.</div>
-        {% if trip.get_chat_url %}
-            <a href="{{ trip.get_chat_url }}" class="btn btn-primary w-100 mb-2">
-                <i class="fas fa-external-link-alt me-2"></i> Truy cập Group Chat
-            </a>
-        {% else %}
-            <button class="btn btn-secondary w-100 mb-2" disabled>
-                <i class="fas fa-tools me-2"></i> Kênh chat chưa sẵn sàng
-            </button>
-        {% endif %}
-        <small class="text-muted d-block text-center">Chỉ dành cho thành viên chuyến đi</small>
-    {% else %}
-        <div class="chat-description">Kênh chat chỉ dành cho thành viên. Đăng ký để tham gia.</div>
-        <button class="btn btn-primary w-100" onclick="document.getElementById('join-trip-btn').click()">
-            <i class="fas fa-paper-plane me-2"></i> Đăng ký tham gia
-        </button>
-    {% endif %}
-</div>
-
-        <!-- Organizer Info -->
-        <div class="organizer-section">
-            <div class="organizer-profile">
-                <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}" class="organizer-avatar" alt="{{ trip.nguoi_to_chuc.username }}">
-                <div class="organizer-info">
-                    <div class="organizer-label">Tổ chức bởi</div>
-                    <a href="#" class="organizer-name text-decoration-none" style="color: var(--text-dark);">{{ trip.nguoi_to_chuc.get_full_name|default:trip.nguoi_to_chuc.username }}</a>
                 </div>
+
+                <div class="booking-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Đã tham gia</div>
+                        <div class="stat-value">{{ trip.so_thanh_vien_tham_gia|default:"0" }}</div>
+                    </div>
+                    <div class="stat-box" style="border-left: 1px solid var(--border-color);">
+                        <div class="stat-label">Tối đa</div>
+                        <div class="stat-value">{{ trip.so_luong_toi_da }}</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                {% widthratio trip.so_thanh_vien_tham_gia|default:0 trip.so_luong_toi_da 100 as percent %}
+                <div class="progress mb-4" style="height: 6px; border-radius: 10px;">
+                    <div class="progress-bar {% if percent|add:'0' >= 100 %}bg-danger{% else %}bg-success{% endif %}" 
+                         role="progressbar"
+                         data-percent="{{ percent|default:'0' }}"
+                         style="width: 0%;"
+                         aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+
+                <!-- ACTION BUTTONS -->
+                <div id="main-action-area">
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'accounts:dang-nhap' %}?next={{ request.path }}" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập để tham gia
+                        </a>
+                    {% elif is_organizer %}
+                        <a href="{% url 'trips:update_trip' pk=trip.pk slug=trip.slug %}" class="btn btn-warning btn-lg w-100">
+                            <i class="fas fa-edit me-2"></i> Chỉnh sửa chuyến đi
+                        </a>
+                    {% else %}
+                        {% if not membership %}
+                            {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}
+                                 <button class="btn btn-secondary btn-lg w-100" disabled>
+                                     <i class="fas fa-ban me-2"></i> Đã đủ thành viên
+                                 </button>
+                            {% else %}
+                                <button id="join-trip-btn" class="btn btn-primary btn-lg w-100"
+                                    {% if trip.yeu_cau_ly_do %} data-bs-toggle="modal" data-bs-target="#joinReasonModal" {% endif %}>
+                                    <i class="fas fa-paper-plane me-2"></i> Tham gia ngay
+                                </button>
+                            {% endif %}
+                        {% elif membership.trang_thai_tham_gia == 'DA_GUI_YEU_CAU' %}
+                            <div class="alert alert-info text-center py-2 mb-2 fw-bold">
+                                <i class="fas fa-hourglass-half me-2"></i> Đang chờ duyệt
+                            </div>
+                            <button id="cancel-request-btn" class="btn btn-outline-danger btn-sm w-100">
+                                <i class="fas fa-times me-2"></i> Hủy yêu cầu
+                            </button>
+                        {% elif membership.trang_thai_tham_gia == 'DA_THAM_GIA' %}
+                            <div class="alert alert-success text-center py-2 mb-2 fw-bold">
+                                <i class="fas fa-check-circle me-2"></i> Bạn đã tham gia
+                            </div>
+                            <button id="leave-trip-btn" class="btn btn-outline-danger btn-sm w-100">
+                                <i class="fas fa-sign-out-alt me-2"></i> Rời khỏi chuyến đi
+                            </button>
+                        {% elif membership.trang_thai_tham_gia == 'BI_TU_CHOI' %}
+                            <div class="alert alert-danger text-center py-2 mb-0 fw-bold">
+                                <i class="fas fa-times-circle me-2"></i> Yêu cầu bị từ chối
+                            </div>
+                        {% elif membership.trang_thai_tham_gia == 'DA_ROI_DI' %}
+                            <div class="alert alert-secondary text-center py-2 mb-2 small">
+                                Bạn đã rời khỏi chuyến đi này
+                            </div>
+                            {% if trip.so_thanh_vien_tham_gia < trip.so_luong_toi_da %}
+                                <button id="join-trip-btn" class="btn btn-primary btn-lg w-100" 
+                                    {% if trip.yeu_cau_ly_do %} data-bs-toggle="modal" data-bs-target="#joinReasonModal" {% endif %}>
+                                    Tham gia lại
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <!-- CHAT CARD (Sidebar) -->
+                <div class="chat-cta-card">
+                    <div class="chat-icon-wrapper"><i class="fas fa-comments"></i></div>
+                    <div class="chat-title">Thảo luận nhóm</div>
+                    {% if is_member or is_organizer %}
+                        <div class="chat-description">Trao đổi, kế hoạch và chia sẻ khoảnh khắc với nhóm.</div>
+                        {% if trip.get_chat_url %}
+                            <a href="{{ trip.get_chat_url }}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-external-link-alt me-2"></i> Truy cập Group Chat
+                            </a>
+                        {% else %}
+                            <button class="btn btn-secondary w-100 mb-2" disabled>
+                                <i class="fas fa-tools me-2"></i> Kênh chat chưa sẵn sàng
+                            </button>
+                        {% endif %}
+                        <small class="text-muted d-block text-center">Chỉ dành cho thành viên</small>
+                    {% else %}
+                        <div class="chat-description">Kênh chat chỉ dành cho thành viên. Đăng ký để tham gia.</div>
+                        <button class="btn btn-primary w-100" onclick="document.getElementById('join-trip-btn').click()">
+                            <i class="fas fa-paper-plane me-2"></i> Đăng ký tham gia
+                        </button>
+                    {% endif %}
+                </div>
+
+                <!-- Organizer Info -->
+                <div class="organizer-section">
+                    <div class="organizer-profile">
+                        <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}" class="organizer-avatar" alt="{{ trip.nguoi_to_chuc.username }}">
+                        <div class="organizer-info">
+                            <div class="organizer-label">Tổ chức bởi</div>
+                            <a href="#" class="organizer-name text-decoration-none" style="color: var(--text-dark);">{{ trip.nguoi_to_chuc.get_full_name|default:trip.nguoi_to_chuc.username }}</a>
+                        </div>
+                    </div>
+                    
+                    <a href="{{ trip.cung_duong.get_absolute_url }}" class="organizer-link">
+                        Xem chi tiết Cung đường <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>   
             </div>
-            
-            <a href="{{ trip.cung_duong.get_absolute_url }}" class="organizer-link">
-                Xem chi tiết Cung đường <i class="fas fa-arrow-right ms-1"></i>
-            </a>
-        </div>   
-    </div>
-</div>
+        </div>
     </div>
 </div>
 
@@ -1457,12 +956,21 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- LightGallery scripts -->
 <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.0/lightgallery.umd.min.js"></script>
 
 <script>
+    // Hàm copy mã chuyến đi
+    function copyTripCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            alert("Đã sao chép mã chuyến đi: " + code);
+        }).catch(err => {
+            console.error('Không thể sao chép: ', err);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const csrfToken = '{{ csrf_token }}';
+        
         // Helper: Gửi AJAX
         const sendAjax = (url, method='POST', body=null) => {
             return fetch(url, {
@@ -1536,41 +1044,35 @@
                 setTimeout(() => map.invalidateSize(), 200);
             };
             
-            // Lazy load map
             const observer = new IntersectionObserver(entries => {
                 if(entries[0].isIntersecting) { initMap(); observer.disconnect(); }
             });
             observer.observe(mapEl);
         }
 
-        // Initialize LightGallery for media tab
-const lgRoot = document.getElementById('light-gallery');
+        // Initialize LightGallery
+        const lgRoot = document.getElementById('light-gallery');
         if (lgRoot) {
             lightGallery(lgRoot, {
-                selector: 'a', // Selector chọn thẻ a bao quanh ảnh
+                selector: 'a',
                 speed: 300,
-                
-                // Các tính năng cơ bản
-                controls: true, // Hiện nút Next/Prev
-                closable: true, // Cho phép đóng
-                download: false, // Tắt download
-                counter: false, // Tắt đếm số trang
-                
-                // Quan trọng: Tắt auto hide để CSS của mình luôn có tác dụng
-                hideBarsDelay: 999999, 
-                
-                // Hiệu ứng
+                controls: true,
+                closable: true,
+                download: false,
+                counter: false,
+                hideBarsDelay: 999999,
                 mode: 'lg-fade',
                 mousewheel: true,
-                getCaptionFromTitleOrAlt: false // Tắt caption nếu không cần
+                getCaptionFromTitleOrAlt: false
             });
         }
     });
-    // set progress-bar widths (fix linter warnings about template in style)
+
+    // Set progress bar width
     document.querySelectorAll('.progress-bar[data-percent]').forEach(el => {
-            const pct = Math.max(0, Math.min(100, Number(el.getAttribute('data-percent') || 0)));
-            el.style.width = pct + '%';
-            el.setAttribute('aria-valuenow', String(pct));
-        });
+        const pct = Math.max(0, Math.min(100, Number(el.getAttribute('data-percent') || 0)));
+        el.style.width = pct + '%';
+        el.setAttribute('aria-valuenow', String(pct));
+    });
 </script>
 {% endblock %}
