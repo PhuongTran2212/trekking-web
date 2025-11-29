@@ -4,332 +4,63 @@
 {% block title %}Tạo bài viết mới{% endblock %}
 
 {% block extra_css %}
+<!-- Load CSS giao diện của bạn -->
 <link rel="stylesheet" href="{% static 'css/community.css' %}">
 <style>
-  /* Added modern styling for create post form */
-  .create-post-container {
-    max-width: 900px;
-    margin: 2rem auto;
-  }
+  /* === GIỮ NGUYÊN CSS GIAO DIỆN CỦA BẠN === */
+  .create-post-container { max-width: 900px; margin: 2rem auto; }
+  .create-post-card { background: var(--surface-primary, #fff); border-radius: var(--radius-lg, 12px); box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1)); overflow: hidden; }
+  .create-post-header { background: linear-gradient(135deg, var(--primary-dark, #4D7111) 0%, var(--primary-medium, #C3E956) 100%); padding: 1.5rem 2rem; color: white; }
+  .create-post-header h1 { margin: 0; font-size: 1.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; }
+  .create-post-body { padding: 2rem; }
+  .form-group { margin-bottom: 1.5rem; }
+  .form-label { display: block; font-weight: 600; color: var(--text-primary, #1a1a1a); margin-bottom: 0.5rem; font-size: 0.95rem; }
+  .form-control { width: 100%; padding: 0.75rem 1rem; border: 2px solid var(--border-light, #e0e0e0); border-radius: var(--radius-md, 8px); font-size: 1rem; transition: all 0.2s ease; background: var(--surface-primary, #fff); }
+  .form-control:focus { outline: none; border-color: var(--primary-medium, #C3E956); box-shadow: 0 0 0 3px rgba(195, 233, 86, 0.1); }
   
-  .create-post-card {
-    background: var(--surface-primary, #fff);
-    border-radius: var(--radius-lg, 12px);
-    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
-    overflow: hidden;
-  }
-  
-  .create-post-header {
-    background: linear-gradient(135deg, var(--primary-dark, #4D7111) 0%, var(--primary-medium, #C3E956) 100%);
-    padding: 1.5rem 2rem;
-    color: white;
-  }
-  
-  .create-post-header h1 {
-    margin: 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  
-  .create-post-body {
-    padding: 2rem;
-  }
-  
-  .form-group {
-    margin-bottom: 1.5rem;
-  }
-  
-  .form-label {
-    display: block;
-    font-weight: 600;
-    color: var(--text-primary, #1a1a1a);
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-  }
-  
-  .form-control {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 2px solid var(--border-light, #e0e0e0);
-    border-radius: var(--radius-md, 8px);
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    background: var(--surface-primary, #fff);
-  }
-  
-  .form-control:focus {
-    outline: none;
-    border-color: var(--primary-medium, #C3E956);
-    box-shadow: 0 0 0 3px rgba(195, 233, 86, 0.1);
-  }
-  
-  textarea.form-control {
-    min-height: 200px;
-    resize: vertical;
-    font-family: inherit;
-  }
-  
-  .tag-checkbox-container {
-    background: var(--surface-secondary, #f8f9fa);
-    border: 2px solid var(--border-light, #e0e0e0);
-    border-radius: var(--radius-md, 8px);
-    padding: 1.5rem;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-  
-  .tag-checkbox-container ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
-  }
-  
-  .tag-checkbox-container li {
-    display: flex;
-    align-items: center;
-  }
-  
-  .tag-checkbox-container input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin-right: 0.5rem;
-    cursor: pointer;
-    accent-color: var(--primary-medium, #C3E956);
-  }
-  
-  .tag-checkbox-container label {
-    cursor: pointer;
-    font-size: 0.95rem;
-    color: var(--text-secondary, #666);
-    user-select: none;
-  }
+  /* CSS riêng cho vùng chứa Tags */
+  .tag-checkbox-container { background: var(--surface-secondary, #f8f9fa); border: 2px solid var(--border-light, #e0e0e0); border-radius: var(--radius-md, 8px); padding: 1.5rem; max-height: 300px; overflow-y: auto; }
+  .tag-checkbox-container ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+  .tag-checkbox-container li { display: flex; align-items: center; }
+  .tag-checkbox-container input[type="checkbox"] { width: 18px; height: 18px; margin-right: 0.5rem; cursor: pointer; accent-color: var(--primary-medium, #C3E956); }
   
   /* Media preview styles */
-  .media-preview-section {
-    margin-top: 1rem;
-  }
-  
-  .post-media-gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  
-  .media-item {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: var(--radius-md, 8px);
-    overflow: hidden;
-    background: var(--surface-secondary, #f0f2f5);
-    cursor: pointer;
-    transition: transform 0.2s ease;
-  }
-  
-  .media-item:hover {
-    transform: scale(1.02);
-  }
-  
-  .media-item img,
-  .media-item video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .delete-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .delete-btn:hover {
-    background: #ff4444;
-    color: white;
-    transform: scale(1.1);
-  }
-  
-  .media-item-more {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2rem;
-    font-weight: 700;
-    pointer-events: none;
-  }
+  .media-preview-section { margin-top: 1rem; }
+  .post-media-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+  .media-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-md, 8px); overflow: hidden; background: var(--surface-secondary, #f0f2f5); cursor: pointer; transition: transform 0.2s ease; }
+  .media-item:hover { transform: scale(1.02); }
+  .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
+  .delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.95); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .delete-btn:hover { background: #ff4444; color: white; transform: scale(1.1); }
+  .media-item-more { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 700; pointer-events: none; }
   
   /* Modal styles */
-  .image-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 1000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-  }
-  
-  .image-modal.show {
-    display: flex;
-  }
-  
-  .image-modal-content {
-    background: white;
-    border-radius: var(--radius-lg, 12px);
-    max-width: 1400px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 2rem;
-    position: relative;
-  }
-  
-  .image-modal-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--surface-secondary, #f0f0f0);
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 1.5rem;
-    transition: all 0.2s ease;
-    z-index: 10;
-  }
-  
-  .image-modal-close:hover {
-    background: #ff4444;
-    color: white;
-  }
-  
-  #modal-gallery-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-  
-  .modal-media-item {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: var(--radius-md, 8px);
-    overflow: hidden;
-    background: var(--surface-secondary, #f0f0f0);
-  }
-  
-  .modal-media-item img,
-  .modal-media-item video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  .image-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 2rem; }
+  .image-modal.show { display: flex; }
+  .image-modal-content { background: white; border-radius: var(--radius-lg, 12px); max-width: 1400px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative; }
+  .image-modal-close { position: absolute; top: 1rem; right: 1rem; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-secondary, #f0f0f0); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; transition: all 0.2s ease; z-index: 10; }
+  .image-modal-close:hover { background: #ff4444; color: white; }
+  #modal-gallery-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .modal-media-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-md, 8px); overflow: hidden; background: var(--surface-secondary, #f0f0f0); }
+  .modal-media-item img, .modal-media-item video { width: 100%; height: 100%; object-fit: cover; }
   
   /* Alert and info boxes */
-  .info-alert {
-    background: linear-gradient(135deg, rgba(195, 233, 86, 0.1) 0%, rgba(77, 113, 17, 0.05) 100%);
-    border-left: 4px solid var(--primary-medium, #C3E956);
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius-md, 8px);
-    margin-top: 1.5rem;
-  }
-  
-  .info-alert strong {
-    color: var(--primary-dark, #4D7111);
-  }
+  .info-alert { background: linear-gradient(135deg, rgba(195, 233, 86, 0.1) 0%, rgba(77, 113, 17, 0.05) 100%); border-left: 4px solid var(--primary-medium, #C3E956); padding: 1rem 1.25rem; border-radius: var(--radius-md, 8px); margin-top: 1.5rem; }
+  .info-alert strong { color: var(--primary-dark, #4D7111); }
   
   /* Action buttons */
-  .form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid var(--border-light, #e0e0e0);
-  }
-  
-  .btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--radius-md, 8px);
-    font-weight: 600;
-    font-size: 1rem;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-  }
-  
-  .btn-primary {
-    background: var(--primary-dark, #4D7111);
-    color: white;
-  }
-  
-  .btn-primary:hover {
-    background: var(--primary-medium, #C3E956);
-    color: var(--primary-dark, #4D7111);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(77, 113, 17, 0.3);
-  }
-  
-  .btn-secondary {
-    background: var(--surface-secondary, #f0f0f0);
-    color: var(--text-primary, #1a1a1a);
-  }
-  
-  .btn-secondary:hover {
-    background: var(--border-light, #e0e0e0);
-  }
-  
-  .error-text {
-    color: #dc3545;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-  }
+  .form-actions { display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--border-light, #e0e0e0); }
+  .btn { padding: 0.75rem 1.5rem; border-radius: var(--radius-md, 8px); font-weight: 600; font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .btn-primary { background: var(--primary-dark, #4D7111); color: white; }
+  .btn-primary:hover { background: var(--primary-medium, #C3E956); color: var(--primary-dark, #4D7111); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(77, 113, 17, 0.3); }
+  .btn-secondary { background: var(--surface-secondary, #f0f0f0); color: var(--text-primary, #1a1a1a); }
+  .btn-secondary:hover { background: var(--border-light, #e0e0e0); }
+  .error-text { color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; }
   
   /* File input styling */
-  input[type="file"] {
-    padding: 0.5rem;
-  }
-  
-  .file-input-label {
-    display: block;
-    margin-bottom: 0.5rem;
-  }
-  
-  .file-help-text {
-    font-size: 0.875rem;
-    color: var(--text-secondary, #666);
-    margin-top: 0.5rem;
-  }
+  input[type="file"] { padding: 0.5rem; }
+  .file-input-label { display: block; margin-bottom: 0.5rem; }
+  .file-help-text { font-size: 0.875rem; color: var(--text-secondary, #666); margin-top: 0.5rem; }
 </style>
 {% endblock %}
 
@@ -338,6 +69,7 @@
   <div class="create-post-card">
     <div class="create-post-header">
       <h1>
+        <!-- Icon -->
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -350,6 +82,7 @@
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
+        <!-- Tiêu đề -->
         <div class="form-group">
           <label for="{{ form.tieu_de.id_for_label }}" class="form-label">{{ form.tieu_de.label }}</label>
           {{ form.tieu_de }}
@@ -358,14 +91,7 @@
           {% endif %}
         </div>
 
-        <div class="form-group">
-          <label for="{{ form.noi_dung.id_for_label }}" class="form-label">{{ form.noi_dung.label }}</label>
-          {{ form.noi_dung }}
-          {% if form.noi_dung.errors %}
-            <div class="error-text">{{ form.noi_dung.errors|striptags }}</div>
-          {% endif %}
-        </div>
-
+        <!-- Chuyến đi (Nếu có) -->
         <div class="form-group">
           <label for="{{ form.chuyen_di.id_for_label }}" class="form-label">{{ form.chuyen_di.label }}</label>
           {{ form.chuyen_di }}
@@ -374,6 +100,7 @@
           {% endif %}
         </div>
 
+        <!-- Tags -->
         <div class="form-group">
           <label class="form-label">{{ form.tags.label }}</label>
           <div class="tag-checkbox-container">
@@ -384,6 +111,17 @@
           {% endif %}
         </div>
 
+        <!-- TINYMCE EDITOR: Nội dung chi tiết -->
+        <div class="form-group">
+          <label for="{{ form.noi_dung.id_for_label }}" class="form-label">{{ form.noi_dung.label }}</label>
+          <!-- TinyMCE sẽ tự động thay thế thẻ này -->
+          {{ form.noi_dung }}
+          {% if form.noi_dung.errors %}
+            <div class="error-text">{{ form.noi_dung.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <!-- File Upload Riêng (Dành cho Gallery/Album) -->
         <div class="form-group">
           <label for="media_files" class="form-label file-input-label">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
@@ -391,10 +129,10 @@
               <circle cx="8.5" cy="8.5" r="1.5"></circle>
               <polyline points="21 15 16 10 5 21"></polyline>
             </svg>
-            Tải lên ảnh/video
+            Tải lên Album ảnh/Video
           </label>
           <input type="file" class="form-control" id="media_files" name="media_files" multiple accept="image/*,video/*"/>
-          <div class="file-help-text">Bạn có thể chọn nhiều file. Click vào ảnh để xem tất cả hoặc xóa từng file.</div>
+          <div class="file-help-text">Bạn có thể chọn nhiều file để tạo album ảnh đính kèm.</div>
         </div>
 
         <div id="preview-container" class="post-media-gallery"></div>
@@ -418,7 +156,7 @@
   </div>
 </div>
 
-<!-- Modal for viewing all media -->
+<!-- Modal xem trước Gallery -->
 <div id="image-modal" class="image-modal">
   <div class="image-modal-content">
     <button id="modal-close-btn" class="image-modal-close">&times;</button>
@@ -427,8 +165,33 @@
   </div>
 </div>
 
+<!-- 1. Script Load TinyMCE (Bản miễn phí từ Cloudflare) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // === CẤU HÌNH TINYMCE CƠ BẢN ===
+    tinymce.init({
+        selector: 'textarea[name="noi_dung"]', // Chọn đúng field nội dung
+        height: 500,
+        menubar: false,
+        branding: false,
+        // Chỉ dùng các plugin soạn thảo cơ bản
+        plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+        toolbar: 'undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+        
+        // Cấu hình font chữ cho giống giao diện web
+        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; }',
+        
+        // Đảm bảo dữ liệu được lưu khi submit form
+        setup: function (editor) {
+            editor.on('change', function () {
+                editor.save();
+            });
+        }
+    });
+
+    // === GIỮ NGUYÊN CODE XỬ LÝ GALLERY (ALBUM ẢNH) CỦA BẠN ===
     const fileInput = document.getElementById("media_files");
     const previewContainer = document.getElementById("preview-container");
     const modal = document.getElementById("image-modal");

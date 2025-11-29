@@ -19,7 +19,7 @@ urlpatterns = [
     path('bai-viet-cua-toi/', views.bai_viet_cua_toi, name='bai-viet-cua-toi'),
     
     # Upvote (AJAX)
-    path('upvote/<int:bai_viet_id>/', views.toggle_upvote, name='toggle-upvote'),
+    path('toggle-upvote/<int:bai_viet_id>/', views.toggle_upvote, name='toggle-upvote'),
     
     # Xóa media (AJAX)
     path('xoa-media/<int:media_id>/', views.xoa_media, name='xoa-media'),

@@ -50,6 +50,12 @@ class BaiHuongDan(models.Model):
         blank=True, # CHO PHÉP RỖNG TRONG FORM
         verbose_name="Chuyên mục"
     )
+    anh_dai_dien = models.ImageField(
+        upload_to='articles/thumbnails/', # Ảnh sẽ được lưu vào thư mục MEDIA_ROOT/articles/thumbnails/
+        blank=True,         # Cho phép trường này được để trống
+        null=True,          # Lưu giá trị NULL trong database nếu không có ảnh
+        verbose_name="Ảnh đại diện" # Tên hiển thị
+    )
 
     tac_gia = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='bai_huong_dan_da_viet', verbose_name="Tác giả")
     ngay_dang = models.DateTimeField(auto_now_add=True, verbose_name="Ngày đăng")

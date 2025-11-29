@@ -1,255 +1,288 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ article.tieu_de }} - Kho Kiến Thức Trekking</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ article.tieu_de }} - TrekViet{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* --- Page Specific Styles --- */
+
+    /* 1. Thanh tiến trình đọc */
+    .reading-progress-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: transparent;
+        z-index: 9999;
+    }
+    
+    .reading-progress-bar {
+        height: 100%;
+        background: var(--primary-dark); /* Màu xanh chủ đạo */
+        width: 0%;
+        transition: width 0.1s ease;
+    }
+
+    /* 2. Breadcrumb (Nằm ngoài khung bài viết) */
+    .custom-breadcrumb {
+        padding: var(--spacing-md) 0;
+        font-size: 0.9rem;
+        color: var(--gray-500);
+        margin-bottom: var(--spacing-md);
+    }
+    .custom-breadcrumb a {
+        color: var(--gray-600);
+        font-weight: 500;
+        transition: color var(--transition-fast);
+    }
+    .custom-breadcrumb a:hover {
+        color: var(--primary-dark);
+    }
+
+    /* 3. Article Card (Khung bài viết chính) */
+    /* Kế thừa từ class .card trong styles.css nhưng thêm padding to hơn cho bài đọc */
+    .article-card {
+        padding: var(--spacing-2xl); /* Padding rộng rãi (3rem) */
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md); /* Đổ bóng nhẹ */
+        border: 1px solid var(--gray-200);
+        margin-bottom: var(--spacing-3xl);
+    }
+
+    /* 4. Header bên trong khung */
+    .article-header-wrapper {
+        margin-bottom: var(--spacing-xl);
+        border-bottom: 1px solid var(--gray-100);
+        padding-bottom: var(--spacing-lg);
+    }
+
+    .article-category {
+        display: inline-block;
+        margin-bottom: var(--spacing-sm);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--primary-dark);
+        background: var(--primary-lightest);
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-full);
+    }
+
+    .article-title {
+        font-family: var(--font-heading);
+        font-size: 2.25rem;
+        font-weight: 800;
+        line-height: 1.25;
+        color: var(--gray-900);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    /* Meta tác giả */
+    .author-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .author-avatar-large {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(135deg, var(--primary-medium), var(--primary-dark));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: 2px solid white;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .meta-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .meta-name {
+        font-weight: 700;
+        color: var(--gray-900);
+        font-size: 0.95rem;
+    }
+    
+    .meta-date {
+        font-size: 0.85rem;
+        color: var(--gray-500);
+    }
+
+    /* Badge Chính thức */
+    .badge-official {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background-color: var(--info); /* Dùng màu xanh dương info */
+        color: white;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: var(--spacing-sm);
+        vertical-align: middle;
+    }
+
+    /* 5. Nội dung bài viết */
+    .article-body {
+        font-family: 'Merriweather', 'Georgia', serif; /* Font serif dễ đọc */
+        font-size: 1.0625rem; /* ~17px */
+        line-height: 1.8;
+        color: var(--gray-800);
+    }
+
+    .article-body p { margin-bottom: 1.5rem; }
+    
+    .article-body h2 {
+        font-family: var(--font-heading);
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .article-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        margin: 1.5rem 0;
+        display: block;
+    }
+
+    .article-body blockquote {
+        border-left: 4px solid var(--primary-medium);
+        background-color: var(--gray-50);
+        padding: var(--spacing-lg);
+        margin: 2rem 0;
+        font-style: italic;
+        color: var(--gray-700);
+    }
+
+    /* 6. Footer Actions (Nút bấm) */
+    .article-footer-actions {
+        margin-top: var(--spacing-2xl);
+        padding-top: var(--spacing-lg);
+        border-top: 1px dashed var(--gray-300);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* 7. Animations */
+    .animate-card-entry {
+        animation: fadeInUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .article-card { padding: var(--spacing-lg); }
+        .article-title { font-size: 1.75rem; }
+        .article-footer-actions { 
+            flex-direction: column; 
+            gap: var(--spacing-md);
         }
+        .article-footer-actions .btn { width: 100%; }
+    }
+</style>
+{% endblock %}
 
-        :root {
-            --primary: #22c55e;
-            --primary-dark: #16a34a;
-            --primary-light: #dcfce7;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-500: #6b7280;
-            --gray-900: #111827;
-            --spacing-md: 16px;
-            --spacing-lg: 24px;
-            --spacing-xl: 32px;
-        }
+{% block content %}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--gray-50);
-            color: var(--gray-900);
-            line-height: 1.8;
-        }
+<div class="reading-progress-container">
+    <div class="reading-progress-bar" id="readingProgressBar"></div>
+</div>
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: var(--spacing-lg);
-        }
-
-        /* ========== BREADCRUMB ========== */
-        .breadcrumb {
-            display: flex;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-lg);
-            font-size: 0.9rem;
-        }
-
-        .breadcrumb a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        /* ========== ARTICLE HEADER ========== */
-        .article-header {
-            background: white;
-            border-radius: 12px;
-            padding: var(--spacing-xl);
-            margin-bottom: var(--spacing-lg);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        }
-
-        .article-badge {
-            display: inline-block;
-            background: var(--primary-light);
-            color: var(--primary-dark);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: var(--spacing-md);
-        }
-
-        .article-header h1 {
-            font-size: 2.25rem;
-            margin-bottom: var(--spacing-lg);
-            line-height: 1.3;
-            font-weight: 700;
-        }
-
-        .article-meta {
-            font-size: 0.95rem;
-            color: var(--gray-500);
-            display: flex;
-            gap: var(--spacing-lg);
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .badge-official {
-            background: #3b82f6;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        /* ========== ARTICLE CONTENT ========== */
-        .article-content {
-            background: white;
-            border-radius: 12px;
-            padding: var(--spacing-xl);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .article-content h2 {
-            font-size: 1.75rem;
-            margin: var(--spacing-xl) 0 var(--spacing-lg) 0;
-            font-weight: 700;
-        }
-
-        .article-content h3 {
-            font-size: 1.4rem;
-            margin: var(--spacing-lg) 0 var(--spacing-md) 0;
-            font-weight: 600;
-        }
-
-        .article-content p {
-            margin-bottom: var(--spacing-md);
-            line-height: 1.8;
-        }
-
-        .article-content ul,
-        .article-content ol {
-            margin-left: var(--spacing-lg);
-            margin-bottom: var(--spacing-md);
-        }
-
-        .article-content li {
-            margin-bottom: var(--spacing-sm);
-        }
-
-        .article-content code {
-            background: var(--gray-100);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-        }
-
-        /* ========== ARTICLE FOOTER ========== */
-        .article-footer {
-            background: white;
-            border-radius: 12px;
-            padding: var(--spacing-xl);
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--spacing-lg);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: var(--spacing-md) var(--spacing-lg);
-            border: none;
-            border-radius: 8px;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-
-        .btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--gray-500);
-            border: 1px solid var(--gray-300);
-        }
-
-        .btn-secondary:hover {
-            background: var(--gray-100);
-        }
-
-        @media (max-width: 768px) {
-            .article-header h1 {
-                font-size: 1.5rem;
-            }
-
-            .article-meta {
-                flex-direction: column;
-                gap: var(--spacing-sm);
-            }
-
-            .article-footer {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Thêm breadcrumb navigation -->
-        <div class="breadcrumb">
-            <a href="{% url 'knowledge:list' %}">Trang chủ</a>
-            <span>/</span>
-            <span>{{ article.chuyen_muc.ten|default:"Bài viết" }}</span>
-        </div>
-
-        <!-- Cải thiện article header với typography và metadata tốt hơn -->
-        <div class="article-header">
-            <span class="article-badge">{{ article.chuyen_muc.ten|default:"Chưa phân loại" }}</span>
-            <h1>{{ article.tieu_de }}</h1>
-            <div class="article-meta">
-                <div>
-                    <strong>{{ article.tac_gia.username|default:"Vô danh" }}</strong>
-                    {% if article.tac_gia.is_staff %}
-                        <span class="badge-official">CHÍNH THỨC ✓</span>
-                    {% endif %}
-                </div>
-                <span>{{ article.ngay_duyet|date:"d \t\h\á\n\g F, Y" }}</span>
-            </div>
-        </div>
-
-        <div class="article-content">
-            {{ article.noi_dung|linebreaks }}
-        </div>
-
-        <div class="article-footer">
-            <a href="{% url 'knowledge:list' %}" class="btn btn-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                </svg>
-                Quay lại danh sách
-            </a>
-            <a href="{% url 'knowledge:contribute' %}" class="btn">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Đóng góp bài viết
-            </a>
-        </div>
+<div class="container" style="max-width: 900px;">
+    
+    <div class="custom-breadcrumb animate-fadeIn">
+        <a href="{% url 'home' %}"><i class="fas fa-home"></i> Trang chủ</a>
+        <span class="mx-2">/</span>
+        <a href="{% url 'knowledge:list' %}">Kho kiến thức</a>
+        <span class="mx-2">/</span>
+        <span>{{ article.chuyen_muc.ten|default:"Chi tiết bài viết" }}</span>
     </div>
-</body>
-</html>
+
+    <div class="article-card animate-card-entry">
+        
+        <header class="article-header-wrapper">
+            <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+                <span class="article-category">
+                    {{ article.chuyen_muc.ten|default:"Kiến thức" }}
+                </span>
+                
+                {% if article.tac_gia.is_staff %}
+                    <span class="badge-official" title="Bài viết từ ban quản trị">
+                        <i class="fas fa-check-circle"></i> Chính thức
+                    </span>
+                {% endif %}
+            </div>
+
+            <h1 class="article-title">
+                {{ article.tieu_de }}
+            </h1>
+
+            <div class="author-meta">
+                <div class="author-avatar-large">
+                    {{ article.tac_gia.username|slice:":1"|upper }}
+                </div>
+                <div class="meta-details">
+                    <div class="meta-name">
+                        {{ article.tac_gia.username }}
+                    </div>
+                    <div class="meta-date">
+                        <span>Đăng ngày {{ article.ngay_duyet|date:"d/m/Y" }}</span>
+                        <span class="mx-1">•</span>
+                        <span>{{ article.noi_dung|wordcount|divisibleby:250|add:1 }} phút đọc</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <article class="article-body">
+            {{ article.noi_dung|safe|linebreaks }}
+        </article>
+
+        <div class="article-footer-actions">
+            <a href="{% url 'knowledge:list' %}" class="btn btn-ghost">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại danh sách
+            </a>
+            
+            <a href="{% url 'knowledge:contribute' %}" class="btn btn-primary shadow-sm">
+                <i class="fas fa-pen-nib mr-2"></i> Đóng góp bài viết
+            </a>
+        </div>
+
+    </div> </div>
+
+<script>
+    window.onscroll = function() {myFunction()};
+
+    function myFunction() {
+      var winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      var height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      var scrolled = (winScroll / height) * 100;
+      document.getElementById("readingProgressBar").style.width = scrolled + "%";
+    }
+</script>
+
+{% endblock %}

@@ -11,6 +11,7 @@ urlpatterns = [
     path('approve/<int:pk>/', views.approve_article, name='admin-approve'),
     path('update/<int:pk>/', views.AdminArticleUpdateView.as_view(), name='admin-update'),
     path('delete/<int:pk>/', views.AdminArticleDeleteView.as_view(), name='admin-delete'),
+    path('detail/<int:pk>/', views.ArticleDetailView.as_view(), name='article-detail'),
 
     # ==========================================================
     # === THÊM CÁC URL QUẢN LÝ CHUYÊN MỤC VÀO ĐÂY ===

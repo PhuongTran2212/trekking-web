@@ -64,9 +64,8 @@
             </a>
             <div class="submenu">
                 <a href="{% url 'post_admin:post_list' %}" class="submenu-item">Bài viết</a>
-                <a href="#" class="submenu-item">Bình luận</a>
                 <!-- === ĐÃ SỬA === -->
-                <a href="{% url 'report_admin:report_list' %}" class="submenu-item">Nội dung bị báo cáo</a>
+                <a href="{% url 'report_admin:report_list' %}" class="submenu-item">Bài viết bị báo cáo</a>
             </div>
         </div>
 
@@ -92,24 +91,33 @@
         </div>
 
   <!-- Quản lý Kiến thức -->
-<div class="nav-item">
-    <a href="#" class="nav-link submenu-toggle">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-        </svg>
-        <span class="nav-link-text">Quản lý Kiến thức</span>
-        <svg class="submenu-toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-    </a>
-    <div class="submenu">
-        <!-- URL này sẽ trỏ đến: /dashboard/articles/list/ -->
-        <a href="{% url 'articles:admin-list' %}" class="submenu-item">Danh sách bài hướng dẫn</a>
+        <!-- Quản lý Kiến thức -->
+        <!-- === NÂNG CẤP: TỰ ĐỘNG MỞ VÀ ACTIVE MENU === -->
+        {% with 'articles' as target_app %}
+        <div class="nav-item">
+            <a href="#" class="nav-link submenu-toggle {% if app_name == target_app %}active open{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+                <span class="nav-link-text">Quản lý Kiến thức</span>
+                <svg class="submenu-toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </a>
+            <div class="submenu" {% if app_name == target_app %}style="display: block;"{% endif %}>
+                
+                {% with 'articles:admin-list' as target_url_name %}
+                <a href="{% url target_url_name %}" class="submenu-item {% if url_name == 'admin-list' and app_name == target_app %}active{% endif %}">Danh sách bài hướng dẫn</a>
+                {% endwith %}
 
-        <!-- URL này sẽ trỏ đến: /dashboard/articles/create/ -->
-        <a href="{% url 'articles:admin-create' %}" class="submenu-item">Tạo bài hướng dẫn</a>
+                {% with 'articles:admin-create' as target_url_name %}
+                <a href="{% url target_url_name %}" class="submenu-item {% if url_name == 'admin-create' and app_name == target_app %}active{% endif %}">Tạo bài hướng dẫn</a>
+                {% endwith %}
 
-        <a href="{% url 'articles:admin-category-list' %}" class="submenu-item">Quản lý Chuyên mục</a> <!-- DÒNG MỚI -->
-    </div>
-</div>
+                {% with 'articles:admin-category-list' as target_url_name %}
+                <a href="{% url target_url_name %}" class="submenu-item {% if 'category' in url_name and app_name == target_app %}active{% endif %}">Quản lý Chuyên mục</a>
+                {% endwith %}
+            </div>
+        </div>
+        {% endwith %}
 
         <!-- Hệ thống -->
         <div class="nav-item">

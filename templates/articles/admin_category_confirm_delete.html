@@ -1,29 +1,194 @@
 {% extends "admin_base.html" %}
 
-{% block title %}Xác nhận Xóa Chuyên mục{% endblock %}
+{% block title %}Xác nhận Xóa{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 600px;">
-    <div style="padding: var(--spacing-xl) 0; text-align: center;">
-        <h2 style="margin-bottom: var(--spacing-lg);">Xác nhận Xóa</h2>
-    </div>
+<style>
+    :root {
+        --danger-color: #dc2626; /* Đỏ đậm */
+        --danger-bg: #fee2e2;    /* Đỏ nhạt nền */
+        --danger-hover: #b91c1c;
+        --warning-bg: #fffbeb;   /* Vàng nhạt */
+        --warning-text: #b45309; /* Vàng đậm */
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
 
-    <div class="card">
-        <div class="card-body text-center">
-            <p style="font-size: 1.1rem; margin-bottom: var(--spacing-md);">Bạn có chắc chắn muốn xóa vĩnh viễn chuyên mục:</p>
-            <h3 class="text-danger" style="margin: var(--spacing-lg) 0;">{{ object.ten }}</h3>
-            <p class="text-muted" style="margin-bottom: var(--spacing-lg);">
-                Lưu ý: Các bài viết thuộc chuyên mục này sẽ không bị xóa, chỉ bỏ phân loại.
-            </p>
-            
-            <form method="post">
-                {% csrf_token %}
-                <div class="d-flex justify-center gap-2">
-                    <a href="{% url 'articles:admin-category-list' %}" class="btn btn-ghost">Hủy bỏ</a>
-                    <button type="submit" class="btn btn-danger">Đồng ý, Xóa chuyên mục</button>
-                </div>
-            </form>
+    .delete-container {
+        min-height: 80vh; /* Căn giữa theo chiều dọc */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Card giao diện giống Modal */
+    .delete-card {
+        background: white;
+        width: 100%;
+        max-width: 480px;
+        border-radius: 1rem;
+        box-shadow: var(--card-shadow);
+        padding: 2.5rem;
+        text-align: center;
+        animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid #e5e7eb;
+    }
+
+    @keyframes zoomIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Icon cảnh báo */
+    .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background-color: var(--danger-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem auto;
+        animation: pulse 2s infinite;
+    }
+
+    .icon-wrapper svg {
+        color: var(--danger-color);
+        width: 40px;
+        height: 40px;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+        70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+
+    /* Typography */
+    .delete-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+
+    .delete-desc {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    /* Highlight tên chuyên mục */
+    .target-item {
+        background-color: #f3f4f6;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: inline-block;
+        border: 1px solid #d1d5db;
+        margin: 0.25rem 0;
+    }
+
+    /* Box cảnh báo phụ (Màu vàng) */
+    .warning-box {
+        background-color: var(--warning-bg);
+        border: 1px solid #fcd34d;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        text-align: left;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .warning-box p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--warning-text);
+        line-height: 1.4;
+    }
+
+    /* Buttons */
+    .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        font-size: 0.95rem;
+    }
+
+    .btn-cancel {
+        background-color: white;
+        border: 1px solid #d1d5db;
+        color: var(--text-primary);
+    }
+
+    .btn-cancel:hover {
+        background-color: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+    .btn-confirm {
+        background-color: var(--danger-color);
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.4);
+    }
+
+    .btn-confirm:hover {
+        background-color: var(--danger-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px -1px rgba(220, 38, 38, 0.5);
+    }
+
+</style>
+
+<div class="delete-container">
+    <div class="delete-card">
+        <!-- Icon thung rác -->
+        <div class="icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
         </div>
+
+        <h2 class="delete-title">Xóa chuyên mục này?</h2>
+        
+        <div class="delete-desc">
+            Bạn có chắc chắn muốn xóa vĩnh viễn chuyên mục:<br>
+            <span class="target-item">{{ object.ten }}</span>
+        </div>
+
+        <!-- Box cảnh báo phụ -->
+        <div class="warning-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <p>
+                <strong>Lưu ý:</strong> Các bài viết thuộc chuyên mục này sẽ <strong>không bị xóa</strong>, chúng sẽ chuyển về trạng thái "Chưa phân loại".
+            </p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="actions">
+                <a href="{% url 'articles:admin-category-list' %}" class="btn btn-cancel">Hủy bỏ</a>
+                <button type="submit" class="btn btn-confirm">Xóa vĩnh viễn</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

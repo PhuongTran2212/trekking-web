@@ -1,500 +1,345 @@
 {% extends 'admin_base.html' %}
 
-{% block title %}{{ title }} - TrekViet Admin{% endblock title %}
+{% block title %}{{ title }}{% endblock title %}
 
 {% block content %}
 <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    .container { max-width: 1400px; margin: 0 auto; padding: var(--spacing-lg); }
-    
-    /* Header Section */
+    :root {
+        --primary: #4F46E5; /* Màu chủ đạo Indigo */
+        --bg-body: #F3F4F6;
+        --bg-card: #FFFFFF;
+        --text-main: #111827;
+        --text-light: #6B7280;
+        --border: #E5E7EB;
+        --radius: 0.75rem;
+        --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Layout Dashboard */
+    .dashboard-wrapper {
+        padding: 2rem;
+        font-family: 'Inter', system-ui, sans-serif;
+        color: var(--text-main);
+        background: var(--bg-body);
+        min-height: 100vh;
+    }
+
     .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: var(--spacing-xl);
-        flex-wrap: wrap;
-        gap: var(--spacing-md);
+        margin-bottom: 2rem;
     }
-    
-    .page-title {
-        font-family: var(--font-heading);
-        font-size: 2rem;
-        color: var(--gray-800);
-        font-weight: 700;
-    }
-    
-    /* Stats Cards */
+    .page-title { font-size: 1.75rem; font-weight: 800; color: #1F2937; margin: 0; }
+
+    /* Thẻ thống kê (Stats Cards) */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--spacing-lg);
-        margin-bottom: var(--spacing-xl);
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
     }
-    
     .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: var(--spacing-lg);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-md);
-        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .stat-card.pending { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-    .stat-card.approved { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    .stat-card.rejected { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-    
-    .stat-label {
-        font-size: 0.875rem;
-        opacity: 0.9;
-        margin-bottom: var(--spacing-sm);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-    }
-    
-    /* Main Card */
-    .card {
-        background-color: white;
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-md);
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-xl);
-    }
-    
-    /* Filter Tabs */
-    .filter-section {
+        background: var(--bg-card);
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
         display: flex;
+        align-items: center;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); }
+    
+    .stat-icon {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+    }
+    /* Màu sắc icon */
+    .icon-total { background: #E0E7FF; color: #4338ca; }
+    .icon-pending { background: #FEF3C7; color: #B45309; }
+    .icon-approved { background: #D1FAE5; color: #047857; }
+    .icon-rejected { background: #FEE2E2; color: #B91C1C; }
+
+    .stat-info h3 { font-size: 0.85rem; color: var(--text-light); text-transform: uppercase; font-weight: 600; margin: 0 0 0.25rem 0; }
+    .stat-info .value { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+
+    /* Thanh công cụ (Filter + Search) */
+    .toolbar-card {
+        background: var(--bg-card);
+        padding: 1rem;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: var(--spacing-lg);
-        flex-wrap: wrap;
-        gap: var(--spacing-md);
     }
-    
+
     .filter-tabs {
         display: flex;
-        gap: var(--spacing-sm);
-        border-bottom: 2px solid var(--gray-200);
-        flex-wrap: wrap;
+        background: #F9FAFB;
+        padding: 4px;
+        border-radius: 8px;
     }
-    
-    .filter-tab {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        background: none;
+    .tab-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
         font-weight: 600;
-        color: var(--gray-500);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        border-bottom: 3px solid transparent;
-        margin-bottom: -2px;
-        font-size: 0.95rem;
+        color: var(--text-light);
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.2s;
     }
-    
-    .filter-tab:hover {
-        color: var(--primary-dark);
-    }
-    
-    .filter-tab.active {
-        color: var(--primary-dark);
-        border-bottom-color: var(--primary-medium);
-    }
-    
-    /* Search Box */
+    .tab-link:hover { color: var(--text-main); }
+    .tab-link.active { background: white; color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
     .search-box {
         display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        background-color: var(--gray-50);
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--gray-200);
-    }
-    
-    .search-box input {
+        gap: 0.5rem;
         flex: 1;
-        border: none;
-        background: none;
+        max-width: 400px;
+    }
+    .search-input {
+        flex: 1;
+        padding: 0.6rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
         outline: none;
-        font-size: 0.95rem;
-        color: var(--gray-700);
     }
-    
-    .search-box input::placeholder {
-        color: var(--gray-400);
-    }
-    
-    /* Messages */
-    .alert {
-        padding: 1rem;
-        border-radius: var(--radius-md);
-        margin-bottom: var(--spacing-lg);
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .alert-success {
-        background-color: #D1FAE5;
-        color: #065F46;
-        border-left: 4px solid #10B981;
-    }
-    
-    .alert-warning {
-        background-color: #FEF3C7;
-        color: #92400E;
-        border-left: 4px solid #F59E0B;
-    }
-    
-    .alert-error {
-        background-color: #FEE2E2;
-        color: #991B1B;
-        border-left: 4px solid #EF4444;
-    }
-    
-    /* Table */
-    .table-responsive {
-        overflow-x: auto;
-    }
-    
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .data-table thead {
-        background-color: var(--gray-50);
-    }
-    
-    .data-table th {
-        padding: 1rem;
-        text-align: left;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: var(--gray-600);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid var(--gray-200);
-    }
-    
-    .data-table td {
-        padding: 1rem;
-        border-bottom: 1px solid var(--gray-200);
-        vertical-align: middle;
-    }
-    
-    .data-table tbody tr {
-        transition: background-color var(--transition-fast);
-    }
-    
-    .data-table tbody tr:hover {
-        background-color: var(--gray-50);
-    }
-    
-    /* Post Title Link */
-    .post-title-link {
+    .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+    .btn-search {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0 1.2rem;
+        border-radius: 8px;
         font-weight: 600;
-        color: var(--primary-dark);
-        text-decoration: none;
-        transition: all var(--transition-fast);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .post-title-link:hover {
-        color: var(--primary-medium);
-        text-decoration: underline;
-    }
-    
-    /* Badges */
-    .badge {
-        display: inline-block;
-        padding: 0.35rem 0.75rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        border-radius: var(--radius-full);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .badge-pending {
-        background-color: #FEF3C7;
-        color: #92400E;
-    }
-    
-    .badge-approved {
-        background-color: #D1FAE5;
-        color: #065F46;
-    }
-    
-    .badge-rejected {
-        background-color: #FEE2E2;
-        color: #991B1B;
-    }
-    
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-    }
-    
-    .action-btn {
-        background: none;
-        border: 1.5px solid;
-        border-radius: var(--radius-md);
-        padding: 0.5rem 0.9rem;
         cursor: pointer;
-        font-size: 0.8rem;
-        font-weight: 600;
-        transition: all var(--transition-fast);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
+
+    /* Bảng dữ liệu */
+    .table-container {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    thead { background: #F9FAFB; border-bottom: 1px solid var(--border); }
+    th { padding: 1rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; color: var(--text-light); font-weight: 700; }
+    td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text-main); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: #F9FAFB; }
+
+    /* Badges trạng thái */
+    .badge { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .bg-pending { background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; }
+    .bg-approved { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+    .bg-rejected { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+
+    /* Nút hành động */
+    .action-group { display: flex; gap: 0.5rem; justify-content: flex-end; }
+    .btn-icon {
+        width: 34px; height: 34px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        background: transparent;
+        transition: all 0.2s;
+    }
+    .btn-approve { color: #059669; background: #ECFDF5; border-color: #A7F3D0; }
+    .btn-approve:hover { background: #059669; color: white; }
     
-    .btn-approve {
-        color: #10B981;
-        border-color: #10B981;
-    }
+    .btn-reject { color: #D97706; background: #FFFBEB; border-color: #FDE68A; }
+    .btn-reject:hover { background: #D97706; color: white; }
     
-    .btn-approve:hover {
-        background-color: #10B981;
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-    
-    .btn-reject {
-        color: #F59E0B;
-        border-color: #F59E0B;
-    }
-    
-    .btn-reject:hover {
-        background-color: #F59E0B;
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-    }
-    
-    .btn-delete {
-        color: #EF4444;
-        border-color: #EF4444;
-    }
-    
-    .btn-delete:hover {
-        background-color: #EF4444;
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-    }
-    
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1rem;
-        color: var(--gray-500);
-    }
-    
-    .empty-state-icon {
-        font-size: 3rem;
-        margin-bottom: var(--spacing-md);
-    }
-    
-    .empty-state-text {
-        font-size: 1.1rem;
-        margin-bottom: var(--spacing-sm);
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .stats-grid {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        }
-        
-        .filter-section {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        
-        .filter-tabs {
-            width: 100%;
-            overflow-x: auto;
-        }
-        
-        .search-box {
-            width: 100%;
-        }
-        
-        .data-table th,
-        .data-table td {
-            padding: 0.75rem 0.5rem;
-            font-size: 0.85rem;
-        }
-        
-        .action-buttons {
-            flex-direction: column;
-        }
-        
-        .action-btn {
-            width: 100%;
-        }
-    }
+    .btn-delete { color: #EF4444; }
+    .btn-delete:hover { background: #FEE2E2; }
+
+    /* Thông báo */
+    .alert-box { margin-bottom: 1.5rem; }
+    .alert { padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.95rem; }
+    .alert-success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+    .alert-warning { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
+    .alert-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+
+    /* Pagination */
+    .pagination { padding: 1rem; display: flex; justify-content: center; gap: 0.5rem; background: #F9FAFB; border-top: 1px solid var(--border); }
+    .page-btn { padding: 0.4rem 0.8rem; border: 1px solid var(--border); background: white; text-decoration: none; color: var(--text-light); border-radius: 6px; font-size: 0.85rem; }
+    .page-btn:hover { background: #F3F4F6; color: var(--primary); }
+    .page-btn.current { background: var(--primary); color: white; border-color: var(--primary); }
 </style>
 
-<div class="container">
-    <!-- Page Header -->
+<div class="dashboard-wrapper">
+    <!-- Header -->
     <div class="page-header">
         <h1 class="page-title">{{ title }}</h1>
     </div>
-    
-    <!-- Stats Cards -->
+
+    <!-- 1. Stats Grid (Dữ liệu lấy từ View) -->
     <div class="stats-grid">
+        <!-- Tổng bài -->
         <div class="stat-card">
-            <div class="stat-label">Tổng bài viết</div>
-            <div class="stat-value">{{ total_posts }}</div>
+            <div class="stat-icon icon-total">📊</div>
+            <div class="stat-info">
+                <h3>Tổng bài viết</h3>
+                <div class="value">{{ total_posts|default:"0" }}</div>
+            </div>
         </div>
-        <div class="stat-card pending">
-            <div class="stat-label">Chờ duyệt</div>
-            <div class="stat-value">{{ pending_count }}</div>
+        <!-- Chờ duyệt -->
+        <div class="stat-card">
+            <div class="stat-icon icon-pending">⏳</div>
+            <div class="stat-info">
+                <h3>Chờ duyệt</h3>
+                <div class="value">{{ pending_count|default:"0" }}</div>
+            </div>
         </div>
-        <div class="stat-card approved">
-            <div class="stat-label">Đã duyệt</div>
-            <div class="stat-value">{{ approved_count }}</div>
+        <!-- Đã duyệt -->
+        <div class="stat-card">
+            <div class="stat-icon icon-approved">✅</div>
+            <div class="stat-info">
+                <h3>Đã duyệt</h3>
+                <div class="value">{{ approved_count|default:"0" }}</div>
+            </div>
         </div>
-        <div class="stat-card rejected">
-            <div class="stat-label">Từ chối</div>
-            <div class="stat-value">{{ rejected_count }}</div>
+        <!-- Từ chối -->
+        <div class="stat-card">
+            <div class="stat-icon icon-rejected">🚫</div>
+            <div class="stat-info">
+                <h3>Từ chối</h3>
+                <div class="value">{{ rejected_count|default:"0" }}</div>
+            </div>
         </div>
     </div>
-    
-    <!-- Main Card -->
-    <div class="card">
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <div class="filter-tabs">
-                <a href="{% url 'post_admin:post_list' %}" class="filter-tab {% if not status_filter %}active{% endif %}">Tất cả</a>
-                <a href="?status=cho_duyet" class="filter-tab {% if status_filter == 'cho_duyet' %}active{% endif %}">Chờ duyệt</a>
-                <a href="?status=da_duyet" class="filter-tab {% if status_filter == 'da_duyet' %}active{% endif %}">Đã duyệt</a>
-                <a href="?status=tu_choi" class="filter-tab {% if status_filter == 'tu_choi' %}active{% endif %}">Từ chối</a>
+
+    <!-- Thông báo (Messages) -->
+    {% if messages %}
+    <div class="alert-box">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
             </div>
-            <div class="search-box">
-                <span>🔍</span>
-                <input type="text" placeholder="Tìm kiếm bài viết..." id="searchInput">
-            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 2. Toolbar: Filter & Search -->
+    <div class="toolbar-card">
+        <div class="filter-tabs">
+            <a href="?" class="tab-link {% if not status_filter %}active{% endif %}">Tất cả</a>
+            <a href="?status=cho_duyet" class="tab-link {% if status_filter == 'cho_duyet' %}active{% endif %}">Chờ duyệt</a>
+            <a href="?status=da_duyet" class="tab-link {% if status_filter == 'da_duyet' %}active{% endif %}">Đã duyệt</a>
+            <a href="?status=tu_choi" class="tab-link {% if status_filter == 'tu_choi' %}active{% endif %}">Từ chối</a>
         </div>
-        
-        <!-- Messages -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}warning{% endif %}">
-                    <span>{% if message.tags == 'success' %}✓{% elif message.tags == 'error' %}✕{% else %}⚠{% endif %}</span>
-                    <span>{{ message }}</span>
-                </div>
-            {% endfor %}
-        {% endif %}
-        
-        <!-- Table -->
-        <div class="table-responsive">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Tiêu đề</th>
-                        <th>Tác giả</th>
-                        <th>Ngày đăng</th>
-                        <th>Trạng thái</th>
-                        <th style="text-align: right;">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for post in posts %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'post_admin:post_detail' post.id %}" class="post-title-link">
-                                {{ post.tieu_de|truncatewords:8 }}
-                            </a>
-                        </td>
-                        <td>
-                            <strong>@{{ post.tac_gia.username }}</strong>
-                        </td>
-                        <td>{{ post.ngay_dang|date:"d/m/Y H:i" }}</td>
-                        <td>
-                            {% if post.trang_thai == 'cho_duyet' %}<span class="badge badge-pending">Chờ duyệt</span>
-                            {% elif post.trang_thai == 'da_duyet' %}<span class="badge badge-approved">Đã duyệt</span>
-                            {% elif post.trang_thai == 'tu_choi' %}<span class="badge badge-rejected">Từ chối</span>
-                            {% endif %}
-                        </td>
-                        <td style="text-align: right;">
-                            <div class="action-buttons">
-                                {% if post.trang_thai == 'cho_duyet' %}
-                                    <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'da_duyet' %}" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn DUYỆT bài viết này?');">
-                                        {% csrf_token %}<button type="submit" class="action-btn btn-approve">Duyệt</button>
-                                    </form>
-                                    <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'tu_choi' %}" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn TỪ CHỐI bài viết này?');">
-                                        {% csrf_token %}<button type="submit" class="action-btn btn-reject">Từ chối</button>
-                                    </form>
-                                {% endif %}
-                                <form method="POST" action="{% url 'post_admin:post_delete' post.id %}" style="display: inline;" onsubmit="return confirm('Hành động này không thể hoàn tác! Bạn có chắc chắn muốn XÓA bài viết này?');">
-                                    {% csrf_token %}<button type="submit" class="action-btn btn-delete">Xóa</button>
+
+        <form method="GET" class="search-box">
+            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+            <input type="text" name="q" value="{{ search_query }}" class="search-input" placeholder="Tìm tiêu đề, tác giả...">
+            <button type="submit" class="btn-search">Tìm</button>
+        </form>
+    </div>
+
+    <!-- 3. Bảng dữ liệu -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40%">Tiêu đề bài viết</th>
+                    <th style="width: 20%">Tác giả</th>
+                    <th style="width: 15%">Thời gian</th>
+                    <th style="width: 10%; text-align: center;">Trạng thái</th>
+                    <th style="width: 15%; text-align: right;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>
+                        <a href="{% url 'post_admin:post_detail' post.id %}" style="font-weight: 600; color: #111827; text-decoration: none; display: block; margin-bottom: 4px;">
+                            {{ post.tieu_de|truncatechars:60 }}
+                        </a>
+                        <small style="color: #6B7280;">ID: #{{ post.id }}</small>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 28px; height: 28px; background: #E5E7EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
+                                {{ post.tac_gia.username|slice:":1"|upper }}
+                            </div>
+                            <span>{{ post.tac_gia.username }}</span>
+                        </div>
+                    </td>
+                    <td style="font-size: 0.9rem; color: #4B5563;">
+                        {{ post.ngay_dang|date:"d/m/Y" }}<br>
+                        <small>{{ post.ngay_dang|date:"H:i" }}</small>
+                    </td>
+                    <td style="text-align: center;">
+                        {% if post.trang_thai == 'cho_duyet' %}
+                            <span class="badge bg-pending">Chờ duyệt</span>
+                        {% elif post.trang_thai == 'da_duyet' %}
+                            <span class="badge bg-approved">Đã duyệt</span>
+                        {% elif post.trang_thai == 'tu_choi' %}
+                            <span class="badge bg-rejected">Từ chối</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            {% if post.trang_thai == 'cho_duyet' %}
+                                <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'da_duyet' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-icon btn-approve" title="Duyệt bài" onclick="return confirm('Duyệt bài viết này?');">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </button>
                                 </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">📭</div>
-                                <div class="empty-state-text">Không có bài viết nào</div>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                                <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'tu_choi' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-icon btn-reject" title="Từ chối" onclick="return confirm('Từ chối bài viết này?');">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            <form method="POST" action="{% url 'post_admin:post_delete' post.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-icon btn-delete" title="Xóa vĩnh viễn" onclick="return confirm('CẢNH BÁO: Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa?');">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 3rem; color: #9CA3AF;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <p style="margin-top: 1rem;">Không tìm thấy dữ liệu phù hợp.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination Footer -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&status={{ status_filter }}" class="page-btn">← Trước</a>
+            {% endif %}
+            
+            <span style="font-size: 0.9rem; color: #6B7280; padding: 0.4rem 0;">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&status={{ status_filter }}" class="page-btn">Sau →</a>
+            {% endif %}
         </div>
+        {% endif %}
     </div>
 </div>
-
-<script>
-    document.getElementById('searchInput').addEventListener('keyup', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('.data-table tbody tr');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm) ? '' : 'none';
-        });
-    });
-</script>
 {% endblock content %}

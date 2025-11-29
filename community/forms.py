@@ -40,14 +40,14 @@ class BaiVietForm(forms.ModelForm):
     
     def clean_tieu_de(self):
         tieu_de = self.cleaned_data.get('tieu_de')
-        if len(tieu_de) < 10:
-            raise forms.ValidationError('Tiêu đề phải có ít nhất 10 ký tự.')
+        if len(tieu_de) < 1:
+            raise forms.ValidationError('Tiêu đề phải có ít nhất 1 ký tự.')
         return tieu_de
     
     def clean_noi_dung(self):
         noi_dung = self.cleaned_data.get('noi_dung')
-        if len(noi_dung) < 50:
-            raise forms.ValidationError('Nội dung phải có ít nhất 50 ký tự.')
+        if len(noi_dung) < 1:
+            raise forms.ValidationError('Nội dung phải có ít nhất 1 ký tự.')
         return noi_dung
 
 
@@ -88,8 +88,8 @@ class BinhLuanForm(forms.ModelForm):
     
     def clean_noi_dung(self):
         noi_dung = self.cleaned_data.get('noi_dung')
-        if len(noi_dung) < 5:
-            raise forms.ValidationError('Bình luận phải có ít nhất 5 ký tự.')
+        if len(noi_dung) < 1:
+            raise forms.ValidationError('Bình luận phải có ít nhất 1 ký tự.')
         return noi_dung
     
 class BaoCaoForm(forms.ModelForm):

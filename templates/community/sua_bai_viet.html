@@ -6,324 +6,62 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/community.css' %}">
 <style>
-  /* Reusing styles from create post with edit-specific modifications */
-  .edit-post-container {
-    max-width: 900px;
-    margin: 2rem auto;
-  }
+  /* === STYLE CHUNG (Giống trang Tạo bài viết) === */
+  .edit-post-container { max-width: 900px; margin: 2rem auto; }
+  .edit-post-card { background: var(--surface-primary, #fff); border-radius: var(--radius-lg, 12px); box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1)); overflow: hidden; }
+  .edit-post-header { background: linear-gradient(135deg, var(--primary-dark, #4D7111) 0%, var(--primary-medium, #C3E956) 100%); padding: 1.5rem 2rem; color: white; }
+  .edit-post-header h1 { margin: 0; font-size: 1.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; }
+  .edit-post-body { padding: 2rem; }
+  .form-group { margin-bottom: 1.5rem; }
+  .form-label { display: block; font-weight: 600; color: var(--text-primary, #1a1a1a); margin-bottom: 0.5rem; font-size: 0.95rem; }
+  .form-control { width: 100%; padding: 0.75rem 1rem; border: 2px solid var(--border-light, #e0e0e0); border-radius: var(--radius-md, 8px); font-size: 1rem; transition: all 0.2s ease; background: var(--surface-primary, #fff); }
+  .form-control:focus { outline: none; border-color: var(--primary-medium, #C3E956); box-shadow: 0 0 0 3px rgba(195, 233, 86, 0.1); }
   
-  .edit-post-card {
-    background: var(--surface-primary, #fff);
-    border-radius: var(--radius-lg, 12px);
-    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
-    overflow: hidden;
-  }
+  /* Style cho Tags */
+  .tag-checkbox-container { background: var(--surface-secondary, #f8f9fa); border: 2px solid var(--border-light, #e0e0e0); border-radius: var(--radius-md, 8px); padding: 1.5rem; max-height: 300px; overflow-y: auto; }
+  .tag-checkbox-container ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+  .tag-checkbox-container li { display: flex; align-items: center; }
+  .tag-checkbox-container input[type="checkbox"] { width: 18px; height: 18px; margin-right: 0.5rem; cursor: pointer; accent-color: var(--primary-medium, #C3E956); }
+  .tag-checkbox-container label { cursor: pointer; font-size: 0.95rem; color: var(--text-secondary, #666); user-select: none; }
   
-  .edit-post-header {
-    background: linear-gradient(135deg, var(--primary-dark, #4D7111) 0%, var(--primary-medium, #C3E956) 100%);
-    padding: 1.5rem 2rem;
-    color: white;
-  }
+  /* === MEDIA GALLERY STYLES (Dành riêng cho trang Edit để hiện ảnh cũ) === */
+  .media-section { margin-bottom: 1.5rem; }
+  .media-section-title { font-weight: 600; color: var(--text-primary, #1a1a1a); margin-bottom: 1rem; font-size: 0.95rem; }
+  .post-media-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+  .media-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-md, 8px); overflow: hidden; background: var(--surface-secondary, #f0f2f5); cursor: pointer; transition: transform 0.2s ease; }
+  .media-item:hover { transform: scale(1.02); }
+  .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
   
-  .edit-post-header h1 {
-    margin: 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
+  .delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.95); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .delete-btn:hover { background: #ff4444; color: white; transform: scale(1.1); }
   
-  .edit-post-body {
-    padding: 2rem;
-  }
-  
-  .form-group {
-    margin-bottom: 1.5rem;
-  }
-  
-  .form-label {
-    display: block;
-    font-weight: 600;
-    color: var(--text-primary, #1a1a1a);
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-  }
-  
-  .form-control {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 2px solid var(--border-light, #e0e0e0);
-    border-radius: var(--radius-md, 8px);
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    background: var(--surface-primary, #fff);
-  }
-  
-  .form-control:focus {
-    outline: none;
-    border-color: var(--primary-medium, #C3E956);
-    box-shadow: 0 0 0 3px rgba(195, 233, 86, 0.1);
-  }
-  
-  textarea.form-control {
-    min-height: 200px;
-    resize: vertical;
-    font-family: inherit;
-  }
-  
-  .tag-checkbox-container {
-    background: var(--surface-secondary, #f8f9fa);
-    border: 2px solid var(--border-light, #e0e0e0);
-    border-radius: var(--radius-md, 8px);
-    padding: 1.5rem;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-  
-  .tag-checkbox-container ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
-  }
-  
-  .tag-checkbox-container li {
-    display: flex;
-    align-items: center;
-  }
-  
-  .tag-checkbox-container input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin-right: 0.5rem;
-    cursor: pointer;
-    accent-color: var(--primary-medium, #C3E956);
-  }
-  
-  .tag-checkbox-container label {
-    cursor: pointer;
-    font-size: 0.95rem;
-    color: var(--text-secondary, #666);
-    user-select: none;
-  }
-  
-  /* Media gallery styles */
-  .media-section {
-    margin-bottom: 1.5rem;
-  }
-  
-  .media-section-title {
-    font-weight: 600;
-    color: var(--text-primary, #1a1a1a);
-    margin-bottom: 1rem;
-    font-size: 0.95rem;
-  }
-  
-  .post-media-gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-  }
-  
-  .media-item {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: var(--radius-md, 8px);
-    overflow: hidden;
-    background: var(--surface-secondary, #f0f2f5);
-    cursor: pointer;
-    transition: transform 0.2s ease;
-  }
-  
-  .media-item:hover {
-    transform: scale(1.02);
-  }
-  
-  .media-item img,
-  .media-item video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .delete-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .delete-btn:hover {
-    background: #ff4444;
-    color: white;
-    transform: scale(1.1);
-  }
-  
-  .media-item-more {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2rem;
-    font-weight: 700;
-    pointer-events: none;
-  }
+  .media-item-more { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 700; pointer-events: none; }
   
   /* Modal styles */
-  .image-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 1000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-  }
-  
-  .image-modal.show {
-    display: flex;
-  }
-  
-  .image-modal-content {
-    background: white;
-    border-radius: var(--radius-lg, 12px);
-    max-width: 1400px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 2rem;
-    position: relative;
-  }
-  
-  .image-modal-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--surface-secondary, #f0f0f0);
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 1.5rem;
-    transition: all 0.2s ease;
-    z-index: 10;
-  }
-  
-  .image-modal-close:hover {
-    background: #ff4444;
-    color: white;
-  }
-  
-  .modal-gallery-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-  
-  .modal-media-item {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: var(--radius-md, 8px);
-    overflow: hidden;
-    background: var(--surface-secondary, #f0f0f0);
-  }
-  
-  .modal-media-item img,
-  .modal-media-item video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  .image-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 2rem; }
+  .image-modal.show { display: flex; }
+  .image-modal-content { background: white; border-radius: var(--radius-lg, 12px); max-width: 1400px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative; }
+  .image-modal-close { position: absolute; top: 1rem; right: 1rem; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-secondary, #f0f0f0); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; transition: all 0.2s ease; z-index: 10; }
+  .image-modal-close:hover { background: #ff4444; color: white; }
+  .modal-gallery-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .modal-media-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-md, 8px); overflow: hidden; background: var(--surface-secondary, #f0f0f0); }
+  .modal-media-item img, .modal-media-item video { width: 100%; height: 100%; object-fit: cover; }
   
   /* Alert boxes */
-  .warning-alert {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%);
-    border-left: 4px solid #ffc107;
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius-md, 8px);
-    margin-top: 1.5rem;
-  }
-  
-  .warning-alert strong {
-    color: #f57c00;
-  }
+  .warning-alert { background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%); border-left: 4px solid #ffc107; padding: 1rem 1.25rem; border-radius: var(--radius-md, 8px); margin-top: 1.5rem; }
+  .warning-alert strong { color: #f57c00; }
   
   /* Action buttons */
-  .form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid var(--border-light, #e0e0e0);
-  }
-  
-  .btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--radius-md, 8px);
-    font-weight: 600;
-    font-size: 1rem;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-  }
-  
-  .btn-primary {
-    background: var(--primary-dark, #4D7111);
-    color: white;
-  }
-  
-  .btn-primary:hover {
-    background: var(--primary-medium, #C3E956);
-    color: var(--primary-dark, #4D7111);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(77, 113, 17, 0.3);
-  }
-  
-  .btn-secondary {
-    background: var(--surface-secondary, #f0f0f0);
-    color: var(--text-primary, #1a1a1a);
-  }
-  
-  .btn-secondary:hover {
-    background: var(--border-light, #e0e0e0);
-  }
-  
-  input[type="file"] {
-    padding: 0.5rem;
-  }
-  
-  .file-help-text {
-    font-size: 0.875rem;
-    color: var(--text-secondary, #666);
-    margin-top: 0.5rem;
-  }
+  .form-actions { display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--border-light, #e0e0e0); }
+  .btn { padding: 0.75rem 1.5rem; border-radius: var(--radius-md, 8px); font-weight: 600; font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .btn-primary { background: var(--primary-dark, #4D7111); color: white; }
+  .btn-primary:hover { background: var(--primary-medium, #C3E956); color: var(--primary-dark, #4D7111); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(77, 113, 17, 0.3); }
+  .btn-secondary { background: var(--surface-secondary, #f0f0f0); color: var(--text-primary, #1a1a1a); }
+  .btn-secondary:hover { background: var(--border-light, #e0e0e0); }
+  .error-text { color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; }
+
+  input[type="file"] { padding: 0.5rem; }
+  .file-help-text { font-size: 0.875rem; color: var(--text-secondary, #666); margin-top: 0.5rem; }
 </style>
 {% endblock %}
 
@@ -347,16 +85,26 @@
         <div class="form-group">
           <label for="{{ form.tieu_de.id_for_label }}" class="form-label">{{ form.tieu_de.label }}</label>
           {{ form.tieu_de }}
+          {% if form.tieu_de.errors %}
+            <div class="error-text">{{ form.tieu_de.errors|striptags }}</div>
+          {% endif %}
         </div>
 
         <div class="form-group">
           <label for="{{ form.noi_dung.id_for_label }}" class="form-label">{{ form.noi_dung.label }}</label>
+          <!-- TinyMCE sẽ tự động thay thế textarea này -->
           {{ form.noi_dung }}
+          {% if form.noi_dung.errors %}
+            <div class="error-text">{{ form.noi_dung.errors|striptags }}</div>
+          {% endif %}
         </div>
 
         <div class="form-group">
           <label for="{{ form.chuyen_di.id_for_label }}" class="form-label">{{ form.chuyen_di.label }}</label>
           {{ form.chuyen_di }}
+          {% if form.chuyen_di.errors %}
+            <div class="error-text">{{ form.chuyen_di.errors|striptags }}</div>
+          {% endif %}
         </div>
 
         <div class="form-group">
@@ -364,15 +112,20 @@
           <div class="tag-checkbox-container">
             {{ form.tags }}
           </div>
+          {% if form.tags.errors %}
+            <div class="error-text">{{ form.tags.errors|striptags }}</div>
+          {% endif %}
         </div>
 
+        <!-- MEDIA HIỆN TẠI (Logic riêng của trang Edit) -->
         {% if bai_viet.media.all %}
         <div class="media-section">
-          <div class="media-section-title">Media hiện tại</div>
+          <div class="media-section-title">Media hiện tại (Nhấn vào biểu tượng X để xóa)</div>
           <div class="post-media-gallery" id="existing-media-gallery"></div>
         </div>
         {% endif %}
 
+        <!-- UPLOAD MEDIA MỚI -->
         <div class="form-group">
           <label for="media_files" class="form-label">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
@@ -383,7 +136,7 @@
             Thêm ảnh/video mới
           </label>
           <input type="file" class="form-control" id="media_files" name="media_files" multiple accept="image/*,video/*"/>
-          <div class="file-help-text">Chọn file mới để thêm vào bài viết</div>
+          <div class="file-help-text">Chọn file mới để thêm vào bài viết.</div>
         </div>
 
         <div id="new-media-preview-gallery" class="post-media-gallery"></div>
@@ -430,7 +183,35 @@
   ]
 </script>
 
+<!-- 1. Script Load TinyMCE (Bản Cloudflare miễn phí như trang Tạo bài viết) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+
 <script>
+// === I. CẤU HÌNH TINYMCE (Giống hệt trang Tạo bài viết) ===
+document.addEventListener("DOMContentLoaded", function() {
+    tinymce.init({
+        selector: 'textarea[name="noi_dung"]', // Selector chính xác
+        height: 500,
+        menubar: false,
+        branding: false,
+        // Các plugin cơ bản
+        plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+        toolbar: 'undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+        
+        // Font style
+        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; }',
+        
+        // Auto-save khi submit
+        setup: function (editor) {
+            editor.on('change', function () {
+                editor.save();
+            });
+        }
+    });
+});
+
+// === II. XỬ LÝ MEDIA (Ảnh/Video) ===
+// (Logic này phức tạp hơn trang tạo bài viết vì phải xử lý cả ảnh CŨ và ảnh MỚI)
 document.addEventListener("DOMContentLoaded", function() {
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
     const MAX_PREVIEWS = 4;
@@ -458,6 +239,7 @@ document.addEventListener("DOMContentLoaded", function() {
         removeItem(index) {
             const item = this.items[index];
             if (this.isExisting) {
+                // Xử lý xóa media cũ (Gửi request lên server)
                 if (!confirm("Bạn có chắc chắn muốn xóa vĩnh viễn media này không?")) return;
                 fetch(item.deleteUrl, {
                     method: "POST",
@@ -473,8 +255,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 }).catch(() => alert('Đã xảy ra lỗi kết nối.'));
             } else {
+                // Xử lý xóa media mới (Chưa upload)
                 this.items.splice(index, 1);
                 this.render();
+                // Cập nhật lại input file
                 const fileInput = document.getElementById("media_files");
                 const dataTransfer = new DataTransfer();
                 this.items.forEach(file => dataTransfer.items.add(file));
@@ -523,10 +307,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
             let mediaElement;
             if (this.isExisting) {
+                // Hiển thị ảnh cũ từ URL
                 mediaElement = document.createElement(item.type === 'anh' ? 'img' : 'video');
                 mediaElement.src = item.url;
                 if(mediaElement) mediaWrapper.appendChild(mediaElement);
             } else {
+                // Hiển thị ảnh mới preview
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const el = document.createElement(item.type.startsWith("image/") ? 'img' : 'video');
@@ -540,14 +326,15 @@ document.addEventListener("DOMContentLoaded", function() {
             deleteBtn.innerHTML = "&times;";
             deleteBtn.type = "button";
             deleteBtn.classList.add("delete-btn");
+            // Nút xóa
             deleteBtn.onclick = (e) => { e.stopPropagation(); this.removeItem(index); };
             mediaWrapper.appendChild(deleteBtn);
             return mediaWrapper;
         }
     }
     
+    // Khởi tạo quản lý Media cũ
     const existingMediaData = JSON.parse(document.getElementById('existing-media-data').textContent);
-
     const existingManager = new MediaManager(
         document.getElementById('existing-media-gallery'),
         document.getElementById('media-modal'),
@@ -555,6 +342,7 @@ document.addEventListener("DOMContentLoaded", function() {
         true
     );
 
+    // Khởi tạo quản lý Media mới
     const newManager = new MediaManager(
         document.getElementById('new-media-preview-gallery'),
         document.getElementById('media-modal'),
@@ -562,6 +350,7 @@ document.addEventListener("DOMContentLoaded", function() {
         false
     );
     
+    // Lắng nghe sự kiện chọn file mới
     document.getElementById("media_files").addEventListener("change", (e) => {
         Array.from(e.target.files).forEach(file => newManager.addItem(file));
     });

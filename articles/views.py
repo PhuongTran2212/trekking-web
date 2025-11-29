@@ -6,17 +6,15 @@ from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.http import require_POST
-# Quan trọng: Đảm bảo bạn đã import CreateView
 from django.views.generic import ListView, UpdateView, DeleteView, CreateView
-
-from .models import BaiHuongDan, ChuyenMuc # Import ChuyenMuc
-from .forms import BaiHuongDanAdminForm, ChuyenMucForm # Import ChuyenMucForm
+from django.views.generic import DetailView
+from django.http import Http404
+from .models import BaiHuongDan, ChuyenMuc
+from .forms import BaiHuongDanAdminForm, ChuyenMucForm
 
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_authenticated and self.request.user.is_staff
-
-# articles/views.py
 
 class AdminArticleListView(AdminRequiredMixin, ListView):
     model = BaiHuongDan
@@ -25,11 +23,12 @@ class AdminArticleListView(AdminRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('tac_gia', 'chuyen_muc')
+        queryset = super().get_queryset().select_related('tac_gia', 'chuyen_muc').order_by('-ngay_dang')
         
         # Lấy tham số từ URL
         search_query = self.request.GET.get('q', '')
         category_id = self.request.GET.get('category', '')
+        status = self.request.GET.get('status', '') # <-- MỚI
 
         # Lọc theo query tìm kiếm
         if search_query:
@@ -39,6 +38,12 @@ class AdminArticleListView(AdminRequiredMixin, ListView):
         if category_id:
             queryset = queryset.filter(chuyen_muc_id=category_id)
             
+        # Lọc theo trạng thái <-- MỚI
+        if status == 'approved':
+            queryset = queryset.filter(da_duyet=True)
+        elif status == 'pending':
+            queryset = queryset.filter(da_duyet=False)
+            
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -47,7 +52,16 @@ class AdminArticleListView(AdminRequiredMixin, ListView):
         context['categories'] = ChuyenMuc.objects.all()
         context['current_q'] = self.request.GET.get('q', '')
         context['current_category'] = self.request.GET.get('category', '')
+        context['current_status'] = self.request.GET.get('status', '') # <-- MỚI
+
+        # Tạo query string để giữ bộ lọc khi chuyển trang <-- MỚI
+        query_params = self.request.GET.copy()
+        if 'page' in query_params:
+            del query_params['page']
+        context['filter_query_string'] = query_params.urlencode()
+        
         return context
+
 class AdminArticleUpdateView(AdminRequiredMixin, UpdateView):
     model = BaiHuongDan
     form_class = BaiHuongDanAdminForm
@@ -77,22 +91,14 @@ def approve_article(request, pk):
         messages.warning(request, "Bài viết này đã được duyệt trước đó.")
     return redirect('articles:admin-list')
 
-# ===================================================================
-# === BỔ SUNG CLASS VIEW NÀY (ĐÂY LÀ PHẦN BỊ THIẾU GÂY LỖI) ===
-# ===================================================================
 class AdminArticleCreateView(AdminRequiredMixin, CreateView):
-    """
-    View dành riêng cho Admin tạo bài viết mới.
-    Bài viết được tạo sẽ tự động được duyệt.
-    """
     model = BaiHuongDan
     form_class = BaiHuongDanAdminForm
-    template_name = 'articles/admin_article_form.html' # Dùng chung template form
+    template_name = 'articles/admin_article_form.html'
     success_url = reverse_lazy('articles:admin-list')
 
     def form_valid(self, form):
         form.instance.tac_gia = self.request.user
-        # Vì Admin tạo, bài viết sẽ được duyệt ngay lập tức
         form.instance.da_duyet = True
         form.instance.nguoi_duyet = self.request.user
         form.instance.ngay_duyet = timezone.now()
@@ -105,14 +111,12 @@ class AdminArticleCreateView(AdminRequiredMixin, CreateView):
         return context
     
 class ChuyenMucListView(AdminRequiredMixin, ListView):
-    """View hiển thị danh sách tất cả chuyên mục."""
     model = ChuyenMuc
     template_name = 'articles/admin_category_list.html'
     context_object_name = 'categories'
     paginate_by = 10
 
 class ChuyenMucCreateView(AdminRequiredMixin, CreateView):
-    """View cho Admin tạo chuyên mục mới."""
     model = ChuyenMuc
     form_class = ChuyenMucForm
     template_name = 'articles/admin_category_form.html'
@@ -128,7 +132,6 @@ class ChuyenMucCreateView(AdminRequiredMixin, CreateView):
         return context
 
 class ChuyenMucUpdateView(AdminRequiredMixin, UpdateView):
-    """View cho Admin chỉnh sửa chuyên mục."""
     model = ChuyenMuc
     form_class = ChuyenMucForm
     template_name = 'articles/admin_category_form.html'
@@ -144,7 +147,6 @@ class ChuyenMucUpdateView(AdminRequiredMixin, UpdateView):
         return context
 
 class ChuyenMucDeleteView(AdminRequiredMixin, DeleteView):
-    """View cho Admin xóa chuyên mục."""
     model = ChuyenMuc
     template_name = 'articles/admin_category_confirm_delete.html'
     success_url = reverse_lazy('articles:admin-category-list')
@@ -152,3 +154,15 @@ class ChuyenMucDeleteView(AdminRequiredMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, f"Đã xóa thành công chuyên mục '{self.object.ten}'.")
         return super().form_valid(form)
+
+class ArticleDetailView(DetailView):
+    model = BaiHuongDan
+    template_name = 'articles/article_detail.html'
+    context_object_name = 'article'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        # Nếu bài viết chưa duyệt và người xem KHÔNG phải là Admin/Staff -> Báo lỗi 404
+        if not obj.da_duyet and not self.request.user.is_staff:
+            raise Http404("Bài viết này không tồn tại hoặc chưa được duyệt.")
+        return obj
