@@ -17,6 +17,8 @@ from treks.models import CungDuongTrek
 from core.models import TrangThaiChuyenDi
 from .models import ChuyenDi, ChuyenDiThanhVien, ChuyenDiMedia
 from .forms import TripFilterForm, ChuyenDiForm, TimelineFormSet, SelectTrekFilterForm
+from django.db.models import Prefetch
+from .models import ChuyenDiTinNhan, ChuyenDiTinNhanMedia
 
 import json
 
@@ -419,3 +421,265 @@ class SelectTrekForTripView(LoginRequiredMixin, ListView):
         context['page_title'] = "Bước 1: Chọn Cung đường"
         context['filter_form'] = self.filter_form
         return context
+    
+
+ # ==========================================================
+# === 4. CHỨC NĂNG CHAT ROOM (THÊM MỚI) ===
+# ==========================================================
+
+class TripChatRoomView(LoginRequiredMixin, DetailView):
+    model = ChuyenDi
+    template_name = 'trips/chat_room.html'
+    context_object_name = 'trip'
+    pk_url_kwarg = 'trip_id'
+
+    def get_object(self):
+        trip = get_object_or_404(ChuyenDi, pk=self.kwargs['trip_id'])
+        # Check quyền (như cũ)
+        is_organizer = (trip.nguoi_to_chuc == self.request.user)
+        is_member = trip.thanh_vien.filter(user=self.request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
+        if not (is_member or is_organizer):
+            raise HttpResponseForbidden("Bạn không có quyền truy cập.")
+        return trip
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        trip = self.object
+        user = self.request.user
+
+        # 1. CỘT TRÁI: Danh sách các nhóm chat (Các chuyến đi User đã tham gia)
+        # Lấy chuyến đi mà user là thành viên (DA_THAM_GIA) hoặc là người tổ chức
+        my_trips = ChuyenDi.objects.filter(
+            Q(thanh_vien__user=user, thanh_vien__trang_thai_tham_gia='DA_THAM_GIA') | 
+            Q(nguoi_to_chuc=user)
+        ).distinct().order_by('-ngay_tao') # Hoặc order theo tin nhắn mới nhất nếu muốn phức tạp hơn
+        
+        context['my_trips'] = my_trips
+
+        # 2. CỘT PHẢI: Thành viên của chuyến đi hiện tại
+        context['members'] = trip.thanh_vien.filter(
+            trang_thai_tham_gia='DA_THAM_GIA'
+        ).select_related('user__taikhoanhoso')
+
+        # 3. CỘT PHẢI: Media Files
+        context['chat_media_files'] = ChuyenDiTinNhanMedia.objects.filter(
+            tin_nhan__chuyen_di=trip
+        ).select_related('tin_nhan__nguoi_gui').order_by('-tin_nhan__thoi_gian_gui')
+        
+        return context
+@login_required
+@require_POST
+def send_chat_message(request, trip_id):
+    """API gửi tin nhắn (AJAX) - Có hỗ trợ Reply & File"""
+    trip = get_object_or_404(ChuyenDi, pk=trip_id)
+    
+    # 1. KIỂM TRA QUYỀN (BẮT BUỘC)
+    # User phải là người tổ chức HOẶC thành viên đã tham gia (DA_THAM_GIA)
+    is_organizer = (trip.nguoi_to_chuc == request.user)
+    is_member = trip.thanh_vien.filter(user=request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
+    
+    if not (is_organizer or is_member):
+        return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền gửi tin nhắn trong nhóm này.'}, status=403)
+
+    # 2. LẤY DỮ LIỆU TỪ FORM
+    noi_dung = request.POST.get('message', '').strip()
+    files = request.FILES.getlist('files')
+    reply_to_id = request.POST.get('reply_to_id')
+
+    # Nếu không có nội dung và không có file -> Báo lỗi
+    if not noi_dung and not files:
+        return JsonResponse({'status': 'error', 'message': 'Tin nhắn không được để trống.'}, status=400)
+
+    # 3. XỬ LÝ REPLY (TRẢ LỜI TIN NHẮN)
+    reply_obj = None
+    if reply_to_id:
+        try:
+            # Chỉ cho phép reply tin nhắn thuộc cùng chuyến đi này
+            reply_obj = ChuyenDiTinNhan.objects.get(pk=reply_to_id, chuyen_di=trip)
+        except (ChuyenDiTinNhan.DoesNotExist, ValueError):
+            pass # Nếu ID không hợp lệ hoặc không tìm thấy thì bỏ qua (gửi tin thường)
+
+    # 4. TẠO TIN NHẮN MỚI
+    try:
+        tin_nhan = ChuyenDiTinNhan.objects.create(
+            chuyen_di=trip,
+            nguoi_gui=request.user,
+            tra_loi_tin_nhan=reply_obj,
+            noi_dung=noi_dung
+        )
+
+        # 5. XỬ LÝ FILE ĐÍNH KÈM (MEDIA)
+        for f in files:
+            # Xác định loại file dựa trên MIME type
+            if f.content_type.startswith('image'):
+                loai = 'ANH'
+            elif f.content_type.startswith('video'):
+                loai = 'VIDEO'
+            else:
+                loai = 'FILE'
+            
+            # Tính kích thước (KB)
+            size_kb = round(f.size / 1024, 2)
+
+            ChuyenDiTinNhanMedia.objects.create(
+                tin_nhan=tin_nhan,
+                duong_dan_file=f,
+                loai_media=loai,
+                ten_file_goc=f.name,
+                kich_thuoc_file_kb=size_kb
+            )
+
+        return JsonResponse({'status': 'success', 'msg_id': tin_nhan.id})
+
+    except Exception as e:
+        # Log lỗi nếu cần thiết
+        print(f"Lỗi gửi tin nhắn: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': 'Có lỗi xảy ra phía server.'}, status=500)
+    
+# @login_required
+# def get_chat_messages(request, trip_id):
+#     """API lấy tin nhắn mới (AJAX Polling)"""
+#     trip = get_object_or_404(ChuyenDi, pk=trip_id)
+    
+#     # Kiểm tra quyền truy cập (Quan trọng)
+#     is_organizer = (trip.nguoi_to_chuc == request.user)
+#     is_member = trip.thanh_vien.filter(user=request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
+    
+#     if not (is_organizer or is_member):
+#         return JsonResponse({'status': 'error', 'message': 'Không có quyền truy cập'}, status=403)
+
+#     # Lấy tin nhắn
+#     messages_qs = ChuyenDiTinNhan.objects.filter(chuyen_di=trip)\
+#         .select_related('nguoi_gui__taikhoanhoso')\
+#         .prefetch_related('media')\
+#         .order_by('thoi_gian_gui')
+        
+#     # Logic: Lấy tin mới hơn last_id
+#     last_id = request.GET.get('last_id')
+#     if last_id and last_id != '0':
+#         try:
+#             last_id = int(last_id)
+#             messages_qs = messages_qs.filter(id__gt=last_id)
+#         except ValueError:
+#             pass # Nếu last_id không phải số thì bỏ qua
+    
+#     data = []
+#     for msg in messages_qs:
+#         # 1. Xử lý Media
+#         media_list = []
+#         for m in msg.media.all():
+#             if m.duong_dan_file: # Kiểm tra file tồn tại
+#                 media_list.append({
+#                     'url': m.duong_dan_file.url,
+#                     'type': m.loai_media,
+#                     'name': m.ten_file_goc
+#                 })
+            
+#         # 2. Xử lý Avatar an toàn (Fix lỗi AttributeError)
+#         avatar_url = '/static/images/default-avatar.png'
+#         if hasattr(msg.nguoi_gui, 'taikhoanhoso'):
+#             hoso = msg.nguoi_gui.taikhoanhoso
+#             # Thử lấy các tên trường phổ biến: 'avatar' hoặc 'anh_dai_dien'
+#             user_avatar = getattr(hoso, 'avatar', None) or getattr(hoso, 'anh_dai_dien', None)
+            
+#             if user_avatar:
+#                 try:
+#                     avatar_url = user_avatar.url
+#                 except ValueError:
+#                     pass
+       
+#         # 3. Format dữ liệu trả về
+#         data.append({
+#             'id': msg.id,
+#             'user_id': msg.nguoi_gui.id,
+#             'username': msg.nguoi_gui.get_full_name() or msg.nguoi_gui.username,
+#             'avatar': avatar_url,
+#             'content': msg.noi_dung,
+#             'timestamp': msg.thoi_gian_gui.strftime("%H:%M"),
+#             'is_me': msg.nguoi_gui == request.user,
+#             'media': media_list
+#         })
+        
+#     return JsonResponse({'messages': data})
+@login_required
+def get_chat_messages(request, trip_id):
+    """API lấy tin nhắn mới (AJAX Polling) - Có hỗ trợ Reply & Date Grouping"""
+    trip = get_object_or_404(ChuyenDi, pk=trip_id)
+    
+    # 1. Kiểm tra quyền truy cập
+    is_organizer = (trip.nguoi_to_chuc == request.user)
+    is_member = trip.thanh_vien.filter(user=request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
+    
+    if not (is_organizer or is_member):
+        return JsonResponse({'status': 'error', 'message': 'Không có quyền truy cập'}, status=403)
+
+    # 2. Lấy tin nhắn (kèm thông tin người gửi, media và tin nhắn được reply)
+    messages_qs = ChuyenDiTinNhan.objects.filter(chuyen_di=trip)\
+        .select_related('nguoi_gui__taikhoanhoso', 'tra_loi_tin_nhan__nguoi_gui')\
+        .prefetch_related('media')\
+        .order_by('thoi_gian_gui')
+        
+    # 3. Lọc tin nhắn mới hơn last_id (nếu có)
+    last_id = request.GET.get('last_id')
+    if last_id and last_id != '0':
+        try:
+            last_id = int(last_id)
+            messages_qs = messages_qs.filter(id__gt=last_id)
+        except ValueError:
+            pass 
+    
+    data = []
+    for msg in messages_qs:
+        # A. Xử lý Media
+        media_list = []
+        for m in msg.media.all():
+            if m.duong_dan_file:
+                media_list.append({
+                    'url': m.duong_dan_file.url,
+                    'type': m.loai_media,
+                    'name': m.ten_file_goc
+                })
+            
+        # B. Xử lý Avatar an toàn
+        avatar_url = '/static/images/default-avatar.png'
+        if hasattr(msg.nguoi_gui, 'taikhoanhoso'):
+            hoso = msg.nguoi_gui.taikhoanhoso
+            user_avatar = getattr(hoso, 'avatar', None) or getattr(hoso, 'anh_dai_dien', None)
+            if user_avatar:
+                try:
+                    avatar_url = user_avatar.url
+                except ValueError:
+                    pass
+
+        # C. Xử lý Reply (Quan trọng để hiện trích dẫn)
+        reply_data = None
+        if msg.tra_loi_tin_nhan:
+            # Lấy tên người được reply
+            reply_user = msg.tra_loi_tin_nhan.nguoi_gui.get_full_name() or msg.tra_loi_tin_nhan.nguoi_gui.username
+            
+            # Lấy nội dung reply (nếu rỗng thì hiển thị placeholder)
+            reply_content = msg.tra_loi_tin_nhan.noi_dung
+            if not reply_content: 
+                reply_content = "[File phương tiện]"
+                
+            reply_data = {
+                'id': msg.tra_loi_tin_nhan.id,
+                'username': reply_user,
+                'content': reply_content
+            }
+
+        # D. Đóng gói dữ liệu
+        data.append({
+            'id': msg.id,
+            'user_id': msg.nguoi_gui.id,
+            'username': msg.nguoi_gui.get_full_name() or msg.nguoi_gui.username,
+            'avatar': avatar_url,
+            'content': msg.noi_dung,
+            'timestamp': msg.thoi_gian_gui.strftime("%H:%M"),
+            'full_date': msg.thoi_gian_gui.isoformat(), # Dùng để chia nhóm ngày tháng
+            'is_me': msg.nguoi_gui == request.user,
+            'media': media_list,
+            'reply': reply_data # Trả về data reply cho frontend
+        })
+        
+    return JsonResponse({'messages': data})

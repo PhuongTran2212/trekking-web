@@ -44,4 +44,8 @@ urlpatterns = [
     # Trang chi tiết (Có 2 dạng URL để support cũ/mới)
     path('<int:pk>/<slug:slug>/', views.TripDetailView.as_view(), name='trip_detail'),
     path('chuyen-di/<int:pk>/<slug:slug>/', views.TripDetailView.as_view(), name='chuyen_di_detail'),
+        # === CHAT ROOM URLS ===
+    path('chat/<int:trip_id>/', views.TripChatRoomView.as_view(), name='chat_room'),
+    path('chat/<int:trip_id>/send/', views.send_chat_message, name='chat_send'),
+    path('chat/<int:trip_id>/get-messages/', views.get_chat_messages, name='chat_get_messages'),
 ]

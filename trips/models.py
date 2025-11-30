@@ -94,14 +94,9 @@ class ChuyenDi(models.Model):
     def get_absolute_url(self):
         return reverse('trips:chuyen_di_detail', kwargs={'pk': self.pk, 'slug': self.slug})
     def get_chat_url(self):
-        """
-        Trả về URL dẫn đến phòng chat của chuyến đi này.
-        Giả định bạn có app tên là 'chat' và url name là 'room_detail' nhận trip_id hoặc slug.
-        Nếu chưa có app chat, hàm này sẽ trả về None hoặc #.
-        """
         try:
-            # Thay 'chat:room_detail' bằng URL name thực tế trong urls.py của app Chat
-            return reverse('chat:room_detail', kwargs={'trip_id': self.pk})
+            # Trỏ về namespace 'trips' và name 'chat_room'
+            return reverse('trips:chat_room', kwargs={'trip_id': self.pk})
         except:
             return None
 
