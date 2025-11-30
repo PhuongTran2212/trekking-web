@@ -876,45 +876,207 @@
         text-align: left;
         margin-left: 2px;
     }
+    /* --- 1. CSS CHO THANH TÌM KIẾM & LỌC Ở SIDEBAR --- */
+.ls-search-filter {
+    padding: 10px 15px;
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+.search-input-wrapper i {
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-sub);
+    font-size: 0.8rem;
+}
+.ls-search-input {
+    width: 100%;
+    padding: 8px 10px 8px 30px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+.ls-search-input:focus {
+    background: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.ls-filter-select {
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    cursor: pointer;
+    outline: none;
+}
+
+/* --- 2. CSS FIX LỖI ẢNH (SMART GRID) --- */
+/* Thay thế class .msg-media-grid cũ bằng đoạn này */
+.msg-media-grid {
+    display: grid;
+    gap: 4px;
+    margin-top: 6px;
+    width: 100%;
+    max-width: 320px; /* Giới hạn chiều rộng tối đa của khối ảnh */
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Mặc định cho ảnh thumb */
+.msg-thumb-link {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.msg-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Quan trọng: Cắt ảnh vừa khung, không méo */
+    display: block;
+    transition: transform 0.3s ease;
+}
+.msg-thumb:hover { transform: scale(1.05); }
+
+/* --- QUY TẮC LƯỚI THÔNG MINH --- */
+
+/* Trường hợp 1 ảnh: Hiển thị to, bo góc */
+.msg-media-grid:has(> a:nth-last-child(1):first-child) {
+    grid-template-columns: 1fr;
+}
+.msg-media-grid:has(> a:nth-last-child(1):first-child) .msg-thumb {
+    height: auto;
+    max-height: 300px;
+    border-radius: 12px;
+}
+
+/* Trường hợp 2 ảnh: Chia đôi 50-50 */
+.msg-media-grid:has(> a:nth-last-child(2):first-child) {
+    grid-template-columns: 1fr 1fr;
+    aspect-ratio: 2/1; /* Tỉ lệ khung hình chữ nhật ngang */
+}
+
+/* Trường hợp 3 ảnh trở lên: Lưới đều hoặc style Facebook */
+.msg-media-grid:has(> a:nth-last-child(n+3):first-child) {
+    grid-template-columns: repeat(2, 1fr); /* 2 Cột */
+    aspect-ratio: 1/1; /* Khung hình vuông */
+}
+
+/* Nếu có 3 ảnh: Ảnh đầu tiên full width (mẹo CSS) */
+.msg-media-grid:has(> a:nth-last-child(3):first-child) > a:first-child {
+    grid-column: span 2;
+    aspect-ratio: 2/1;
+}
+
+/* Giới hạn hiển thị tối đa 4 ảnh (ẩn các ảnh thừa nếu muốn - optional) */
+.msg-media-grid > a:nth-child(n+5) {
+    display: none; /* Chỉ hiện 4 ảnh đầu, ảnh sau ẩn đi */
+    
+}
+.msg-thumb-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.more-images-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Màu đen mờ 50% */
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    border-radius: 12px;
+    z-index: 2;
+    pointer-events: none; /* Để vẫn click xuyên qua vào thẻ A bên dưới */
+}
+
+/* Ẩn các ảnh từ thứ 5 trở đi nhưng vẫn để trong DOM để LightGallery đọc */
+.hidden-thumb {
+    display: none !important;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="chat-layout">
     
-    <!-- 1. CỘT TRÁI: DANH SÁCH NHÓM -->
-    <aside class="left-sidebar" id="left-sidebar">
-        <div class="ls-header">
-            <i class="fas fa-comments"></i>
-            <span>Nhóm của bạn</span>
+<aside class="left-sidebar" id="left-sidebar">
+    <div class="ls-header">
+        <i class="fas fa-comments"></i>
+        <span>Nhóm của bạn</span>
+    </div>
+    
+    <div class="ls-search-filter">
+        <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="group-search-input" class="ls-search-input" placeholder="Tìm nhóm...">
         </div>
-        <div class="group-list">
-      {% for my_trip in my_trips %}
-            <a href="{{ my_trip.get_chat_url }}" 
-               class="group-item {% if my_trip.pk == trip.pk %}active{% endif %}"
-               id="group-{{ my_trip.pk }}">
-                <img src="{{ my_trip.cover_url }}" class="group-avatar">
-                <div class="group-info">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="group-name">{{ my_trip.ten_chuyen_di }}</div>
-                        <!-- Thời gian tin cuối (Backend đã gửi qua last_activity) -->
-                        <span class="last-msg-time">
-                            {% if my_trip.last_activity %}{{ my_trip.last_activity|date:"H:i" }}{% endif %}
-                        </span>
-                    </div>
-                    <div class="group-status text-truncate" style="max-width: 180px;">
-                        <!-- Nội dung tin cuối -->
-                        {% if my_trip.preview_content %}
-                            {{ my_trip.preview_content }}
-                        {% else %}
-                            <span class="text-muted fst-italic">Chưa có tin nhắn...</span>
-                        {% endif %}
-                    </div>
-                </div>
-            </a>
+        <select id="group-filter-route" class="ls-filter-select">
+            <option value="all">-- Tất cả cung đường --</option>
+            {% for route in available_routes %}
+                <option value="{{ route.cung_duong__id }}">{{ route.cung_duong__ten }}</option>
             {% endfor %}
+        </select>
+    </div>
+
+    <div class="group-list" id="group-list-container">
+        {% for my_trip in my_trips %}
+        <a href="{{ my_trip.get_chat_url }}" 
+           class="group-item {% if my_trip.pk == trip.pk %}active{% endif %}"
+           id="group-{{ my_trip.pk }}"
+           data-name="{{ my_trip.ten_chuyen_di|lower }}"
+           data-route="{{ my_trip.cung_duong.id }}">
+           
+            <img src="{{ my_trip.cover_url }}" class="group-avatar">
+            <div class="group-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="group-name">{{ my_trip.ten_chuyen_di }}</div>
+                    <span class="last-msg-time">
+                        {% if my_trip.last_activity %}{{ my_trip.last_activity|date:"H:i" }}{% endif %}
+                    </span>
+                </div>
+                <div class="group-status text-truncate" style="max-width: 180px;">
+                    {% if my_trip.preview_content %}
+                        {{ my_trip.preview_content }}
+                    {% else %}
+                        <span class="text-muted fst-italic">Chưa có tin nhắn...</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+        
+        <div id="no-group-found" class="text-center text-muted small py-4 d-none">
+            Không tìm thấy nhóm phù hợp.
         </div>
-    </aside>
+    </div>
+</aside>
 
     <!-- 2. CỘT GIỮA: CHAT -->
     <main class="chat-center">
@@ -1044,22 +1206,24 @@
                     <span><i class="fas fa-images me-2"></i>Kho Ảnh & Video</span>
                     <i class="fas fa-chevron-down text-muted"></i>
                 </button>
-                <div class="collapse show" id="collapseMedia">
-                    <div id="light-gallery-sidebar" class="media-grid">
-                        {% regroup chat_media_files by tin_nhan.nguoi_gui as sender_list %}
-                        {% for sender in sender_list %}
-                            {% for media in sender.list %}
-                                {% if media.loai_media == 'ANH' %}
-                                <a href="{{ media.duong_dan_file.url }}" class="media-item" data-sub-html="Gửi bởi {{ sender.grouper.username }}">
-                                    <img src="{{ media.duong_dan_file.url }}">
-                                </a>
-                                {% endif %}
-                            {% endfor %}
-                        {% empty %}
-                            <p class="text-muted small text-center w-100 py-3">Chưa có ảnh nào.</p>
-                        {% endfor %}
-                    </div>
-                </div>
+<div class="collapse show" id="collapseMedia">
+    <div id="light-gallery-sidebar" class="media-grid">
+        {% regroup chat_media_files by tin_nhan.nguoi_gui as sender_list %}
+        {% for sender in sender_list %}
+            {% for media in sender.list %}
+                {% if media.loai_media == 'ANH' %}
+                <a href="{{ media.duong_dan_file.url }}" 
+                   class="media-item media-msg-{{ media.tin_nhan.id }}" 
+                   data-sub-html="Gửi bởi {{ sender.grouper.username }}">
+                    <img src="{{ media.duong_dan_file.url }}">
+                </a>
+                {% endif %}
+            {% endfor %}
+        {% empty %}
+            <p id="no-media-text" class="text-muted small text-center w-100 py-3">Chưa có ảnh nào.</p>
+        {% endfor %}
+    </div>
+</div>
             </div>
         </div>
     </aside>
@@ -1072,222 +1236,188 @@
 
 <script>
     // =================================================
-    // 1. KHAI BÁO BIẾN TOÀN CỤC
+    // 1. CẤU HÌNH & UI HELPERS
     // =================================================
-    let lastMsgId = 0;
-    let lastRenderedDate = null;
-    let pendingFiles = []; 
-    let isSending = false; // Biến cờ quan trọng để chặn spam click
-
-    const urlSend = "{% url 'trips:chat_send' trip.pk %}";
-    const urlGet = "{% url 'trips:chat_get_messages' trip.pk %}";
-    const csrfToken = '{{ csrf_token }}';
-
-    // =================================================
-    // 2. HELPER FUNCTIONS (UI & Logic)
-    // =================================================
-
-    // --- UI Toggles ---
-    window.toggleSidebar = function(side) {
-        const el = document.getElementById(side === 'left' ? 'leftSidebar' : 'rightSidebar');
-        if(el) el.classList.toggle(window.innerWidth <= 992 ? 'show' : 'collapsed');
-        if(side === 'right') document.getElementById('btnRightSidebar')?.classList.toggle('active');
+    
+    // Hàm hiển thị Toast (Chỉ dùng khi LỖI)
+    function showToast(msg, type = 'error') {
+        const toast = document.createElement('div');
+        toast.className = `custom-toast ${type}`;
+        toast.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${msg}`;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => { toast.classList.add('show'); });
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
     }
 
-    window.toggleSearch = function() {
-        const box = document.getElementById('search-container');
-        const input = document.getElementById('chat-search');
-        if(box && input) {
-            box.classList.toggle('active');
-            if(box.classList.contains('active')) input.focus();
-        }
-    }
+    // Tắt loading sau 3s (An toàn)
+    setTimeout(function() {
+        const spinner = document.querySelector('.loading-spinner');
+        if (spinner) spinner.remove();
+    }, 3000);
 
-    // --- Reply Logic ---
-    window.startReply = function(id, username, content) {
-        document.getElementById('reply-id-input').value = id;
-        document.getElementById('reply-to-user').innerText = username;
-        document.getElementById('reply-to-content').innerText = content.length > 50 ? content.substring(0, 50) + '...' : content;
-        document.getElementById('reply-context-bar').classList.add('show');
-        document.getElementById('msg-input').focus();
-    }
-
-    window.cancelReply = function() {
-        document.getElementById('reply-id-input').value = '';
-        document.getElementById('reply-context-bar').classList.remove('show');
-    }
-
-    // --- Reaction Logic ---
-    window.reactMessage = function(msgId, action) {
-        fetch(`/chuyen-di/chat/react/${msgId}/`, {
-            method: 'POST',
-            headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded'},
-            body: `action=${action}`
-        }).then(res => res.json()).then(data => {
-            if(data.status === 'success') {
-                updateReactionUI(msgId, data);
-            }
-        });
-    }
-
-    function updateReactionUI(msgId, data) {
-        const likeCount = document.getElementById(`like-count-${msgId}`);
-        const dislikeCount = document.getElementById(`dislike-count-${msgId}`);
-        const container = document.querySelector(`#msg-${msgId} .msg-reactions`);
-        
-        if(likeCount) likeCount.innerText = data.likes > 0 ? data.likes : '';
-        if(dislikeCount) dislikeCount.innerText = data.dislikes > 0 ? data.dislikes : '';
-
-        // Cập nhật class active cho nút bấm
-        const btnLike = container?.querySelector('.reaction-btn:first-child');
-        const btnDislike = container?.querySelector('.reaction-btn:last-child');
-        
-        if(btnLike) {
-            data.user_liked ? btnLike.classList.add('active') : btnLike.classList.remove('active');
-        }
-        if(btnDislike) {
-            data.user_disliked ? btnDislike.classList.add('active') : btnDislike.classList.remove('active');
-        }
-
-        // Hiện container nếu có like
-        if(container) {
-            if (data.likes > 0 || data.dislikes > 0) {
-                container.classList.add('has-reacts');
-                container.style.opacity = '1';
-            } else {
-                container.classList.remove('has-reacts');
-                container.style.opacity = '';
-            }
-        }
-    }
-
-    // --- Delete Logic ---
-    window.deleteMessage = function(msgId) {
-        if(!confirm("Bạn muốn thu hồi tin nhắn này?")) return;
-        fetch(`/chuyen-di/chat/delete/${msgId}/`, {
-            method: 'POST',
-            headers: {'X-CSRFToken': csrfToken}
-        }).then(res => res.json()).then(data => {
-            if(data.status === 'success') {
-                const msgRow = document.getElementById(`msg-${msgId}`);
-                if(msgRow) {
-                    const bubble = msgRow.querySelector('.msg-bubble');
-                    bubble.innerHTML = '<span class="text-muted fst-italic small"><i class="fas fa-ban me-1"></i> Tin nhắn đã bị thu hồi</span>';
-                    msgRow.querySelector('.msg-actions')?.remove();
-                    msgRow.querySelector('.msg-reactions')?.remove();
-                }
-            }
-        });
-    }
-
-    // --- File Handling ---
-    window.removeFile = function(el, fileName) {
-        el.parentElement.remove();
-        pendingFiles = pendingFiles.filter(f => f.name !== fileName);
-        if(pendingFiles.length === 0) document.getElementById('file-input').value = '';
-    }
-
-    window.clearAllFiles = function() {
-        pendingFiles = [];
-        document.getElementById('preview-box').innerHTML = '';
-        document.getElementById('file-input').value = '';
-    }
-
-    // --- Date Helper ---
-    function formatDateDivider(isoDateString) {
-        const date = new Date(isoDateString);
-        const now = new Date();
-        const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-        const isCurrentYear = date.getFullYear() === now.getFullYear();
-        const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth()+1).toString().padStart(2, '0')}`;
-        const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-        return isCurrentYear ? `${days[date.getDay()]}, ${dateStr} lúc ${timeStr}` : `${days[date.getDay()]}, ${dateStr}/${date.getFullYear()} lúc ${timeStr}`;
-    }
-
-    function checkAndAddDateDivider(msgDateIso) {
-        const msgDate = new Date(msgDateIso);
-        const dateKey = msgDate.toDateString(); 
-        if (lastRenderedDate !== dateKey) {
-            const dividerText = formatDateDivider(msgDateIso);
-            document.getElementById('chat-box').insertAdjacentHTML('beforeend', `<div class="date-divider"><span>${dividerText}</span></div>`);
-            lastRenderedDate = dateKey;
-        }
-    }
-
-    // =================================================
-    // 3. MAIN LOGIC
-    // =================================================
     document.addEventListener('DOMContentLoaded', function() {
+        let lastMsgId = 0;
+        let lastRenderedDate = null;
+        let pendingFiles = []; 
+        let isSending = false; 
+        let isFetching = false;
+
+        const urlSend = "{% url 'trips:chat_send' trip.pk %}";
+        const urlGet = "{% url 'trips:chat_get_messages' trip.pk %}";
+        const currentTripId = "{{ trip.pk }}"; 
+        const csrfToken = '{{ csrf_token }}';
+
+        // DOM Elements
         const chatBox = document.getElementById('chat-box');
         const chatForm = document.getElementById('chat-form');
         const msgInput = document.getElementById('msg-input');
         const fileInput = document.getElementById('file-input');
         const previewBox = document.getElementById('preview-box');
 
-        // Init Sidebar Gallery
-        const sbGal = document.getElementById('sidebar-gallery');
-        if(sbGal) {
-            try { lightGallery(sbGal, { selector: 'a', plugins: [lgZoom, lgThumbnail], speed: 300, download: false }); } catch(e){}
+        // Init Gallery
+        const sbGal = document.getElementById('light-gallery-sidebar');
+        if(sbGal) { try { window.sbGalleryPlugin = lightGallery(sbGal, { selector: '.media-item', plugins: [lgZoom, lgThumbnail], speed: 300, download: false }); } catch(e){} }
+
+        // =================================================
+        // 2. GỬI TIN NHẮN (KHÔNG HIỆN THÔNG BÁO THÀNH CÔNG)
+        // =================================================
+        function handleSendMessage() {
+            if (isSending) return; 
+
+            const text = msgInput.value.trim();
+            if(!text && pendingFiles.length === 0) return;
+
+            const fd = new FormData(chatForm); 
+            pendingFiles.forEach(file => fd.append('files', file));
+
+            isSending = true; 
+            const btn = document.querySelector('.btn-send');
+            const oldIcon = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            fetch(urlSend, { 
+                method: 'POST', body: fd, headers: { 'X-CSRFToken': csrfToken }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // === THÀNH CÔNG: CHỈ CẦN RESET UI, KHÔNG CẦN THÔNG BÁO ===
+                    msgInput.value = '';             
+                    msgInput.style.height = 'auto';  
+                    clearAllFiles();                 
+                    cancelReply();                   
+                    
+                    // Load tin mới ngay lập tức để user thấy tin mình vừa gửi
+                    loadMessages(); 
+                } else { 
+                    // === THẤT BẠI: MỚI HIỆN THÔNG BÁO LỖI ===
+                    showToast(data.message, 'error'); 
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Lỗi kết nối mạng", 'error');
+            })
+            .finally(() => { 
+                isSending = false; 
+                btn.innerHTML = oldIcon; 
+                btn.disabled = false; 
+                msgInput.focus(); 
+            });
         }
 
-        function scrollToBottom() {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+        chatForm.addEventListener('submit', function(e) { e.preventDefault(); handleSendMessage(); });
+        msgInput.addEventListener('keydown', function(e) { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } });
+        msgInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
 
-        // --- APPEND MESSAGE ---
+        // =================================================
+        // 3. TẢI TIN NHẮN (GIỮ NGUYÊN)
+        // =================================================
+        function loadMessages() {
+            if (isFetching) return;
+            isFetching = true;
+
+            fetch(`${urlGet}?last_id=${lastMsgId}`)
+                .then(res => { if (!res.ok) throw new Error("Server Error"); return res.json(); })
+                .then(data => {
+                    if(data.messages && data.messages.length > 0) {
+                        let shouldScroll = (chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 150) || lastMsgId === 0;
+                        data.messages.forEach(msg => {
+                            appendMessage(msg); 
+                            if (msg.id > lastMsgId) lastMsgId = msg.id;
+                        });
+                        if(shouldScroll) scrollToBottom();
+                    }
+                    if(data.updates && data.updates.length > 0) {
+                        data.updates.forEach(msg => {
+                            if(msg.is_deleted) markMessageDeleted(msg.id);
+                            else updateReactionUI(msg.id, {
+                                likes: msg.reactions.likes_count,
+                                dislikes: msg.reactions.dislikes_count,
+                                user_liked: msg.reactions.user_liked,
+                                user_disliked: msg.reactions.user_disliked
+                            });
+                        });
+                    }
+                })
+                .catch(err => console.error("Lỗi tải tin nhắn:", err))
+                .finally(() => {
+                    document.querySelector('.loading-spinner')?.remove();
+                    isFetching = false;
+                    setTimeout(loadMessages, 3000);
+                });
+        }
+        loadMessages();
+
+        // =================================================
+        // 4. UI HELPERS & RENDER (GIỮ NGUYÊN)
+        // =================================================
+        function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
+
         function appendMessage(msg) {
-            if (document.getElementById(`msg-${msg.id}`)) return; // Check trùng ID
+            if (document.getElementById(`msg-${msg.id}`)) return; 
             if (msg.full_date) checkAndAddDateDivider(msg.full_date);
-
+            try { updateLeftSidebar(msg); addToRightSidebar(msg); } catch(e){}
             const isMe = msg.is_me;
-            let mediaHtml = '';
             
+            // Media
+            let mediaHtml = '';
             if(msg.media && msg.media.length > 0) {
                 mediaHtml = `<div class="msg-media-grid" id="gal-${msg.id}">`;
-                msg.media.forEach(m => {
+                const total = msg.media.length;
+                msg.media.forEach((m, index) => {
                     if(m.type === 'ANH') {
-                        mediaHtml += `<a href="${m.url}" class="msg-thumb-link"><img src="${m.url}" class="msg-thumb"></a>`;
+                        if (index < 3 || total <= 4) {
+                            mediaHtml += `<a href="${m.url}" class="msg-thumb-link"><img src="${m.url}" class="msg-thumb"></a>`;
+                        } else if (index === 3 && total > 4) {
+                            mediaHtml += `<a href="${m.url}" class="msg-thumb-link" style="position: relative; display: block;"><img src="${m.url}" class="msg-thumb"><div class="more-images-overlay">+${total - 3}</div></a>`;
+                        } else {
+                            mediaHtml += `<a href="${m.url}" class="msg-thumb-link hidden-thumb"><img src="${m.url}" class="msg-thumb"></a>`;
+                        }
                     }
                 });
                 mediaHtml += '</div>';
             }
 
-            let replyHtml = '';
-            if (msg.reply) {
-                replyHtml = `
-                    <div class="msg-reply-bubble" onclick="document.getElementById('msg-${msg.reply.id}')?.scrollIntoView({behavior: 'smooth', block: 'center'})">
-                        <div class="fw-bold mb-1 small" style="color: ${isMe ? '#e6f4ea' : 'var(--primary)'}">${msg.reply.username}</div>
-                        <div class="text-truncate small">${msg.reply.content}</div>
-                    </div>
-                `;
-            }
-
-            // Reaction UI
+            // Reply & Reaction
+            let replyHtml = msg.reply ? `<div class="msg-reply-bubble" onclick="document.getElementById('msg-${msg.reply.id}')?.scrollIntoView({behavior: 'smooth', block: 'center'})"><div class="fw-bold mb-1 small" style="color: ${isMe ? '#e6f4ea' : 'var(--primary)'}">${msg.reply.username}</div><div class="text-truncate small">${msg.reply.content}</div></div>` : '';
+            
             let reactionHtml = '';
             if (!msg.is_deleted) {
                 const likes = msg.reactions?.likes_count || 0;
                 const dislikes = msg.reactions?.dislikes_count || 0;
                 const hasReacts = (likes > 0 || dislikes > 0) ? 'has-reacts' : '';
-                // Active class
-                const likeActive = msg.reactions?.user_liked ? 'active' : '';
-                const dislikeActive = msg.reactions?.user_disliked ? 'active' : '';
                 const styleOpacity = (likes > 0 || dislikes > 0) ? 'opacity: 1;' : '';
-
-                reactionHtml = `
-                    <div class="msg-reactions ${hasReacts}" style="${styleOpacity}">
-                        <span class="reaction-btn ${likeActive}" onclick="reactMessage(${msg.id}, 'like')">👍 <span id="like-count-${msg.id}">${likes > 0 ? likes : ''}</span></span>
-                        <span class="reaction-btn ${dislikeActive}" onclick="reactMessage(${msg.id}, 'dislike')">👎 <span id="dislike-count-${msg.id}">${dislikes > 0 ? dislikes : ''}</span></span>
-                    </div>
-                `;
+                reactionHtml = `<div class="msg-reactions ${hasReacts}" style="${styleOpacity}">
+                        <span class="reaction-btn ${msg.reactions?.user_liked ? 'active' : ''}" onclick="reactMessage(${msg.id}, 'like')">👍 <span id="like-count-${msg.id}">${likes > 0 ? likes : ''}</span></span>
+                        <span class="reaction-btn ${msg.reactions?.user_disliked ? 'active' : ''}" onclick="reactMessage(${msg.id}, 'dislike')">👎 <span id="dislike-count-${msg.id}">${dislikes > 0 ? dislikes : ''}</span></span>
+                    </div>`;
             }
 
             const safeContent = (msg.content || "").replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
-            let actionHtml = `<div class="msg-actions">
-                <button class="btn-reply-action" onclick="startReply(${msg.id}, '${msg.username}', '${safeContent}')" title="Trả lời"><i class="fas fa-reply"></i></button>`;
-            
-            if(isMe && !msg.is_deleted) {
-                actionHtml += `<button class="btn-delete-msg ms-1" onclick="deleteMessage(${msg.id})" title="Thu hồi"><i class="fas fa-trash"></i></button>`;
-            }
+            let actionHtml = `<div class="msg-actions"><button class="btn-reply-action" onclick="startReply(${msg.id}, '${msg.username}', '${safeContent}')"><i class="fas fa-reply"></i></button>`;
+            if(isMe && !msg.is_deleted) actionHtml += `<button class="btn-delete-msg ms-1" onclick="deleteMessage(${msg.id})"><i class="fas fa-trash"></i></button>`;
             actionHtml += `</div>`;
 
             const html = `
@@ -1296,148 +1426,112 @@
                     <div class="msg-content">
                         ${!isMe ? `<div class="msg-name">${msg.username}</div>` : ''}
                         <div class="msg-bubble">
-                            ${replyHtml}
-                            <div>${msg.is_deleted ? '<span class="text-muted fst-italic small"><i class="fas fa-ban me-1"></i> Tin nhắn đã bị thu hồi</span>' : msg.content}</div>
-                            ${mediaHtml}
-                            ${reactionHtml}
+                            ${replyHtml}<div>${msg.is_deleted ? '<span class="text-muted fst-italic small"><i class="fas fa-ban me-1"></i> Tin nhắn đã bị thu hồi</span>' : msg.content}</div>
+                            ${mediaHtml}${reactionHtml}
                         </div>
                         <div class="msg-time">${msg.timestamp}</div>
                     </div>
                     ${isMe ? '' : actionHtml} 
-                </div>
-            `;
+                </div>`;
             
             chatBox.insertAdjacentHTML('beforeend', html);
-
             if(msg.media && msg.media.length > 0) {
                 const newGal = document.getElementById(`gal-${msg.id}`);
-                if(newGal) {
-                    try { lightGallery(newGal, { selector: '.msg-thumb-link', plugins: [lgZoom, lgThumbnail], speed: 300, download: false }); } catch(e){}
-                }
+                if(newGal) try { lightGallery(newGal, { selector: '.msg-thumb-link', plugins: [lgZoom, lgThumbnail], speed: 300, download: false }); } catch(e){}
             }
         }
 
-        // --- LOAD MESSAGES ---
-        function loadMessages() {
-            fetch(`${urlGet}?last_id=${lastMsgId}`)
-                .then(res => res.json())
-                .then(data => {
-                    document.querySelector('.loading-spinner')?.remove();
-                    // 1. New messages
-                    if(data.messages && data.messages.length > 0) {
-                        let shouldScroll = (chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 150) || lastMsgId === 0;
-                        data.messages.forEach(msg => {
-                            appendMessage(msg);
-                            if (msg.id > lastMsgId) lastMsgId = msg.id;
-                        });
-                        if(shouldScroll) scrollToBottom();
-                    }
-                    // 2. Update old messages (Realtime updates)
-                    if(data.updates && data.updates.length > 0) {
-                        data.updates.forEach(msg => {
-                            const msgRow = document.getElementById(`msg-${msg.id}`);
-                            if(msgRow) {
-                                // Update deleted
-                                if(msg.is_deleted && !msgRow.innerHTML.includes('Tin nhắn đã bị thu hồi')) {
-                                    msgRow.querySelector('.msg-bubble').innerHTML = '<span class="text-muted fst-italic small"><i class="fas fa-ban me-1"></i> Tin nhắn đã bị thu hồi</span>';
-                                    msgRow.querySelector('.msg-actions')?.remove();
-                                    msgRow.querySelector('.msg-reactions')?.remove();
-                                } else if(!msg.is_deleted) {
-                                    // Update reaction
-                                    updateReactionUI(msg.id, {
-                                        likes: msg.reactions.likes_count,
-                                        dislikes: msg.reactions.dislikes_count,
-                                        user_liked: msg.reactions.user_liked,
-                                        user_disliked: msg.reactions.user_disliked
-                                    });
-                                }
-                            }
-                        });
-                    }
-                })
-                .catch(err => console.error(err));
-        }
-
-        loadMessages();
-        setInterval(loadMessages, 3000);
-
-        // --- PREVIEW ---
-        fileInput.addEventListener('change', function() {
-            if(this.files.length > 0) {
-                Array.from(this.files).forEach((file, index) => {
-                    pendingFiles.push(file);
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const div = document.createElement('div');
-                        div.className = 'preview-img-wrap';
-                        div.innerHTML = `<img src="${e.target.result}"><div class="btn-remove-preview" onclick="removeFile(this, '${file.name}')">×</div>`;
-                        previewBox.appendChild(div);
-                    }
-                    reader.readAsDataURL(file);
-                });
-            }
-            this.value = ''; 
-        });
-
-        // --- SUBMIT ---
-        // Fix lỗi gửi 2 lần:
-        // 1. Chặn submit nếu đang gửi (isSending)
-        // 2. Không gọi dispatchEvent thủ công trong keydown Enter
-        
-        function handleSendMessage() {
-            if (isSending) return; // Chặn spam
-
-            const text = msgInput.value.trim();
-            if(!text && pendingFiles.length === 0) return;
-
-            const fd = new FormData(chatForm); 
-            pendingFiles.forEach(file => fd.append('files', file));
-
-            isSending = true; // Khóa
-            const btn = document.querySelector('.btn-send');
-            const oldIcon = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            btn.disabled = true;
-
-            fetch(urlSend, { method: 'POST', body: fd })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    msgInput.value = '';
-                    clearAllFiles();
-                    msgInput.style.height = 'auto';
-                    cancelReply();
-                    loadMessages(); // Load tin nhắn mới ngay
-                } else {
-                    alert(data.message);
+        // --- Utils ---
+        function updateLeftSidebar(msg) {
+            const groupItem = document.getElementById(`group-${currentTripId}`);
+            if (groupItem) {
+                const statusEl = groupItem.querySelector('.group-status');
+                const timeEl = groupItem.querySelector('.last-msg-time');
+                let previewText = msg.is_me ? `Bạn: ${msg.content}` : `${msg.username}: ${msg.content}`;
+                if ((!msg.content) && msg.media.length > 0) previewText = msg.is_me ? "Bạn đã gửi file" : `${msg.username} đã gửi file`;
+                if (msg.is_deleted) previewText = "Tin nhắn đã thu hồi";
+                if(statusEl) statusEl.innerText = previewText;
+                if(timeEl) timeEl.innerText = msg.timestamp; 
+                if(groupItem.parentElement.firstElementChild !== groupItem) {
+                    groupItem.parentElement.prepend(groupItem);
+                    groupItem.style.backgroundColor = '#ecfdf5';
+                    setTimeout(() => groupItem.style.backgroundColor = '', 500);
                 }
-            })
-            .catch(err => alert("Lỗi kết nối!"))
-            .finally(() => {
-                isSending = false; // Mở khóa
-                btn.innerHTML = oldIcon;
-                btn.disabled = false;
-                msgInput.focus();
+            }
+        }
+        function addToRightSidebar(msg) {
+            if (!msg.media || msg.media.length === 0) return;
+            const mediaContainer = document.getElementById('light-gallery-sidebar');
+            document.getElementById('no-media-text')?.setAttribute('style', 'display:none');
+            let newHtml = '';
+            msg.media.forEach(m => {
+                if (m.type === 'ANH') newHtml += `<a href="${m.url}" class="media-item media-msg-${msg.id}" data-sub-html="Gửi bởi ${msg.username}"><img src="${m.url}"></a>`;
             });
+            if (newHtml && mediaContainer) {
+                mediaContainer.insertAdjacentHTML('afterbegin', newHtml);
+                if(window.sbGalleryPlugin) window.sbGalleryPlugin.refresh();
+            }
+        }
+        function removeFromRightSidebar(msgId) {
+            document.querySelectorAll(`.media-msg-${msgId}`).forEach(el => el.remove());
+            const c = document.getElementById('light-gallery-sidebar');
+            if (c && c.children.length === 0) document.getElementById('no-media-text').style.display = 'block';
+        }
+        window.toggleSidebar = function(side) { document.getElementById(side === 'left' ? 'leftSidebar' : 'rightSidebar').classList.toggle(window.innerWidth <= 992 ? 'show' : 'collapsed'); }
+        window.toggleSearch = function() { document.getElementById('search-container')?.classList.toggle('active'); document.getElementById('chat-search')?.focus(); }
+        window.startReply = function(id, username, content) { document.getElementById('reply-id-input').value = id; document.getElementById('reply-to-user').innerText = username; document.getElementById('reply-to-content').innerText = content; document.getElementById('reply-context-bar').classList.add('show'); document.getElementById('msg-input').focus(); }
+        window.cancelReply = function() { document.getElementById('reply-id-input').value = ''; document.getElementById('reply-context-bar').classList.remove('show'); }
+        window.removeFile = function(el, fileName) { el.parentElement.remove(); pendingFiles = pendingFiles.filter(f => f.name !== fileName); if(pendingFiles.length === 0) fileInput.value = ''; }
+        window.clearAllFiles = function() { pendingFiles = []; document.getElementById('preview-box').innerHTML = ''; document.getElementById('file-input').value = ''; }
+        
+        window.reactMessage = function(msgId, action) { fetch(`/chuyen-di/chat/react/${msgId}/`, { method: 'POST', headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded'}, body: `action=${action}` }).then(res => res.json()).then(data => { if(data.status === 'success') updateReactionUI(msgId, data); }); }
+        function updateReactionUI(msgId, data) {
+            const container = document.querySelector(`#msg-${msgId} .msg-reactions`); if(!container) return;
+            const l = document.getElementById(`like-count-${msgId}`); if(l) l.innerText = data.likes > 0 ? data.likes : '';
+            const d = document.getElementById(`dislike-count-${msgId}`); if(d) d.innerText = data.dislikes > 0 ? data.dislikes : '';
+            const bl = container.querySelector('.reaction-btn:first-child'); if(bl) data.user_liked ? bl.classList.add('active') : bl.classList.remove('active');
+            const bd = container.querySelector('.reaction-btn:last-child'); if(bd) data.user_disliked ? bd.classList.add('active') : bd.classList.remove('active');
+            (data.likes>0||data.dislikes>0) ? container.classList.add('has-reacts') : container.classList.remove('has-reacts');
+            container.style.opacity = (data.likes>0||data.dislikes>0)?'1':'';
         }
 
-        chatForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleSendMessage();
-        });
-
-        msgInput.addEventListener('keydown', function(e) {
-            if(e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                // Gọi hàm xử lý trực tiếp, KHÔNG dùng dispatchEvent('submit') nữa
-                handleSendMessage();
+        window.deleteMessage = function(msgId) { if(confirm("Thu hồi tin nhắn?")) fetch(`/chuyen-di/chat/delete/${msgId}/`, { method: 'POST', headers: {'X-CSRFToken': csrfToken} }).then(res=>res.json()).then(data=>{ if(data.status==='success') markMessageDeleted(msgId); }); }
+        function markMessageDeleted(msgId) {
+            const msgRow = document.getElementById(`msg-${msgId}`);
+            if(msgRow) {
+                const bubble = msgRow.querySelector('.msg-bubble');
+                if (!bubble.innerHTML.includes('Tin nhắn đã bị thu hồi')) {
+                    bubble.innerHTML = '<span class="text-muted fst-italic small"><i class="fas fa-ban me-1"></i> Tin nhắn đã bị thu hồi</span>';
+                    msgRow.querySelector('.msg-actions')?.remove();
+                    msgRow.querySelector('.msg-reactions')?.remove();
+                    removeFromRightSidebar(msgId);
+                }
             }
-        });
-        
-        msgInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
+        }
+
+        function formatDateDivider(iso) { const d = new Date(iso); return `${['CN','T2','T3','T4','T5','T6','T7'][d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}`; }
+        function checkAndAddDateDivider(iso) { 
+            const k = new Date(iso).toDateString(); 
+            if (lastRenderedDate !== k) { document.getElementById('chat-box').insertAdjacentHTML('beforeend', `<div class="date-divider"><span>${formatDateDivider(iso)}</span></div>`); lastRenderedDate = k; } 
+        }
+
+        const searchInput = document.getElementById('group-search-input');
+        const routeSelect = document.getElementById('group-filter-route');
+        const groupItems = document.querySelectorAll('.group-item');
+        function filterGroups() {
+            const s = searchInput.value.toLowerCase().trim(); const r = routeSelect.value;
+            let c = 0;
+            groupItems.forEach(i => {
+                const n = i.getAttribute('data-name'); const rt = i.getAttribute('data-route');
+                const m = (n && n.includes(s)) && (r === 'all' || rt === r);
+                i.style.display = m ? 'flex' : 'none'; if(m) c++;
+            });
+            const nm = document.getElementById('no-group-found'); if(nm) nm.style.display = c===0?'block':'none';
+        }
+        if(searchInput) searchInput.addEventListener('input', filterGroups);
+        if(routeSelect) routeSelect.addEventListener('change', filterGroups);
+
+        fileInput.addEventListener('change', function() { if(this.files.length > 0) Array.from(this.files).forEach(f => { pendingFiles.push(f); const r = new FileReader(); r.onload = e => { previewBox.innerHTML += `<div class="preview-img-wrap"><img src="${e.target.result}"><div class="btn-remove-preview" onclick="removeFile(this, '${f.name}')">×</div></div>`; }; r.readAsDataURL(f); }); this.value = ''; });
     });
 </script>
 {% endblock %}

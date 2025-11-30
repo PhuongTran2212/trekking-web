@@ -50,5 +50,6 @@ urlpatterns = [
     path('chat/<int:trip_id>/get-messages/', views.get_chat_messages, name='chat_get_messages'),
     path('chat/delete/<int:msg_id>/', views.delete_chat_message, name='chat_delete'),
     path('chat/react/<int:msg_id>/', views.react_chat_message, name='chat_react'),
+    path('chat/api/my-groups/', views.get_my_chat_groups, name='get_my_chat_groups'),
     
 ]

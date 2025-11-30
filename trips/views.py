@@ -428,6 +428,10 @@ class SelectTrekForTripView(LoginRequiredMixin, ListView):
 # === 4. CHỨC NĂNG CHAT ROOM (THÊM MỚI) ===
 # ==========================================================
 
+# ==========================================================
+# === 4. CHỨC NĂNG CHAT ROOM ===
+# ==========================================================
+
 class TripChatRoomView(LoginRequiredMixin, DetailView):
     model = ChuyenDi
     template_name = 'trips/chat_room.html'
@@ -436,10 +440,12 @@ class TripChatRoomView(LoginRequiredMixin, DetailView):
 
     def get_object(self):
         trip = get_object_or_404(ChuyenDi, pk=self.kwargs['trip_id'])
+        # Kiểm tra quyền truy cập (Chủ phòng hoặc Thành viên đã tham gia)
         is_organizer = (trip.nguoi_to_chuc == self.request.user)
         is_member = trip.thanh_vien.filter(user=self.request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
+        
         if not (is_member or is_organizer):
-            raise HttpResponseForbidden("Bạn không có quyền truy cập.")
+            raise HttpResponseForbidden("Bạn không có quyền truy cập vào nhóm chat này.")
         return trip
 
     def get_context_data(self, **kwargs):
@@ -447,106 +453,165 @@ class TripChatRoomView(LoginRequiredMixin, DetailView):
         trip = self.object
         user = self.request.user
 
-        # 1. SIDEBAR THÔNG MINH (Giống Messenger)
-        # Lấy danh sách chuyến đi, SẮP XẾP theo tin nhắn mới nhất
-        # Subquery để lấy thời gian tin nhắn cuối cùng của mỗi chuyến đi
-        last_msg_time = ChuyenDiTinNhan.objects.filter(
-            chuyen_di=OuterRef('pk')
-        ).order_by('-thoi_gian_gui').values('thoi_gian_gui')[:1]
-
-        last_msg_content = ChuyenDiTinNhan.objects.filter(
-            chuyen_di=OuterRef('pk')
-        ).order_by('-thoi_gian_gui').values('noi_dung')[:1]
-
+        # --- 1. SIDEBAR: DANH SÁCH NHÓM CHAT ---
+        # Subquery: Lấy thời gian và nội dung tin nhắn cuối cùng
+        last_msg_qs = ChuyenDiTinNhan.objects.filter(chuyen_di=OuterRef('pk')).order_by('-thoi_gian_gui')
+        
         my_trips = ChuyenDi.objects.filter(
             Q(thanh_vien__user=user, thanh_vien__trang_thai_tham_gia='DA_THAM_GIA') | 
             Q(nguoi_to_chuc=user)
         ).distinct().annotate(
-            last_activity=Subquery(last_msg_time),
-            preview_content=Subquery(last_msg_content)
-        ).order_by('-last_activity', '-ngay_tao') # Trồi lên đầu nếu có tin nhắn mới
+            last_activity=Subquery(last_msg_qs.values('thoi_gian_gui')[:1]),
+            preview_content=Subquery(last_msg_qs.values('noi_dung')[:1])
+        ).order_by(F('last_activity').desc(nulls_last=True), '-ngay_tao')
         
         context['my_trips'] = my_trips
 
-        # 2. Thành viên & Media (Giữ nguyên)
+        # === QUAN TRỌNG: Lấy danh sách cung đường để hiển thị vào Dropdown Lọc ===
+        # Lấy các ID và Tên cung đường duy nhất từ danh sách chuyến đi của user
+        context['available_routes'] = my_trips.values(
+            'cung_duong__id', 'cung_duong__ten'
+        ).distinct().exclude(cung_duong__isnull=True)
+        # =========================================================================
+
+        # --- 2. THÔNG TIN THÀNH VIÊN ---
         context['members'] = trip.thanh_vien.filter(
             trang_thai_tham_gia='DA_THAM_GIA'
         ).select_related('user__taikhoanhoso')
 
+        # --- 3. MEDIA (ẢNH/VIDEO) ---
         context['chat_media_files'] = ChuyenDiTinNhanMedia.objects.filter(
             tin_nhan__chuyen_di=trip,
-            tin_nhan__da_xoa=False # Không lấy ảnh của tin đã xóa
+            tin_nhan__da_xoa=False 
         ).select_related('tin_nhan__nguoi_gui').order_by('-tin_nhan__thoi_gian_gui')
         
         return context
+
+# --- API: LẤY DANH SÁCH NHÓM (Dùng cho AJAX Search/Filter nếu cần) ---
 @login_required
-@require_POST
+def get_my_chat_groups(request):
+    user = request.user
+    query = request.GET.get('q', '').strip()
+    route_id = request.GET.get('route_id', '')
+
+    # 1. Subquery lấy tin nhắn cuối cùng
+    last_msg_qs = ChuyenDiTinNhan.objects.filter(chuyen_di=OuterRef('pk')).order_by('-thoi_gian_gui')
+
+    # 2. Filter cơ bản (User tham gia)
+    my_trips = ChuyenDi.objects.filter(
+        Q(thanh_vien__user=user, thanh_vien__trang_thai_tham_gia='DA_THAM_GIA') | 
+        Q(nguoi_to_chuc=user)
+    ).distinct()
+
+    # 3. Tìm kiếm theo tên
+    if query:
+        my_trips = my_trips.filter(ten_chuyen_di__icontains=query)
+
+    # 4. Lọc theo cung đường (Route)
+    if route_id and route_id != 'all':
+        my_trips = my_trips.filter(cung_duong_id=route_id)
+
+    # 5. Annotate & Order
+    my_trips = my_trips.annotate(
+        last_activity=Subquery(last_msg_qs.values('thoi_gian_gui')[:1]),
+        preview_content=Subquery(last_msg_qs.values('noi_dung')[:1])
+    ).order_by(F('last_activity').desc(nulls_last=True), '-ngay_tao')
+
+    data = []
+    for trip in my_trips:
+        # Format thời gian: Nếu là hôm nay thì hiện giờ, khác thì hiện ngày/tháng
+        time_str = ""
+        if trip.last_activity:
+            now = timezone.now().date()
+            msg_date = trip.last_activity.date()
+            time_str = trip.last_activity.strftime("%H:%M") if msg_date == now else trip.last_activity.strftime("%d/%m")
+
+        # Xử lý cover url an toàn (tránh lỗi nếu ko có method cover_url)
+        cover = trip.cover_url if hasattr(trip, 'cover_url') else (trip.anh_bia.file.url if trip.anh_bia else '/static/images/default-trip.jpg')
+        
+        # Xử lý lấy tên người tổ chức
+        organizer_name = trip.nguoi_to_chuc.get_full_name() or trip.nguoi_to_chuc.username
+
+        data.append({
+            'id': trip.id,
+            'name': trip.ten_chuyen_di,
+            'cover': cover,
+            'url': trip.get_chat_url() if hasattr(trip, 'get_chat_url') else f"/chuyen-di/chat/{trip.pk}/", # Fallback URL
+            'status_name': trip.trang_thai.ten if trip.trang_thai else "",
+            'last_msg': trip.preview_content or "Chưa có tin nhắn",
+            'last_time': time_str,
+            'organizer': organizer_name
+        })
+    
+    return JsonResponse({'groups': data})
+@login_required # Bắt buộc phải đăng nhập
+@require_POST   # Chỉ chấp nhận method POST (chặn GET truy cập trực tiếp)
 def send_chat_message(request, trip_id):
     """API gửi tin nhắn (AJAX) - Có hỗ trợ Reply & File"""
+    
+    # 1. KIỂM TRA DỮ LIỆU CƠ BẢN
     trip = get_object_or_404(ChuyenDi, pk=trip_id)
     
-    # 1. KIỂM TRA QUYỀN (BẮT BUỘC)
-    # User phải là người tổ chức HOẶC thành viên đã tham gia (DA_THAM_GIA)
+    # 2. KIỂM TRA QUYỀN (BẮT BUỘC)
     is_organizer = (trip.nguoi_to_chuc == request.user)
     is_member = trip.thanh_vien.filter(user=request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
     
     if not (is_organizer or is_member):
-        return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền gửi tin nhắn trong nhóm này.'}, status=403)
+        return JsonResponse({'status': 'error', 'message': 'Bạn không có quyền gửi tin nhắn.'}, status=403)
 
-    # 2. LẤY DỮ LIỆU TỪ FORM
+    # 3. LẤY DỮ LIỆU FORM
     noi_dung = request.POST.get('message', '').strip()
     files = request.FILES.getlist('files')
     reply_to_id = request.POST.get('reply_to_id')
 
-    # Nếu không có nội dung và không có file -> Báo lỗi
     if not noi_dung and not files:
-        return JsonResponse({'status': 'error', 'message': 'Tin nhắn không được để trống.'}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'Tin nhắn rỗng.'}, status=400)
 
-    # 3. XỬ LÝ REPLY (TRẢ LỜI TIN NHẮN)
+    # 4. XỬ LÝ REPLY
     reply_obj = None
     if reply_to_id:
         try:
-            # Chỉ cho phép reply tin nhắn thuộc cùng chuyến đi này
             reply_obj = ChuyenDiTinNhan.objects.get(pk=reply_to_id, chuyen_di=trip)
         except (ChuyenDiTinNhan.DoesNotExist, ValueError):
-            pass # Nếu ID không hợp lệ hoặc không tìm thấy thì bỏ qua (gửi tin thường)
+            pass 
 
-    # 4. TẠO TIN NHẮN MỚI
+    # 5. LƯU DỮ LIỆU (Dùng transaction.atomic để đảm bảo toàn vẹn)
     try:
-        tin_nhan = ChuyenDiTinNhan.objects.create(
-            chuyen_di=trip,
-            nguoi_gui=request.user,
-            tra_loi_tin_nhan=reply_obj,
-            noi_dung=noi_dung
-        )
-
-        # 5. XỬ LÝ FILE ĐÍNH KÈM (MEDIA)
-        for f in files:
-            # Xác định loại file dựa trên MIME type
-            if f.content_type.startswith('image'):
-                loai = 'ANH'
-            elif f.content_type.startswith('video'):
-                loai = 'VIDEO'
-            else:
-                loai = 'FILE'
-            
-            # Tính kích thước (KB)
-            size_kb = round(f.size / 1024, 2)
-
-            ChuyenDiTinNhanMedia.objects.create(
-                tin_nhan=tin_nhan,
-                duong_dan_file=f,
-                loai_media=loai,
-                ten_file_goc=f.name,
-                kich_thuoc_file_kb=size_kb
+        with transaction.atomic(): # <--- Bắt đầu giao dịch an toàn
+            # A. Tạo tin nhắn
+            tin_nhan = ChuyenDiTinNhan.objects.create(
+                chuyen_di=trip,
+                nguoi_gui=request.user,
+                tra_loi_tin_nhan=reply_obj,
+                noi_dung=noi_dung
             )
 
+            # B. Xử lý File (Nếu tin nhắn lỗi thì file cũng không được lưu và ngược lại)
+            if files:
+                media_bulk_list = [] # (Tối ưu: gom lại lưu 1 lần nếu muốn, nhưng create từng cái cũng ok)
+                for f in files:
+                    mime = getattr(f, 'content_type', '')
+                    if mime.startswith('image'): loai = 'ANH'
+                    elif mime.startswith('video'): loai = 'VIDEO'
+                    else: loai = 'FILE'
+                    
+                    size_kb = round(f.size / 1024, 2)
+
+                    ChuyenDiTinNhanMedia.objects.create(
+                        tin_nhan=tin_nhan,
+                        duong_dan_file=f,
+                        loai_media=loai,
+                        ten_file_goc=f.name,
+                        kich_thuoc_file_kb=size_kb
+                    )
+        
+        # Nếu chạy đến đây tức là không có lỗi -> Trả về Success
         return JsonResponse({'status': 'success', 'msg_id': tin_nhan.id})
 
     except Exception as e:
-        # Log lỗi nếu cần thiết
+        # Nếu có lỗi trong khối atomic, mọi thứ sẽ được rollback (hoàn tác)
         print(f"Lỗi gửi tin nhắn: {str(e)}")
-        return JsonResponse({'status': 'error', 'message': 'Có lỗi xảy ra phía server.'}, status=500)
+        return JsonResponse({'status': 'error', 'message': 'Lỗi Server: ' + str(e)}, status=500)
     
 # @login_required
 # def get_chat_messages(request, trip_id):
@@ -615,105 +680,126 @@ def send_chat_message(request, trip_id):
 #     return JsonResponse({'messages': data})
 @login_required
 def get_chat_messages(request, trip_id):
-    """API lấy tin nhắn (Realtime: New messages + Updates for old messages)"""
-    trip = get_object_or_404(ChuyenDi, pk=trip_id)
-    
-    # 1. Check quyền
-    is_organizer = (trip.nguoi_to_chuc == request.user)
-    is_member = trip.thanh_vien.filter(user=request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
-    if not (is_organizer or is_member):
-        return JsonResponse({'status': 'error'}, status=403)
-
-    # Base QuerySet
-    messages_qs = ChuyenDiTinNhan.objects.filter(chuyen_di=trip)\
-        .select_related('nguoi_gui__taikhoanhoso', 'tra_loi_tin_nhan__nguoi_gui')\
-        .prefetch_related('media', 'likes', 'dislikes')\
-        .order_by('thoi_gian_gui')
+    """API lấy tin nhắn tối ưu (Chỉ lấy 50 tin gần nhất khi mới vào)"""
+    try:
+        trip = get_object_or_404(ChuyenDi, pk=trip_id)
         
-    last_id = request.GET.get('last_id', 0)
-    try: last_id = int(last_id)
-    except: last_id = 0
-    
-    # A. Lấy tin nhắn MỚI (ID > last_id)
-    new_msgs = messages_qs.filter(id__gt=last_id)
+        # 1. Check quyền
+        is_organizer = (trip.nguoi_to_chuc == request.user)
+        is_member = trip.thanh_vien.filter(user=request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
+        if not (is_organizer or is_member):
+            return JsonResponse({'status': 'error', 'message': 'Forbidden'}, status=403)
 
-    # B. Lấy tin nhắn CŨ cần cập nhật (ID <= last_id)
-    # Để đơn giản và hiệu quả, ta lấy 20 tin nhắn cuối cùng để check update realtime (Like/Delete)
-    # Trong thực tế production có thể dùng Redis/Websocket để tối ưu hơn
-    old_msgs_to_check = messages_qs.filter(id__lte=last_id).order_by('-id')[:20]
-
-    # Hàm Helper Format dữ liệu (Dùng chung cho cả mới và cũ)
-    def format_msg_data(msg):
-        # 1. Media
-        media_list = []
-        if not msg.da_xoa:
-            for m in msg.media.all():
-                if m.duong_dan_file:
-                    media_list.append({
-                        'url': m.duong_dan_file.url,
-                        'type': m.loai_media,
-                        'name': m.ten_file_goc
-                    })
+        # 2. Base QuerySet (Tối ưu query DB)
+        messages_qs = ChuyenDiTinNhan.objects.filter(chuyen_di=trip)\
+            .select_related('nguoi_gui__taikhoanhoso', 'tra_loi_tin_nhan__nguoi_gui')\
+            .prefetch_related('media', 'likes', 'dislikes')
+            
+        last_id = request.GET.get('last_id', 0)
+        try: 
+            last_id = int(last_id)
+        except (ValueError, TypeError): 
+            last_id = 0
         
-        # 2. Avatar
-        avatar_url = '/static/images/default-avatar.png'
-        if hasattr(msg.nguoi_gui, 'taikhoanhoso'):
-            hoso = msg.nguoi_gui.taikhoanhoso
-            user_avatar = getattr(hoso, 'avatar', None) or getattr(hoso, 'anh_dai_dien', None)
-            if user_avatar:
-                try: avatar_url = user_avatar.url
-                except ValueError: pass
+        # 3. LOGIC LẤY TIN NHẮN (QUAN TRỌNG)
+        if last_id == 0:
+            # === MỚI VÀO PHÒNG: CHỈ LẤY 50 TIN CUỐI CÙNG ===
+            # Lấy 50 tin mới nhất (sắp xếp giảm dần để slice)
+            last_50_msgs = messages_qs.order_by('-thoi_gian_gui')[:50]
+            # Đảo ngược lại để hiển thị đúng thứ tự thời gian (Cũ -> Mới)
+            new_msgs = reversed(last_50_msgs) 
+        else:
+            # === REALTIME: LẤY CÁC TIN MỚI HƠN LAST_ID ===
+            new_msgs = messages_qs.filter(id__gt=last_id).order_by('thoi_gian_gui')
 
-        # 3. Reply
-        reply_data = None
-        if msg.tra_loi_tin_nhan:
-            if msg.tra_loi_tin_nhan.da_xoa:
-                reply_data = {'id': 0, 'username': 'Hệ thống', 'content': 'Tin nhắn đã bị thu hồi'}
-            else:
-                reply_content = msg.tra_loi_tin_nhan.noi_dung or "[File phương tiện]"
-                reply_data = {
-                    'id': msg.tra_loi_tin_nhan.id,
-                    'username': msg.tra_loi_tin_nhan.nguoi_gui.username,
-                    'content': reply_content
+        # Lấy tin cũ để check update (Like/Xóa)
+        old_msgs_to_check = messages_qs.filter(id__lte=last_id).order_by('-id')[:20]
+
+        # 4. Hàm Format Data (Giữ nguyên logic chuẩn)
+        def format_msg_data(msg):
+            # Media
+            media_list = []
+            if not msg.da_xoa:
+                for m in msg.media.all():
+                    if m.duong_dan_file:
+                        media_list.append({
+                            'url': m.duong_dan_file.url,
+                            'type': m.loai_media,
+                            'name': m.ten_file_goc
+                        })
+            
+            # Avatar
+            avatar_url = '/static/images/default-avatar.png'
+            if hasattr(msg.nguoi_gui, 'taikhoanhoso'):
+                hoso = msg.nguoi_gui.taikhoanhoso
+                user_avatar = getattr(hoso, 'avatar', None) or getattr(hoso, 'anh_dai_dien', None)
+                if user_avatar:
+                    try: avatar_url = user_avatar.url
+                    except ValueError: pass
+
+            # Reply
+            reply_data = None
+            if msg.tra_loi_tin_nhan:
+                if msg.tra_loi_tin_nhan.da_xoa:
+                    reply_data = {'id': 0, 'username': 'Hệ thống', 'content': 'Tin nhắn đã bị thu hồi'}
+                else:
+                    reply_content = msg.tra_loi_tin_nhan.noi_dung or "[File phương tiện]"
+                    reply_data = {
+                        'id': msg.tra_loi_tin_nhan.id,
+                        'username': msg.tra_loi_tin_nhan.nguoi_gui.username,
+                        'content': reply_content
+                    }
+
+            # Reactions & Content
+            is_liked = request.user in msg.likes.all()
+            is_disliked = request.user in msg.dislikes.all()
+            final_content = msg.noi_dung
+            if msg.da_xoa: final_content = "Tin nhắn đã bị thu hồi."
+
+            # Timezone Safe
+            try:
+                local_time = timezone.localtime(msg.thoi_gian_gui)
+                now = timezone.localtime(timezone.now())
+                if local_time.date() == now.date():
+                    time_str = local_time.strftime("%H:%M")
+                else:
+                    time_str = local_time.strftime("%d/%m %H:%M")
+                iso_date = local_time.isoformat()
+            except:
+                time_str = msg.thoi_gian_gui.strftime("%H:%M")
+                iso_date = str(msg.thoi_gian_gui)
+
+            return {
+                'id': msg.id,
+                'user_id': msg.nguoi_gui.id,
+                'username': msg.nguoi_gui.get_full_name() or msg.nguoi_gui.username,
+                'avatar': avatar_url,
+                'content': final_content,
+                'timestamp': time_str,
+                'full_date': iso_date,
+                'is_me': msg.nguoi_gui == request.user,
+                'media': media_list,
+                'reply': reply_data,
+                'is_deleted': msg.da_xoa,
+                'reactions': {
+                    'likes_count': msg.likes.count(),
+                    'dislikes_count': msg.dislikes.count(),
+                    'user_liked': is_liked,
+                    'user_disliked': is_disliked
                 }
-
-        # 4. Reactions & Content
-        is_liked = request.user in msg.likes.all()
-        is_disliked = request.user in msg.dislikes.all()
-        
-        final_content = msg.noi_dung
-        if msg.da_xoa:
-            final_content = "Tin nhắn đã bị thu hồi."
-
-        return {
-            'id': msg.id,
-            'user_id': msg.nguoi_gui.id,
-            'username': msg.nguoi_gui.get_full_name() or msg.nguoi_gui.username,
-            'avatar': avatar_url,
-            'content': final_content,
-            'timestamp': msg.thoi_gian_gui.strftime("%H:%M"),
-            'full_date': msg.thoi_gian_gui.isoformat(),
-            'is_me': msg.nguoi_gui == request.user,
-            'media': media_list,
-            'reply': reply_data,
-            'is_deleted': msg.da_xoa,
-            'reactions': {
-                'likes_count': msg.likes.count(),
-                'dislikes_count': msg.dislikes.count(),
-                'user_liked': is_liked,
-                'user_disliked': is_disliked
             }
-        }
 
-    # Gom dữ liệu
-    data_messages = [format_msg_data(m) for m in new_msgs]
-    data_updates = [format_msg_data(m) for m in old_msgs_to_check]
-        
-    return JsonResponse({
-        'messages': data_messages, # Tin mới -> Append
-        'updates': data_updates    # Tin cũ -> Update UI (Like/Delete)
-    })
-
+        data_messages = [format_msg_data(m) for m in new_msgs]
+        data_updates = [format_msg_data(m) for m in old_msgs_to_check]
+            
+        return JsonResponse({
+            'messages': data_messages,
+            'updates': data_updates
+        })
+    except Exception as e:
+        print(f"CHAT ERROR: {e}") # In lỗi ra terminal để debug
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
 @login_required
 @require_POST
 def delete_chat_message(request, msg_id):
