@@ -1,28 +1,49 @@
 {% load humanize %}
 
-<a href="{{ trip.get_absolute_url }}" class="trip-card">
+<a href="{% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}javascript:void(0){% else %}{{ trip.get_absolute_url }}{% endif %}" 
+   class="trip-card {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}js-locked-trip{% endif %}"
+   {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}data-bs-toggle="modal" data-bs-target="#tripCodeModal"data-trip-id="{{ trip.pk }}" {% endif %}>
+   
     <div class="card-img-wrapper">
-        <!-- 1. ẢNH BÌA (Dùng hàm cover_url trong model) -->
-        <img src="{{ trip.cover_url }}" 
-             class="card-img" 
-             alt="{{ trip.ten_chuyen_di }}" 
-             loading="lazy">
+        <img src="{{ trip.cover_url }}" class="card-img" alt="{{ trip.ten_chuyen_di }}" loading="lazy">
         
-        <!-- 2. TRẠNG THÁI (Lấy màu động từ status_color) -->
-<span class="badge rounded-pill shadow-sm text-white fw-bold trip-status-badge"
-      data-color="{{ trip.status_color|default_if_none:'#10b981'|escape }}"
-      style="
-         position: absolute;
-         top: 12px;
-         right: 12px;
-         z-index: 10;
-         letter-spacing: 0.5px;
-         backdrop-filter: blur(2px);
-      ">
-    {{ trip.status_name|default:"Sắp diễn ra" }}
-</span>
+        {# --- 1. BADGE RIÊNG TƯ / CÔNG KHAI (Góc Trái Trên) --- #}
+        <span class="badge-privacy {% if trip.che_do_rieng_tu == 'RIENG_TU' %}bg-private{% else %}bg-public{% endif %}">
+            {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
+                <i class="fas fa-lock"></i> Riêng tư
+            {% else %}
+                <i class="fas fa-globe-asia"></i> Công khai
+            {% endif %}
+        </span>
+
+        {# --- 2. TRẠNG THÁI NGƯỜI DÙNG (Nằm ngay dưới badge privacy) --- #}
+        {% if user.is_authenticated %}
+            {% if trip.nguoi_to_chuc == user %}
+                <span class="badge-user-status bg-warning text-dark"><i class="fas fa-crown"></i> Trưởng đoàn</span>
+            {% elif trip.user_status == 'DA_THAM_GIA' %}
+                <span class="badge-user-status bg-success"><i class="fas fa-check-circle"></i> Đã tham gia</span>
+            {% elif trip.user_status == 'DA_GUI_YEU_CAU' %}
+                <span class="badge-user-status bg-info"><i class="fas fa-clock"></i> Chờ duyệt</span>
+            {% elif trip.user_status == 'BI_TU_CHOI' %}
+                <span class="badge-user-status bg-danger"><i class="fas fa-ban"></i> Bị từ chối</span>
+            {% endif %}
+        {% endif %}
+
+        {# --- 3. TRẠNG THÁI TRIP (Góc Phải Trên) --- #}
+        <span class="badge rounded-pill shadow-sm text-white fw-bold trip-status-badge"
+              data-color="{{ trip.status_color|default_if_none:'#10b981'|escape }}"
+              style="position: absolute; top: 12px; right: 12px; z-index: 10; backdrop-filter: blur(2px);">
+            {{ trip.status_name|default:"Sắp diễn ra" }}
+        </span>
         
-        <!-- 3. GIÁ TIỀN -->
+        {# --- 4. ĐỘ KHÓ (Góc Trái Dưới) --- #}
+        {% if trip.cung_duong.do_kho %}
+        <span class="badge-level">
+            <i class="fas fa-mountain"></i> {{ trip.cung_duong.do_kho.ten }}
+        </span>
+        {% endif %}
+
+        {# --- 5. GIÁ TIỀN (Góc Phải Dưới) --- #}
         <span class="badge-price">
             {% if trip.chi_phi_uoc_tinh > 0 %}
                 {{ trip.chi_phi_uoc_tinh|intcomma }}<small>VND</small>
@@ -30,12 +51,13 @@
                 Miễn phí
             {% endif %}
         </span>
-
-        <!-- 4. ĐỘ KHÓ (Nếu có) -->
-        {% if trip.cung_duong.do_kho %}
-        <span class="badge-level">
-            <i class="fas fa-mountain me-1"></i>{{ trip.cung_duong.do_kho.ten }}
-        </span>
+        
+        {# --- 6. OVERLAY Ổ KHÓA (Khi bị khóa) --- #}
+        {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}
+        <div class="locked-overlay">
+            <i class="fas fa-lock mb-1"></i>
+            <span>Nhập mã</span>
+        </div>
         {% endif %}
     </div>
 
@@ -44,24 +66,30 @@
             {{ trip.ten_chuyen_di }}
         </h3>
         
+        {# Cảnh báo khóa #}
+        {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}
+        <div class="text-warning small mb-2 fw-bold d-flex align-items-center">
+            <i class="fas fa-key me-2"></i> Yêu cầu mã tham gia
+        </div>
+        {% endif %}
+
         <div class="card-location">
             <i class="fas fa-map-marker-alt text-danger"></i>
             <span>{{ trip.cung_duong.tinh_thanh.ten }} • {{ trip.cung_duong.ten }}</span>
         </div>
 
         <div class="card-meta">
-            <div class="meta-item" title="Ngày khởi hành">
+            <div class="meta-item">
                 <i class="far fa-calendar-alt text-primary"></i>
                 {{ trip.ngay_bat_dau|date:"d/m/Y" }}
             </div>
             
-            <div class="meta-item" title="Tổng thời gian">
+            <div class="meta-item">
                 <i class="far fa-clock text-warning"></i>
                 {{ trip.thoi_gian_display }}
             </div>
         </div>
 
-        <!-- 5. HASHTAGS (Hiển thị tối đa 3 thẻ) -->
         {% if trip.tags.all %}
         <div class="card-tags">
             {% for tag in trip.tags.all|slice:":3" %} 
@@ -79,37 +107,24 @@
             {% if trip.nguoi_to_chuc.taikhoanhoso.avatar %}
                 <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar.url }}" alt="Avatar">
             {% else %}
-                <div class="default-avatar">
-                    {{ trip.nguoi_to_chuc.username|slice:":1"|upper }}
-                </div>
+                <div class="default-avatar">{{ trip.nguoi_to_chuc.username|slice:":1"|upper }}</div>
             {% endif %}
             <div class="organizer-info">
-                <span class="label">Tổ chức bởi</span>
-                <span class="name">{{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}</span>
+                <span class="label">Host</span>
+                <span class="name text-truncate" style="max-width: 100px;">{{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}</span>
             </div>
         </div>
         
-        <!-- 6. SLOT (Màu đỏ nếu full, màu xanh nếu còn chỗ) -->
-        <div class="slots {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-success{% endif %}" 
-             title="Đã tham gia / Tổng số chỗ">
-            <i class="fas fa-user-friends"></i> 
-            {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}
+        <div class="slots {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-success{% endif %}">
+            <i class="fas fa-user-friends"></i> {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}
         </div>
     </div>
 </a>
-{% comment %} Ensure badges get their dynamic color without putting Django expressions inside style attr (avoids template/parser highlighting issues) {% endcomment %}
+
 <script>
 (function(){
-    // set background-color from data-color for all badges in this partial
     document.querySelectorAll('.trip-status-badge').forEach(function(el){
-        try {
-            var c = el.dataset.color;
-            if (c) {
-                el.style.backgroundColor = c;
-                // ensure readable text
-                el.classList.add('text-white');
-            }
-        } catch(e) { /* ignore */ }
+        try { var c = el.dataset.color; if (c) { el.style.backgroundColor = c; el.classList.add('text-white'); } } catch(e) {}
     });
 })();
 </script>

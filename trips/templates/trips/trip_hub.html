@@ -365,21 +365,38 @@
         font-weight: 700;
     }
     
-    .badge-level {
-        position: absolute;
-        top: 14px;
-        left: 14px;
-        font-size: 0.7rem;
-        font-weight: 800;
-        padding: 6px 12px;
-        border-radius: 100px;
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-        color: #78350f;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
-        z-index: 2;
-    }
+/* --- Badge Cấp độ (Độ khó) --- */
+.badge-level {
+    /* 1. Vị trí: Góc Trái Dưới */
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    z-index: 10; /* Đảm bảo nổi lên trên ảnh */
+
+    /* 2. Màu sắc: Gradient Vàng Cam -> Chữ Nâu Đậm (Tương phản tốt) */
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #78350f; 
+
+    /* 3. Kích thước & Font */
+    font-size: 0.7rem;
+    font-weight: 800; /* Chữ đậm */
+    text-transform: uppercase; /* Viết hoa toàn bộ */
+    letter-spacing: 0.5px;
+    padding: 6px 12px;
+    border-radius: 100px; /* Bo tròn dạng viên thuốc */
+
+    /* 4. Hiệu ứng & Căn chỉnh */
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); /* Đổ bóng màu cam */
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Khoảng cách giữa icon núi và chữ */
+}
+
+/* Chỉnh icon núi nhỏ lại một chút cho cân đối */
+.badge-level i {
+    font-size: 0.75rem;
+    margin-bottom: 1px; /* Căn chỉnh icon cho thẳng hàng với chữ */
+}
 
     /* Card Body */
     .card-body {
@@ -614,6 +631,49 @@
             grid-template-columns: 1fr;
         }
     }
+    .badge-privacy {
+    position: absolute;
+    top: 14px;
+    left: 14px; /* Góc trái trên */
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+    z-index: 15;
+    text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Badge Trạng thái User (Tham gia, chờ duyệt...) */
+.badge-user-status {
+    position: absolute;
+    top: 45px; /* Nằm dưới badge privacy */
+    left: 14px;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    z-index: 15;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Hiệu ứng khi bị khóa */
+.js-locked-trip {
+    cursor: not-allowed;
+}
+.js-locked-trip:hover {
+    border-color: #f59e0b; /* Viền vàng cảnh báo */
+}
+.js-locked-trip:hover::before {
+    background: linear-gradient(90deg, #f59e0b, #d97706); /* Đổi thanh line trên cùng sang vàng */
+}
+
 </style>
 {% endblock %}
 
@@ -738,23 +798,27 @@
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <div class="modal-header border-0 bg-light rounded-top-4 pb-0">
-                <h5 class="modal-title fw-bold fs-6 text-uppercase text-muted">Mã chuyến đi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <!-- Tiêu đề sẽ đổi bằng JS -->
+                <h5 class="modal-title fw-bold fs-6 text-uppercase text-muted" id="modalTitle">...</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4 text-center">
                 <div class="mb-3">
                     <div style="width: 60px; height: 60px; background: #fff7ed; color: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
-                        <i class="fas fa-qrcode fs-2"></i>
+                        <i class="fas fa-key fs-2"></i>
                     </div>
                 </div>
-                <h6 class="fw-bold mb-2">Bạn có mã tham gia?</h6>
-                <p class="text-muted small mb-3">Nhập mã để truy cập trực tiếp chuyến đi riêng tư hoặc công khai.</p>
                 
+                <p class="text-muted small mb-3" id="modalDesc">...</p>
+                
+                <!-- INPUT ẨN: Lưu ID trip cần mở khóa (Nếu có) -->
+                <input type="hidden" id="target-trip-id" value="">
+
                 <input type="text" id="popup-trip-code" class="form-control form-control-lg text-center fw-bold mb-3" 
                        placeholder="Nhập mã..." style="letter-spacing: 1px; font-size: 1.1rem;">
                 
-                <button onclick="submitTripCode()" class="btn btn-warning w-100 fw-bold text-white">
-                    <i class="fas fa-search me-1"></i> Tìm & Truy cập
+                <button onclick="handleTripCodeSubmit()" class="btn btn-warning w-100 fw-bold text-white">
+                    <i class="fas fa-arrow-right me-1"></i> Tiếp tục
                 </button>
             </div>
         </div>
@@ -827,58 +891,155 @@
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
-    // Xử lý khi nhấn Enter trong ô input
-    document.getElementById('popup-trip-code').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') submitTripCode();
+    $(document).ready(function() {
+        // --- 1. KÍCH HOẠT SELECT2 CHO TAGS (CHỌN NHIỀU) ---
+        // Tìm tất cả các ô select có class 'select2' (đã khai báo trong forms.py)
+        $('.select2').select2({
+            theme: "bootstrap-5", // Sử dụng theme Bootstrap 5 cho đẹp
+            width: '100%',        // Full chiều rộng
+            placeholder: $(this).data('placeholder'), // Lấy placeholder từ attribute HTML
+            allowClear: true,     // Cho phép xóa chọn
+            closeOnSelect: false, // Giữ menu mở để chọn tiếp nhiều cái
+            language: {
+                noResults: function() {
+                    return "Không tìm thấy kết quả";
+                }
+            }
+        });
+
+        // --- 2. XỬ LÝ NHẬP MÃ TRIP (Code cũ của bạn) ---
+        // Xử lý khi nhấn Enter trong ô input
+        const popupInput = document.getElementById('popup-trip-code');
+        if (popupInput) {
+            popupInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') submitTripCode();
+            });
+        }
+
+        // Auto focus vào ô input khi mở modal
+        const tripModal = document.getElementById('tripCodeModal');
+        if (tripModal) {
+            tripModal.addEventListener('show.bs.modal', function (event) {
+                // Nút/Card vừa được bấm
+                const button = event.relatedTarget; 
+                
+                // Các phần tử trong modal
+                const inputId = document.getElementById('target-trip-id');
+                const inputCode = document.getElementById('popup-trip-code');
+                const title = document.getElementById('modalTitle');
+                const desc = document.getElementById('modalDesc');
+
+                // Reset dữ liệu cũ
+                inputCode.value = '';
+                inputId.value = '';
+
+                // KIỂM TRA LOGIC
+                if (button && button.hasAttribute('data-trip-id')) {
+                    // TRƯỜNG HỢP 1: Bấm vào Card bị khóa -> CHẾ ĐỘ XÁC THỰC
+                    // Lấy ID từ card bỏ vào ô ẩn
+                    const tripId = button.getAttribute('data-trip-id');
+                    inputId.value = tripId; 
+                    
+                    title.innerText = "Mở khóa Trip Riêng Tư";
+                    desc.innerText = "Nhập mã để xem nội dung chuyến đi này.";
+                    inputCode.placeholder = "Mã bảo mật...";
+                } else {
+                    // TRƯỜNG HỢP 2: Bấm nút Sidebar -> CHẾ ĐỘ TÌM KIẾM
+                    // Ô ẩn để rỗng
+                    inputId.value = ""; 
+                    
+                    title.innerText = "Tìm kiếm Chuyến đi";
+                    desc.innerText = "Nhập mã chuyến đi bất kỳ để truy cập nhanh.";
+                    inputCode.placeholder = "Nhập mã tìm kiếm...";
+                }
+            });
+
+            // Focus vào ô nhập
+            tripModal.addEventListener('shown.bs.modal', function () {
+                document.getElementById('popup-trip-code').focus();
+            });
+        }
+
+        // Enter để submit
+        document.getElementById('popup-trip-code').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleTripCodeSubmit();
+        });
     });
 
-    function submitTripCode() {
-        const codeInput = document.getElementById('popup-trip-code');
-        const code = codeInput.value.trim();
-        
+    // --- HÀM XỬ LÝ CHÍNH ---
+    function handleTripCodeSubmit() {
+        const tripId = document.getElementById('target-trip-id').value; // Lấy ID (nếu có)
+        const code = document.getElementById('popup-trip-code').value.trim();
+        const btn = document.querySelector('button[onclick="handleTripCodeSubmit()"]');
+        const inputCode = document.getElementById('popup-trip-code');
+
         if (!code) {
-            alert("Vui lòng nhập mã chuyến đi!");
-            codeInput.focus();
+            alert("Vui lòng nhập mã!");
+            inputCode.focus();
             return;
         }
 
-        const btn = document.querySelector('button[onclick="submitTripCode()"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tìm...';
+        // Loading UI
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
         btn.disabled = true;
 
-        // Gọi API tìm kiếm
-        fetch(`{% url 'trips:find_trip_by_code' %}?code=${code}`)
+        if (tripId) {
+            // ============================================================
+            // LOGIC 1: MỞ KHÓA TRIP CỤ THỂ (Strict Mode)
+            // ============================================================
+            // Chỉ gọi API verify của ĐÚNG tripId đó.
+            // Nếu mã đúng của trip khác -> API trả về lỗi -> Không chuyển trang.
+            
+            const verifyUrl = `/chuyen-di/${tripId}/verify-access/`; 
+            const fd = new FormData();
+            fd.append('access_code', code);
+
+            fetch(verifyUrl, {
+                method: 'POST',
+                body: fd,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Nếu tìm thấy -> Chuyển hướng ngay
-                    // Vì session đã được set ở server, nên vào trang chi tiết sẽ tự mở khóa
-                    window.location.href = data.url;
+                    // Mã đúng -> Reload để vào trang chi tiết
+                    window.location.reload(); 
                 } else {
-                    alert(data.message);
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    codeInput.value = '';
-                    codeInput.focus();
+                    // Mã sai (hoặc mã của trip khác) -> Báo lỗi
+                    alert("Mã không đúng với chuyến đi này!");
+                    resetBtn(btn, oldText, inputCode);
                 }
             })
-            .catch(err => {
-                console.error(err);
-                alert("Lỗi kết nối đến máy chủ.");
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
+            .catch(() => { alert("Lỗi hệ thống."); resetBtn(btn, oldText, inputCode); });
+
+        } else {
+            // ============================================================
+            // LOGIC 2: TÌM KIẾM TỰ DO (Search Mode)
+            // ============================================================
+            // Gọi API tìm kiếm chung -> Có mã nào đi trip đó
+            
+            fetch(`{% url 'trips:find_trip_by_code' %}?code=${code}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = data.url;
+                    } else {
+                        alert(data.message);
+                        resetBtn(btn, oldText, inputCode);
+                    }
+                })
+                .catch(() => { alert("Lỗi kết nối."); resetBtn(btn, oldText, inputCode); });
+        }
     }
-    
-    // Auto focus vào ô input khi mở modal
-    const tripModal = document.getElementById('tripCodeModal');
-    if (tripModal) {
-        tripModal.addEventListener('shown.bs.modal', function () {
-            document.getElementById('popup-trip-code').focus();
-        });
+
+    function resetBtn(btn, text, input) {
+        btn.innerHTML = text;
+        btn.disabled = false;
+        input.value = '';
+        input.focus();
     }
 </script>
-
 {% endblock %}

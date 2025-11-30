@@ -31,28 +31,28 @@ class TripHubView(ListView):
     paginate_by = 12 
 
     def get_queryset(self):
-        # =========================================================
-        # 1. QUERY CƠ BẢN & TỐI ƯU HÓA (Eager Loading)
-        # =========================================================
-        queryset = ChuyenDi.objects.filter(che_do_rieng_tu='CONG_KHAI').select_related(
-            'cung_duong', 
-            'cung_duong__tinh_thanh', 
-            'cung_duong__do_kho',        # Để lọc độ khó nhanh hơn
-            'nguoi_to_chuc__taikhoanhoso', 
-            'trang_thai', 
-            'anh_bia'
-        ).prefetch_related(
-            'tags'                       # [QUAN TRỌNG] Lấy Hashtag để hiển thị ở Card
-        ).annotate(
-            # Đếm số thành viên ĐÃ tham gia (để lọc full slot)
-            so_thanh_vien_tham_gia=Count('thanh_vien', filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA')),
-            
-            # Tính thời lượng (Duration) = Ngày về - Ngày đi
-            # Kết quả trả về dạng timedelta
-            duration=ExpressionWrapper(
-                F('ngay_ket_thuc') - F('ngay_bat_dau'),
-               output_field=DurationField()
+        # 1. BỎ FILTER 'CONG_KHAI' ĐỂ HIỆN TẤT CẢ (Hoặc tùy logic của bạn)
+        queryset = ChuyenDi.objects.select_related(
+            'cung_duong', 'cung_duong__tinh_thanh', 'cung_duong__do_kho',
+            'nguoi_to_chuc__taikhoanhoso', 'trang_thai', 'anh_bia'
+        ).prefetch_related('tags')
+
+        # 2. LẤY TRẠNG THÁI THAM GIA CỦA USER HIỆN TẠI (Annotate)
+        if self.request.user.is_authenticated:
+            # Subquery lấy trạng thái từ bảng trung gian ChuyenDiThanhVien
+            status_subquery = ChuyenDiThanhVien.objects.filter(
+                chuyen_di=OuterRef('pk'),
+                user=self.request.user
+            ).values('trang_thai_tham_gia')[:1]
+
+            queryset = queryset.annotate(
+                user_status=Subquery(status_subquery)
             )
+
+        # 3. GIỮ NGUYÊN CÁC ANNOTATE KHÁC
+        queryset = queryset.annotate(
+            so_thanh_vien_tham_gia=Count('thanh_vien', filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA')),
+            duration=ExpressionWrapper(F('ngay_ket_thuc') - F('ngay_bat_dau'), output_field=DurationField())
         )
 
         # =========================================================
@@ -301,8 +301,8 @@ def find_trip_by_code(request):
         return JsonResponse({
             'status': 'success',
             'url': trip.get_absolute_url()
-        })
-    else:
+        }) 
+    else: 
         return JsonResponse({
             'status': 'error', 
             'message': 'Không tìm thấy chuyến đi nào với mã này.'
