@@ -275,6 +275,53 @@ class TripUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 # ==========================================================
 # === 3. CÁC VIEW CHI TIẾT & API (Giữ nguyên phần lớn) ===
 # ==========================================================
+def find_trip_by_code(request):
+    """Tìm chuyến đi và cấp quyền truy cập ngay nếu mã đúng"""
+    code = request.GET.get('code', '').strip()
+    
+    if not code:
+        return JsonResponse({'status': 'error', 'message': 'Vui lòng nhập mã chuyến đi.'})
+
+    # Tìm chuyến đi có mã bắt đầu bằng chuỗi nhập vào
+    # Lưu ý: Chuyển UUID sang chuỗi để so sánh startswith
+    trip = None
+    all_trips = ChuyenDi.objects.all()
+    
+    # Cách so sánh thủ công để hỗ trợ startswith cho UUID field (hoặc dùng filter nếu DB hỗ trợ cast)
+    for t in all_trips:
+        if str(t.ma_moi).startswith(code):
+            trip = t
+            break
+
+    if trip:
+        # --- LOGIC MỚI: Cấp quyền ngay lập tức ---
+        # Nếu mã đúng, lưu session luôn để vào trang chi tiết không bị hỏi lại
+        request.session[f'access_granted_{trip.pk}'] = True
+        
+        return JsonResponse({
+            'status': 'success',
+            'url': trip.get_absolute_url()
+        })
+    else:
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'Không tìm thấy chuyến đi nào với mã này.'
+        })
+
+# 2. API XÁC THỰC MÃ TRUY CẬP (Dùng cho trang Detail Riêng tư)
+@require_POST
+def verify_trip_access_code(request, pk):
+    trip = get_object_or_404(ChuyenDi, pk=pk)
+    code = request.POST.get('access_code', '').strip()
+
+    # So sánh mã (Cho phép nhập 8 ký tự đầu hoặc full)
+    if str(trip.ma_moi).startswith(code):
+        # QUAN TRỌNG: Lưu vào Session để lần sau không hỏi lại (trong phiên làm việc này)
+        request.session[f'access_granted_{trip.pk}'] = True
+        return JsonResponse({'status': 'success', 'message': 'Mã chính xác. Đang truy cập...'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Mã chuyến đi không đúng.'})
+    
 
 class TripDetailView(DetailView):
     model = ChuyenDi
@@ -290,15 +337,35 @@ class TripDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         trip = self.object
         user = self.request.user
-        trip.so_thanh_vien_tham_gia = trip.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
         
-        context['is_organizer'] = (user.is_authenticated and trip.nguoi_to_chuc == user)
+        # --- LOGIC QUYỀN TRUY CẬP RIÊNG TƯ ---
+        is_organizer = (user.is_authenticated and trip.nguoi_to_chuc == user)
         membership = None
         if user.is_authenticated:
             membership = trip.thanh_vien.filter(user=user).first()
         
+        is_member = (membership and membership.trang_thai_tham_gia == 'DA_THAM_GIA')
+        
+        # Kiểm tra Session xem đã nhập mã đúng lần nào chưa
+        has_session_access = self.request.session.get(f'access_granted_{trip.pk}', False)
+
+        # Flag: Cho phép xem nội dung hay không?
+        # Xem được nếu: Công khai HOẶC Là chủ HOẶC Là thành viên HOẶC Đã nhập mã đúng
+        can_view_details = (
+            trip.che_do_rieng_tu == 'CONG_KHAI' or 
+            is_organizer or 
+            is_member or 
+            has_session_access
+        )
+
+        context['can_view_details'] = can_view_details
+        # --------------------------------------
+
+        # Các context cũ giữ nguyên
+        trip.so_thanh_vien_tham_gia = trip.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
+        context['is_organizer'] = is_organizer
         context['membership'] = membership
-        context['is_member'] = (membership and membership.trang_thai_tham_gia == 'DA_THAM_GIA')
+        context['is_member'] = is_member
         
         if context['is_organizer']:
             context['pending_requests'] = trip.thanh_vien.filter(trang_thai_tham_gia='DA_GUI_YEU_CAU')

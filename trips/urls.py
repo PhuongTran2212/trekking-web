@@ -51,5 +51,7 @@ urlpatterns = [
     path('chat/delete/<int:msg_id>/', views.delete_chat_message, name='chat_delete'),
     path('chat/react/<int:msg_id>/', views.react_chat_message, name='chat_react'),
     path('chat/api/my-groups/', views.get_my_chat_groups, name='get_my_chat_groups'),
+    path('api/find-by-code/', views.find_trip_by_code, name='find_trip_by_code'),
+    path('<int:pk>/verify-access/', views.verify_trip_access_code, name='verify_trip_access'),
     
 ]

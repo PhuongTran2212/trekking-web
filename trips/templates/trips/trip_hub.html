@@ -733,14 +733,72 @@
         </div>
         {% endif %}
     </aside>
+<!-- === 2. MODAL POPUP NHẬP MÃ (Đặt ở cuối file, trước endblock) === -->
+<div class="modal fade" id="tripCodeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 bg-light rounded-top-4 pb-0">
+                <h5 class="modal-title fw-bold fs-6 text-uppercase text-muted">Mã chuyến đi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <div style="width: 60px; height: 60px; background: #fff7ed; color: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-qrcode fs-2"></i>
+                    </div>
+                </div>
+                <h6 class="fw-bold mb-2">Bạn có mã tham gia?</h6>
+                <p class="text-muted small mb-3">Nhập mã để truy cập trực tiếp chuyến đi riêng tư hoặc công khai.</p>
+                
+                <input type="text" id="popup-trip-code" class="form-control form-control-lg text-center fw-bold mb-3" 
+                       placeholder="Nhập mã..." style="letter-spacing: 1px; font-size: 1.1rem;">
+                
+                <button onclick="submitTripCode()" class="btn btn-warning w-100 fw-bold text-white">
+                    <i class="fas fa-search me-1"></i> Tìm & Truy cập
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <main>
-        <div class="page-header">
-            <h1>{{ page_title }}</h1>
-            <p>
+<div class="page-header mb-4">
+    <!-- Sử dụng d-flex để chia layout: 
+         - flex-column flex-md-row: Mobile xếp dọc, PC xếp ngang
+         - justify-content-between: Đẩy 2 phần sang 2 đầu trái/phải 
+         - align-items-end: Căn chỉnh đáy (hoặc center nếu muốn giữa) -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        
+        <!-- PHẦN 1: TIÊU ĐỀ (BÊN TRÁI) -->
+        <div>
+            <h1 class="mb-1">{{ page_title }}</h1>
+            <p class="mb-0 text-muted">
                 Tìm thấy <strong>{{ paginator.count|default:trips.count }}</strong> chuyến đi phù hợp với bạn
             </p>
         </div>
+
+        <!-- PHẦN 2: NÚT NHẬP MÃ (BÊN PHẢI) -->
+        <!-- Đặt min-width để nút không bị co quá nhỏ -->
+        <div style="min-width: 220px;">
+            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
+                <div class="p-3 cursor-pointer position-relative d-flex align-items-center justify-content-between" 
+                     data-bs-toggle="modal" data-bs-target="#tripCodeModal"
+                     style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; cursor: pointer; transition: 0.3s;">
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-qrcode fs-4"></i> <!-- Icon to hơn chút -->
+                        <div>
+                            <h6 class="fw-bold mb-0 text-uppercase" style="font-size: 0.85rem;">Nhập mã Trip</h6>
+                            <small style="font-size: 0.7rem; opacity: 0.9; display: block; line-height: 1;">Tham gia ngay</small>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right opacity-50 ms-3"></i>
+                </div>
+            </div>
+        </div>
+            <!-- ============================================= -->
+        </div>
+</div>
 
         <div class="trip-grid">
             {% for trip in trips %}
@@ -770,13 +828,57 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#id_tinh_thanh, #id_tags').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            allowClear: true,
-            placeholder: 'Chọn...'
-        });
+    // Xử lý khi nhấn Enter trong ô input
+    document.getElementById('popup-trip-code').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') submitTripCode();
     });
+
+    function submitTripCode() {
+        const codeInput = document.getElementById('popup-trip-code');
+        const code = codeInput.value.trim();
+        
+        if (!code) {
+            alert("Vui lòng nhập mã chuyến đi!");
+            codeInput.focus();
+            return;
+        }
+
+        const btn = document.querySelector('button[onclick="submitTripCode()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tìm...';
+        btn.disabled = true;
+
+        // Gọi API tìm kiếm
+        fetch(`{% url 'trips:find_trip_by_code' %}?code=${code}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Nếu tìm thấy -> Chuyển hướng ngay
+                    // Vì session đã được set ở server, nên vào trang chi tiết sẽ tự mở khóa
+                    window.location.href = data.url;
+                } else {
+                    alert(data.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    codeInput.value = '';
+                    codeInput.focus();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Lỗi kết nối đến máy chủ.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+    
+    // Auto focus vào ô input khi mở modal
+    const tripModal = document.getElementById('tripCodeModal');
+    if (tripModal) {
+        tripModal.addEventListener('shown.bs.modal', function () {
+            document.getElementById('popup-trip-code').focus();
+        });
+    }
 </script>
+
 {% endblock %}
