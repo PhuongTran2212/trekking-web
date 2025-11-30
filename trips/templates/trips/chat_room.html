@@ -312,10 +312,11 @@
     }
     
     .msg-content { 
-        max-width: 65%; 
+        max-width: 75%; /* Tăng chiều rộng tối đa lên 75% */
         display: flex; 
         flex-direction: column;
         gap: 4px;
+        min-width: 0; /* Quan trọng: giúp flex item co lại đúng cách khi nội dung quá dài */
     }
     
     .msg-row.me .msg-content { 
@@ -338,7 +339,13 @@
         font-size: 0.95rem; 
         line-height: 1.5;
         position: relative; 
-        word-wrap: break-word;
+        
+        /* Cấu hình xuống dòng cho text dài */
+        overflow-wrap: break-word;
+        word-wrap: break-word; 
+        word-break: break-word; /* Hỗ trợ ngắt từ tốt hơn */
+        
+        max-width: 100%; /* Đảm bảo không tràn khỏi container cha */
     }
     
     /* Bubble của người khác */
@@ -374,6 +381,15 @@
         border-left-color: rgba(255,255,255,0.7); 
         color: white; 
     }
+
+    /* FEATURE MỚI: Cắt ngắn nội dung reply bằng CSS Height + JS Truncate */
+    .reply-content-truncate {
+        display: block; /* Bỏ -webkit-box */
+        line-height: 1.4em; /* Chiều cao 1 dòng */
+        max-height: 2.8em; /* Giới hạn đúng 2 dòng (1.4 * 2) */
+        overflow: hidden; /* Ẩn phần dư nếu JS cắt chưa chuẩn */
+        word-wrap: break-word;
+    }
     
     /* --- FEATURE: Message Time --- */
     .msg-time {
@@ -388,6 +404,15 @@
     }
     .msg-row:not(.me) .msg-time {
         color: var(--text-sub);
+    }
+
+    /* --- FEATURE MỚI: Highlight tìm kiếm --- */
+    .highlight-text {
+        background-color: #fde047; /* Vàng */
+        color: #000;
+        font-weight: bold;
+        border-radius: 2px;
+        padding: 0 2px;
     }
 
     /* --- Nút Reply Action --- */
@@ -431,7 +456,15 @@
     }
     #reply-context-bar.show { display: flex; }
     .reply-to-label { font-weight: 700; color: var(--primary); font-size: 0.8rem; }
-    .reply-preview-text { color: var(--text-sub); font-size: 0.85rem; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .reply-preview-text { 
+        color: var(--text-sub); 
+        font-size: 0.85rem; 
+        max-width: 300px; 
+        /* Cắt ngắn ở thanh input */
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+    }
 
     @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
@@ -920,10 +953,77 @@
         document.getElementById('chat-search').focus();
     }
 
+    // === SEARCH & HIGHLIGHT LOGIC ===
+    function highlightSearchTerm(element, term) {
+        if (!term) return;
+        
+        // Dùng TreeWalker để duyệt qua các node văn bản an toàn, tránh làm hỏng HTML tags
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+        const textNodes = [];
+        let node;
+        while(node = walker.nextNode()) {
+            textNodes.push(node);
+        }
+
+        textNodes.forEach(textNode => {
+            const text = textNode.nodeValue;
+            const lowerText = text.toLowerCase();
+            const index = lowerText.indexOf(term);
+            
+            if (index !== -1) {
+                const parent = textNode.parentNode;
+                // Bỏ qua nếu đã highlight rồi hoặc nằm trong thẻ script/style
+                if (parent.classList.contains('highlight-text') || ['SCRIPT', 'STYLE'].includes(parent.tagName)) return;
+
+                // Tách node văn bản và chèn thẻ span highlight
+                const range = document.createRange();
+                range.setStart(textNode, index);
+                range.setEnd(textNode, index + term.length);
+                
+                const highlightSpan = document.createElement('span');
+                highlightSpan.className = 'highlight-text';
+                
+                try {
+                    range.surroundContents(highlightSpan);
+                } catch(e) {
+                    // Bỏ qua lỗi phức tạp nếu cấu trúc DOM quá rối
+                }
+            }
+        });
+    }
+
+    function resetHighlight(element) {
+        // Tìm tất cả các span highlight và trả lại nội dung gốc
+        const highlights = element.querySelectorAll('.highlight-text');
+        highlights.forEach(span => {
+            const parent = span.parentNode;
+            parent.replaceChild(document.createTextNode(span.textContent), span);
+            parent.normalize(); // Gộp các text node liền kề lại
+        });
+    }
+
     document.getElementById('chat-search').addEventListener('keyup', function() {
         const term = this.value.toLowerCase();
-        document.querySelectorAll('.msg-row').forEach(m => {
-            m.style.display = m.innerText.toLowerCase().includes(term) ? 'flex' : 'none';
+        const msgRows = document.querySelectorAll('.msg-row');
+
+        msgRows.forEach(row => {
+            const bubble = row.querySelector('.msg-bubble');
+            if (!bubble) return;
+
+            // 1. Reset highlight cũ
+            resetHighlight(bubble);
+
+            // 2. Kiểm tra và filter
+            const textContent = bubble.textContent.toLowerCase();
+            if (term && !textContent.includes(term)) {
+                row.style.display = 'none';
+            } else {
+                row.style.display = 'flex';
+                // 3. Highlight mới nếu có từ khóa
+                if (term) {
+                    highlightSearchTerm(bubble, term);
+                }
+            }
         });
     });
 
@@ -951,10 +1051,20 @@
         }
     }
 
+    // Helper JS truncate string
+    function truncateString(str, num) {
+        if (!str) return '';
+        if (str.length <= num) {
+            return str;
+        }
+        return str.slice(0, num) + '...';
+    }
+
     function startReply(id, username, content) {
         document.getElementById('reply-id-input').value = id;
         document.getElementById('reply-to-user').innerText = username;
-        document.getElementById('reply-to-content').innerText = content || "[File phương tiện]";
+        // Cắt ngắn trong input reply preview luôn cho gọn
+        document.getElementById('reply-to-content').innerText = truncateString(content || "[File phương tiện]", 60);
         document.getElementById('reply-context-bar').classList.add('show');
         document.getElementById('msg-input').focus();
     }
@@ -1011,12 +1121,16 @@
             }
 
             // Logic xử lý Reply (Trích dẫn tin nhắn cũ)
+            // UPDATE: Dùng JS truncate kết hợp CSS max-height
             let replyHtml = '';
             if (msg.reply) {
+                // Giới hạn khoảng 80-100 ký tự để giả lập 2 dòng
+                const truncatedContent = truncateString(msg.reply.content, 90);
+                
                 replyHtml = `
                     <div class="msg-reply-bubble" onclick="document.getElementById('msg-${msg.reply.id}')?.scrollIntoView({behavior: 'smooth', block: 'center'})">
                         <div class="fw-bold mb-1" style="color: ${isMe ? '#e6f4ea' : 'var(--primary)'}">${msg.reply.username}</div>
-                        <div class="text-truncate">${msg.reply.content}</div>
+                        <div class="reply-content-truncate" title="${msg.reply.content}">${truncatedContent}</div>
                     </div>
                 `;
             }
