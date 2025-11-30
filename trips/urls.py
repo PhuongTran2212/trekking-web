@@ -48,4 +48,7 @@ urlpatterns = [
     path('chat/<int:trip_id>/', views.TripChatRoomView.as_view(), name='chat_room'),
     path('chat/<int:trip_id>/send/', views.send_chat_message, name='chat_send'),
     path('chat/<int:trip_id>/get-messages/', views.get_chat_messages, name='chat_get_messages'),
+    path('chat/delete/<int:msg_id>/', views.delete_chat_message, name='chat_delete'),
+    path('chat/react/<int:msg_id>/', views.react_chat_message, name='chat_react'),
+    
 ]

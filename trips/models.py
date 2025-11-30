@@ -32,6 +32,15 @@ def validate_file_size(value):
         raise ValidationError("Kích thước file tối đa là 10MB.")
     return value
 
+def chat_media_path(instance, filename):
+    """
+    Lưu file chat vào: media/trip_chat_media/ten-chuyen-di/username/filename
+    """
+    # Slugify tên chuyến đi để đảm bảo tên thư mục an toàn (không dấu, không khoảng trắng)
+    trip_name = slugify(instance.tin_nhan.chuyen_di.ten_chuyen_di)
+    user_name = instance.tin_nhan.nguoi_gui.username
+    return os.path.join('trip_chat_media', trip_name, user_name, filename)
+
 # ==========================================================
 # === 1. MODEL CHUYẾN ĐI (CORE MODEL) ===
 # ==========================================================
@@ -254,24 +263,32 @@ class ChuyenDiTinNhan(models.Model):
     tra_loi_tin_nhan = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True, related_name='cac_tra_loi')
     noi_dung = models.TextField(blank=True, null=True)
     thoi_gian_gui = models.DateTimeField(auto_now_add=True)
-
+    # --- MỚI: Tính năng nâng cao ---
+    da_xoa = models.BooleanField(default=False)
+    likes = models.ManyToManyField(User, related_name='liked_messages', blank=True)
+    dislikes = models.ManyToManyField(User, related_name='disliked_messages', blank=True)
     class Meta:
         ordering = ['thoi_gian_gui']
         indexes = [
             models.Index(fields=['chuyen_di', 'thoi_gian_gui']), # Tối ưu load chat
         ]
+    def __str__(self):
+        return f"Msg {self.id} from {self.nguoi_gui}"
 
 class ChuyenDiTinNhanMedia(models.Model):
     tin_nhan = models.ForeignKey(ChuyenDiTinNhan, on_delete=models.CASCADE, related_name='media')
     LOAI_MEDIA_CHOICES = [('ANH', 'Ảnh'), ('VIDEO', 'Video'), ('FILE', 'File')]
-    loai_media = models.CharField(max_length=10, choices=LOAI_MEDIA_CHOICES)
+    loai_media = models.CharField(max_length=10, choices=LOAI_MEDIA_CHOICES, default='ANH')
     
-    # Thêm validator
-    duong_dan_file = models.FileField(upload_to='trip_chat_media/', validators=[validate_file_size]) 
+    # Sử dụng hàm chat_media_path để lưu file vào cấu trúc thư mục mong muốn
+    duong_dan_file = models.FileField(upload_to=chat_media_path, validators=[validate_file_size]) 
     
     thu_tu = models.PositiveSmallIntegerField(default=0)
     ten_file_goc = models.CharField(max_length=255, blank=True, null=True)
-    kich_thuoc_file_kb = models.IntegerField(blank=True, null=True)
+    kich_thuoc_file_kb = models.FloatField(default=0, blank=True, null=True)
+
+    def __str__(self):
+        return f"Media for msg {self.tin_nhan.id}"
 
 # ==========================================================
 # === 6. MODEL NHẬT KÝ HÀNH TRÌNH (GPS TRACKING) ===
