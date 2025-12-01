@@ -1,21 +1,23 @@
-from django.http import JsonResponse, Http404
+import os
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, Http404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
-from django.views.decorators.http import require_POST
-from .models import CongDongMediaBaiViet
+from django.contrib.contenttypes.models import ContentType
+
+# IMPORT FORMS
+from .forms import BaiVietForm, MediaBaiVietForm, BinhLuanForm, BaoCaoForm
+
+# IMPORT MODELS
 from .models import (
     CongDongBaiViet, 
     CongDongMediaBaiViet, 
     CongDongBinhChonBaiViet,
     CongDongBinhLuan
 )
-from .forms import BaiVietForm, MediaBaiVietForm, BinhLuanForm
-from django.contrib.contenttypes.models import ContentType
-from .forms import BaoCaoForm
 from core.models import HeThongBaoCao
 
 def danh_sach_bai_viet(request):
@@ -44,21 +46,14 @@ def danh_sach_bai_viet(request):
 
 
 def chi_tiet_bai_viet(request, bai_viet_id):
-    """
-    Hiển thị chi tiết bài viết, bình luận và xử lý việc đăng bình luận
-    theo mẫu Post/Redirect/Get.
-    """
     qs = CongDongBaiViet.objects.select_related('tac_gia', 'chuyen_di') \
                                 .prefetch_related('media', 'binh_luan__user', 'binh_luan__cac_tra_loi__user')
     bai_viet = get_object_or_404(qs, id=bai_viet_id)
 
-    # Kiểm tra quyền truy cập: bài viết phải được duyệt HOẶC người xem là tác giả
     is_approved = bai_viet.trang_thai == CongDongBaiViet.TrangThaiBaiViet.DA_DUYET
     if not is_approved and bai_viet.tac_gia != request.user:
         raise Http404("Bài viết chưa được duyệt hoặc không tồn tại.")
     
-    # --- XỬ LÝ YÊU CẦU POST ---
-    # Chỉ xử lý POST nếu bài viết đã được duyệt
     if is_approved and request.method == 'POST':
         if not request.user.is_authenticated:
             messages.error(request, 'Bạn cần đăng nhập để bình luận.')
@@ -82,18 +77,10 @@ def chi_tiet_bai_viet(request, bai_viet_id):
             binh_luan.save()
             messages.success(request, 'Đã thêm bình luận thành công.')
         else:
-            error_message = "Đã có lỗi xảy ra. Vui lòng kiểm tra lại nội dung bình luận."
-            if form.errors:
-                first_error_field = list(form.errors.keys())[0]
-                first_error_message = form.errors[first_error_field][0]
-                error_message = f"Lỗi: {first_error_message}"
-
-            messages.error(request, error_message)
+            messages.error(request, "Đã có lỗi xảy ra với bình luận.")
         
         return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet.id)
 
-    # --- CHUẨN BỊ DỮ LIỆU CHO YÊU CẦU GET ---
-    
     binh_luan_goc = bai_viet.binh_luan.filter(tra_loi_binh_luan__isnull=True)
     da_upvote = False
     form = None
@@ -122,7 +109,7 @@ def tao_bai_viet(request):
             bai_viet = form.save(commit=False)
             bai_viet.tac_gia = request.user
             bai_viet.trang_thai = CongDongBaiViet.TrangThaiBaiViet.CHO_DUYET
-            bai_viet.save()
+            bai_viet.save() # Lưu để có ID tạo folder media
             
             form.save_m2m()
 
@@ -146,7 +133,7 @@ def tao_bai_viet(request):
 
 @login_required
 def sua_bai_viet(request, bai_viet_id):
-    """Chỉnh sửa bài viết"""
+    """Chỉnh sửa bài viết: Reset bình luận và bình chọn khi lưu"""
     bai_viet = get_object_or_404(CongDongBaiViet, id=bai_viet_id, tac_gia=request.user)
 
     if request.method == 'POST':
@@ -155,11 +142,29 @@ def sua_bai_viet(request, bai_viet_id):
 
         if form.is_valid():
             bai_viet = form.save(commit=False)
+            
+            # --- LOGIC MỚI: RESET DỮ LIỆU ---
+            # 1. Đưa trạng thái về chờ duyệt
             bai_viet.trang_thai = CongDongBaiViet.TrangThaiBaiViet.CHO_DUYET
+            
+            # 2. Reset số lượt bình chọn về 0
+            bai_viet.luot_binh_chon = 0
+            
+            # 3. Xóa lịch sử ai đã bình chọn (để họ có thể vote lại từ đầu)
+            # Lưu ý: 'binh_chon' là related_name trong models.py
+            bai_viet.binh_chon.all().delete()
+            
+            # 4. Xóa toàn bộ bình luận cũ
+            # Lưu ý: 'binh_luan' là related_name trong models.py
+            bai_viet.binh_luan.all().delete()
+            # --------------------------------
+
             bai_viet.save()
             
+            # Lưu tags
             form.save_m2m()
 
+            # Xử lý media mới (giữ nguyên code cũ của bạn)
             for file in files:
                 loai_media = 'video' if file.content_type.startswith('video') else 'anh'
                 CongDongMediaBaiViet.objects.create(
@@ -170,7 +175,7 @@ def sua_bai_viet(request, bai_viet_id):
                 if hasattr(file, 'close'):
                     file.close()
 
-            messages.success(request, 'Bài viết đã được cập nhật và đang chờ duyệt lại.')
+            messages.success(request, 'Bài viết đã được chỉnh sửa.')
             return redirect('community:bai-viet-cua-toi')
     else:
         form = BaiVietForm(instance=bai_viet)
@@ -180,20 +185,16 @@ def sua_bai_viet(request, bai_viet_id):
 
 @login_required
 def xoa_bai_viet(request, bai_viet_id):
-    """Xóa bài viết"""
     bai_viet = get_object_or_404(CongDongBaiViet, id=bai_viet_id, tac_gia=request.user)
-
     if request.method == 'POST':
         bai_viet.delete()
         messages.success(request, 'Đã xóa bài viết.')
         return redirect('community:bai-viet-cua-toi')
-
     return render(request, 'community/xoa_bai_viet.html', {'bai_viet': bai_viet})
 
 
 @login_required
 def bai_viet_cua_toi(request):
-    """Hiển thị danh sách bài viết của người dùng hiện tại"""
     bai_viet_list = (
         CongDongBaiViet.objects
         .filter(tac_gia=request.user)
@@ -201,18 +202,15 @@ def bai_viet_cua_toi(request):
         .prefetch_related('media')
         .order_by('-ngay_dang')
     )
-
     paginator = Paginator(bai_viet_list, 10)
     page_number = request.GET.get('page')
     bai_viet = paginator.get_page(page_number)
-
     return render(request, 'community/bai_viet_cua_toi.html', {'bai_viet': bai_viet})
 
 
 @login_required
 @require_POST
 def toggle_upvote(request, bai_viet_id):
-    """Toggle upvote cho bài viết (AJAX)"""
     bai_viet = get_object_or_404(CongDongBaiViet, id=bai_viet_id)
     
     if bai_viet.trang_thai != CongDongBaiViet.TrangThaiBaiViet.DA_DUYET:
@@ -244,38 +242,48 @@ def toggle_upvote(request, bai_viet_id):
         'is_approved': True
     })
 
-
-
+# --- HÀM XÓA MEDIA ĐÃ ĐƯỢC FIX ---
 @login_required
 @require_POST
 def xoa_media(request, media_id):
-    """Xóa media của bài viết một cách an toàn và ghi lại lỗi (AJAX)"""
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-    if not is_ajax:
-        return JsonResponse({'success': False, 'error': 'Yêu cầu không hợp lệ.'}, status=400)
+    """
+    Xóa media (ảnh/video). 
+    Fix lỗi: Ưu tiên xóa DB trước hoặc bất chấp lỗi file lock để đảm bảo UI cập nhật.
+    """
+    # 1. Lấy object hoặc 404
+    media = get_object_or_404(CongDongMediaBaiViet, id=media_id)
+
+    # 2. Kiểm tra quyền
+    if media.bai_viet.tac_gia != request.user and not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Bạn không có quyền xóa media này.'}, status=403)
 
     try:
-        media = get_object_or_404(CongDongMediaBaiViet, id=media_id)
+        # 3. Thử xóa file vật lý
+        if media.duong_dan_file:
+            try:
+                path = media.duong_dan_file.path
+                if os.path.isfile(path):
+                    if hasattr(media.duong_dan_file, 'close'):
+                        media.duong_dan_file.close() # Đóng file
+                    os.remove(path)
+            except Exception as e:
+                # Nếu Windows lock file, in lỗi ra console nhưng VẪN TIẾP TỤC xóa DB
+                print(f"Window Lock Warning: Không xóa được file vật lý {media_id}. Lỗi: {e}")
 
-        if media.bai_viet.tac_gia != request.user:
-            return JsonResponse({'success': False, 'error': 'Bạn không có quyền thực hiện hành động này.'}, status=403)
-
-        media.duong_dan_file.delete(save=False)
+        # 4. XÓA DATABASE (BẮT BUỘC)
         media.delete()
 
         return JsonResponse({'success': True})
 
     except Exception as e:
-        print(f"LỖI KHI XÓA MEDIA (ID: {media_id}): {e}")
-        return JsonResponse({'success': False, 'error': 'Đã có lỗi xảy ra từ phía máy chủ.'}, status=500)
-
+        print(f"CRITICAL ERROR khi xóa media ID {media_id}: {e}")
+        return JsonResponse({'success': False, 'error': 'Lỗi server khi xóa dữ liệu.'}, status=500)
+# ---------------------------------
 
 @login_required
 @require_POST
 def xoa_binh_luan(request, binh_luan_id):
-    """Xóa bình luận"""
     binh_luan = get_object_or_404(CongDongBinhLuan, id=binh_luan_id)
-
     if binh_luan.user != request.user and not request.user.is_staff:
         messages.error(request, 'Bạn không có quyền xóa bình luận này.')
         return redirect('community:chi-tiet-bai-viet', bai_viet_id=binh_luan.bai_viet.id)
@@ -283,20 +291,13 @@ def xoa_binh_luan(request, binh_luan_id):
     bai_viet_id = binh_luan.bai_viet.id
     binh_luan.delete()
     messages.success(request, 'Đã xóa bình luận.')
-
     return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet_id)
 
 @login_required
 def bao_cao_bai_viet(request, bai_viet_id):
-    """
-    View để xử lý việc báo cáo một bài viết (CongDongBaiViet).
-    """
     bai_viet = get_object_or_404(CongDongBaiViet, id=bai_viet_id)
-    
-    # Lấy ContentType của model CongDongBaiViet
     content_type = ContentType.objects.get_for_model(bai_viet)
 
-    # Kiểm tra xem người dùng đã báo cáo đối tượng này chưa
     da_bao_cao = HeThongBaoCao.objects.filter(
         nguoi_bao_cao=request.user,
         content_type=content_type,
@@ -312,10 +313,9 @@ def bao_cao_bai_viet(request, bai_viet_id):
         if form.is_valid():
             bao_cao = form.save(commit=False)
             bao_cao.nguoi_bao_cao = request.user
-            # Gán đối tượng bị báo cáo thông qua GenericForeignKey
             bao_cao.content_object = bai_viet
             bao_cao.save()
-            messages.success(request, 'Cảm ơn bạn đã gửi báo cáo. Chúng tôi sẽ xem xét sớm nhất có thể.')
+            messages.success(request, 'Cảm ơn bạn đã gửi báo cáo.')
             return redirect('community:chi-tiet-bai-viet', bai_viet_id=bai_viet.id)
     else:
         form = BaoCaoForm()

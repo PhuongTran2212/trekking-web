@@ -1,18 +1,34 @@
+import os
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils import timezone
+from django.utils.text import slugify # Import để xử lý tên file
 from core.models import The
 from trips.models import ChuyenDi
+
+# --- HÀM TẠO ĐƯỜNG DẪN MEDIA ---
+def tao_duong_dan_media(instance, filename):
+    """
+    Tạo đường dẫn: community/slug-tieu-de/id-bai-viet/filename
+    Giúp quản lý file gọn gàng và tránh trùng lặp.
+    """
+    # Chuyển tiêu đề thành slug (ví dụ: "Ảnh Đẹp" -> "anh-dep")
+    # Nếu bài viết chưa có tiêu đề (lúc tạo mới chưa save), dùng 'unsaved'
+    tieu_de = instance.bai_viet.tieu_de if instance.bai_viet.tieu_de else "unsaved"
+    slug = slugify(tieu_de)[:50] # Lấy tối đa 50 ký tự slug
+    
+    # ID bài viết
+    bai_viet_id = str(instance.bai_viet.id)
+    
+    return os.path.join('community', slug, bai_viet_id, filename)
+# -------------------------------
 
 class CongDongBaiViet(models.Model):
     """Model cho bài viết trong cộng đồng"""
     def get_absolute_url(self):
-        """Lấy URL để xem chi tiết bài viết."""
         return reverse('community:chi-tiet-bai-viet', args=[self.id])
 
     def get_edit_url(self):
-        """Lấy URL để chỉnh sửa bài viết."""
         return reverse('community:sua-bai-viet', args=[self.id])
        
     class TrangThaiBaiViet(models.TextChoices):
@@ -93,8 +109,9 @@ class CongDongMediaBaiViet(models.Model):
         choices=LoaiMedia.choices,
         verbose_name="Loại media"
     )
+    # SỬ DỤNG HÀM TẠO ĐƯỜNG DẪN MỚI TẠI ĐÂY
     duong_dan_file = models.FileField(
-        upload_to='community/',
+        upload_to=tao_duong_dan_media, 
         verbose_name="File"
     )
     ngay_tai_len = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tải lên")
@@ -171,6 +188,3 @@ class CongDongBinhLuan(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.bai_viet.tieu_de}"
-    
-    def so_luong_tra_loi(self):
-        return self.cac_tra_loi.count()

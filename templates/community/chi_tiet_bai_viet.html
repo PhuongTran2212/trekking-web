@@ -69,11 +69,44 @@
     .badge-primary { background: var(--primary-lightest); color: var(--primary-dark); padding: 8px 14px; border-radius: 20px; text-decoration: none; font-weight: 600; border: 1px solid var(--primary-light); }
     .badge-primary:hover { background: var(--primary-medium); color: white; }
 
-    /* Media Gallery & Lightbox */
-    .post-media-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 1.5rem; }
-    .media-item { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 12px; cursor: pointer; background: var(--gray-100); animation: scaleIn 0.5s ease-out backwards; }
+    /* --- Media Gallery & Lightbox (UPDATED) --- */
+    .post-media-gallery { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+        gap: 12px; 
+        margin-top: 1.5rem; 
+    }
+    .media-item { 
+        position: relative; 
+        aspect-ratio: 1; 
+        overflow: hidden; 
+        border-radius: 12px; 
+        cursor: pointer; 
+        background: var(--gray-100); 
+        animation: scaleIn 0.5s ease-out backwards; 
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .media-item:hover { transform: scale(1.02); transition: transform 0.2s; }
     .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
-    .video-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2.5rem; pointer-events: none; }
+    
+    .video-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2.5rem; pointer-events: none; z-index: 2; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+    /* Overlay cho ảnh thứ 4 khi có nhiều hơn 4 ảnh */
+    .media-item-more { 
+        position: absolute; 
+        inset: 0; 
+        background: rgba(0, 0, 0, 0.6); 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        color: white; 
+        font-size: 2rem; 
+        font-weight: 700; 
+        backdrop-filter: blur(2px);
+        transition: background 0.3s;
+        z-index: 5;
+    }
+    .media-item:hover .media-item-more { background: rgba(0, 0, 0, 0.5); }
 
     .lightbox-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.98); padding-top: 50px; }
     .lightbox-content-wrapper { display: flex; justify-content: center; align-items: center; height: 85%; flex-direction: column; }
@@ -81,7 +114,7 @@
     .lightbox-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; cursor: pointer; z-index: 10001; }
     .lightbox-prev, .lightbox-next { cursor: pointer; position: absolute; top: 50%; padding: 16px; color: white; font-size: 30px; z-index: 10000; background: rgba(77, 113, 17, 0.4); border-radius: 8px; margin-top: -50px; }
     .lightbox-next { right: 20px; } .lightbox-prev { left: 20px; }
-    .lightbox-counter { color: #ccc; margin-top: 20px; }
+    .lightbox-counter { color: #ccc; margin-top: 20px; font-weight: 600; font-size: 1.1rem; }
 
     /* Interaction Bar */
     .post-interaction-section { 
@@ -142,19 +175,14 @@
     .btn-remove-tag { background: none; border: none; color: var(--primary-medium); font-size: 1.1rem; margin-left: 6px; cursor: pointer; }
 
     /* --- COMMENT ITEM STYLES --- */
-    .comment-item { 
-        display: flex; 
-        gap: 12px; 
-        margin-bottom: 12px; /* CẬP NHẬT: Giảm khoảng cách giữa các bình luận từ 20px -> 12px */
-        animation: fadeInUp 0.5s ease-out backwards; 
-    }
+    .comment-item { display: flex; gap: 12px; margin-bottom: 12px; animation: fadeInUp 0.5s ease-out backwards; }
     .avatar-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-lightest); flex-shrink: 0; }
     .avatar-img-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-lightest); flex-shrink: 0; }
     .comment-body { flex: 1; }
 
     .comment-bubble {
         background: var(--gray-100);
-        padding: 8px 14px; /* CẬP NHẬT: Giảm padding trên/dưới cho gọn */
+        padding: 8px 14px;
         border-radius: 18px;
         display: block;
         width: fit-content; 
@@ -166,45 +194,19 @@
     .comment-author { font-size: 0.95rem; color: var(--primary-dark); font-weight: 700; }
     .comment-content { font-size: 0.95rem; color: var(--gray-700); margin-top: 2px; line-height: 1.4; }
     
-    /* CẬP NHẬT: Kéo nút Trả lời/Xóa lên gần bong bóng hơn */
-    .comment-meta { 
-        font-size: 0.8rem; 
-        color: var(--gray-500); 
-        margin: 4px 0 0 12px; /* Giảm margin-top từ 6px -> 4px */
-        display: flex; 
-        gap: 16px; 
-    }
+    .comment-meta { font-size: 0.8rem; color: var(--gray-500); margin: 4px 0 0 12px; display: flex; gap: 16px; }
     
     .btn-reply, .btn-delete { background: none; border: none; padding: 0; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
     .btn-reply { color: var(--gray-500); } .btn-reply:hover { color: var(--primary-medium); }
     .btn-delete { color: #ef4444; }
 
-    /* Styles cho phần hiển thị phản hồi */
-    .comment-replies { 
-        margin-top: 6px; /* CẬP NHẬT: Giảm khoảng cách trên */
-        padding-left: 10px; 
-        border-left: 2px solid var(--primary-light); 
-        margin-left: 22px; 
-    }
-    
-    .reply-item { display: flex; gap: 10px; margin-top: 8px; } /* CẬP NHẬT: Giảm margin-top */
+    .comment-replies { margin-top: 6px; padding-left: 10px; border-left: 2px solid var(--primary-light); margin-left: 22px; }
+    .reply-item { display: flex; gap: 10px; margin-top: 8px; }
     .reply-body .comment-bubble { background: rgba(124, 179, 66, 0.08); font-size: 0.9rem; }
     .reply-tag-link { font-weight: 700; color: var(--primary-dark); text-decoration: none; margin-right: 5px; }
 
-    /* Nút xem phản hồi */
     .view-replies-trigger {
-        background: none;
-        border: none;
-        color: var(--gray-600);
-        font-weight: 600;
-        font-size: 0.85rem;
-        cursor: pointer;
-        margin-left: 12px;
-        margin-top: 4px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: color 0.2s;
+        background: none; border: none; color: var(--gray-600); font-weight: 600; font-size: 0.85rem; cursor: pointer; margin-left: 12px; margin-top: 4px; display: flex; align-items: center; gap: 6px; transition: color 0.2s;
     }
     .view-replies-trigger:hover { color: var(--primary-dark); text-decoration: underline; }
     .view-replies-trigger svg { width: 14px; height: 14px; transition: transform 0.3s ease; }
@@ -215,6 +217,7 @@
         .post-detail-title { font-size: 1.75rem; }
         .post-detail-meta { flex-direction: column; }
         .comment-replies { margin-left: 10px; }
+        .post-media-gallery { grid-template-columns: repeat(2, 1fr); }
     }
 </style>
 {% endblock %}
@@ -270,22 +273,38 @@
             </div>
             {% endif %}
 
+            <!-- MEDIA GALLERY SECTION (UPDATED) -->
             {% if bai_viet.media.all %}
             <div class="post-media-section" style="margin-bottom: 2rem;">
                 <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary-dark);">Album ảnh & Video</h4>
+                
                 <div class="post-media-gallery">
-                    {% for media in bai_viet.media.all %}
-                    <div class="media-item" onclick="openLightbox({{ forloop.counter0 }})">
-                        {% if media.loai_media == 'anh' %}
-                            <img src="{{ media.duong_dan_file.url }}" alt="Hình ảnh bài viết" loading="lazy">
-                        {% elif media.loai_media == 'video' %}
-                            <video><source src="{{ media.duong_dan_file.url }}" type="video/mp4"></video>
-                            <div class="video-play-icon">▶</div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                    {% with media_list=bai_viet.media.all %}
+                        {% for media in media_list %}
+                            {# Chỉ hiển thị tối đa 4 item #}
+                            {% if forloop.counter <= 4 %}
+                                <div class="media-item" onclick="openLightbox({{ forloop.counter0 }})">
+                                    {% if media.loai_media == 'anh' %}
+                                        <img src="{{ media.duong_dan_file.url }}" alt="Hình ảnh bài viết" loading="lazy">
+                                    {% elif media.loai_media == 'video' %}
+                                        <video><source src="{{ media.duong_dan_file.url }}" type="video/mp4"></video>
+                                        <div class="video-play-icon">▶</div>
+                                    {% endif %}
+
+                                    {# Nếu là item thứ 4 VÀ tổng số item > 4 thì hiện lớp phủ #}
+                                    {% if forloop.counter == 4 and media_list|length > 4 %}
+                                        <div class="media-item-more">
+                                            +{{ media_list|length|add:"-4" }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
                 </div>
             </div>
+
+            <!-- Dữ liệu JS vẫn chứa toàn bộ ảnh để Lightbox hoạt động đúng -->
             <script>
                 const galleryData = [
                     {% for media in bai_viet.media.all %}

@@ -6,7 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/community.css' %}">
 <style>
-  /* === STYLE CHUNG (Giống trang Tạo bài viết) === */
+  /* === 1. CSS GIAO DIỆN FORM === */
   .edit-post-container { max-width: 900px; margin: 2rem auto; }
   .edit-post-card { background: var(--surface-primary, #fff); border-radius: var(--radius-lg, 12px); box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1)); overflow: hidden; }
   .edit-post-header { background: linear-gradient(135deg, var(--primary-dark, #4D7111) 0%, var(--primary-medium, #C3E956) 100%); padding: 1.5rem 2rem; color: white; }
@@ -15,53 +15,46 @@
   .form-group { margin-bottom: 1.5rem; }
   .form-label { display: block; font-weight: 600; color: var(--text-primary, #1a1a1a); margin-bottom: 0.5rem; font-size: 0.95rem; }
   .form-control { width: 100%; padding: 0.75rem 1rem; border: 2px solid var(--border-light, #e0e0e0); border-radius: var(--radius-md, 8px); font-size: 1rem; transition: all 0.2s ease; background: var(--surface-primary, #fff); }
-  .form-control:focus { outline: none; border-color: var(--primary-medium, #C3E956); box-shadow: 0 0 0 3px rgba(195, 233, 86, 0.1); }
   
-  /* Style cho Tags */
+  /* Tags */
   .tag-checkbox-container { background: var(--surface-secondary, #f8f9fa); border: 2px solid var(--border-light, #e0e0e0); border-radius: var(--radius-md, 8px); padding: 1.5rem; max-height: 300px; overflow-y: auto; }
   .tag-checkbox-container ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
   .tag-checkbox-container li { display: flex; align-items: center; }
   .tag-checkbox-container input[type="checkbox"] { width: 18px; height: 18px; margin-right: 0.5rem; cursor: pointer; accent-color: var(--primary-medium, #C3E956); }
-  .tag-checkbox-container label { cursor: pointer; font-size: 0.95rem; color: var(--text-secondary, #666); user-select: none; }
   
-  /* === MEDIA GALLERY STYLES (Dành riêng cho trang Edit để hiện ảnh cũ) === */
+  /* Media Thumbnails */
   .media-section { margin-bottom: 1.5rem; }
   .media-section-title { font-weight: 600; color: var(--text-primary, #1a1a1a); margin-bottom: 1rem; font-size: 0.95rem; }
-  .post-media-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-  .media-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-md, 8px); overflow: hidden; background: var(--surface-secondary, #f0f2f5); cursor: pointer; transition: transform 0.2s ease; }
-  .media-item:hover { transform: scale(1.02); }
+  .post-media-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .media-item { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--surface-secondary, #f0f2f5); cursor: pointer; border: 1px solid #ddd; }
+  .media-item:hover { transform: scale(1.02); transition: transform 0.2s; }
   .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
   
   .delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.95); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
   .delete-btn:hover { background: #ff4444; color: white; transform: scale(1.1); }
-  
   .media-item-more { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 700; pointer-events: none; }
   
-  /* Modal styles */
-  .image-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 2rem; }
-  .image-modal.show { display: flex; }
-  .image-modal-content { background: white; border-radius: var(--radius-lg, 12px); max-width: 1400px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative; }
-  .image-modal-close { position: absolute; top: 1rem; right: 1rem; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-secondary, #f0f0f0); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; transition: all 0.2s ease; z-index: 10; }
-  .image-modal-close:hover { background: #ff4444; color: white; }
-  .modal-gallery-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-  .modal-media-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-md, 8px); overflow: hidden; background: var(--surface-secondary, #f0f0f0); }
-  .modal-media-item img, .modal-media-item video { width: 100%; height: 100%; object-fit: cover; }
-  
-  /* Alert boxes */
+  /* Buttons & Alerts */
   .warning-alert { background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%); border-left: 4px solid #ffc107; padding: 1rem 1.25rem; border-radius: var(--radius-md, 8px); margin-top: 1.5rem; }
-  .warning-alert strong { color: #f57c00; }
-  
-  /* Action buttons */
   .form-actions { display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--border-light, #e0e0e0); }
   .btn { padding: 0.75rem 1.5rem; border-radius: var(--radius-md, 8px); font-weight: 600; font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }
   .btn-primary { background: var(--primary-dark, #4D7111); color: white; }
-  .btn-primary:hover { background: var(--primary-medium, #C3E956); color: var(--primary-dark, #4D7111); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(77, 113, 17, 0.3); }
   .btn-secondary { background: var(--surface-secondary, #f0f0f0); color: var(--text-primary, #1a1a1a); }
-  .btn-secondary:hover { background: var(--border-light, #e0e0e0); }
   .error-text { color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; }
 
-  input[type="file"] { padding: 0.5rem; }
-  .file-help-text { font-size: 0.875rem; color: var(--text-secondary, #666); margin-top: 0.5rem; }
+  /* === 2. CSS LIGHTBOX === */
+  .lightbox-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); }
+  .lightbox-content-wrapper { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; position: relative; }
+  #lightbox-media-container { display: flex; justify-content: center; align-items: center; width: 100%; height: 85vh; margin-bottom: 10px; }
+  .lightbox-content { max-width: 90vw; max-height: 85vh; object-fit: contain; display: block; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 10000; }
+  .lightbox-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; cursor: pointer; z-index: 10002; line-height: 1; }
+  .lightbox-close:hover { color: #ff4444; }
+  .lightbox-prev, .lightbox-next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); padding: 16px; color: white; font-size: 30px; z-index: 10001; background: rgba(77, 113, 17, 0.4); border-radius: 8px; user-select: none; }
+  .lightbox-next { right: 20px; } 
+  .lightbox-prev { left: 20px; }
+  .lightbox-prev:hover, .lightbox-next:hover { background: rgba(77, 113, 17, 0.9); }
+  .lightbox-counter { color: #fff; font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; z-index: 10002; }
+  .hidden { display: none !important; }
 </style>
 {% endblock %}
 
@@ -92,7 +85,6 @@
 
         <div class="form-group">
           <label for="{{ form.noi_dung.id_for_label }}" class="form-label">{{ form.noi_dung.label }}</label>
-          <!-- TinyMCE sẽ tự động thay thế textarea này -->
           {{ form.noi_dung }}
           {% if form.noi_dung.errors %}
             <div class="error-text">{{ form.noi_dung.errors|striptags }}</div>
@@ -117,43 +109,29 @@
           {% endif %}
         </div>
 
-        <!-- MEDIA HIỆN TẠI (Logic riêng của trang Edit) -->
+        <!-- MEDIA HIỆN TẠI -->
         {% if bai_viet.media.all %}
         <div class="media-section">
-          <div class="media-section-title">Media hiện tại (Nhấn vào biểu tượng X để xóa)</div>
+          <div class="media-section-title">Media hiện tại (Nhấn vào X để xóa)</div>
           <div class="post-media-gallery" id="existing-media-gallery"></div>
         </div>
         {% endif %}
 
         <!-- UPLOAD MEDIA MỚI -->
         <div class="form-group">
-          <label for="media_files" class="form-label">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-              <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-            Thêm ảnh/video mới
-          </label>
+          <label for="media_files" class="form-label">Thêm ảnh/video mới</label>
           <input type="file" class="form-control" id="media_files" name="media_files" multiple accept="image/*,video/*"/>
-          <div class="file-help-text">Chọn file mới để thêm vào bài viết.</div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">Chọn file mới để thêm vào bài viết.</div>
         </div>
 
         <div id="new-media-preview-gallery" class="post-media-gallery"></div>
 
         <div class="warning-alert">
-          <strong>Lưu ý:</strong> Sau khi sửa, bài viết sẽ trở lại trạng thái "Chờ duyệt" và cần được quản trị viên phê duyệt lại.
+          <strong>Lưu ý:</strong> Sau khi sửa, bài viết sẽ trở lại trạng thái "Chờ duyệt".
         </div>
 
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-              <polyline points="17 21 17 13 7 13 7 21"></polyline>
-              <polyline points="7 3 7 8 15 8"></polyline>
-            </svg>
-            Lưu thay đổi
-          </button>
+          <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
           <a href="{% url 'community:bai-viet-cua-toi' %}" class="btn btn-secondary">Hủy</a>
         </div>
       </form>
@@ -161,15 +139,18 @@
   </div>
 </div>
 
-<!-- Modal for viewing all media -->
-<div id="media-modal" class="image-modal">
-  <div class="image-modal-content">
-    <button class="image-modal-close">&times;</button>
-    <h5 id="modal-title"></h5>
-    <div class="modal-gallery-container"></div>
-  </div>
+<!-- === MODAL SLIDESHOW === -->
+<div id="lightbox-modal" class="lightbox-modal">
+    <span class="lightbox-close">&times;</span>
+    <a class="lightbox-prev">&#10094;</a>
+    <a class="lightbox-next">&#10095;</a>
+    <div class="lightbox-content-wrapper">
+        <div id="lightbox-media-container"></div>
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+    </div>
 </div>
 
+<!-- DATA JSON -->
 <script type="application/json" id="existing-media-data">
   [
     {% for media in bai_viet.media.all %}
@@ -183,36 +164,24 @@
   ]
 </script>
 
-<!-- 1. Script Load TinyMCE (Bản Cloudflare miễn phí như trang Tạo bài viết) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
 
 <script>
-// === I. CẤU HÌNH TINYMCE (Giống hệt trang Tạo bài viết) ===
 document.addEventListener("DOMContentLoaded", function() {
-    tinymce.init({
-        selector: 'textarea[name="noi_dung"]', // Selector chính xác
-        height: 500,
-        menubar: false,
-        branding: false,
-        // Các plugin cơ bản
-        plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
-        toolbar: 'undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-        
-        // Font style
-        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; }',
-        
-        // Auto-save khi submit
-        setup: function (editor) {
-            editor.on('change', function () {
-                editor.save();
-            });
-        }
-    });
-});
+    // 1. TINYMCE
+    if (typeof tinymce !== 'undefined') {
+        tinymce.init({
+            selector: 'textarea[name="noi_dung"]',
+            height: 500,
+            menubar: false,
+            plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+            toolbar: 'undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; }',
+            setup: function (editor) { editor.on('change', function () { editor.save(); }); }
+        });
+    }
 
-// === II. XỬ LÝ MEDIA (Ảnh/Video) ===
-// (Logic này phức tạp hơn trang tạo bài viết vì phải xử lý cả ảnh CŨ và ảnh MỚI)
-document.addEventListener("DOMContentLoaded", function() {
+    // 2. MEDIA MANAGER
     const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
     const MAX_PREVIEWS = 4;
 
@@ -222,13 +191,60 @@ document.addEventListener("DOMContentLoaded", function() {
             this.modalEl = modalEl;
             this.items = mediaItems;
             this.isExisting = isExisting;
-            this.modalTitleEl = this.modalEl.querySelector('#modal-title');
-            this.modalGalleryEl = this.modalEl.querySelector('.modal-gallery-container');
+            this.currentIndex = 0;
 
-            this.modalEl.querySelector('.image-modal-close').onclick = () => this.closeModal();
-            this.modalEl.onclick = (e) => { if (e.target === this.modalEl) this.closeModal(); };
-            
+            this.mediaContainer = this.modalEl.querySelector('#lightbox-media-container');
+            this.prevBtn = this.modalEl.querySelector('.lightbox-prev');
+            this.nextBtn = this.modalEl.querySelector('.lightbox-next');
+            this.counterEl = this.modalEl.querySelector('.lightbox-counter');
+            this.closeBtn = this.modalEl.querySelector('.lightbox-close');
+
+            this.handleKeydown = this.handleKeydown.bind(this);
             this.render();
+        }
+
+        bindModalEvents() {
+            this.closeBtn.onclick = () => this.closeModal();
+            this.modalEl.onclick = (e) => { 
+                if (e.target === this.modalEl || e.target.classList.contains('lightbox-content-wrapper') || e.target.id === 'lightbox-media-container') {
+                    this.closeModal();
+                }
+            };
+            this.prevBtn.onclick = (e) => { e.stopPropagation(); this.changeSlide(-1); };
+            this.nextBtn.onclick = (e) => { e.stopPropagation(); this.changeSlide(1); };
+            document.addEventListener('keydown', this.handleKeydown);
+        }
+
+        unbindModalEvents() {
+            this.prevBtn.onclick = null;
+            this.nextBtn.onclick = null;
+            this.closeBtn.onclick = null;
+            this.modalEl.onclick = null;
+            document.removeEventListener('keydown', this.handleKeydown);
+        }
+
+        handleKeydown(e) {
+            if (this.modalEl.style.display === "block") {
+                if (e.key === 'ArrowLeft') this.changeSlide(-1);
+                if (e.key === 'ArrowRight') this.changeSlide(1);
+                if (e.key === 'Escape') this.closeModal();
+            }
+        }
+
+        closeModal() {
+            this.modalEl.style.display = "none";
+            this.mediaContainer.innerHTML = ''; 
+            document.body.style.overflow = "auto"; 
+            this.unbindModalEvents();
+        }
+
+        openModal(startIndex) {
+            if (this.items.length === 0) return;
+            this.currentIndex = startIndex;
+            this.updateSlide();
+            this.modalEl.style.display = "block";
+            document.body.style.overflow = "hidden";
+            this.bindModalEvents();
         }
 
         addItem(item) {
@@ -236,33 +252,59 @@ document.addEventListener("DOMContentLoaded", function() {
             this.render();
         }
 
+        // --- HÀM XÓA ĐÃ ĐƯỢC FIX ---
         removeItem(index) {
             const item = this.items[index];
             if (this.isExisting) {
-                // Xử lý xóa media cũ (Gửi request lên server)
                 if (!confirm("Bạn có chắc chắn muốn xóa vĩnh viễn media này không?")) return;
+
+                // FIX QUAN TRỌNG: Clear src của video/ảnh trong DOM trước khi gọi API xóa
+                // Điều này giúp trình duyệt nhả file ra, tránh lỗi WinError 32
+                const mediaElements = this.galleryEl.querySelectorAll('.media-item');
+                if (mediaElements[index]) {
+                    const videoEl = mediaElements[index].querySelector('video');
+                    const imgEl = mediaElements[index].querySelector('img');
+                    if (videoEl) { 
+                        videoEl.pause(); 
+                        videoEl.src = ""; 
+                        videoEl.load(); // Bắt buộc load lại để release
+                    }
+                    if (imgEl) { imgEl.src = ""; }
+                }
+
                 fetch(item.deleteUrl, {
                     method: "POST",
-                    headers: { "X-CSRFToken": csrfToken, "X-Requested-With": "XMLHttpRequest" },
+                    headers: { 
+                        "X-CSRFToken": csrfToken, 
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/json"
+                    },
                 })
-                .then(res => res.json())
+                .then(res => {
+                     if (!res.ok) throw new Error("Lỗi server");
+                     return res.json();
+                })
                 .then(data => {
                     if (data.success) {
                         this.items.splice(index, 1);
                         this.render();
-                    } else { 
-                        alert('Lỗi: ' + (data.error || 'Không thể xóa media.')); 
+                        if (this.modalEl.style.display === "block") this.closeModal();
+                    } else {
+                        alert('Lỗi: ' + (data.error || 'Không thể xóa media.'));
+                        this.render(); // Render lại nếu lỗi
                     }
-                }).catch(() => alert('Đã xảy ra lỗi kết nối.'));
+                })
+                .catch(err => {
+                    alert('Đã xảy ra lỗi kết nối.');
+                    console.error(err);
+                });
             } else {
-                // Xử lý xóa media mới (Chưa upload)
                 this.items.splice(index, 1);
                 this.render();
-                // Cập nhật lại input file
                 const fileInput = document.getElementById("media_files");
-                const dataTransfer = new DataTransfer();
-                this.items.forEach(file => dataTransfer.items.add(file));
-                fileInput.files = dataTransfer.files;
+                const dt = new DataTransfer();
+                this.items.forEach(f => dt.items.add(f));
+                fileInput.files = dt.files;
             }
         }
 
@@ -270,8 +312,38 @@ document.addEventListener("DOMContentLoaded", function() {
             this.galleryEl.innerHTML = "";
             this.items.forEach((item, index) => {
                 if (index >= MAX_PREVIEWS) return;
-                const mediaWrapper = this.createMediaElement(item, index, 'page');
-                
+
+                const mediaWrapper = document.createElement("div");
+                mediaWrapper.classList.add("media-item");
+                mediaWrapper.onclick = () => this.openModal(index);
+
+                let mediaElement;
+                if (this.isExisting) {
+                    if (item.type === 'video') {
+                        mediaElement = document.createElement('video');
+                        mediaElement.src = item.url;
+                        mediaElement.muted = true; 
+                        mediaElement.preload = "metadata"; 
+                    } else {
+                        mediaElement = document.createElement('img');
+                        mediaElement.src = item.url;
+                    }
+                } else {
+                    const isVideo = item.type.startsWith("video/");
+                    mediaElement = document.createElement(isVideo ? 'video' : 'img');
+                    mediaElement.src = URL.createObjectURL(item);
+                    if(isVideo) { mediaElement.muted = true; mediaElement.preload = "metadata"; }
+                }
+
+                if (mediaElement) mediaWrapper.appendChild(mediaElement);
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.innerHTML = "&times;";
+                deleteBtn.type = "button";
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.onclick = (e) => { e.stopPropagation(); this.removeItem(index); };
+                mediaWrapper.appendChild(deleteBtn);
+
                 if (index === MAX_PREVIEWS - 1 && this.items.length > MAX_PREVIEWS) {
                     const moreOverlay = document.createElement("div");
                     moreOverlay.classList.add("media-item-more");
@@ -282,78 +354,69 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
-        openModal() {
-            this.modalGalleryEl.innerHTML = "";
-            this.modalTitleEl.textContent = `Tất cả ${this.items.length} media ${this.isExisting ? 'hiện tại' : 'mới'}`;
-            this.items.forEach((item, index) => {
-                const mediaWrapper = this.createMediaElement(item, index, 'modal');
-                this.modalGalleryEl.appendChild(mediaWrapper);
-            });
-            this.modalEl.classList.add("show");
-        }
-        
-        closeModal() {
-            this.modalEl.classList.remove("show");
+        changeSlide(dir) {
+            this.currentIndex += dir;
+            if (this.currentIndex < 0) this.currentIndex = this.items.length - 1;
+            if (this.currentIndex >= this.items.length) this.currentIndex = 0;
+            this.updateSlide();
         }
 
-        createMediaElement(item, index, context) {
-            const wrapperClass = context === 'modal' ? 'modal-media-item' : 'media-item';
-            const mediaWrapper = document.createElement("div");
-            mediaWrapper.classList.add(wrapperClass);
-            
-            if(context === 'page') {
-                mediaWrapper.onclick = () => this.openModal();
-            }
+        updateSlide() {
+            if (!this.items[this.currentIndex]) return;
+            const item = this.items[this.currentIndex];
+            this.mediaContainer.innerHTML = ''; 
 
-            let mediaElement;
+            let element;
+            let src = '';
+            let isVideo = false;
+
             if (this.isExisting) {
-                // Hiển thị ảnh cũ từ URL
-                mediaElement = document.createElement(item.type === 'anh' ? 'img' : 'video');
-                mediaElement.src = item.url;
-                if(mediaElement) mediaWrapper.appendChild(mediaElement);
+                src = item.url;
+                isVideo = (item.type === 'video');
             } else {
-                // Hiển thị ảnh mới preview
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const el = document.createElement(item.type.startsWith("image/") ? 'img' : 'video');
-                    el.src = e.target.result;
-                    mediaWrapper.appendChild(el);
-                };
-                reader.readAsDataURL(item);
+                src = URL.createObjectURL(item);
+                isVideo = item.type.startsWith('video/');
+            }
+            
+            if (isVideo) {
+                element = document.createElement('video');
+                element.src = src;
+                element.controls = true; 
+                element.autoplay = true; 
+                element.playsInline = true; 
+                element.classList.add('lightbox-content');
+            } else {
+                element = document.createElement('img');
+                element.src = src;
+                element.classList.add('lightbox-content');
             }
 
-            const deleteBtn = document.createElement("button");
-            deleteBtn.innerHTML = "&times;";
-            deleteBtn.type = "button";
-            deleteBtn.classList.add("delete-btn");
-            // Nút xóa
-            deleteBtn.onclick = (e) => { e.stopPropagation(); this.removeItem(index); };
-            mediaWrapper.appendChild(deleteBtn);
-            return mediaWrapper;
+            this.mediaContainer.appendChild(element);
+            this.counterEl.innerText = `${this.currentIndex + 1} / ${this.items.length}`;
+
+            this.prevBtn.classList.toggle('hidden', this.items.length <= 1);
+            this.nextBtn.classList.toggle('hidden', this.items.length <= 1);
         }
     }
+
+    // INIT
+    let existingData = [];
+    try { existingData = JSON.parse(document.getElementById('existing-media-data').textContent); } catch (e) { console.error(e); }
+    const modal = document.getElementById('lightbox-modal');
     
-    // Khởi tạo quản lý Media cũ
-    const existingMediaData = JSON.parse(document.getElementById('existing-media-data').textContent);
     const existingManager = new MediaManager(
-        document.getElementById('existing-media-gallery'),
-        document.getElementById('media-modal'),
-        existingMediaData,
-        true
+        document.getElementById('existing-media-gallery'), modal, existingData, true
+    );
+    const newManager = new MediaManager(
+        document.getElementById('new-media-preview-gallery'), modal, [], false
     );
 
-    // Khởi tạo quản lý Media mới
-    const newManager = new MediaManager(
-        document.getElementById('new-media-preview-gallery'),
-        document.getElementById('media-modal'),
-        [],
-        false
-    );
-    
-    // Lắng nghe sự kiện chọn file mới
-    document.getElementById("media_files").addEventListener("change", (e) => {
-        Array.from(e.target.files).forEach(file => newManager.addItem(file));
-    });
+    const fileInput = document.getElementById("media_files");
+    if(fileInput) {
+        fileInput.addEventListener("change", (e) => {
+            Array.from(e.target.files).forEach(f => newManager.addItem(f));
+        });
+    }
 });
 </script>
 {% endblock %}
