@@ -1,66 +1,100 @@
 {% load humanize %}
 
-<div class="card h-100 border-0 shadow-sm overflow-hidden trip-card-personal">
-    <!-- Ảnh bìa + Badge -->
+<div class="card h-100 border-0 shadow-sm overflow-hidden trip-card-personal position-relative">
+    
+    <!-- MENU 3 CHẤM (Góc phải trên) -->
+    <div class="dropdown position-absolute top-0 end-0 m-2" style="z-index: 10;">
+        <button class="btn btn-light btn-sm rounded-circle shadow-sm" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-ellipsis-v text-muted"></i>
+        </button>
+<ul class="dropdown-menu dropdown-menu-end shadow border-0">
+    {% if trip.nguoi_to_chuc == user %}
+        <li>
+            <a class="dropdown-item" href="{% url 'trips:update_trip' pk=trip.pk slug=trip.slug %}">
+                <i class="fas fa-edit me-2 text-primary"></i> Chỉnh sửa
+            </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <!-- Thêm type="button" để tránh reload trang -->
+<button type="button" class="dropdown-item text-danger" 
+        data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" 
+        onclick="confirmDelete(this.dataset.url, true)">
+    <i class="fas fa-trash-alt me-2"></i> Hủy chuyến đi
+</button>
+        </li>
+    {% else %}
+        <li>
+            <!-- Thêm type="button" -->
+<button type="button" class="dropdown-item text-danger" 
+        data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" 
+        onclick="confirmDelete(this.dataset.url, false)">
+    <i class="fas fa-sign-out-alt me-2"></i> Rời nhóm
+</button>
+        </li>
+    {% endif %}
+</ul>
+    </div>
+
+    <!-- ẢNH BÌA -->
     <div class="position-relative" style="height: 180px;">
-        <img src="{{ trip.cover_url }}" class="w-100 h-100 object-fit-cover" alt="{{ trip.ten_chuyen_di }}">
+        <img src="{{ trip.cover_url }}" class="w-100 h-100 object-fit-cover">
         
         <!-- Badge Vai trò -->
         {% if trip.nguoi_to_chuc == user %}
-            <span class="position-absolute top-0 start-0 m-3 badge bg-warning text-dark shadow-sm">
-                <i class="fas fa-crown me-1"></i> Leader
-            </span>
+            <span class="position-absolute top-0 start-0 m-2 badge bg-warning text-dark shadow-sm"><i class="fas fa-crown"></i> Leader</span>
         {% else %}
-            <span class="position-absolute top-0 start-0 m-3 badge bg-info text-white shadow-sm">
-                <i class="fas fa-hiking me-1"></i> Member
-            </span>
+            <span class="position-absolute top-0 start-0 m-2 badge bg-info text-white shadow-sm"><i class="fas fa-hiking"></i> Member</span>
         {% endif %}
-
-        <!-- Badge Ngày đi -->
-        <div class="position-absolute bottom-0 end-0 m-3 badge bg-white text-dark shadow-sm border px-3 py-2">
-            <div class="fw-bold" style="font-size: 0.7rem; color: #aaa;">KHỞI HÀNH</div>
-            <div class="fw-bold text-primary">{{ trip.ngay_bat_dau|date:"d/m/Y" }}</div>
-        </div>
     </div>
 
-    <!-- Nội dung -->
-    <div class="card-body d-flex flex-column">
-        <h5 class="card-title fw-bold text-truncate mb-1">
-            <a href="{{ trip.get_absolute_url }}" class="text-decoration-none text-dark stretched-link">
-                {{ trip.ten_chuyen_di }}
-            </a>
-        </h5>
-        <div class="small text-muted mb-3">
-            <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ trip.cung_duong.ten }}
+    <!-- NỘI DUNG -->
+    <div class="card-body d-flex flex-column p-3">
+        <h6 class="card-title fw-bold text-truncate mb-1">
+            <a href="{{ trip.get_absolute_url }}" class="text-decoration-none text-dark">{{ trip.ten_chuyen_di }}</a>
+        </h6>
+        
+        <div class="d-flex justify-content-between small text-muted mb-3">
+            <span><i class="far fa-calendar me-1"></i> {{ trip.ngay_bat_dau|date:"d/m/Y" }}</span>
+            <span><i class="fas fa-map-marker-alt me-1"></i> {{ trip.cung_duong.tinh_thanh.ten }}</span>
         </div>
 
-        <!-- Nút hành động (Nổi lên trên stretched-link bằng z-index) -->
-        <div class="mt-auto d-flex gap-2 position-relative" style="z-index: 2;">
-            
-            {% if status == 'upcoming' or status == 'past' %}
-                <!-- Nút Chat (Quan trọng) -->
-                <a href="{{ trip.get_chat_url }}" class="btn btn-outline-primary btn-sm flex-fill rounded-pill fw-bold">
-                    <i class="fas fa-comments me-1"></i> Chat Nhóm
+        <!-- NÚT CHAT -->
+        <div class="mt-auto">
+            {% if trip.my_status == 'DA_THAM_GIA' or trip.nguoi_to_chuc == user %}
+                <a href="{{ trip.get_chat_url }}" class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-bold">
+                    <i class="fas fa-comments me-1"></i> Vào Chat Nhóm
                 </a>
-            {% endif %}
-
-            {% if trip.nguoi_to_chuc == user and status == 'upcoming' %}
-                <!-- Nút Quản lý cho Leader -->
-                <a href="{{ trip.get_absolute_url }}" class="btn btn-warning btn-sm flex-fill rounded-pill fw-bold text-white">
-                    <i class="fas fa-cog me-1"></i> Quản lý
-                </a>
-            {% endif %}
-
-            {% if status == 'pending' %}
-                <button class="btn btn-secondary btn-sm flex-fill rounded-pill fw-bold" disabled>
-                    <i class="fas fa-hourglass-half me-1"></i> Đang chờ...
-                </button>
-                <button class="btn btn-outline-danger btn-sm rounded-circle"
-        title="Hủy yêu cầu"
-        onclick="cancelRequest('{{ trip.id }}')">
-                    <i class="fas fa-times"></i>
+            {% elif trip.my_status == 'DA_GUI_YEU_CAU' %}
+                <button class="btn btn-secondary btn-sm w-100 rounded-pill fw-bold" disabled>
+                    <i class="fas fa-clock me-1"></i> Chờ duyệt...
                 </button>
             {% endif %}
         </div>
     </div>
 </div>
+<script>
+    function confirmDelete(url, isHost) {
+        // Debug xem url có đúng không
+        console.log("Delete URL:", url);
+        
+        const form = document.getElementById('deleteForm');
+        const msg = document.getElementById('deleteMsg');
+        
+        if(form) {
+            form.action = url; // Gán action cho form
+            
+            if(isHost) {
+                msg.innerText = "Bạn là Leader. Hành động này sẽ HỦY chuyến đi vĩnh viễn.";
+            } else {
+                msg.innerText = "Bạn sẽ rời khỏi nhóm này.";
+            }
+            
+            // Hiện Modal Bootstrap 5
+            var myModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            myModal.show();
+        } else {
+            console.error("Không tìm thấy deleteForm");
+        }
+    }
+</script>

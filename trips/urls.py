@@ -54,4 +54,5 @@ urlpatterns = [
     path('api/find-by-code/', views.find_trip_by_code, name='find_trip_by_code'),
     path('<int:pk>/verify-access/', views.verify_trip_access_code, name='verify_trip_access'),
     path('cua-toi/', views.MyTripsView.as_view(), name='my_trips'),
+    path('xoa/<int:pk>/', views.delete_or_leave_trip, name='delete_or_leave_trip'),
 ]

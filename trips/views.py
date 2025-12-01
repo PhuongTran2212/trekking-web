@@ -17,6 +17,7 @@ from treks.models import CungDuongTrek
 from .models import ChuyenDi, ChuyenDiThanhVien, ChuyenDiMedia
 from .forms import TripFilterForm, ChuyenDiForm, TimelineFormSet, SelectTrekFilterForm
 from django.db.models import Max, OuterRef, Subquery, Prefetch, Q
+from django.db.models import Sum, Count, Q
 from django.views.decorators.http import require_http_methods
 from .models import ChuyenDiTinNhan, ChuyenDiTinNhanMedia
 
@@ -965,51 +966,99 @@ def react_chat_message(request, msg_id):
         'user_liked': user in msg.likes.all(),       # True nếu đang like
         'user_disliked': user in msg.dislikes.all()  # True nếu đang dislike
     })
+# trips/views.py
+
+# trips/views.py
+
 class MyTripsView(LoginRequiredMixin, ListView):
     model = ChuyenDi
     template_name = 'trips/my_trips.html'
     context_object_name = 'trips'
+    paginate_by = 9
 
     def get_queryset(self):
-        # Lấy tất cả chuyến đi mà User có liên quan (Là Host hoặc có tên trong danh sách thành viên)
-        return ChuyenDi.objects.filter(
-            Q(thanh_vien__user=self.request.user) | 
-            Q(nguoi_to_chuc=self.request.user)
+        user = self.request.user
+        
+        # 1. Base Query
+        # --- SỬA LỖI Ở ĐÂY: Đã xóa 'trang_thai' khỏi select_related ---
+        queryset = ChuyenDi.objects.filter(
+            Q(thanh_vien__user=user) | Q(nguoi_to_chuc=user)
         ).distinct().select_related(
-            'cung_duong', 'nguoi_to_chuc__taikhoanhoso', 'anh_bia'
+            'cung_duong', 
+            'nguoi_to_chuc__taikhoanhoso', 
+            'anh_bia'  # Chỉ giữ lại các trường là ForeignKey thật sự
+        ).annotate(
+            my_status=Subquery(
+                ChuyenDiThanhVien.objects.filter(
+                    chuyen_di=OuterRef('pk'),
+                    user=user
+                ).values('trang_thai_tham_gia')[:1]
+            )
         )
+
+        # 2. XỬ LÝ BỘ LỌC (Giữ nguyên)
+        q = self.request.GET.get('q')
+        if q:
+            queryset = queryset.filter(ten_chuyen_di__icontains=q)
+
+        status_filter = self.request.GET.get('status')
+        now = timezone.now()
+        if status_filter == 'upcoming':
+            queryset = queryset.filter(ngay_ket_thuc__gte=now)
+        elif status_filter == 'past':
+            queryset = queryset.filter(ngay_ket_thuc__lt=now)
+
+        role_filter = self.request.GET.get('role')
+        if role_filter == 'host':
+            queryset = queryset.filter(nguoi_to_chuc=user)
+        elif role_filter == 'member':
+            queryset = queryset.filter(thanh_vien__user=user).exclude(nguoi_to_chuc=user)
+
+        return queryset.order_by('-ngay_bat_dau')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         now = timezone.now()
-        
-        # Lấy toàn bộ danh sách từ get_queryset
-        all_related_trips = self.get_queryset()
 
-        # 1. TÁCH RIÊNG: DANH SÁCH CHỜ DUYỆT (PENDING)
-        # Logic: User nằm trong bảng thành viên VÀ trạng thái là 'DA_GUI_YEU_CAU'
-        # Lưu ý: Phải query trực tiếp để đảm bảo chính xác
-        context['pending_trips'] = all_related_trips.filter(
-            thanh_vien__user=user,
-            thanh_vien__trang_thai_tham_gia='DA_GUI_YEU_CAU'
-        )
-
-        # 2. TÁCH RIÊNG: DANH SÁCH ĐÃ THAM GIA / HOST (APPROVED)
-        # Logic: (Là Host) HOẶC (Là thành viên ĐÃ ĐƯỢC DUYỆT)
-        approved_trips = all_related_trips.filter(
-            Q(nguoi_to_chuc=user) |
-            Q(thanh_vien__user=user, thanh_vien__trang_thai_tham_gia='DA_THAM_GIA')
+        # Stats Query
+        base_qs = ChuyenDi.objects.filter(
+            Q(thanh_vien__user=user, thanh_vien__trang_thai_tham_gia='DA_THAM_GIA') | 
+            Q(nguoi_to_chuc=user)
         ).distinct()
 
-        # 3. PHÂN LOẠI SẮP TỚI / ĐÃ QUA (Dựa trên approved_trips)
-        context['upcoming_trips'] = approved_trips.filter(
-            ngay_ket_thuc__gte=now
-        ).order_by('ngay_bat_dau')
+        completed_qs = base_qs.filter(ngay_ket_thuc__lt=now)
+        
+        total_km_agg = completed_qs.aggregate(total=Sum('cd_do_dai_km'))['total']
+        total_spent_agg = completed_qs.aggregate(total=Sum('chi_phi_uoc_tinh'))['total']
 
-        context['past_trips'] = approved_trips.filter(
-            ngay_ket_thuc__lt=now
-        ).order_by('-ngay_bat_dau')
-
-        context['page_title'] = "Chuyến đi của tôi"
+        context['stats'] = {
+            'total_trips': completed_qs.count(),
+            'total_km': total_km_agg if total_km_agg is not None else 0,
+            'total_spent': total_spent_agg if total_spent_agg is not None else 0,
+            'hosted': base_qs.filter(nguoi_to_chuc=user).count(),
+        }
+        
+        context['page_title'] = "Quản lý Chuyến đi"
         return context
+@require_POST
+def delete_or_leave_trip(request, pk):
+    trip = get_object_or_404(ChuyenDi, pk=pk)
+
+    # 1. Nếu là Host -> Xóa chuyến đi
+    if trip.nguoi_to_chuc == request.user:
+        # (Tùy chọn) Kiểm tra nếu có thành viên khác thì không cho xóa, hoặc thông báo
+        trip.delete()
+        messages.success(request, f"Đã hủy chuyến đi: {trip.ten_chuyen_di}")
+    
+    # 2. Nếu là Member -> Rời nhóm
+    else:
+        member = ChuyenDiThanhVien.objects.filter(chuyen_di=trip, user=request.user).first()
+        if member:
+            member.delete()
+            messages.success(request, f"Đã rời khỏi chuyến đi: {trip.ten_chuyen_di}")
+        else:
+            messages.error(request, "Bạn không phải là thành viên của chuyến đi này.")
+
+    # return phải thụt đúng
+    return redirect('trips:my_trips')

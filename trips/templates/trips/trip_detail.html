@@ -966,7 +966,7 @@
         </div>
 
         <div class="progress">
-            <div class="progress-bar {% if percent|add:'0' >= 100 %}bg-danger{% endif %}" 
+           <div class="progress-bar {% if percent|add:'0' >= 100 %}bg-danger{% endif %}" 
                  role="progressbar" 
                  style="width: {{ percent|default:'0' }}%" 
                  aria-valuenow="{{ percent|default:'0' }}" 
