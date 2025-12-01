@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
 from django.utils import timezone
-from core.models import TrangThaiChuyenDi, The
+from core.models import The
 from treks.models import CungDuongTrek
 from datetime import timedelta
 
@@ -60,7 +60,19 @@ class ChuyenDi(models.Model):
     so_luong_toi_da = models.PositiveIntegerField(_("Số lượng tối đa"))
     
     # --- Cài đặt & Trạng thái ---
-    trang_thai = models.ForeignKey(TrangThaiChuyenDi, on_delete=models.PROTECT, verbose_name=_("Trạng thái"))
+    TRANG_THAI_CHOICES = [
+        ('DANG_TUYEN', 'Đang tuyển thành viên'), # Mặc định
+        ('DA_HUY', 'Đã hủy chuyến'),             # Admin hủy
+        ('TAM_HOAN', 'Tạm hoãn'),                # Admin hoãn
+    ]
+
+    # 2. Field trạng thái dạng chuỗi (Thay vì ForeignKey)
+    trang_thai = models.CharField(
+        _("Trạng thái"), 
+        max_length=20, 
+        choices=TRANG_THAI_CHOICES, 
+        default='DANG_TUYEN'
+    )
     CHE_DO_RIENG_TU_CHOICES = [('CONG_KHAI', 'Công khai'), ('RIENG_TU', 'Riêng tư')]
     che_do_rieng_tu = models.CharField(_("Chế độ"), max_length=15, choices=CHE_DO_RIENG_TU_CHOICES, default='CONG_KHAI')
     yeu_cau_ly_do = models.BooleanField(_("Yêu cầu lý do tham gia?"), default=False)
@@ -126,31 +138,62 @@ class ChuyenDi(models.Model):
                 num += 1
             self.slug = unique_slug
         super().save(*args, **kwargs)
-    # ==========================================================
+  # ==========================================================
     # === CÁC HÀM TRỢ GIÚP (STATUS, COVER, THỜI GIAN) ===
     # ==========================================================
 
+    # Cấu hình màu sắc hiển thị (Badge Config)
+    BADGE_CONFIG = {
+        'CANCELLED':   {'name': 'Đã hủy',       'color': '#ef4444'}, # Đỏ
+        'ENDED':       {'name': 'Đã kết thúc',  'color': '#6b7280'}, # Xám
+        'ONGOING':     {'name': 'Đang diễn ra', 'color': '#3b82f6'}, # Xanh dương
+        'FULL':        {'name': 'Đã đủ người',  'color': '#f59e0b'}, # Vàng cam
+        'OPEN':        {'name': 'Sắp diễn ra',  'color': '#10b981'}, # Xanh lá
+        'PAUSED':      {'name': 'Tạm hoãn',     'color': '#6b7280'}, # Xám nhạt
+    }
+
     @property
-    def status_color(self):
-        """Trả về màu theo trạng thái chuyến đi."""
-        mapping = {
-            "Đang tuyển thành viên": "#10b981",   # Xanh lá
-            "Đã đủ người / Chốt đoàn": "#f59e0b", # Vàng/cam
-            "Đang diễn ra": "#3b82f6",            # Xanh dương
-            "Đã kết thúc": "#6b7280",             # Xám
-            "Đã hủy": "#ef4444",                  # Đỏ
-        }
+    def dynamic_status_info(self):
+        """Logic tính toán trạng thái động (Đã sửa lỗi logic cũ)"""
+        from django.utils import timezone
+        now = timezone.now()
+        
+        # 1. Ưu tiên Admin can thiệp (So sánh chuỗi, KHÔNG so sánh object)
+        if self.trang_thai == 'DA_HUY':
+            return self.BADGE_CONFIG['CANCELLED']
+        
+        if self.trang_thai == 'TAM_HOAN':
+            return self.BADGE_CONFIG['PAUSED']
 
-        if self.trang_thai:
-            return mapping.get(self.trang_thai.ten, "#10b981")
+        # 2. Kiểm tra Thời gian: Đã Kết Thúc
+        if self.ngay_ket_thuc and now > self.ngay_ket_thuc:
+            return self.BADGE_CONFIG['ENDED']
 
-        return "#10b981"
+        # 3. Kiểm tra Thời gian: Đang Diễn Ra
+        if self.ngay_bat_dau and now >= self.ngay_bat_dau:
+            return self.BADGE_CONFIG['ONGOING']
 
+        # 4. Kiểm tra Số lượng (Chỉ check khi chưa đi)
+        # Sử dụng getattr để tránh lỗi nếu view chưa annotate
+        current_members = getattr(self, 'so_thanh_vien_tham_gia', None)
+        if current_members is None:
+            # Query trực tiếp nếu không có annotate
+            current_members = self.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
+            
+        if current_members >= self.so_luong_toi_da:
+            return self.BADGE_CONFIG['FULL']
+
+        # 5. Mặc định
+        return self.BADGE_CONFIG['OPEN']
+
+    # --- WRAPPER CHO TEMPLATE DỄ GỌI ---
     @property
     def status_name(self):
-        if self.trang_thai:
-            return self.trang_thai.ten
-        return "Sắp diễn ra"
+        return self.dynamic_status_info['name']
+
+    @property
+    def status_color(self):
+        return self.dynamic_status_info['color']
 
     @property
     def thoi_gian_display(self):
@@ -183,6 +226,15 @@ class ChuyenDi(models.Model):
 
         # 3. Ảnh mặc định cuối cùng
         return "https://via.placeholder.com/400x250?text=Trekking+Vietnam"
+    @property
+    def so_cho_con_lai(self):
+        # Nếu view đã annotate số lượng thì dùng luôn, không thì query đếm lại
+        da_tham_gia = getattr(self, 'so_thanh_vien_tham_gia', None)
+        if da_tham_gia is None:
+            da_tham_gia = self.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
+            
+        con_lai = self.so_luong_toi_da - da_tham_gia
+        return con_lai if con_lai > 0 else 0
 
     
 # ==========================================================

@@ -104,25 +104,18 @@ class ChuyenDiForm(forms.ModelForm):
         fields = [
             'ten_chuyen_di', 'mo_ta', 'ngay_bat_dau', 'ngay_ket_thuc', 'so_luong_toi_da', 
             'chi_phi_uoc_tinh', 'che_do_rieng_tu', 'yeu_cau_ly_do', 
-            'dia_diem_tap_trung', 'toa_do_tap_trung', 'tags'  # <--- Đã thêm toa_do_tap_trung
+            'dia_diem_tap_trung', 'toa_do_tap_trung', 'tags' ,'trang_thai' # <--- Đã thêm toa_do_tap_trung
         ]
         widgets = {
             'ten_chuyen_di': forms.TextInput(attrs={'class': 'form-control'}),
             'mo_ta': forms.Textarea(attrs={'rows': 5, 'class': 'form-control', 'placeholder': 'Giới thiệu về chuyến đi, lịch trình dự kiến, chi phí bao gồm những gì, yêu cầu về thể lực...'}),
             'ngay_bat_dau': forms.DateTimeInput(
-                attrs={
-                    'type': 'datetime-local', 
-                    'class': 'form-control'
-                    # Không cần step='any' nữa, mặc định nó sẽ là step theo phút
-                },
-                format='%Y-%m-%dT%H:%M'  # Định dạng hiển thị: Năm-Tháng-NgàyTGiờ:Phút (Bỏ giây)
+                attrs={'type': 'datetime-local', 'class': 'form-control'},
+                format='%Y-%m-%dT%H:%M' # Quan trọng: Chỉ lấy đến Phút
             ),
             'ngay_ket_thuc': forms.DateTimeInput(
-                attrs={
-                    'type': 'datetime-local', 
-                    'class': 'form-control'
-                },
-                format='%Y-%m-%dT%H:%M'  # Định dạng hiển thị: Năm-Tháng-NgàyTGiờ:Phút (Bỏ giây)
+                attrs={'type': 'datetime-local', 'class': 'form-control'},
+                format='%Y-%m-%dT%H:%M' # Quan trọng: Chỉ lấy đến Phút
             ),
             'so_luong_toi_da': forms.NumberInput(attrs={'class': 'form-control'}),
             'chi_phi_uoc_tinh': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -134,6 +127,7 @@ class ChuyenDiForm(forms.ModelForm):
             'toa_do_tap_trung': forms.HiddenInput(), 
             
             'tags': forms.SelectMultiple(attrs={'class': 'form-control select2'}),
+            'trang_thai': forms.Select(attrs={'class': 'form-select fw-bold text-primary'}),
         }
         labels = {
             'ten_chuyen_di': 'Tên Chuyến đi',
@@ -151,7 +145,7 @@ class ChuyenDiForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Báo cho Django biết chỉ chấp nhận định dạng Giờ:Phút khi lưu
         self.fields['ngay_bat_dau'].input_formats = ['%Y-%m-%dT%H:%M']
-        self.fields['ngay_ket_thuc'].input_formats = ['%Y-%m-%dT%H:%M']   
+        self.fields['ngay_ket_thuc'].input_formats = ['%Y-%m-%dT%H:%M']
     def clean(self):
         cleaned_data = super().clean()
         start_date = cleaned_data.get("ngay_bat_dau")

@@ -320,9 +320,9 @@
                         </a>
                         {% if user.is_authenticated %}
                         <div class="th-divider"></div>
-                        <a href="#" class="th-dropdown-item">
-                            <i class="fas fa-user-circle"></i> Chuyến đi của tôi
-                        </a>
+<a href="{% url 'trips:my_trips' %}" class="th-dropdown-item">
+    <i class="fas fa-user-circle"></i> Chuyến đi của tôi
+</a>
                         {% endif %}
                     </div>
                 </li>

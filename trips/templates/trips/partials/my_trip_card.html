@@ -1,0 +1,66 @@
+{% load humanize %}
+
+<div class="card h-100 border-0 shadow-sm overflow-hidden trip-card-personal">
+    <!-- Ảnh bìa + Badge -->
+    <div class="position-relative" style="height: 180px;">
+        <img src="{{ trip.cover_url }}" class="w-100 h-100 object-fit-cover" alt="{{ trip.ten_chuyen_di }}">
+        
+        <!-- Badge Vai trò -->
+        {% if trip.nguoi_to_chuc == user %}
+            <span class="position-absolute top-0 start-0 m-3 badge bg-warning text-dark shadow-sm">
+                <i class="fas fa-crown me-1"></i> Leader
+            </span>
+        {% else %}
+            <span class="position-absolute top-0 start-0 m-3 badge bg-info text-white shadow-sm">
+                <i class="fas fa-hiking me-1"></i> Member
+            </span>
+        {% endif %}
+
+        <!-- Badge Ngày đi -->
+        <div class="position-absolute bottom-0 end-0 m-3 badge bg-white text-dark shadow-sm border px-3 py-2">
+            <div class="fw-bold" style="font-size: 0.7rem; color: #aaa;">KHỞI HÀNH</div>
+            <div class="fw-bold text-primary">{{ trip.ngay_bat_dau|date:"d/m/Y" }}</div>
+        </div>
+    </div>
+
+    <!-- Nội dung -->
+    <div class="card-body d-flex flex-column">
+        <h5 class="card-title fw-bold text-truncate mb-1">
+            <a href="{{ trip.get_absolute_url }}" class="text-decoration-none text-dark stretched-link">
+                {{ trip.ten_chuyen_di }}
+            </a>
+        </h5>
+        <div class="small text-muted mb-3">
+            <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ trip.cung_duong.ten }}
+        </div>
+
+        <!-- Nút hành động (Nổi lên trên stretched-link bằng z-index) -->
+        <div class="mt-auto d-flex gap-2 position-relative" style="z-index: 2;">
+            
+            {% if status == 'upcoming' or status == 'past' %}
+                <!-- Nút Chat (Quan trọng) -->
+                <a href="{{ trip.get_chat_url }}" class="btn btn-outline-primary btn-sm flex-fill rounded-pill fw-bold">
+                    <i class="fas fa-comments me-1"></i> Chat Nhóm
+                </a>
+            {% endif %}
+
+            {% if trip.nguoi_to_chuc == user and status == 'upcoming' %}
+                <!-- Nút Quản lý cho Leader -->
+                <a href="{{ trip.get_absolute_url }}" class="btn btn-warning btn-sm flex-fill rounded-pill fw-bold text-white">
+                    <i class="fas fa-cog me-1"></i> Quản lý
+                </a>
+            {% endif %}
+
+            {% if status == 'pending' %}
+                <button class="btn btn-secondary btn-sm flex-fill rounded-pill fw-bold" disabled>
+                    <i class="fas fa-hourglass-half me-1"></i> Đang chờ...
+                </button>
+                <button class="btn btn-outline-danger btn-sm rounded-circle"
+        title="Hủy yêu cầu"
+        onclick="cancelRequest('{{ trip.id }}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

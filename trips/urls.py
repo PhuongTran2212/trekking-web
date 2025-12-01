@@ -53,5 +53,5 @@ urlpatterns = [
     path('chat/api/my-groups/', views.get_my_chat_groups, name='get_my_chat_groups'),
     path('api/find-by-code/', views.find_trip_by_code, name='find_trip_by_code'),
     path('<int:pk>/verify-access/', views.verify_trip_access_code, name='verify_trip_access'),
-    
+    path('cua-toi/', views.MyTripsView.as_view(), name='my_trips'),
 ]

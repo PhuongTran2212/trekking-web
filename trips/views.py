@@ -14,7 +14,6 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from django.db.models import F, ExpressionWrapper, DurationField
 from treks.models import CungDuongTrek
-from core.models import TrangThaiChuyenDi
 from .models import ChuyenDi, ChuyenDiThanhVien, ChuyenDiMedia
 from .forms import TripFilterForm, ChuyenDiForm, TimelineFormSet, SelectTrekFilterForm
 from django.db.models import Max, OuterRef, Subquery, Prefetch, Q
@@ -23,7 +22,7 @@ from .models import ChuyenDiTinNhan, ChuyenDiTinNhanMedia
 
 import json
 
-# ... (Giữ nguyên TripHubView và trip_events_api) ...
+
 class TripHubView(ListView):
     model = ChuyenDi
     template_name = 'trips/trip_hub.html'
@@ -31,15 +30,27 @@ class TripHubView(ListView):
     paginate_by = 12 
 
     def get_queryset(self):
-        # 1. BỎ FILTER 'CONG_KHAI' ĐỂ HIỆN TẤT CẢ (Hoặc tùy logic của bạn)
+        # 1. Base Query
         queryset = ChuyenDi.objects.select_related(
-            'cung_duong', 'cung_duong__tinh_thanh', 'cung_duong__do_kho',
-            'nguoi_to_chuc__taikhoanhoso', 'trang_thai', 'anh_bia'
+            'cung_duong', 
+            'cung_duong__tinh_thanh', 
+            'cung_duong__do_kho',
+            'nguoi_to_chuc__taikhoanhoso', 
+            'anh_bia'
         ).prefetch_related('tags')
 
-        # 2. LẤY TRẠNG THÁI THAM GIA CỦA USER HIỆN TẠI (Annotate)
+        now = timezone.now()
+
+        # 2. CHỈ LỌC: Sắp diễn ra & Không bị hủy
+        # (BỎ hết đoạn lọc user.is_authenticated ở đây đi)
+        queryset = queryset.filter(
+            ngay_bat_dau__gt=now
+        ).exclude(trang_thai='DA_HUY')
+
+        # =========================================================
+        # 3. ANNOTATE (Giữ nguyên để lấy trạng thái hiển thị Badge)
+        # =========================================================
         if self.request.user.is_authenticated:
-            # Subquery lấy trạng thái từ bảng trung gian ChuyenDiThanhVien
             status_subquery = ChuyenDiThanhVien.objects.filter(
                 chuyen_di=OuterRef('pk'),
                 user=self.request.user
@@ -49,50 +60,47 @@ class TripHubView(ListView):
                 user_status=Subquery(status_subquery)
             )
 
-        # 3. GIỮ NGUYÊN CÁC ANNOTATE KHÁC
         queryset = queryset.annotate(
             so_thanh_vien_tham_gia=Count('thanh_vien', filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA')),
             duration=ExpressionWrapper(F('ngay_ket_thuc') - F('ngay_bat_dau'), output_field=DurationField())
         )
-
         # =========================================================
-        # 2. XỬ LÝ FORM LỌC (FILTER)
+        # 4. XỬ LÝ FORM LỌC (FILTER) TỪ SIDEBAR
         # =========================================================
         self.filter_form = TripFilterForm(self.request.GET)
         
         if self.filter_form.is_valid():
             data = self.filter_form.cleaned_data
             
-            # --- TÌM KIẾM CƠ BẢN ---
+            # --- Tìm kiếm từ khóa ---
             if q := data.get('q'):
                 queryset = queryset.filter(Q(ten_chuyen_di__icontains=q) | Q(cung_duong__ten__icontains=q))
             
-            # --- ĐỊA ĐIỂM & THỜI GIAN ---
+            # --- Địa điểm ---
             if tinh_thanh := data.get('tinh_thanh'):
                 queryset = queryset.filter(cung_duong__tinh_thanh=tinh_thanh)
             
+            # --- Ngày khởi hành (Lọc những chuyến đi sau ngày user chọn) ---
             if start_date := data.get('start_date'):
                 queryset = queryset.filter(ngay_bat_dau__date__gte=start_date)
 
-            # --- HASHTAG (CHỦ ĐỀ) ---
+            # --- Tags (Hashtag) ---
             if tags := data.get('tags'):
-                # Lọc theo quan hệ nhiều-nhiều (M2M)
                 queryset = queryset.filter(tags__in=tags)
 
-            # --- ĐỘ KHÓ ---
+            # --- Độ khó ---
             if do_kho_list := data.get('do_kho'):
                 queryset = queryset.filter(cung_duong__do_kho__in=do_kho_list)
 
-            # --- KHOẢNG GIÁ ---
+            # --- Khoảng giá ---
             if data.get('price_min'):
                 queryset = queryset.filter(chi_phi_uoc_tinh__gte=data.get('price_min'))
             if data.get('price_max'):
                 queryset = queryset.filter(chi_phi_uoc_tinh__lte=data.get('price_max'))
             
-            # --- THỜI LƯỢNG (SỐ NGÀY) ---
-            # duration_min/max là số nguyên (ngày), cần đổi sang timedelta để so sánh
+            # --- Thời lượng (Số ngày) ---
             if data.get('duration_min'):
-                # Ví dụ: Nhập 2 ngày -> Lọc các chuyến >= 1 ngày (để cover trường hợp làm tròn)
+                # Trừ 1 ngày để cover trường hợp làm tròn (VD: đi sáng về chiều tính là 0 ngày nhưng user muốn tìm 1 ngày)
                 min_delta = datetime.timedelta(days=data.get('duration_min') - 1) 
                 queryset = queryset.filter(duration__gte=min_delta)
             
@@ -100,31 +108,27 @@ class TripHubView(ListView):
                 max_delta = datetime.timedelta(days=data.get('duration_max'))
                 queryset = queryset.filter(duration__lte=max_delta)
 
-            # --- TRẠNG THÁI: CÒN CHỖ ---
+            # --- LOGIC QUAN TRỌNG: Lọc 'Còn chỗ' ---
+            # So sánh số người đã tham gia (annotate ở trên) với số lượng tối đa
             if data.get('con_cho'):
-                # Lọc những chuyến mà số người tham gia < số lượng tối đa
                 queryset = queryset.filter(so_thanh_vien_tham_gia__lt=F('so_luong_toi_da'))
 
-            # =========================================================
-            # 3. SẮP XẾP (SORTING)
-            # =========================================================
+            # --- Sắp xếp ---
             sort_by = data.get('sort_by')
             if sort_by == 'price_asc':
                 queryset = queryset.order_by('chi_phi_uoc_tinh')
             elif sort_by == 'price_desc':
                 queryset = queryset.order_by('-chi_phi_uoc_tinh')
             elif sort_by == 'date_asc':
-                queryset = queryset.order_by('ngay_bat_dau')
+                queryset = queryset.order_by('ngay_bat_dau') # Ngày gần nhất lên trước
             else:
-                # Mặc định: Mới tạo nhất lên đầu
-                queryset = queryset.order_by('-ngay_tao')
+                queryset = queryset.order_by('ngay_bat_dau') # Mặc định: Sắp đi lên trước (thay vì mới tạo)
 
         else:
-            # Nếu không lọc gì cả, mặc định sắp xếp mới nhất
-            queryset = queryset.order_by('-ngay_tao')
+            # Mặc định nếu không lọc: Chuyến nào sắp đi nhất thì hiện lên đầu
+            queryset = queryset.order_by('ngay_bat_dau')
 
-        # Dùng distinct() để loại bỏ các bản ghi trùng lặp 
-        # (quan trọng khi lọc theo Tags hoặc Độ khó nhiều lựa chọn)
+        # Loại bỏ bản ghi trùng lặp (do join bảng Tags nhiều lần)
         return queryset.distinct()
 
     def get_context_data(self, **kwargs):
@@ -173,10 +177,7 @@ def create_trip_view(request):
                 chuyen_di.nguoi_to_chuc = request.user
                 chuyen_di.cung_duong = cung_duong
                 
-                try:
-                    chuyen_di.trang_thai = TrangThaiChuyenDi.objects.get(ten='Đang tuyển thành viên')
-                except TrangThaiChuyenDi.DoesNotExist:
-                     chuyen_di.trang_thai = TrangThaiChuyenDi.objects.first()
+                chuyen_di.trang_thai = 'DANG_TUYEN'
 
                 # Snapshot dữ liệu
                 chuyen_di.cd_ten = cung_duong.ten
@@ -375,21 +376,54 @@ class TripDetailView(DetailView):
 # ... (Giữ nguyên các hàm API: join_trip_request, leave_trip, approve_member...) ...
 # ... COPY LẠI CÁC HÀM API TỪ FILE CŨ NẾU CẦN, HOẶC GIỮ NGUYÊN NẾU ĐÃ CÓ ...
 
+# trips/views.py
+
 @login_required
 @require_POST
 def join_trip_request(request, pk):
     trip = get_object_or_404(ChuyenDi, pk=pk)
-    if trip.thanh_vien.filter(user=request.user).exists():
-        return JsonResponse({'status': 'error', 'message': 'Bạn đã gửi yêu cầu hoặc đã là thành viên.'}, status=400)
-    if trip.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count() >= trip.so_luong_toi_da:
-        return JsonResponse({'status': 'error', 'message': 'Chuyến đi đã đủ thành viên.'}, status=400)
-    ChuyenDiThanhVien.objects.create(
-        chuyen_di=trip, user=request.user,
-        ly_do_tham_gia=request.POST.get('reason', ''),
-        trang_thai_tham_gia='DA_GUI_YEU_CAU'
-    )
-    return JsonResponse({'status': 'success', 'message': 'Đã gửi yêu cầu tham gia.'})
+    ly_do = request.POST.get('reason', '').strip()
 
+    # 1. Kiểm tra Slot (Quan trọng)
+    # Lấy số lượng thực tế đã tham gia
+    current_members = trip.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
+    if current_members >= trip.so_luong_toi_da:
+        return JsonResponse({'status': 'error', 'message': 'Rất tiếc, chuyến đi đã đủ thành viên.'}, status=400)
+
+    # 2. Tìm xem User này đã có trong danh sách chưa
+    membership = trip.thanh_vien.filter(user=request.user).first()
+
+    if membership:
+        # --- TRƯỜNG HỢP A: Đã có record ---
+        
+        # Nếu đang tham gia hoặc đang chờ -> Báo lỗi
+        if membership.trang_thai_tham_gia in ['DA_THAM_GIA', 'DA_GUI_YEU_CAU']:
+            return JsonResponse({'status': 'error', 'message': 'Bạn đã gửi yêu cầu hoặc đang là thành viên.'}, status=400)
+        
+        # Nếu bị từ chối -> Có thể chặn hoặc cho gửi lại (Tùy bạn, ở đây tôi cho chặn để tránh spam)
+        if membership.trang_thai_tham_gia == 'BI_TU_CHOI':
+             return JsonResponse({'status': 'error', 'message': 'Yêu cầu của bạn trước đó đã bị từ chối.'}, status=400)
+
+        # Nếu ĐÃ RỜI ĐI -> KÍCH HOẠT LẠI (UPDATE)
+        if membership.trang_thai_tham_gia == 'DA_ROI_DI':
+            membership.trang_thai_tham_gia = 'DA_GUI_YEU_CAU' # Đưa về trạng thái chờ duyệt
+            membership.ly_do_tham_gia = ly_do # Cập nhật lý do mới
+            membership.ngay_tham_gia = timezone.now() # Cập nhật lại thời gian
+            membership.save()
+            return JsonResponse({'status': 'success', 'message': 'Chào mừng quay lại! Yêu cầu đã được gửi.'})
+
+    else:
+        # --- TRƯỜNG HỢP B: Chưa từng tham gia -> TẠO MỚI (CREATE) ---
+        ChuyenDiThanhVien.objects.create(
+            chuyen_di=trip, 
+            user=request.user,
+            ly_do_tham_gia=ly_do,
+            trang_thai_tham_gia='DA_GUI_YEU_CAU'
+        )
+        return JsonResponse({'status': 'success', 'message': 'Đã gửi yêu cầu tham gia.'})
+    
+    # Fallback cho các trường hợp lạ
+    return JsonResponse({'status': 'error', 'message': 'Không thể thực hiện yêu cầu.'}, status=400)
 @login_required
 @require_POST
 def cancel_join_request(request, pk):
@@ -534,12 +568,22 @@ class TripChatRoomView(LoginRequiredMixin, DetailView):
         
         context['my_trips'] = my_trips
 
-        # === QUAN TRỌNG: Lấy danh sách cung đường để hiển thị vào Dropdown Lọc ===
-        # Lấy các ID và Tên cung đường duy nhất từ danh sách chuyến đi của user
-        context['available_routes'] = my_trips.values(
-            'cung_duong__id', 'cung_duong__ten'
-        ).distinct().exclude(cung_duong__isnull=True)
-        # =========================================================================
+# B1: Lấy list các tuple (id, tên)
+        route_tuples = my_trips.values_list('cung_duong__id', 'cung_duong__ten')
+        
+        # B2: Dùng set để loại bỏ dòng trùng lặp
+        unique_routes = set(route_tuples)
+        
+        # B3: Chuyển lại thành list dictionary và sắp xếp A-Z
+        context['available_routes'] = sorted(
+            [
+                {'cung_duong__id': r[0], 'cung_duong__ten': r[1]} 
+                for r in unique_routes 
+                if r[0] is not None  # Loại bỏ None nếu có
+            ],
+            key=lambda x: x['cung_duong__ten'] # Sắp xếp theo tên
+        )
+        # ========================================================================
 
         # --- 2. THÔNG TIN THÀNH VIÊN ---
         context['members'] = trip.thanh_vien.filter(
@@ -921,3 +965,51 @@ def react_chat_message(request, msg_id):
         'user_liked': user in msg.likes.all(),       # True nếu đang like
         'user_disliked': user in msg.dislikes.all()  # True nếu đang dislike
     })
+class MyTripsView(LoginRequiredMixin, ListView):
+    model = ChuyenDi
+    template_name = 'trips/my_trips.html'
+    context_object_name = 'trips'
+
+    def get_queryset(self):
+        # Lấy tất cả chuyến đi mà User có liên quan (Là Host hoặc có tên trong danh sách thành viên)
+        return ChuyenDi.objects.filter(
+            Q(thanh_vien__user=self.request.user) | 
+            Q(nguoi_to_chuc=self.request.user)
+        ).distinct().select_related(
+            'cung_duong', 'nguoi_to_chuc__taikhoanhoso', 'anh_bia'
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        now = timezone.now()
+        
+        # Lấy toàn bộ danh sách từ get_queryset
+        all_related_trips = self.get_queryset()
+
+        # 1. TÁCH RIÊNG: DANH SÁCH CHỜ DUYỆT (PENDING)
+        # Logic: User nằm trong bảng thành viên VÀ trạng thái là 'DA_GUI_YEU_CAU'
+        # Lưu ý: Phải query trực tiếp để đảm bảo chính xác
+        context['pending_trips'] = all_related_trips.filter(
+            thanh_vien__user=user,
+            thanh_vien__trang_thai_tham_gia='DA_GUI_YEU_CAU'
+        )
+
+        # 2. TÁCH RIÊNG: DANH SÁCH ĐÃ THAM GIA / HOST (APPROVED)
+        # Logic: (Là Host) HOẶC (Là thành viên ĐÃ ĐƯỢC DUYỆT)
+        approved_trips = all_related_trips.filter(
+            Q(nguoi_to_chuc=user) |
+            Q(thanh_vien__user=user, thanh_vien__trang_thai_tham_gia='DA_THAM_GIA')
+        ).distinct()
+
+        # 3. PHÂN LOẠI SẮP TỚI / ĐÃ QUA (Dựa trên approved_trips)
+        context['upcoming_trips'] = approved_trips.filter(
+            ngay_ket_thuc__gte=now
+        ).order_by('ngay_bat_dau')
+
+        context['past_trips'] = approved_trips.filter(
+            ngay_ket_thuc__lt=now
+        ).order_by('-ngay_bat_dau')
+
+        context['page_title'] = "Chuyến đi của tôi"
+        return context

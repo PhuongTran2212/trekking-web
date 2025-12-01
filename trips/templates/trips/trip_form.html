@@ -523,23 +523,51 @@
                 </div>
 
                 <!-- Card: Cài đặt (GIỮ NGUYÊN) -->
-                <div class="card-modern">
-                    <div class="card-header-modern"><div class="header-title"><span class="header-icon-box bg-icon-setting"><i class="fas fa-cog"></i></span> Thiết lập</div></div>
-                    <div class="card-body-modern p-0"> 
-                        <div class="settings-list">
-                            <div class="setting-item">
-                                <div class="setting-icon privacy-icon"><i class="fas fa-shield-alt"></i></div>
-                                <div class="setting-content"><label class="setting-label">Quyền riêng tư</label><div class="setting-desc">Ai có thể xem chuyến đi này?</div></div>
-                                <div class="setting-action"><div class="custom-select-wrapper">{{ form.che_do_rieng_tu }}</div></div>
-                            </div>
-                            <div class="setting-item">
-                                <div class="setting-icon reason-icon"><i class="fas fa-clipboard-check"></i></div>
-                                <div class="setting-content"><label class="setting-label">Yêu cầu lý do</label><div class="setting-desc">Bắt buộc nhập lý do khi đăng ký</div></div>
-                                <div class="setting-action"><div class="form-check form-switch m-0 p-0 d-flex justify-content-end">{{ form.yeu_cau_ly_do }}</div></div>
-                            </div>
-                        </div>
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="header-title"><span class="header-icon-box bg-icon-setting"><i class="fas fa-cog"></i></span> Thiết lập</div>
+    </div>
+    <div class="card-body-modern p-0"> 
+        <div class="settings-list">
+            
+            <div class="setting-item">
+                <div class="setting-icon bg-light text-dark"><i class="fas fa-toggle-on"></i></div>
+                <div class="setting-content">
+                    <label class="setting-label">Trạng thái</label>
+                    <div class="setting-desc">Cập nhật tình trạng chuyến đi</div>
+                </div>
+                <div class="setting-action" style="width: 180px;">
+                    {{ form.trang_thai }}
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-icon privacy-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="setting-content">
+                    <label class="setting-label">Quyền riêng tư</label>
+                    <div class="setting-desc">Ai có thể xem chuyến đi này?</div>
+                </div>
+                <div class="setting-action">
+                    {{ form.che_do_rieng_tu }}
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-icon reason-icon"><i class="fas fa-clipboard-check"></i></div>
+                <div class="setting-content">
+                    <label class="setting-label">Yêu cầu lý do</label>
+                    <div class="setting-desc">Bắt buộc nhập lý do khi đăng ký</div>
+                </div>
+                <div class="setting-action">
+                    <div class="form-check form-switch m-0 p-0 d-flex justify-content-end">
+                        {{ form.yeu_cau_ly_do }}
                     </div>
                 </div>
+            </div>
+
+        </div>
+    </div>
+</div>
                 
                 <!-- Card: Ảnh (CẬP NHẬT: LIGHTGALLERY STYLE + LOGIC XÓA/LIMIT) -->
 <!-- Card: Ảnh (CẬP NHẬT: QUẢN LÝ ẢNH CŨ + SET COVER) -->
