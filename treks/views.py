@@ -1,5 +1,6 @@
 # treks/views.py
-
+from django.utils import timezone  # <--- BẮT BUỘC PHẢI LÀ DÒNG NÀY
+from datetime import timedelta     # <--- Để dùng tính toán trừ lùi ngày
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, View, TemplateView
@@ -40,29 +41,117 @@ class CungDuongListView(AdminRequiredMixin, ListView):
     context_object_name = 'cung_duong_list'
     paginate_by = 10
 
+    # treks/views.py
+
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('tinh_thanh', 'do_kho').order_by('-ngay_cap_nhat')
+        # 1. Query gốc (như cũ)
+        queryset = super().get_queryset()\
+            .select_related('tinh_thanh', 'do_kho', 'nguoi_tao')\
+            .annotate(media_count=Count('media'))
+            # LƯU Ý: Tạm thời bỏ .order_by() ở đây để xử lý bên dưới
+        
         self.filter_form = CungDuongTrekFilterForm(self.request.GET)
+        
+        # Mặc định sắp xếp nếu không chọn gì
+        ordering = '-ngay_cap_nhat'
+
         if self.filter_form.is_valid():
-            q = self.filter_form.cleaned_data.get('q')
-            trang_thai = self.filter_form.cleaned_data.get('trang_thai')
-            do_kho = self.filter_form.cleaned_data.get('do_kho')
-            if q:
-                queryset = queryset.filter(Q(ten__icontains=q) | Q(tinh_thanh__ten__icontains=q))
-            if trang_thai:
-                queryset = queryset.filter(trang_thai=trang_thai)
-            if do_kho:
-                queryset = queryset.filter(do_kho=do_kho)
-        return queryset
+            data = self.filter_form.cleaned_data
+            
+            # ... (Giữ nguyên logic lọc q, tinh_thanh, do_kho, trang_thai cũ) ...
+            if data.get('q'):
+                queryset = queryset.filter(Q(ten__icontains=data['q']) | Q(dia_diem_chi_tiet__icontains=data['q']))
+            if data.get('tinh_thanh'):
+                queryset = queryset.filter(tinh_thanh=data['tinh_thanh'])
+            if data.get('do_kho'):
+                queryset = queryset.filter(do_kho=data['do_kho'])
+            if data.get('trang_thai'):
+                queryset = queryset.filter(trang_thai=data['trang_thai'])
+
+            # ... (Giữ nguyên logic lọc bo_loc_nhanh cũ) ...
+            loc_nhanh = data.get('bo_loc_nhanh')
+            if loc_nhanh == 'missing_map':
+                queryset = queryset.filter(Q(du_lieu_ban_do_geojson__isnull=True) | Q(du_lieu_ban_do_geojson__exact={}) | Q(du_lieu_ban_do_geojson__exact=''))
+            elif loc_nhanh == 'missing_image':
+                queryset = queryset.filter(media_count=0)
+            elif loc_nhanh == 'low_rating':
+                queryset = queryset.filter(danh_gia_trung_binh__lt=3.0, so_luot_danh_gia__gt=0)
+            elif loc_nhanh == 'no_reviews':
+                queryset = queryset.filter(so_luot_danh_gia=0)
+            elif loc_nhanh == 'outdated':
+                sau_thang_truoc = timezone.now() - timedelta(days=180)
+                queryset = queryset.filter(ngay_cap_nhat__lt=sau_thang_truoc)
+
+            # === XỬ LÝ LOGIC MỚI ===
+            
+            # 1. Lọc theo Người tạo (Admin vs User)
+            author_type = data.get('author_type')
+            if author_type == 'admin':
+                queryset = queryset.filter(nguoi_tao__is_staff=True)
+            elif author_type == 'user':
+                queryset = queryset.filter(nguoi_tao__is_staff=False)
+
+            # 2. Xử lý Sắp xếp
+            sort_by = data.get('sort_by')
+            if sort_by == 'oldest':
+                ordering = 'ngay_cap_nhat' # Cũ nhất lên đầu
+            elif sort_by == 'rating_desc':
+                ordering = '-danh_gia_trung_binh' # Điểm cao nhất
+            elif sort_by == 'rating_asc':
+                ordering = 'danh_gia_trung_binh' # Điểm thấp nhất
+            elif sort_by == 'review_desc':
+                ordering = '-so_luot_danh_gia' # Nhiều review nhất
+            else:
+                ordering = '-ngay_cap_nhat' # Mặc định: Mới nhất
+            # === XỬ LÝ LỌC CHỈ SỐ (MỚI) ===
+            # 1. Lọc Độ dài
+            if data.get('min_len'):
+                queryset = queryset.filter(do_dai_km__gte=data['min_len'])
+            if data.get('max_len'):
+                queryset = queryset.filter(do_dai_km__lte=data['max_len'])
+
+            # 2. Lọc Thời gian
+            if data.get('min_time'):
+                queryset = queryset.filter(thoi_gian_uoc_tinh_gio__gte=data['min_time'])
+            if data.get('max_time'):
+                queryset = queryset.filter(thoi_gian_uoc_tinh_gio__lte=data['max_time'])
+
+            # 3. Lọc Độ cao
+            if data.get('min_high'):
+                queryset = queryset.filter(tong_do_cao_leo_m__gte=data['min_high'])
+            if data.get('max_high'):
+                queryset = queryset.filter(tong_do_cao_leo_m__lte=data['max_high'])
+
+        return queryset.order_by(ordering)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # --- THÊM PHẦN THỐNG KÊ TỔNG QUAN (DASHBOARD MINI) ---
+        
+        # 1. Tổng số cung đường hiện có
+        context['total_treks'] = CungDuongTrek.objects.count()
+        
+        # 2. Số lượng bài đang CHỜ DUYỆT (Quan trọng nhất với Admin)
+        context['pending_count'] = CungDuongTrek.objects.filter(trang_thai=TrangThaiDuyet.CHO_DUYET).count()
+        
+        # 3. Tổng số lượt đánh giá trên toàn hệ thống
+        context['total_reviews'] = CungDuongDanhGia.objects.count()
+        
+        # 4. Điểm đánh giá trung bình của toàn bộ các cung đường
+        avg_rating = CungDuongTrek.objects.aggregate(Avg('danh_gia_trung_binh'))['danh_gia_trung_binh__avg']
+        context['global_avg_rating'] = round(avg_rating, 1) if avg_rating else 0.0
+
+        # ... (giữ nguyên phần context filter_form cũ) ...
         context['page_title'] = "Quản lý Cung đường"
-        context['filter_form'] = self.filter_form
+        context['filter_form'] = getattr(self, 'filter_form', CungDuongTrekFilterForm(self.request.GET))
+        
+        # Giữ query params khi phân trang
         params = self.request.GET.copy()
-        if 'page' in params:
-            del params['page']
+        if 'page' in params: del params['page']
         context['query_params'] = params.urlencode()
+        
+        return context
         return context
 
 class CungDuongCreateView(AdminRequiredMixin, CungDuongBaseView, CreateView):

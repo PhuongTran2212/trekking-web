@@ -1,139 +1,664 @@
 {% extends 'admin_base.html' %}
 {% load static %}
+
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">{{ page_title }}</h4>
-        <a href="{% url 'treks_admin:cung_duong_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Thêm Cung đường mới
-        </a>
+
+<style>
+    :root {
+        --primary: #059669;       /* Emerald 600 */
+        --primary-dark: #047857;
+        --bg-body: #F9FAFB;
+        --surface: #ffffff;
+        --border: #E5E7EB;
+        --text-main: #111827;
+        --text-sub: #6B7280;
+        --radius: 10px;
+    }
+
+    body { background-color: var(--bg-body); font-family: 'Inter', sans-serif; color: var(--text-main); }
+
+    /* --- 1. TOOLBAR (THANH CÔNG CỤ NỔI) --- */
+    .toolbar-container {
+        background: var(--surface);
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid var(--border);
+        margin-bottom: 24px;
+        position: relative;
+        z-index: 20;
+    }
+
+    /* Search Input đẹp hơn */
+    .search-wrapper {
+        position: relative;
+        flex-grow: 1;
+    }
+    .search-input {
+        padding-left: 40px;
+        height: 44px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #F9FAFB;
+        width: 100%;
+        transition: all 0.2s;
+    }
+    .search-input:focus {
+        background: white;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+        outline: none;
+    }
+    .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-sub);
+        pointer-events: none;
+    }
+
+    /* Nút bấm (Button) */
+    .btn-custom {
+        height: 44px;
+        border-radius: 8px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        padding: 0 16px;
+        white-space: nowrap;
+    }
+    .btn-primary-action { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2); }
+    .btn-primary-action:hover { background: var(--primary-dark); transform: translateY(-1px); color: white; }
+    
+    .btn-outline-filter { background: white; border-color: var(--border); color: var(--text-main); }
+    .btn-outline-filter:hover, .btn-outline-filter.active { border-color: var(--primary); color: var(--primary); background: #ECFDF5; }
+
+    .btn-reset-action { color: #DC2626; background: #FEF2F2; border: 1px solid #FECACA; }
+    .btn-reset-action:hover { background: #FEE2E2; }
+
+    /* --- 2. ADVANCED FILTER DRAWER (NGĂN KÉO BỘ LỌC) --- */
+    .filter-drawer {
+        display: none; /* Ẩn mặc định */
+        background: #F8FAFC;
+        border-top: 1px solid var(--border);
+        padding-top: 20px;
+        margin-top: 16px;
+        animation: slideDown 0.3s ease-out forwards;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .filter-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-sub); margin-bottom: 6px; display: block; }
+    
+    .form-select-sm, .form-control-sm {
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    /* Range Inputs Group (Gom nhóm Min-Max) */
+    .range-pill {
+        display: flex;
+        align-items: center;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 4px;
+    }
+    .range-pill:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
+    .range-pill input {
+        border: none; text-align: center; width: 100%; outline: none; font-size: 0.9rem; background: transparent;
+    }
+    .range-pill input::placeholder { font-size: 0.8rem; color: #9CA3AF; }
+    .range-separator { color: #D1D5DB; font-weight: bold; padding: 0 8px; }
+    /* Ẩn nút mũi tên input number */
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    /* --- 3. TABLE STYLES --- */
+    .trek-table { border-collapse: separate; border-spacing: 0 8px; }
+    .trek-table tbody tr { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .trek-table tbody tr:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+    .trek-table td { vertical-align: middle; padding: 16px 14px; border-top: 1px solid transparent; border-bottom: 1px solid transparent; }
+    .trek-table td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+    .trek-table td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+    .metric-box {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: #F3F4F6; border-radius: 6px; padding: 6px 10px; width: 80px;
+    }
+    .metric-val { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+    .metric-lbl { font-size: 0.65rem; color: var(--text-sub); text-transform: uppercase; margin-top: 2px; }
+    
+    .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+    .st-ok { background: #DCFCE7; color: #15803D; }
+    .st-wait { background: #FEF3C7; color: #B45309; }
+    .st-no { background: #FEE2E2; color: #B91C1C; }
+    /* 1. Metric Tags (Thẻ chỉ số màu mè) */
+    .metric-tag {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 10px;
+        border-radius: 10px;
+        min-width: 70px;
+        font-weight: 700;
+        transition: all 0.2s;
+    }
+    .metric-blue   { background: #EFF6FF; color: #2563EB; } /* Xanh dương cho KM */
+    .metric-orange { background: #FFF7ED; color: #EA580C; } /* Cam cho Thời gian */
+    .metric-rose   { background: #FFF1F2; color: #E11D48; } /* Hồng đỏ cho Độ cao */
+    
+    .metric-tag span.lbl { 
+        font-size: 0.65rem; 
+        text-transform: uppercase; 
+        opacity: 0.8; 
+        margin-top: 2px;
+        font-weight: 600;
+    }
+
+    /* 2. Action Buttons (Nút bấm nổi bật) */
+/* --- ACTION BUTTONS (Dạng Icon + Chữ) --- */
+.btn-action {
+    width: 36px;       /* Cố định chiều rộng */
+    height: 36px;      /* Cố định chiều cao */
+    padding: 0;        /* Bỏ padding để căn giữa icon */
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.2s;
+    margin-left: 4px; /* Giảm khoảng cách giữa các nút */
+    font-size: 1rem;  /* Kích thước icon vừa vặn */
+    position: relative;
+}
+.btn-action span {
+    display: none; 
+}
+
+/* Hiệu ứng Tooltip giả lập khi hover (Tùy chọn) */
+.btn-action:hover::after {
+    content: attr(title); /* Lấy nội dung từ thẻ title */
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    margin-bottom: 5px;
+    z-index: 100;
+}
+/* Màu nút Sửa (Xanh lá) */
+.btn-edit { background: #ECFDF5; color: #059669; border: 1px solid rgba(5, 150, 105, 0.1); }
+.btn-edit:hover { background: #059669; color: white; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2); }
+
+/* Màu nút Map (Tím xanh) */
+.btn-map { background: #EEF2FF; color: #4F46E5; border: 1px solid rgba(79, 70, 229, 0.1); }
+.btn-map:hover { background: #4F46E5; color: white; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2); }
+
+/* Màu nút Xóa (Đỏ) */
+.btn-delete { background: #FEF2F2; color: #DC2626; border: 1px solid rgba(220, 38, 38, 0.1); }
+.btn-delete:hover { background: #DC2626; color: white; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2); }
+
+    /* 3. Hiệu ứng hàng */
+    .trek-table tbody tr { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .trek-table tbody tr:hover {
+        transform: scale(1.01);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        background-color: #fff;
+        position: relative;
+    }
+.stat-card {
+        background: #fff;
+        border: 1px solid #F3F4F6; /* Viền siêu mỏng */
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08);
+        border-color: transparent;
+    }
+
+    /* Icon Box: Hộp chứa icon */
+    .icon-box-lg {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0; /* Không bị co lại */
+    }
+
+    /* 1. Theme Emerald (Tổng cung đường) */
+    .theme-emerald .icon-box-lg { background: #ECFDF5; color: #059669; }
+    .theme-emerald h3 { color: #059669; }
+
+    /* 2. Theme Amber (Chờ duyệt) */
+    .theme-amber .icon-box-lg { background: #FFF7ED; color: #D97706; }
+    .theme-amber h3 { color: #D97706; }
+
+    /* 3. Theme Blue (Đánh giá) */
+    .theme-blue .icon-box-lg { background: #EFF6FF; color: #2563EB; }
+    .theme-blue h3 { color: #2563EB; }
+
+    /* 4. Theme Rose (Rating) */
+    .theme-rose .icon-box-lg { background: #FFF1F2; color: #E11D48; }
+    .theme-rose h3 { color: #E11D48; }
+
+    .stat-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6B7280; /* Màu xám ghi */
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+    /* --- RATING SCORE CARD STYLE --- */
+.rating-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px; /* Khoảng cách giữa số điểm và ngôi sao */
+}
+
+.rating-score-box {
+    background: #FFF7ED;       /* Nền cam rất nhạt (Cream) */
+    color: #D97706;            /* Chữ màu cam đậm (Amber) */
+    border: 1px solid #FFEDD5; /* Viền cam nhạt */
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;       /* Bo góc mềm mại hiện đại */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;          /* Chữ siêu đậm */
+    font-size: 1.25rem;        /* Chữ to */
+    box-shadow: 0 4px 6px -1px rgba(217, 119, 6, 0.1); /* Bóng đổ nhẹ màu cam */
+    flex-shrink: 0;
+}
+
+.star-row {
+    color: #F59E0B; /* Màu vàng nghệ cho ngôi sao */
+    font-size: 0.75rem;
+    margin-bottom: 3px;
+    display: flex;
+    gap: 2px;
+}
+
+.review-count {
+    color: #6B7280; /* Màu xám ghi chuyên nghiệp */
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 px-1">
+    <div>
+        <h1 class="h3 fw-bold mb-1 text-dark">{{ page_title }}</h1>
+        <p class="text-muted small mb-0">Quản lý cơ sở dữ liệu trekking</p>
     </div>
-    <div class="card-body">
-        <!-- Khu vực bộ lọc giữ nguyên -->
-        <div class="card bg-light mb-4">
-            <div class="card-body">
-                <form method="get" class="row g-3 align-items-end">
-                    <div class="col-md-5">
-                        <label class="form-label fw-bold">Tìm kiếm</label>
-                        {{ filter_form.q }}
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold">Trạng thái</label>
-                        {{ filter_form.trang_thai }}
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-bold">Độ khó</label>
-                        {{ filter_form.do_kho }}
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-info w-100">
-                            <i class="fas fa-filter"></i> Lọc
-                        </button>
-                    </div>
-                </form>
+    <a href="{% url 'treks_admin:cung_duong_create' %}" class="btn btn-primary-action shadow-sm">
+        <i class="fas fa-plus me-2"></i>Thêm Mới
+    </a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card theme-emerald shadow-sm p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="stat-label">Tổng Cung đường</p>
+                    <h3 class="fw-bold mb-0">{{ total_treks }}</h3>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        <i class="fas fa-arrow-up text-success"></i> Đang hoạt động
+                    </small>
+                </div>
+                <div class="icon-box-lg">
+                    <i class="fas fa-route"></i> </div>
             </div>
         </div>
+    </div>
 
-        <!-- Bảng hiển thị danh sách -->
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th style="width: 10%;">Ảnh bìa</th>
-                        <th>Tên cung đường</th>
-                        <th>Tỉnh/Thành</th>
-                        <th>Độ khó</th>
-                        <th class="text-center">Đánh giá</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày cập nhật</th>
-                        <th class="text-end">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for trek in cung_duong_list %}
-                    <tr>
-                        <td>
-                            <img src="{{ trek.anh_bia_url }}" alt="Ảnh bìa của {{ trek.ten }}" 
-                                 style="width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius-sm);">
-                        </td>
-                        <td>
-                            <a href="{% url 'treks_admin:cung_duong_detail' pk=trek.pk %}"><strong>{{ trek.ten }}</strong></a>
-                        </td>
-                        <td>{{ trek.tinh_thanh.ten }}</td>
-                        <td>{{ trek.do_kho.ten }}</td>
-                        <td class="text-center">
-                            {% if trek.so_luot_danh_gia > 0 %}
-                                <span class="fw-bold text-warning">{{ trek.danh_gia_trung_binh|floatformat:1 }} ★</span>
-                                <br>
-                                <small class="text-muted">({{ trek.so_luot_danh_gia }} lượt)</small>
-                            {% else %}
-                                <span class="text-muted">Chưa có</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if trek.trang_thai == 'DA_DUYET' %}
-                                <span class="badge bg-success">{{ trek.get_trang_thai_display }}</span>
-                            {% elif trek.trang_thai == 'CHO_DUYET' %}
-                                <span class="badge bg-warning text-dark">{{ trek.get_trang_thai_display }}</span>
-                            {% else %}
-                                <span class="badge bg-danger">{{ trek.get_trang_thai_display }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ trek.ngay_cap_nhat|date:"d/m/Y H:i" }}</td>
-                        
-                        <!-- ========================================================= -->
-                        <!-- === CỘT HÀNH ĐỘNG ĐÃ ĐƯỢC CẬP NHẬT                   === -->
-                        <!-- ========================================================= -->
-                        <td class="text-end">
-                            <!-- NÚT MỚI: TẠO CHUYẾN ĐI (VÔ HIỆU HÓA) -->
-                            <a href="#" class="btn btn-sm btn-info disabled" title="Tạo chuyến đi từ cung đường này (tính năng sắp ra mắt)">
-                                <i class="fas fa-calendar-plus"></i>
-                            </a>
-                            
-                            <!-- Nút sửa -->
-                            <a href="{% url 'treks_admin:cung_duong_update' pk=trek.pk %}" class="btn btn-sm btn-warning" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </a>
-
-                            <!-- Nút xóa -->
-                            <a href="{% url 'treks_admin:cung_duong_delete' pk=trek.pk %}" class="btn btn-sm btn-danger" title="Xóa">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                        </td>
-
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" class="text-center py-4">
-                            Không tìm thấy cung đường nào phù hợp với điều kiện lọc.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="col-md-3">
+        <div class="stat-card theme-amber shadow-sm p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="stat-label">Cần Phê Duyệt</p>
+                    <h3 class="fw-bold mb-0">{{ pending_count }}</h3>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        {% if pending_count > 0 %}
+                            <span class="text-warning fw-bold">Cần xử lý ngay</span>
+                        {% else %}
+                            <span class="text-success">Tất cả đã xong</span>
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="icon-box-lg">
+                    <i class="fas fa-hourglass-half"></i> </div>
+            </div>
         </div>
+    </div>
 
-        <!-- Khu vực phân trang giữ nguyên -->
-        {% if is_paginated %}
-        <nav aria-label="Page navigation" class="mt-4">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?{{ query_params }}&page=1">&laquo; Đầu</a></li>
-                    <li class="page-item"><a class="page-link" href="?{{ query_params }}&page={{ page_obj.previous_page_number }}">Trước</a></li>
-                {% endif %}
-                
-                <li class="page-item disabled"><a class="page-link" href="#">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</a></li>
-                
-                {% if page_obj.has_next %}
-                    <li class="page-item"><a class="page-link" href="?{{ query_params }}&page={{ page_obj.next_page_number }}">Tiếp</a></li>
-                    <li class="page-item"><a class="page-link" href="?{{ query_params }}&page={{ page_obj.paginator.num_pages }}">Cuối &raquo;</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
+    <div class="col-md-3">
+        <div class="stat-card theme-blue shadow-sm p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="stat-label">Tổng Review</p>
+                    <h3 class="fw-bold mb-0">{{ total_reviews }}</h3>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        <i class="fas fa-comment-dots me-1"></i>Từ cộng đồng
+                    </small>
+                </div>
+                <div class="icon-box-lg">
+                    <i class="fas fa-users"></i> </div>
+            </div>
+        </div>
+    </div>
 
+    <div class="col-md-3">
+        <div class="stat-card theme-rose shadow-sm p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="stat-label">Điểm Đánh Giá</p>
+                    <h3 class="fw-bold mb-0">{{ global_avg_rating }}<span class="fs-6 text-muted fw-normal">/5</span></h3>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        Trung bình cung đường
+                    </small>
+                </div>
+                <div class="icon-box-lg">
+                    <i class="fas fa-heart"></i> </div>
+            </div>
+        </div>
     </div>
 </div>
+<form method="get" id="mainFilterForm">
+    <div class="toolbar-container">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                {{ filter_form.q }} 
+            </div>
+
+            <div style="width: 180px;">
+                {{ filter_form.sort_by }}
+            </div>
+
+            <button type="button" class="btn btn-custom btn-outline-filter" id="toggleFilterBtn">
+                <i class="fas fa-sliders-h me-2"></i>Bộ lọc
+            </button>
+
+            <button type="submit" class="btn btn-custom btn-primary-action">
+                Lọc dữ liệu
+            </button>
+        </div>
+
+        <div id="filterDrawer" class="filter-drawer">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="filter-label">Thông tin chung</label>
+                    <div class="mb-2">{{ filter_form.tinh_thanh }}</div>
+                    <div class="mb-2">{{ filter_form.trang_thai }}</div>
+                    <div class="mb-0">{{ filter_form.do_kho }}</div>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="filter-label">Chỉ số kỹ thuật</label>
+                    
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="small text-muted w-25">Độ dài (km):</span>
+                        <div class="range-pill w-75">
+                            {{ filter_form.min_len }}
+                            <span class="range-separator">-</span>
+                            {{ filter_form.max_len }}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="small text-muted w-25">Thời gian (h):</span>
+                        <div class="range-pill w-75">
+                            {{ filter_form.min_time }}
+                            <span class="range-separator">-</span>
+                            {{ filter_form.max_time }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <span class="small text-muted w-25">Độ cao (m):</span>
+                        <div class="range-pill w-75">
+                            {{ filter_form.min_high }}
+                            <span class="range-separator">-</span>
+                            {{ filter_form.max_high }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 border-start ps-4">
+                    <label class="filter-label text-danger">
+                        <i class="fas fa-bug me-1"></i>Kiểm tra dữ liệu
+                    </label>
+                    <div class="mb-3">
+                        {{ filter_form.bo_loc_nhanh }}
+                        <small class="text-muted fst-italic mt-1 d-block">Lọc nhanh các bài thiếu ảnh, map...</small>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="button" id="btnReset" class="btn btn-custom btn-reset-action w-100">
+                            <i class="fas fa-redo-alt me-2"></i>Đặt lại bộ lọc (Reset)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table trek-table align-middle" style="border-collapse: separate; border-spacing: 0 12px;">
+<thead>
+    <tr class="text-secondary text-uppercase fw-bold" style="border-bottom: 2px solid #eaecf0; font-size: 0.85rem;">
+        <th class="ps-3 border-0 py-3" style="width: 5%;">STT</th>
+        <th class="border-0 py-3" style="width: 25%;">Thông tin Cung đường</th>
+        <th class="text-center border-0" style="width: 10%;">Độ dài</th>
+        <th class="text-center border-0" style="width: 10%;">Thời gian</th>
+        <th class="text-center border-0" style="width: 10%;">Độ cao</th>
+        <th class="text-center border-0" style="width: 15%;">Đánh giá</th>
+        <th class="text-center border-0" style="width: 15%;">Trạng thái</th>
+        <th class="text-center pe-3 border-0" style="width: 15%;">Hành động</th>
+    </tr>
+</thead>
+<tbody>
+    {% for trek in cung_duong_list %}
+    <tr class="bg-white rounded-3 shadow-sm">
+        <td class="ps-3 text-center fw-bold text-secondary rounded-start-3" style="font-size: 1.1rem; opacity: 0.7;">
+            {{ forloop.counter }}
+        </td>
+
+        <td class="py-3">
+            <div class="d-flex align-items-center">
+                <div class="position-relative flex-shrink-0">
+                    <img src="{{ trek.anh_bia_url }}" class="rounded-3 shadow-sm me-3" width="60" height="60" style="object-fit: cover;">
+                </div>
+                <div style="min-width: 150px;"> 
+                    <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="fw-bold text-dark text-decoration-none d-block mb-1 text-truncate" style="font-size: 1.05rem;" title="{{ trek.ten }}">
+                        {{ trek.ten }}
+                    </a>
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                        <span class="badge bg-gray-100 text-secondary border fw-normal" style="font-size: 0.8rem; background: #f3f4f6;">
+                            <i class="fas fa-map-marker-alt text-danger me-1"></i>{{ trek.tinh_thanh.ten }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </td>
+        
+        <td class="text-center">
+            <div class="metric-tag metric-blue mx-auto">
+                <span>{{ trek.do_dai_km }}</span>
+                <span class="lbl">Km</span>
+            </div>
+        </td>
+        <td class="text-center">
+            <div class="metric-tag metric-orange mx-auto">
+                <span>{{ trek.thoi_gian_uoc_tinh_gio }}</span>
+                <span class="lbl">Giờ</span>
+            </div>
+        </td>
+        <td class="text-center">
+            <div class="metric-tag metric-rose mx-auto">
+                <span>{{ trek.tong_do_cao_leo_m }}</span>
+                <span class="lbl">m</span>
+            </div>
+        </td>
+
+        <td class="text-center">
+            <div class="d-flex flex-column align-items-center justify-content-center">
+                <div class="star-row mb-1" style="font-size: 0.9rem;"> <span class="fw-bold text-dark me-1" style="font-size: 1rem;">{{ trek.danh_gia_trung_binh }}</span>
+                </div>
+                <div class="review-count text-muted" style="font-size: 0.85rem;">
+                    ({{ trek.so_luot_danh_gia }} lượt)
+                </div>
+            </div>
+        </td>
+
+        <td class="text-center">
+            {% if trek.trang_thai == 'DA_DUYET' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-2 rounded-3" style="font-size: 0.8rem; font-weight: 600;">Đã duyệt</span>
+            {% elif trek.trang_thai == 'CHO_DUYET' %}
+                <span class="badge bg-warning-subtle text-warning-dark border border-warning-subtle px-2 py-2 rounded-3" style="font-size: 0.8rem; font-weight: 600;">Chờ duyệt</span>
+            {% else %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-2 rounded-3" style="font-size: 0.8rem; font-weight: 600;">Từ chối</span>
+            {% endif %}
+        </td>
+
+        <td class="text-end pe-3 rounded-end-3">
+            <div class="d-flex justify-content-end align-items-center">
+                <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn-action btn-edit" title="Chỉnh sửa">
+                    <i class="fas fa-edit"></i>
+                </a>
+                
+                <a href="{% url 'treks_admin:cung_duong_edit_map' trek.pk %}" class="btn-action btn-map" title="Bản đồ">
+                    <i class="fas fa-map-marked-alt"></i>
+                </a>
+
+                <a href="#" class="btn-action btn-delete" title="Xóa" onclick="return confirm('Xóa cung đường: {{ trek.ten }}?')">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+            </div>
+        </td>
+    </tr>
+    <tr style="height: 10px; background: transparent;"><td colspan="8" class="p-0 border-0"></td></tr>
+    {% empty %}
+    <tr><td colspan="8" class="text-center py-5 text-muted fs-5">Không tìm thấy dữ liệu.</td></tr>
+    {% endfor %}
+</tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+<div class="d-flex justify-content-center mt-4">
+    <nav>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link border-0 text-dark" href="?{{ query_params }}&page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link bg-success border-0">{{ page_obj.number }}</span></li>
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link border-0 text-dark" href="?{{ query_params }}&page={{ page_obj.next_page_number }}">&raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('mainFilterForm');
+    const toggleBtn = document.getElementById('toggleFilterBtn');
+    const drawer = document.getElementById('filterDrawer');
+    const resetBtn = document.getElementById('btnReset');
+    
+    // --- 1. Xử lý DOM cho Input ---
+    // Thêm class bootstrap cho các input được render từ Django nếu chưa có
+    const inputs = filterForm.querySelectorAll('input[type="text"], input[type="number"]');
+    inputs.forEach(input => {
+        if(input.name === 'q') {
+            input.classList.add('search-input');
+            input.placeholder = "Tìm kiếm tên cung đường, địa điểm...";
+        } else {
+            // Xóa border mặc định của input number để dùng style của .range-pill
+            input.style.border = "none";
+            input.style.background = "transparent";
+            input.placeholder = "..."; 
+        }
+    });
+
+    const selects = filterForm.querySelectorAll('select');
+    selects.forEach(select => {
+        select.classList.add('form-select', 'form-select-sm', 'bg-white');
+    });
+
+    // --- 2. Toggle Advanced Filters (Ẩn/Hiện bộ lọc) ---
+    // Kiểm tra nếu đang có filter nâng cao (url params) thì mở sẵn
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasAdvancedFilter = ['tinh_thanh', 'trang_thai', 'do_kho', 'min_len', 'bo_loc_nhanh'].some(p => urlParams.get(p));
+    
+    if(hasAdvancedFilter) {
+        drawer.style.display = 'block';
+        toggleBtn.classList.add('active');
+    }
+
+    toggleBtn.addEventListener('click', function() {
+        if (drawer.style.display === 'none' || drawer.style.display === '') {
+            drawer.style.display = 'block';
+            this.classList.add('active');
+        } else {
+            drawer.style.display = 'none';
+            this.classList.remove('active');
+        }
+    });
+
+    // --- 3. Xử lý nút Reset thông minh ---
+    resetBtn.addEventListener('click', function() {
+        // Hiệu ứng icon xoay
+        const icon = this.querySelector('i');
+        if(icon) {
+            icon.style.transition = 'transform 0.4s';
+            icon.style.transform = 'rotate(-360deg)';
+        }
+
+        // Xóa sạch dữ liệu
+        filterForm.querySelectorAll('input').forEach(input => input.value = '');
+        filterForm.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+        
+        // Submit lại form để về trang gốc
+        setTimeout(() => filterForm.submit(), 300);
+    });
+
+    // --- 4. (Optional) Auto-submit cho Sort và Lọc nhanh ---
+    const autoSubmitSelects = filterForm.querySelectorAll('select[name="sort_by"], select[name="bo_loc_nhanh"]');
+    autoSubmitSelects.forEach(sel => {
+        sel.addEventListener('change', () => filterForm.submit());
+    });
+});
+</script>
 {% endblock %}

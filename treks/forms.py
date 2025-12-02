@@ -80,29 +80,102 @@ class CungDuongTrekAdminForm(forms.ModelForm):
                 CungDuongVatDungGoiY.objects.create(cung_duong=instance, vat_dung=vat_dung)
             
         return instance
-class CungDuongTrekFilterForm(forms.Form):
-    # Lấy các lựa chọn từ model và thêm một lựa chọn "Tất cả"
-    CHOICES_TRANG_THAI = [('', 'Tất cả trạng thái')] + TrangThaiDuyet.choices
+# treks/forms.py
 
+# ==============================================================================
+# 2. FORM ADMIN: BỘ LỌC THÔNG MINH (ĐÃ SỬA LỖI THIẾU TRƯỜNG)
+# ==============================================================================
+class CungDuongTrekFilterForm(forms.Form):
+    # --- ĐỊNH NGHĨA CÁC LỰA CHỌN ---
+    CHOICES_TRANG_THAI = [('', '--- Tất cả trạng thái ---')] + TrangThaiDuyet.choices
+    
+    CHOICES_LOC_NHANH = [
+        ('', '--- Lọc nhanh vấn đề ---'),
+        ('missing_map', '⚠️ Thiếu bản đồ (GeoJSON)'),
+        ('missing_image', '📷 Thiếu ảnh bìa/Media'),
+        ('low_rating', '⭐ Đánh giá thấp (< 3 sao)'),
+        ('no_reviews', '💬 Chưa có đánh giá'),
+        ('outdated', '⏰ Cũ (Chưa cập nhật > 6 tháng)'),
+    ]
+
+    CHOICES_SORT = [
+        ('newest', 'Mới nhất'),
+        ('oldest', 'Cũ nhất'),
+        ('rating_desc', 'Điểm đánh giá (Cao -> Thấp)'),
+        ('rating_asc', 'Điểm đánh giá (Thấp -> Cao)'),
+        ('review_desc', 'Nhiều đánh giá nhất'),
+    ]
+
+    CHOICES_AUTHOR = [
+        ('', '--- Tất cả người đăng ---'),
+        ('admin', '🛡️ Admin (Ban quản trị)'),
+        ('user', '👤 User (Cộng đồng)'),
+    ]
+    # === THÊM NHÓM LỌC CHỈ SỐ (MỚI) ===
+    # 1. Độ dài (km)
+    min_len = forms.DecimalField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Km (Min)'}))
+    max_len = forms.DecimalField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Km (Max)'}))
+
+    # 2. Thời gian (giờ)
+    min_time = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Giờ (Min)'}))
+    max_time = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Giờ (Max)'}))
+
+    # 3. Độ cao (m)
+    min_high = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Mét (Min)'}))
+    max_high = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Mét (Max)'}))
+    # --- CÁC TRƯỜNG TÌM KIẾM ---
     q = forms.CharField(
-        label="Tìm kiếm",
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên, tỉnh thành...'})
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Tìm tên cung đường, địa điểm...'
+        })
     )
+    
+    tinh_thanh = forms.ModelChoiceField(
+        queryset=TinhThanh.objects.all().order_by('ten'),
+        required=False,
+        empty_label="--- Tất cả Tỉnh/Thành ---",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    do_kho = forms.ModelChoiceField(
+        queryset=DoKho.objects.all(),
+        required=False,
+        empty_label="--- Tất cả Độ khó ---",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     trang_thai = forms.ChoiceField(
-        label="Trạng thái",
         required=False,
         choices=CHOICES_TRANG_THAI,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    do_kho = forms.ModelChoiceField(
-        queryset=DoKho.objects.all(),
+    
+    # --- TRƯỜNG KIỂM SOÁT CHẤT LƯỢNG ---
+    bo_loc_nhanh = forms.ChoiceField(
         required=False,
-        label="Độ khó",
-        empty_label="Tất cả độ khó",
-        widget=forms.Select(attrs={'class': 'form-select'})
+        choices=CHOICES_LOC_NHANH,
+        widget=forms.Select(attrs={
+            'class': 'form-select border-warning', 
+            'style': 'background-color: #fff3cd;'
+        })
     )
 
+    # --- HAI TRƯỜNG QUAN TRỌNG VỪA THÊM (LÚC NÃY BẠN THIẾU) ---
+    sort_by = forms.ChoiceField(
+        required=False,
+        choices=CHOICES_SORT,
+        label="Sắp xếp",
+        widget=forms.Select(attrs={'class': 'form-select fw-bold'})
+    )
+
+    author_type = forms.ChoiceField(
+        required=False,
+        choices=CHOICES_AUTHOR,
+        label="Người đăng",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
 # Form 2: Dùng cho người dùng lọc cung đường (KHÔNG THAY ĐỔI)
 # treks/forms.py
 
