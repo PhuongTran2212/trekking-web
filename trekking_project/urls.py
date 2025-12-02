@@ -20,6 +20,7 @@ urlpatterns = [
     path('cung-duong/', include('treks.urls', namespace='treks')),
     path('tinymce/', include('tinymce.urls')),
     path('chuyen-di/', include('trips.urls')),
+    path('thanh-tuu/', include(('gamification.urls', 'gamification'), namespace='gamification')),
 
 ]
 

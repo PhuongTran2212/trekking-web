@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles', # Đã có sẵn, rất tốt
     'tinymce',
     
+    
     # KHAI BÁO CÁC APP CỦA BẠN
     'core.apps.CoreConfig',
     'accounts.apps.AccountsConfig',

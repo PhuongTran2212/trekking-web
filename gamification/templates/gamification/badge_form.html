@@ -1,0 +1,174 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* CSS Vùng Preview Ảnh */
+    .img-upload-wrapper {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+    .img-upload-wrapper:hover {
+        border-color: var(--primary-medium, #22C55E);
+        background: #f0fdf4;
+    }
+    .img-preview {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        z-index: 2;
+    }
+    .upload-placeholder {
+        position: absolute;
+        color: #adb5bd;
+        text-align: center;
+        z-index: 1;
+        pointer-events: none;
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        {% if form.instance.pk %}
+                            <i class="fa-solid fa-pen-to-square"></i> Cập nhật Huy Hiệu
+                        {% else %}
+                            <i class="fa-solid fa-plus-circle"></i> Tạo Huy Hiệu Mới
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Quan trọng: enctype="multipart/form-data" để gửi file -->
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Vui lòng kiểm tra lại thông tin.
+                            </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <!-- 1. Cột Trái: Thông tin -->
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Tên huy hiệu <span class="text-danger">*</span></label>
+                                    {{ form.ten }}
+                                    <div class="text-danger small">{{ form.ten.errors }}</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Mô tả ngắn</label>
+                                    {{ form.mo_ta }}
+                                </div>
+                            </div>
+
+                            <!-- 2. Cột Phải: Upload Ảnh -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Ảnh Huy Hiệu</label>
+                                <div class="card bg-light border-0 p-3 text-center">
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <div class="img-upload-wrapper">
+                                            <!-- Logic hiển thị ảnh cũ hoặc ảnh mặc định -->
+                                            {% if form.instance.pk and form.instance.anh_huy_hieu %}
+                                                <img id="previewImg" src="{{ form.instance.anh_huy_hieu.url }}" class="img-preview">
+                                            {% else %}
+                                                <img id="previewImg" src="" class="img-preview" style="display:none;">
+                                                <div class="upload-placeholder" id="placeholderIcon">
+                                                    <i class="fa-solid fa-cloud-arrow-up fa-2x mb-1"></i><br>
+                                                    <small>Upload</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Input File Thật (được render bởi Django) -->
+                                    {{ form.anh_huy_hieu }}
+                                    <div class="form-text small mt-2">Định dạng: JPG, PNG, WEBP. Tối đa 2MB.</div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Logic & Config -->
+                            <div class="col-12 mt-3">
+                                <h6 class="text-muted text-uppercase mb-3 small fw-bold border-top pt-3">Cấu hình Logic</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Loại điều kiện</label>
+                                        {{ form.loai_dieu_kien }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Toán tử</label>
+                                        {{ form.toan_tu }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Mục tiêu (Số)</label>
+                                        {{ form.gia_tri_muc_tieu }}
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label fw-semibold">Biến số phụ (Tag/Slug/Code)</label>
+                                        {{ form.bien_so_phu }}
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check form-switch p-0 mt-2">
+                                            {{ form.is_active }}
+                                            <label class="form-check-label fw-semibold ms-2" for="{{ form.is_active.id_for_label }}">
+                                                Kích hoạt huy hiệu này
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a href="{% url 'gamification:badge_list' %}" class="btn btn-light border">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fa-solid fa-save"></i> {{ btn_text|default:"Lưu dữ liệu" }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // JS: Xem trước ảnh khi user chọn file từ máy tính
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.querySelector('input[type="file"]');
+        const previewImg = document.getElementById('previewImg');
+        const placeholder = document.getElementById('placeholderIcon');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewImg.style.display = 'block'; // Hiện ảnh
+                        if(placeholder) placeholder.style.display = 'none'; // Ẩn icon upload
+                    }
+                    
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

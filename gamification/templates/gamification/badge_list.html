@@ -1,0 +1,205 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Quản lý Huy Hiệu | TrekViet Admin{% endblock title %}
+
+{% block head_extra %}
+<!-- Thêm CSS riêng cho trang này -->
+<style>
+    /* Card huy hiệu */
+    .badge-card {
+        background-color: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        transition: transform 0.2s, box-shadow 0.2s;
+        overflow: hidden; /* Để bo góc ảnh */
+    }
+    .badge-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-light);
+    }
+    
+    /* Vùng chứa ảnh */
+    .badge-img-wrapper {
+        height: 120px;
+        background-color: var(--gray-50);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid var(--gray-100);
+        position: relative;
+    }
+    .badge-img {
+        max-height: 80px;
+        max-width: 80px;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        transition: transform 0.3s ease;
+    }
+    .badge-card:hover .badge-img {
+        transform: scale(1.1);
+    }
+
+    /* Badge trạng thái (Active/Inactive) */
+    .status-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        background-color: rgba(255, 255, 255, 0.9);
+        box-shadow: var(--shadow-sm);
+        z-index: 2;
+    }
+    .status-badge.inactive { color: var(--gray-500); border: 1px solid var(--gray-300); }
+
+    /* Nội dung text */
+    .badge-title {
+        font-family: var(--font-heading);
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+    }
+    .badge-desc {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        display: -webkit-box;
+       
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 2.6em; /* Giới hạn chiều cao */
+    }
+
+    /* Hộp thông tin logic */
+    .logic-box {
+        background-color: var(--primary-lightest);
+        border: 1px solid var(--primary-light);
+        border-radius: var(--radius-md);
+        padding: 0.75rem;
+        font-size: 0.8125rem;
+        margin-top: auto; /* Đẩy xuống dưới cùng body */
+    }
+    .logic-label { color: var(--primary-darkest); font-weight: 600; margin-bottom: 2px; }
+    .logic-value { color: var(--primary-dark); font-family: monospace; }
+</style>
+<!-- FontAwesome cho Icon (Nếu chưa có trong base) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- 1. HEADER CỦA TRANG (Page Header) -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-gray-800 mb-1">🏅 Kho Huy Hiệu</h2>
+            <p class="text-muted mb-0">Quản lý và thiết lập các thành tựu cho hệ thống Gamification.</p>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2">
+            <!-- Nút xem với tư cách User -->
+            <a href="{% url 'gamification:my_badges' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                <i class="fa-solid fa-user-astronaut"></i> 
+                <span>Xem Demo User</span>
+            </a>
+
+            <!-- Nút tạo mới (Chỉ hiện cho Staff) -->
+            {% if user.is_staff %}
+            <a href="{% url 'gamification:badge_create' %}" class="btn btn-success d-flex align-items-center gap-2 text-white">
+                <i class="fa-solid fa-plus"></i> 
+                <span>Tạo Huy Hiệu Mới</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 2. DANH SÁCH HUY HIỆU (Grid Cards) -->
+    <div class="row g-4">
+        {% for badge in badges %}
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="badge-card h-100 d-flex flex-column">
+                
+                <!-- Phần Ảnh (ĐÃ SỬA LỖI 404) -->
+                <div class="badge-img-wrapper">
+                    {% if badge.anh_huy_hieu %}
+                        <!-- QUAN TRỌNG: Dùng .url để lấy đường dẫn media -->
+                        <img src="{{ badge.anh_huy_hieu.url }}" 
+                             alt="{{ badge.ten }}" 
+                             class="badge-img"
+                             onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/6556/6556073.png';">
+                    {% else %}
+                        <!-- Ảnh mặc định nếu chưa upload -->
+                        <img src="https://cdn-icons-png.flaticon.com/512/6556/6556073.png" 
+                             alt="Default Badge" 
+                             class="badge-img">
+                    {% endif %}
+                    
+                    {% if not badge.is_active %}
+                    <span class="status-badge inactive">
+                        <i class="fa-solid fa-eye-slash"></i> Đang ẩn
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Phần Nội Dung -->
+                <div class="p-4 d-flex flex-column flex-grow-1">
+                    <h5 class="badge-title">{{ badge.ten }}</h5>
+                    <p class="badge-desc" title="{{ badge.mo_ta }}">
+                        {{ badge.mo_ta|default:"Không có mô tả chi tiết." }}
+                    </p>
+
+                    <!-- Box hiển thị Logic -->
+                    <div class="logic-box mt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="logic-label">Điều kiện:</span>
+                            <span class="badge bg-success rounded-pill">{{ badge.gia_tri_muc_tieu }}</span>
+                        </div>
+                        <div class="logic-value mt-1 text-truncate" title="{{ badge.get_loai_dieu_kien_display }}">
+                            {{ badge.get_loai_dieu_kien_display }}
+                        </div>
+                        {% if badge.bien_so_phu %}
+                        <div class="mt-1 pt-1 border-top border-success-subtle d-flex align-items-center gap-1 text-success small">
+                            <i class="fa-solid fa-tag"></i> 
+                            <span>{{ badge.bien_so_phu }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Footer Nút Bấm (Chỉ Staff) -->
+                    {% if user.is_staff %}
+                    <div class="mt-4 d-flex gap-2 pt-3 border-top border-gray-100">
+                        <a href="{% url 'gamification:badge_update' badge.id %}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                            <i class="fa-solid fa-pen-to-square"></i> Sửa
+                        </a>
+                        <a href="{% url 'gamification:badge_delete' badge.id %}" class="btn btn-sm btn-outline-danger flex-grow-1">
+                            <i class="fa-solid fa-trash"></i> Xóa
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Trạng thái trống (Empty State) -->
+        <div class="col-12">
+            <div class="text-center py-5 bg-white rounded-3 border border-gray-200">
+                <div class="mb-3 text-gray-300">
+                    <i class="fa-solid fa-medal fa-4x"></i>
+                </div>
+                <h4 class="h5 text-gray-700 fw-bold">Chưa có dữ liệu</h4>
+                <p class="text-gray-500 mb-4">Hệ thống chưa có huy hiệu nào. Hãy tạo huy hiệu đầu tiên!</p>
+                {% if user.is_staff %}
+                <a href="{% url 'gamification:badge_create' %}" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Tạo Huy Hiệu Ngay
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

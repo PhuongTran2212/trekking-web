@@ -384,7 +384,10 @@
                     
                     <a href="{% url 'accounts:profile-detail' username=user.username %}" class="th-dropdown-item">Profile của tôi</a>
                     <a href="#" class="th-dropdown-item">Cài đặt tài khoản</a>
-                    
+                     <a href="{% url 'gamification:my_badges' %}" class="th-dropdown-item">
+                     <i class="fas fa-medal me-2 text-warning"></i> Thành tựu của tôi
+                      </a>
+
                     {% if user.is_staff %}
                     <div class="th-divider"></div>
                     <a href="{% url 'admin_dashboard' %}" class="th-dropdown-item th-admin-link">

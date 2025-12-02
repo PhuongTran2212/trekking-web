@@ -1,0 +1,28 @@
+{% extends 'admin_base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">⚠️ Xác nhận xóa Huy Hiệu</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p class="fs-5">Bạn có chắc chắn muốn xóa huy hiệu này không?</p>
+                    <h3 class="fw-bold text-danger">{{ object.ten }}</h3>
+                    <p class="text-muted">Hành động này không thể hoàn tác và sẽ xóa huy hiệu này khỏi tất cả người dùng đã đạt được.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mt-4">
+                            <a href="{% url 'gamification:badge_list' %}" class="btn btn-secondary">Quay lại</a>
+                            <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
