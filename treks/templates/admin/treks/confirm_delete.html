@@ -11,7 +11,9 @@
         <p class="text-danger">Hành động này sẽ xóa tất cả media, đánh giá và các dữ liệu liên quan. Hành động này không thể hoàn tác.</p>
         <form method="post" class="mt-4">
             {% csrf_token %}
-            <a href="{% url 'treks_admin:cung_duong_detail' pk=object.pk %}" class="btn btn-ghost">Hủy</a>
+            <a href="{% url 'treks_admin:cung_duong_list' %}" class="btn btn-secondary me-2">
+    <i class="fas fa-times"></i> Hủy
+</a>
             <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
         </form>
     </div>

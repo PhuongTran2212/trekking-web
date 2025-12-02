@@ -10,7 +10,8 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.db import transaction
 from django.db.models import Q, Count, Avg
 import requests
-
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.views.decorators.http import require_POST
 from .models import CungDuongTrek, CungDuongMedia, TrangThaiDuyet, CungDuongDanhGia
 from .forms import CungDuongTrekAdminForm, CungDuongTrekFilterForm, CungDuongMapForm # Thêm CungDuongMapForm
 
@@ -219,7 +220,10 @@ class CungDuongUpdateView(AdminRequiredMixin, CungDuongBaseView, UpdateView):
         
     def get_success_url(self):
         # Sau khi lưu, ở lại trang chỉnh sửa
-        return reverse('treks_admin:cung_duong_update', kwargs={'pk': self.object.pk})
+        return reverse('treks_admin:cung_duong_detail', kwargs={'pk': self.object.pk})
+
+from django.core.paginator import Paginator
+from django.db.models import Q
 
 class CungDuongDetailView(AdminRequiredMixin, DetailView):
     model = CungDuongTrek
@@ -228,11 +232,68 @@ class CungDuongDetailView(AdminRequiredMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_title'] = f"Chi tiết: {self.object.ten}"
-        reviews = CungDuongDanhGia.objects.filter(cung_duong=self.object).order_by('-ngay_danh_gia')
-        context['reviews'] = reviews
-        context['total_reviews'] = reviews.count()
+        
+        # 1. Lấy tất cả đánh giá của cung đường này
+        # prefetch_related('anh_danh_gia') để lấy ảnh review không bị n+1 query
+        # select_related('user') để lấy thông tin user nhanh hơn
+        reviews_qs = self.object.danh_gia.select_related('user').prefetch_related('anh_danh_gia').all()
+
+        # 2. XỬ LÝ BỘ LỌC (Lấy tham số từ URL)
+        rating = self.request.GET.get('rating')
+        has_img = self.request.GET.get('has_img')
+        has_content = self.request.GET.get('has_content')
+        sort = self.request.GET.get('sort', 'newest') # Mặc định mới nhất
+
+        if rating:
+            reviews_qs = reviews_qs.filter(diem_danh_gia=rating)
+        
+        if has_img == 'on':
+            reviews_qs = reviews_qs.filter(anh_danh_gia__isnull=False).distinct()
+            
+        if has_content == 'on':
+            reviews_qs = reviews_qs.exclude(Q(binh_luan__isnull=True) | Q(binh_luan__exact=''))
+
+        # 3. XỬ LÝ SẮP XẾP
+        if sort == 'oldest':
+            reviews_qs = reviews_qs.order_by('ngay_danh_gia')
+        elif sort == 'high_rating':
+            reviews_qs = reviews_qs.order_by('-diem_danh_gia')
+        elif sort == 'low_rating':
+            reviews_qs = reviews_qs.order_by('diem_danh_gia')
+        else: # newest
+            reviews_qs = reviews_qs.order_by('-ngay_danh_gia')
+
+        # 4. XỬ LÝ PHÂN TRANG (5 review mỗi trang)
+        paginator = Paginator(reviews_qs, 5) 
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context['reviews'] = page_obj # Đối tượng page chứa danh sách review
+        context['total_reviews_count'] = reviews_qs.count() # Tổng số review sau khi lọc
+        
+        # Truyền lại các tham số lọc để giữ trạng thái trên form
+        context['current_filters'] = {
+            'rating': rating,
+            'has_img': has_img,
+            'has_content': has_content,
+            'sort': sort
+        }
+        
+        # Giữ lại query string cho phân trang (để khi qua trang 2 không mất bộ lọc)
+        query_params = self.request.GET.copy()
+        if 'page' in query_params: del query_params['page']
+        context['filter_params'] = query_params.urlencode()
+
         return context
+
+# View xóa review dành cho Admin
+def delete_review_admin_view(request, pk):
+    if not request.user.is_staff: return redirect('home')
+    review = get_object_or_404(CungDuongDanhGia, pk=pk)
+    trek_pk = review.cung_duong.pk
+    review.delete()
+    messages.success(request, "Đã xóa đánh giá thành công.")
+    return redirect('treks_admin:cung_duong_detail', pk=trek_pk)
 
 class CungDuongDeleteView(AdminRequiredMixin, DeleteView):
     model = CungDuongTrek
@@ -358,3 +419,16 @@ def set_cover_media_view(request, pk):
     except Exception as e:
         messages.error(request, f"Lỗi khi đặt ảnh bìa: {e}")
         return redirect('treks_admin:cung_duong_list')
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+@require_POST 
+def quick_approve_trek(request, pk):
+    trek = get_object_or_404(CungDuongTrek, pk=pk)
+    
+    if trek.trang_thai != TrangThaiDuyet.DA_DUYET:
+        trek.trang_thai = TrangThaiDuyet.DA_DUYET
+        trek.save()
+        messages.success(request, f"✅ Đã duyệt nhanh: {trek.ten}")
+    
+    # Quay lại đúng trang danh sách mà admin đang đứng
+    return redirect('treks_admin:cung_duong_list')

@@ -307,6 +307,31 @@
     font-size: 0.75rem;
     font-weight: 600;
 }
+/* Màu nút Chi tiết (Xanh dương) */
+.btn-detail { 
+    background: #EFF6FF; 
+    color: #3B82F6; /* Blue 500 */
+    border: 1px solid rgba(59, 130, 246, 0.1); 
+}
+.btn-detail:hover { 
+    background: #3B82F6; 
+    color: white; 
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); 
+}
+/* Màu nút Duyệt (Xanh lá đậm hơn edit) */
+.btn-approve { 
+    background: #DCFCE7; 
+    color: #166534; /* Green 800 */
+    border: 1px solid rgba(22, 101, 52, 0.1); 
+    width: 36px; height: 36px;
+}
+.btn-approve:hover { 
+    background: #166534; 
+    color: white; 
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 6px rgba(22, 101, 52, 0.2); 
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4 px-1">
@@ -496,7 +521,7 @@
                     <img src="{{ trek.anh_bia_url }}" class="rounded-3 shadow-sm me-3" width="60" height="60" style="object-fit: cover;">
                 </div>
                 <div style="min-width: 150px;"> 
-                    <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="fw-bold text-dark text-decoration-none d-block mb-1 text-truncate" style="font-size: 1.05rem;" title="{{ trek.ten }}">
+                    <a href="{% url 'treks_admin:cung_duong_detail' trek.pk %}" class="fw-bold text-dark text-decoration-none d-block mb-1 text-truncate" style="font-size: 1.05rem;" title="{{ trek.ten }}">
                         {{ trek.ten }}
                     </a>
                     <div class="d-flex align-items-center gap-1 flex-wrap">
@@ -541,27 +566,37 @@
             {% if trek.trang_thai == 'DA_DUYET' %}
                 <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-2 rounded-3" style="font-size: 0.8rem; font-weight: 600;">Đã duyệt</span>
             {% elif trek.trang_thai == 'CHO_DUYET' %}
-                <span class="badge bg-warning-subtle text-warning-dark border border-warning-subtle px-2 py-2 rounded-3" style="font-size: 0.8rem; font-weight: 600;">Chờ duyệt</span>
+                <span class="badge bg-warning text-warning-dark border border-warning-subtle px-2 py-2 rounded-3" style="font-size: 0.8rem; font-weight: 600;">Chờ duyệt</span>
             {% else %}
                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-2 rounded-3" style="font-size: 0.8rem; font-weight: 600;">Từ chối</span>
             {% endif %}
         </td>
 
-        <td class="text-end pe-3 rounded-end-3">
-            <div class="d-flex justify-content-end align-items-center">
-                <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn-action btn-edit" title="Chỉnh sửa">
-                    <i class="fas fa-edit"></i>
-                </a>
-                
-                <a href="{% url 'treks_admin:cung_duong_edit_map' trek.pk %}" class="btn-action btn-map" title="Bản đồ">
-                    <i class="fas fa-map-marked-alt"></i>
-                </a>
+<td class="text-end pe-3 rounded-end-3">
+    <div class="d-flex justify-content-end align-items-center gap-1">
+        
+        {% if trek.trang_thai == 'CHO_DUYET' %}
+            <form action="{% url 'treks_admin:cung_duong_quick_approve' trek.pk %}" method="POST" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-approve" title="Duyệt bài ngay" onclick="return confirm('Xác nhận duyệt cung đường này?');">
+                    <i class="fas fa-check"></i>
+                </button>
+            </form>
+        {% endif %}
 
-                <a href="#" class="btn-action btn-delete" title="Xóa" onclick="return confirm('Xóa cung đường: {{ trek.ten }}?')">
-                    <i class="fas fa-trash-alt"></i>
-                </a>
-            </div>
-        </td>
+        <a href="{% url 'treks_admin:cung_duong_detail' trek.pk %}" class="btn-action btn-detail" title="Xem chi tiết">
+            <i class="fas fa-eye"></i>
+        </a>
+
+        <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn-action btn-edit" title="Chỉnh sửa">
+            <i class="fas fa-edit"></i>
+        </a>
+
+        <a href="{% url 'treks_admin:cung_duong_delete' trek.pk %}" class="btn-action btn-delete" title="Xóa">
+            <i class="fas fa-trash-alt"></i>
+        </a>
+    </div>
+</td>
     </tr>
     <tr style="height: 10px; background: transparent;"><td colspan="8" class="p-0 border-0"></td></tr>
     {% empty %}
