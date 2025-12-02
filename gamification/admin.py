@@ -16,50 +16,46 @@ class GameHuyHieuAdmin(admin.ModelAdmin):
         'is_active'
     )
     list_display_links = ('id', 'ten', 'hien_thi_anh')
-    list_editable = ('is_active',) # Cho phép bật/tắt nhanh ngay ở danh sách
-    list_filter = ('is_active', 'loai_dieu_kien', 'toan_tu')
+    list_editable = ('is_active',) # Bật tắt nhanh ngay danh sách
+    list_filter = ('is_active', 'loai_dieu_kien')
     search_fields = ('ten', 'mo_ta', 'bien_so_phu')
     
-    # Phân nhóm các trường trong trang chi tiết để dễ nhìn hơn
+    # Phân nhóm giao diện nhập liệu
     fieldsets = (
         ('Thông tin chung', {
             'fields': ('ten', 'mo_ta', 'anh_huy_hieu', 'is_active')
         }),
         ('Cấu hình Logic (Rule Engine)', {
-            'fields': ('loai_dieu_kien', 'toan_tu', 'gia_tri_muc_tieu', 'bien_so_phu'),
-            'description': 'Hệ thống sẽ dựa vào các thông số này để tự động trao huy hiệu.',
+            'fields': ('loai_dieu_kien', 'gia_tri_muc_tieu', 'bien_so_phu'),
+            'description': 'Hệ thống sẽ tự động trao huy hiệu nếu chỉ số người dùng >= mục tiêu.',
         }),
     )
 
-    # Tùy chỉnh giao diện form nhập liệu
+    # Tùy chỉnh kích thước ô nhập liệu
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '80'})},
         models.TextField: {'widget': Textarea(attrs={'rows': 4, 'cols': 80})},
     }
 
     def hien_thi_anh(self, obj):
-        """Hiển thị ảnh nhỏ hoặc icon trong trang admin"""
+        """Hiển thị ảnh nhỏ trong trang admin"""
         if obj.anh_huy_hieu:
-            # Giả sử anh_huy_hieu là đường dẫn (URL hoặc path static)
-            # Nếu là đường dẫn file tĩnh, bạn có thể cần thêm /static/ hoặc cấu hình media url
             return format_html(
-                '<img src="{}" style="width: 40px; height: 40px; object-fit: contain;" />',
-                obj.anh_huy_hieu
+                '<img src="{}" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px; border: 1px solid #ddd;" />',
+                obj.anh_huy_hieu.url
             )
         return "No Image"
     hien_thi_anh.short_description = "Ảnh"
 
     def hien_thi_logic(self, obj):
-        """Hiển thị logic dưới dạng dễ đọc: LOẠI >= MỤC TIÊU"""
-        operator_map = {'GTE': '>=', 'EQ': '=='}
-        op_symbol = operator_map.get(obj.toan_tu, obj.toan_tu)
-        
-        logic_str = f"{obj.loai_dieu_kien} {op_symbol} {obj.gia_tri_muc_tieu}"
+        """Hiển thị tóm tắt điều kiện"""
+        # Mặc định luôn là >=
+        logic_str = f"{obj.get_loai_dieu_kien_display()} >= {obj.gia_tri_muc_tieu}"
         
         if obj.bien_so_phu:
-            logic_str += f" (Tag/Slug: {obj.bien_so_phu})"
+            logic_str += f" (Tag/Code: {obj.bien_so_phu})"
             
-        return format_html('<code>{}</code>', logic_str)
+        return format_html('<code style="color: #d63384;">{}</code>', logic_str)
     hien_thi_logic.short_description = "Điều kiện đạt"
 
 
@@ -68,17 +64,17 @@ class GameHuyHieuNguoiDungAdmin(admin.ModelAdmin):
     list_display = ('user', 'huy_hieu_badge', 'ngay_dat_duoc')
     list_filter = ('ngay_dat_duoc', 'huy_hieu')
     search_fields = ('user__username', 'user__email', 'huy_hieu__ten')
-    autocomplete_fields = ['user', 'huy_hieu'] # Yêu cầu UserAdmin và GameHuyHieuAdmin phải có search_fields
+    autocomplete_fields = ['user', 'huy_hieu'] # Yêu cầu UserAdmin có search_fields
     date_hierarchy = 'ngay_dat_duoc'
     
     def huy_hieu_badge(self, obj):
-        """Hiển thị tên huy hiệu kèm màu sắc cho đẹp"""
+        """Hiển thị tên huy hiệu có màu nền"""
         return format_html(
-            '<span style="background-color: #e3f2fd; color: #0d47a1; padding: 3px 8px; border-radius: 4px;">{}</span>',
+            '<span style="background-color: #e0f2f1; color: #00695c; padding: 4px 8px; border-radius: 12px; font-weight: bold;">{}</span>',
             obj.huy_hieu.ten
         )
     huy_hieu_badge.short_description = "Huy hiệu"
 
     def get_queryset(self, request):
-        # Tối ưu query (select_related) để tránh n+1 query
+        # Tối ưu SQL (tránh N+1 query)
         return super().get_queryset(request).select_related('user', 'huy_hieu')

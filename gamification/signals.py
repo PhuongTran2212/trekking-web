@@ -1,34 +1,97 @@
-# gamification/signals.py
-
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .services import BadgeEngine
+import logging
 
-# Import các Model cần theo dõi từ các App khác
-from trips.models import ChuyenDiThanhVien
-from community.models import CongDongBaiViet, CongDongBinhLuan
+logger = logging.getLogger(__name__)
 
-# 1. Lắng nghe khi có thay đổi về Thành Viên Chuyến Đi (Tham gia/Hoàn thành)
+# Import Models
+from .models import GameHuyHieu, GameHuyHieuNguoiDung
+from trips.models import ChuyenDiThanhVien, ChuyenDi, ChuyenDiTinNhan, ChuyenDiMedia
+from community.models import CongDongBaiViet, CongDongBinhLuan, CongDongMediaBaiViet
+from treks.models import CungDuongDanhGia
+from accounts.models import TaiKhoanThietBiCaNhan
+
+def run_badge_check_safely(user, action_name):
+    try:
+        if user:
+            # print(f"⚡ Checking: {user.username} - {action_name}")
+            BadgeEngine().check_all_badges(user)
+    except Exception as e:
+        logger.error(f"❌ Error {action_name}: {e}")
+        # ==========================================================
+# PHẦN 1: TỰ ĐỘNG QUÉT KHI ADMIN TẠO HOẶC SỬA HUY HIỆU
+# ==========================================================
+@receiver(post_save, sender=GameHuyHieu)
+def auto_sync_on_admin_save(sender, instance, created, **kwargs):
+    """
+    Hàm này chạy ngay lập tức khi Admin bấm nút LƯU (SAVE).
+    - Nếu Tạo mới: Quét xem ai đủ điều kiện thì trao luôn (Truy lĩnh).
+    - Nếu Sửa: Quét lại xem ai thiếu thì thu hồi, ai đủ thì trao thêm.
+    """
+    action_type = "Tạo mới" if created else "Cập nhật"
+    print(f"⚙️ [AUTO SYNC] Admin vừa {action_type} huy hiệu '{instance.ten}'. Đang rà soát toàn bộ User...")
+    
+    try:
+        # Gọi hàm đồng bộ trong services.py
+        added, removed = BadgeEngine().sync_badge_for_all_users(instance)
+        print(f"✅ [KẾT QUẢ] Đã trao: {added} người | Đã thu hồi: {removed} người.")
+    except Exception as e:
+        logger.error(f"❌ Lỗi Auto Sync: {e}")
+
+# --- NHÓM 1: CHUYẾN ĐI ---
 @receiver(post_save, sender=ChuyenDiThanhVien)
-def check_badges_on_trip_update(sender, instance, created, **kwargs):
-    # Chỉ kiểm tra nếu trạng thái là 'DA_THAM_GIA' (hoặc trạng thái hoàn thành tùy logic của bạn)
+def on_trip_member_update(sender, instance, created, **kwargs):
     if instance.trang_thai_tham_gia == 'DA_THAM_GIA':
-        print(f"⚡ Signal: Checking badges for user {instance.user.username} (Trip Action)")
-        engine = BadgeEngine()
-        engine.check_all_badges(instance.user)
+        run_badge_check_safely(instance.user, "Trip Joined")
 
-# 2. Lắng nghe khi người dùng Đăng Bài Viết
+@receiver(post_save, sender=ChuyenDi)
+def on_trip_host_update(sender, instance, created, **kwargs):
+    if instance.trang_thai != 'DA_HUY' and instance.nguoi_to_chuc:
+        run_badge_check_safely(instance.nguoi_to_chuc, "Host Trip")
+
+@receiver(post_save, sender=ChuyenDiTinNhan)
+def on_trip_message(sender, instance, created, **kwargs):
+    if created: run_badge_check_safely(instance.nguoi_gui, "Sent Message")
+
+# --- NHÓM 2: CỘNG ĐỒNG ---
 @receiver(post_save, sender=CongDongBaiViet)
-def check_badges_on_post(sender, instance, created, **kwargs):
-    if created: # Chỉ tính khi tạo mới, không tính khi sửa
-        print(f"⚡ Signal: Checking badges for user {instance.tac_gia.username} (New Post)")
-        engine = BadgeEngine()
-        engine.check_all_badges(instance.tac_gia)
+def on_post_created(sender, instance, created, **kwargs):
+    if created: run_badge_check_safely(instance.tac_gia, "New Post")
 
-# 3. Lắng nghe khi người dùng Bình Luận
 @receiver(post_save, sender=CongDongBinhLuan)
-def check_badges_on_comment(sender, instance, created, **kwargs):
-    if created:
-        print(f"⚡ Signal: Checking badges for user {instance.user.username} (New Comment)")
-        engine = BadgeEngine()
-        engine.check_all_badges(instance.user)
+def on_comment_created(sender, instance, created, **kwargs):
+    if created: run_badge_check_safely(instance.user, "New Comment")
+
+@receiver(post_save, sender=CongDongMediaBaiViet)
+def on_media_uploaded(sender, instance, created, **kwargs):
+    if created: 
+        try: run_badge_check_safely(instance.bai_viet.tac_gia, "Media Upload")
+        except: pass
+
+@receiver(post_save, sender=ChuyenDiMedia)
+def on_trip_media_uploaded(sender, instance, created, **kwargs):
+    if created: run_badge_check_safely(instance.user, "Trip Photo")
+
+# --- NHÓM 3: KHÁC ---
+@receiver(post_save, sender=CungDuongDanhGia)
+def on_trek_review(sender, instance, created, **kwargs):
+    run_badge_check_safely(instance.user, "Review Trek")
+
+@receiver(post_save, sender=TaiKhoanThietBiCaNhan)
+def on_item_update(sender, instance, created, **kwargs):
+    run_badge_check_safely(instance.user, "Equipment")
+
+@receiver(post_save, sender=GameHuyHieuNguoiDung)
+def on_badge_earned(sender, instance, created, **kwargs):
+    if created: run_badge_check_safely(instance.user, "Badge Collection")
+
+# --- PHẦN MỚI: TỰ ĐỘNG ĐỒNG BỘ KHI ADMIN SỬA HUY HIỆU ---
+@receiver(post_save, sender=GameHuyHieu)
+def auto_sync_on_badge_change(sender, instance, created, **kwargs):
+    print(f"⚙️ [AUTO SYNC] Huy hiệu '{instance.ten}' thay đổi -> Quét lại toàn bộ User...")
+    try:
+        added, removed = BadgeEngine().sync_badge_for_all_users(instance)
+        print(f"✅ Kết quả: +{added} người nhận mới, -{removed} người bị thu hồi.")
+    except Exception as e:
+        logger.error(f"❌ Auto Sync Failed: {e}")

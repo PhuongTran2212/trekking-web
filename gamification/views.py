@@ -1,17 +1,22 @@
+# gamification/views.py
+
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
-from django.db.models import Count
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.db.models import OuterRef, Subquery, Case, When, Value, IntegerField
+
+# Import Models
 from .models import GameHuyHieu, GameHuyHieuNguoiDung
 from .forms import GameHuyHieuForm
-from django.db.models import OuterRef, Subquery, Case, When, Value, IntegerField
-# --- KIỂM TRA QUYỀN ADMIN/STAFF ---
+from core.models import The, DoKho  # <--- CHỈ IMPORT 1 LẦN Ở ĐÂY LÀ ĐỦ
+
+# --- MIXIN KIỂM TRA QUYỀN ADMIN/STAFF ---
 class StaffRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_authenticated and self.request.user.is_staff
 
-# 1. READ: Danh sách tất cả huy hiệu (Ai cũng xem được)
+# 1. READ: Danh sách tất cả huy hiệu (Dành cho Admin)
 class BadgeListView(ListView):
     model = GameHuyHieu
     template_name = 'gamification/badge_list.html'
@@ -19,53 +24,45 @@ class BadgeListView(ListView):
     ordering = ['-id']
 
     def get_queryset(self):
-        # Nếu là staff thì xem hết, user thường chỉ xem huy hiệu đang active
         if self.request.user.is_staff:
             return GameHuyHieu.objects.all()
         return GameHuyHieu.objects.filter(is_active=True)
 
-# 2. READ: Danh sách huy hiệu của TÔI (User đã đăng nhập)
+# 2. READ: Bảng thành tựu CỦA TÔI (User View)
 class MyBadgeListView(LoginRequiredMixin, ListView):
     model = GameHuyHieu
     template_name = 'gamification/my_badges.html'
-    context_object_name = 'badges_page' # Đổi tên vì bây giờ là 1 trang (page object)
-    paginate_by = 12 # Số lượng huy hiệu trên mỗi trang
+    context_object_name = 'badges_page'
+    paginate_by = 12
 
     def get_queryset(self):
         user = self.request.user
         
-        # 1. Subquery để lấy ngày đạt được của từng huy hiệu (nếu có)
+        # Subquery lấy ngày nhận
         earned_subquery = GameHuyHieuNguoiDung.objects.filter(
             user=user,
             huy_hieu=OuterRef('pk')
         ).values('ngay_dat_duoc')[:1]
 
-        # 2. Query chính: Lấy tất cả huy hiệu active
+        # Annotate & Sắp xếp
         qs = GameHuyHieu.objects.filter(is_active=True).annotate(
-            earned_at=Subquery(earned_subquery) # Gắn ngày nhận vào
+            earned_at=Subquery(earned_subquery)
         ).annotate(
-            # Tạo trường giả 'status_order': 1 là đã sở hữu, 0 là chưa
             status_order=Case(
                 When(earned_at__isnull=False, then=Value(1)),
                 default=Value(0),
                 output_field=IntegerField(),
             )
         )
-
-        # 3. Sắp xếp:
-        # - Ưu tiên status_order giảm dần (1 lên trước -> Đã sở hữu lên đầu)
-        # - Sau đó đến earned_at tăng dần (Ngày bé -> Nhận trước -> Nằm bên trái/trước)
         return qs.order_by('-status_order', 'earned_at', 'id')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
-        # Tính toán thống kê
         total_badges = GameHuyHieu.objects.filter(is_active=True).count()
         earned_count = GameHuyHieuNguoiDung.objects.filter(user=user).count()
         
-        # Tính phần trăm để vẽ thanh tiến trình (Progress Bar)
         progress_percent = 0
         if total_badges > 0:
             progress_percent = int((earned_count / total_badges) * 100)
@@ -74,7 +71,8 @@ class MyBadgeListView(LoginRequiredMixin, ListView):
         context['earned_count'] = earned_count
         context['progress_percent'] = progress_percent
         return context
-# 3. CREATE: Tạo huy hiệu mới (Chỉ Staff)
+
+# 3. CREATE: Tạo huy hiệu mới (CẦN DANH SÁCH TAG & ĐỘ KHÓ)
 class BadgeCreateView(StaffRequiredMixin, CreateView):
     model = GameHuyHieu
     form_class = GameHuyHieuForm
@@ -85,9 +83,13 @@ class BadgeCreateView(StaffRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Tạo Huy Hiệu Mới'
         context['btn_text'] = 'Tạo mới'
+        
+        # Gửi dữ liệu cho Dropdown
+        context['list_tags'] = The.objects.all().order_by('ten') 
+        context['list_dokho'] = DoKho.objects.all().order_by('id')
         return context
 
-# 4. UPDATE: Chỉnh sửa huy hiệu (Chỉ Staff)
+# 4. UPDATE: Chỉnh sửa huy hiệu (CẦN DANH SÁCH TAG & ĐỘ KHÓ)
 class BadgeUpdateView(StaffRequiredMixin, UpdateView):
     model = GameHuyHieu
     form_class = GameHuyHieuForm
@@ -98,9 +100,13 @@ class BadgeUpdateView(StaffRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Cập nhật: {self.object.ten}'
         context['btn_text'] = 'Lưu thay đổi'
+        
+        # Gửi dữ liệu cho Dropdown
+        context['list_tags'] = The.objects.all().order_by('ten')
+        context['list_dokho'] = DoKho.objects.all().order_by('id')
         return context
 
-# 5. DELETE: Xóa huy hiệu (Chỉ Staff)
+# 5. DELETE
 class BadgeDeleteView(StaffRequiredMixin, DeleteView):
     model = GameHuyHieu
     template_name = 'gamification/badge_confirm_delete.html'
