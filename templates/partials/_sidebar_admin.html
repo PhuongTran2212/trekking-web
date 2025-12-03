@@ -2,98 +2,96 @@
 
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <a href="#" class="logo">
-            <svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-top: -5px;">
+           <a href="{% url 'admin_dashboard' %}" class="logo text-decoration-none d-flex align-items-center">
+            <svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;">
                 <path fill="white" d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z"/>
             </svg>
-            <span style="margin-left: 1px;">TrekViet</span>
+            <span class="ms-2 fw-bold fs-5 tracking-wide text-white">TrekViet</span>
         </a>
-        <button class="sidebar-toggle" id="sidebar-toggle">
-            <span></span><span></span><span></span>
+        <button class="sidebar-toggle btn btn-link text-white p-0" id="sidebar-toggle">
+            <i class="fas fa-bars fs-5"></i>
         </button>
     </div>
 
     <nav class="sidebar-nav">
+        
+        <div class="nav-label text-uppercase text-secondary fw-bold px-3 mt-3 mb-2" style="font-size: 0.7rem;">Tổng quan</div>
+        
         <div class="nav-item">
-            <a href="#" class="nav-link {% if request.path == '/admin/' or 'dashboard' in request.path %}active{% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
-                </svg>
+            <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
+                <i class="fas fa-th-large"></i>
                 <span class="nav-link-text">Dashboard</span>
             </a>
         </div>
 
         <div class="nav-item">
-            <a href="#" class="nav-link {% if 'users' in request.path %}active{% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-                <span class="nav-link-text">Quản lý Users</span>
+            <a href="#" class="nav-link {% if 'analytics' in request.path %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span class="nav-link-text">Thống kê & Báo cáo</span>
             </a>
         </div>
 
+        <div class="nav-label text-uppercase text-secondary fw-bold px-3 mt-4 mb-2" style="font-size: 0.7rem;">Vận hành</div>
+
         <div class="nav-item">
             <a href="{% url 'trips_admin:trip_list' %}" class="nav-link {% if 'trips' in request.path %}active{% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/>
-                </svg>
+                <i class="fas fa-map-marked-alt"></i>
                 <span class="nav-link-text">Quản lý Chuyến đi</span>
             </a>
         </div>
 
         <div class="nav-item">
-            <a href="{% url 'treks_admin:cung_duong_list' %}" class="nav-link {% if 'treks' in request.path %}active{% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                </svg>
+            <a href="{% url 'treks_admin:cung_duong_list' %}" class="nav-link {% if 'cung-duong' in request.path %}active{% endif %}">
+                <i class="fas fa-route"></i>
                 <span class="nav-link-text">Quản lý Cung đường</span>
+            </a>
+        </div>
+
+        <div class="nav-label text-uppercase text-secondary fw-bold px-3 mt-4 mb-2" style="font-size: 0.7rem;">Cộng đồng</div>
+
+        <div class="nav-item">
+            <a href="#" class="nav-link {% if 'users' in request.path %}active{% endif %}">
+                <i class="fas fa-users-cog"></i>
+                <span class="nav-link-text">Quản lý Users</span>
             </a>
         </div>
 
         <div class="nav-item">
             <a href="#" class="nav-link {% if 'community' in request.path %}active{% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
-                </svg>
-                <span class="nav-link-text">Quản lý Cộng đồng</span>
+                <i class="fas fa-comments"></i>
+                <span class="nav-link-text">Diễn đàn & Bài viết</span>
             </a>
         </div>
+
+        <div class="nav-item">
+            <a href="{% url 'gamification:badge_list' %}" class="nav-link {% if 'gamification' in request.path %}active{% endif %}">
+                <i class="fas fa-medal"></i>
+                <span class="nav-link-text">Thành tựu & Điểm thưởng</span>
+            </a>
+        </div>
+
+        <div class="nav-label text-uppercase text-secondary fw-bold px-3 mt-4 mb-2" style="font-size: 0.7rem;">Hệ thống</div>
 
         <div class="nav-item">
             <a href="#" class="nav-link {% if 'reports' in request.path %}active{% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>
-                </svg>
-                <span class="nav-link-text">Quản lý Báo cáo</span>
+                <i class="fas fa-flag"></i>
+                <span class="nav-link-text">Xử lý Báo cáo vi phạm</span>
             </a>
         </div>
 
         <div class="nav-item">
             <a href="#" class="nav-link">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M3.75 9.75h16.5M3.75 14.25h16.5M3.75 18.75h16.5" />
-                </svg>
-                <span class="nav-link-text">Danh mục Hệ thống</span>
-            </a>
-        </div>
-
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                </svg>
+                <i class="fas fa-book"></i>
                 <span class="nav-link-text">Quản lý Kiến thức</span>
             </a>
         </div>
 
-        <div class="nav-item">
-            <a href="{% url 'gamification:badge_list' %}" 
-               class="nav-link {% if 'gamification' in request.path %}active{% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
-                </svg>
-                <span class="nav-link-text">Quản lý Thành Tựu</span>
+<div class="nav-item">
+            <a href="{% url 'system_config' %}" class="nav-link {% if 'system-configuration' in request.path %}active{% endif %}">
+                <i class="fas fa-cogs"></i>
+                <span class="nav-link-text">Cấu hình Hệ thống</span>
             </a>
         </div>
+
     </nav>
 </aside>

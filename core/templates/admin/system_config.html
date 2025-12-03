@@ -1,0 +1,940 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block head_extra %}
+<!-- Import Font Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* --- 1. MANG BỘ MÀU TỪ TRIP_LIST SANG --- */
+    :root {
+        --primary: #3e9f5f;
+        --primary-hover: #2d7a46;
+        --primary-light: #d1fae5;
+        --secondary: #10b981;
+        --danger: #dc2626;
+        --text-dark: #0f172a;
+        --text-muted: #64748b;
+        --bg-light: #f8fafc;
+        --border-color: #e2e8f0;
+        --radius-md: 0.625rem;
+        --radius-lg: 1rem;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-light);
+        color: var(--text-dark);
+    }
+
+    /* Card Container */
+    .card {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 8px 16px;
+        box-shadow: 0 4px 6px -1px rgba(62, 159, 95, 0.3);
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-hover) !important;
+        transform: translateY(-1px);
+    }
+
+    .btn-light {
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+
+    .btn-light:hover {
+        background-color: var(--bg-light);
+    }
+
+    /* --- MODAL --- */
+    .modal-content {
+        border: none;
+        border-radius: var(--radius-lg);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background-color: #f8fafc;
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.25rem 1.5rem;
+    }
+
+    .modal-title {
+        color: var(--text-dark);
+        font-weight: 700;
+        font-size: 1.125rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+        background-color: #f8fafc;
+    }
+
+    .modal-dialog-centered {
+        display: flex !important;
+        align-items: center !important;
+        min-height: calc(100% - 1rem) !important;
+    }
+
+    /* --- FORM INPUT --- */
+    .form-control,
+    .form-select {
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        padding: 0.625rem 1rem;
+        font-size: 0.95rem;
+        color: var(--text-dark);
+        background-color: #fff;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    /* --- TABS --- */
+    .config-tabs-wrapper {
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .config-tab-btn {
+        background: none;
+        border: none;
+        padding: 12px 20px;
+        font-weight: 600;
+        color: var(--text-muted);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .config-tab-btn:hover {
+        color: var(--primary);
+        background-color: rgba(62, 159, 95, 0.05);
+        border-radius: 8px 8px 0 0;
+    }
+
+    .config-tab-btn.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        background-color: transparent;
+    }
+
+    /* --- TABLE & SORTING --- */
+    .table thead th {
+        background-color: #f1f5f9;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid var(--border-color);
+        user-select: none;
+    }
+
+    .table tbody td {
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .sortable-header {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .sortable-header:hover {
+        background-color: #e2e8f0;
+        color: var(--text-dark);
+    }
+
+    .sort-icon {
+        margin-left: 5px;
+        font-size: 0.7rem;
+        color: #94a3b8;
+    }
+
+    .sortable-header.active .sort-icon {
+        color: var(--primary);
+    }
+
+    .text-primary {
+        color: var(--primary) !important;
+    }
+
+    .badge.bg-info {
+        background-color: var(--primary-light) !important;
+        color: var(--primary) !important;
+    }
+
+    .badge.bg-success {
+        background-color: #dcfce7 !important;
+        color: #15803d !important;
+    }
+
+    /* Hiệu ứng chuyển Tab */
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Messages -->
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">Cấu hình Hệ thống</h2>
+            <p class="text-muted mb-0 small">Quản lý danh mục dữ liệu dùng chung (Master Data).</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">
+            <i class="fas fa-plus me-2"></i> Thêm mới
+        </button>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="config-tabs-wrapper mb-4">
+        <div class="config-tabs">
+            <button class="config-tab-btn active" onclick="switchTab('tinh-thanh')" id="btn-tinh-thanh">
+                <i class="fas fa-map-marker-alt me-2"></i>Tỉnh thành
+            </button>
+            <button class="config-tab-btn" onclick="switchTab('loai-vat-dung')" id="btn-loai-vat-dung">
+                <i class="fas fa-layer-group me-2"></i>Loại vật dụng
+            </button>
+            <button class="config-tab-btn" onclick="switchTab('vat-dung')" id="btn-vat-dung">
+                <i class="fas fa-campground me-2"></i>Vật dụng
+            </button>
+            <button class="config-tab-btn" onclick="switchTab('the')" id="btn-the">
+                <i class="fas fa-tags me-2"></i>Thẻ / Tags
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="card border-0">
+        <div class="card-body p-4">
+
+            <!-- ================= TAB 1: TỈNH THÀNH ================= -->
+            <div id="tab-tinh-thanh" class="tab-content active" data-model="tinh-thanh">
+
+                <!-- 4 STATS: TỈNH THÀNH -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #eef2ff;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-map-marked-alt fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Tổng số Tỉnh</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_tinh.total }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #fff7ed;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-warning d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-fire fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Nhiều cung đường</p>
+                                    <h4 class="mb-0 fw-bold text-dark text-truncate" style="max-width: 140px;"
+                                        title="{{ stats_tinh.hot_name }}">{{ stats_tinh.hot_name }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #f0fdf4;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-route fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Số lượng Trek</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_tinh.hot_count }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #f3e8ff;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-purple d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px; color: #9333ea;">
+                                    <i class="fas fa-ghost fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Chưa khai thác</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_tinh.unused }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLE: TỈNH THÀNH -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title mb-0 fw-bold text-dark">Danh sách Tỉnh thành</h5>
+                    <div class="header-search position-relative">
+                        <i
+                            class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" class="form-control ps-5" placeholder="Tìm kiếm..." style="min-width: 250px;"
+                            onkeyup="filterTable(this, 'table-tinh-thanh')">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="table-tinh-thanh">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="sortable-header" onclick="sortTable('table-tinh-thanh', 0)">ID <i
+                                        class="fas fa-sort sort-icon"></i></th>
+                                <th class="sortable-header" onclick="sortTable('table-tinh-thanh', 1)">Tên Tỉnh/Thành <i
+                                        class="fas fa-sort sort-icon"></i></th>
+                                <th class="sortable-header" onclick="sortTable('table-tinh-thanh', 2)">Slug <i
+                                        class="fas fa-sort sort-icon"></i></th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in tinh_thanhs %}
+                            <tr>
+                                <td class="text-muted small">#{{ item.id }}</td>
+                                <td class="fw-bold text-primary">{{ item.ten }}</td>
+                                <td class="text-muted fst-italic">{{ item.slug }}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light text-primary me-1"
+                                        onclick="openModal('tinh-thanh', '{{ item.id }}', '{{ item.ten }}', '', '', '{{ item.slug }}')"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-light text-danger"
+                                        onclick="confirmDelete('tinh-thanh', {{ item.id }})"><i
+                                            class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= TAB 2: LOẠI VẬT DỤNG ================= -->
+            <div id="tab-loai-vat-dung" class="tab-content" data-model="loai-vat-dung">
+
+                <!-- 4 STATS: LOẠI VẬT DỤNG -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #eef2ff;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-layer-group fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Tổng Phân Loại</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_loai.total }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #fff7ed;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-warning d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-star fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Nhóm lớn nhất</p>
+                                    <h4 class="mb-0 fw-bold text-dark text-truncate" style="max-width: 140px;"
+                                        title="{{ stats_loai.hot_name }}">{{ stats_loai.hot_name }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #f0fdf4;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-cubes fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Số lượng đồ</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_loai.hot_count }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #f3e8ff;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-purple d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px; color: #9333ea;">
+                                    <i class="fas fa-box-open fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Nhóm rỗng</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_loai.unused }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLE: LOẠI VẬT DỤNG -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title mb-0 fw-bold text-dark">Phân loại Vật dụng</h5>
+                    <div class="header-search position-relative">
+                        <i
+                            class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" class="form-control ps-5" placeholder="Tìm kiếm..." style="min-width: 250px;"
+                            onkeyup="filterTable(this, 'table-loai-vat-dung')">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="table-loai-vat-dung">
+                        <thead>
+                            <tr>
+                                <th width="10%" class="sortable-header" onclick="sortTable('table-loai-vat-dung', 0)">ID
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable-header" onclick="sortTable('table-loai-vat-dung', 1)">Tên Loại <i
+                                        class="fas fa-sort sort-icon"></i></th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in loai_vat_dungs %}
+                            <tr>
+                                <td class="text-muted small">#{{ item.id }}</td>
+                                <td class="fw-bold">{{ item.ten }}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light text-primary me-1"
+                                        onclick="openModal('loai-vat-dung', '{{ item.id }}', '{{ item.ten }}')"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-light text-danger"
+                                        onclick="confirmDelete('loai-vat-dung', {{ item.id }})"><i
+                                            class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= TAB 3: VẬT DỤNG ================= -->
+            <div id="tab-vat-dung" class="tab-content" data-model="vat-dung">
+
+                <!-- 4 STATS: VẬT DỤNG (Đã sửa tên biến thành stats_vat_dung) -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #e0f2fe;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-info d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-campground fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Tổng Vật dụng</p>
+                                    <!-- SỬA LẠI BIẾN Ở ĐÂY -->
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_vat_dung.total }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #fff7ed;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-warning d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-thumbs-up fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Được dùng nhiều</p>
+                                    <!-- SỬA LẠI BIẾN Ở ĐÂY -->
+                                    <h4 class="mb-0 fw-bold text-dark text-truncate" style="max-width: 140px;"
+                                        title="{{ stats_vat_dung.hot_name }}">{{ stats_vat_dung.hot_name }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #f0fdf4;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-chart-bar fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Số lượt gợi ý</p>
+                                    <!-- SỬA LẠI BIẾN Ở ĐÂY -->
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_vat_dung.hot_count }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #f3e8ff;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-purple d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px; color: #9333ea;">
+                                    <i class="fas fa-ghost fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Chưa sử dụng</p>
+                                    <!-- SỬA LẠI BIẾN Ở ĐÂY -->
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_vat_dung.unused }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLE: VẬT DỤNG -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title mb-0 fw-bold text-dark">Kho Vật dụng</h5>
+                    <div class="header-search position-relative">
+                        <i
+                            class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" class="form-control ps-5" placeholder="Tìm đồ đạc..."
+                            style="min-width: 250px;" onkeyup="filterTable(this, 'table-vat-dung')">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="table-vat-dung">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="sortable-header" onclick="sortTable('table-vat-dung', 0)">ID <i
+                                        class="fas fa-sort sort-icon"></i></th>
+                                <th width="25%" class="sortable-header" onclick="sortTable('table-vat-dung', 1)">Tên Vật
+                                    dụng <i class="fas fa-sort sort-icon"></i></th>
+                                <th width="20%" class="sortable-header" onclick="sortTable('table-vat-dung', 2)">Phân
+                                    loại <i class="fas fa-sort sort-icon"></i></th>
+                                <th width="35%" class="sortable-header" onclick="sortTable('table-vat-dung', 3)">Mô tả
+                                    <i class="fas fa-sort sort-icon"></i></th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in vat_dungs %}
+                            <tr>
+                                <td class="text-muted small">#{{ item.id }}</td>
+                                <td class="fw-bold">{{ item.ten }}</td>
+                                <td><span class="badge bg-info">{{ item.loai_vat_dung.ten }}</span></td>
+                                <td class="text-muted small text-truncate" style="max-width: 200px;">
+                                    {{ item.mo_ta|default:"-" }}
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light text-primary me-1"
+                                        onclick="openModal('vat-dung', '{{ item.id }}', '{{ item.ten }}', '{{ item.mo_ta|default_if_none:""|escapejs }}', '{{ item.loai_vat_dung.id }}')"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-light text-danger"
+                                        onclick="confirmDelete('vat-dung', {{ item.id }})"><i
+                                            class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= TAB 4: THẺ (TAGS) ================= -->
+            <div id="tab-the" class="tab-content" data-model="the">
+
+                <!-- 4 STATS: THẺ -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #eef2ff;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-tags fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Tổng số thẻ</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_the.total }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #fff7ed;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-warning d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-fire fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Thịnh hành</p>
+                                    <h4 class="mb-0 fw-bold text-dark text-truncate" style="max-width: 140px;"
+                                        title="{{ stats_the.hot_name }}">
+                                        {{ stats_the.hot_name }}
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #f0fdf4;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px;">
+                                    <i class="fas fa-chart-line fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Lượt dùng</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_the.hot_count }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100" style="background: #f3e8ff;">
+                            <div class="card-body p-3 d-flex align-items-center">
+                                <div class="rounded-circle bg-white text-purple d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 48px; height: 48px; color: #9333ea;">
+                                    <i class="fas fa-ghost fa-lg"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="mb-0 text-muted small fw-bold text-uppercase">Chưa sử dụng</p>
+                                    <h4 class="mb-0 fw-bold text-dark">{{ stats_the.unused }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLE: THẺ -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title mb-0 fw-bold text-dark">Danh sách Thẻ</h5>
+                    <div class="header-search position-relative">
+                        <i
+                            class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" class="form-control ps-5" placeholder="Tìm thẻ..." style="min-width: 250px;"
+                            onkeyup="filterTable(this, 'table-the')">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="table-the">
+                        <thead>
+                            <tr>
+                                <th width="10%" class="sortable-header" onclick="sortTable('table-the', 0)">ID <i
+                                        class="fas fa-sort sort-icon"></i></th>
+                                <th class="sortable-header" onclick="sortTable('table-the', 1)">Tên Thẻ <i
+                                        class="fas fa-sort sort-icon"></i></th>
+                                <th class="sortable-header" onclick="sortTable('table-the', 2)">Slug <i
+                                        class="fas fa-sort sort-icon"></i></th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in thes %}
+                            <tr>
+                                <td class="text-muted small">#{{ item.id }}</td>
+                                <td><span class="badge bg-success rounded-pill px-3">{{ item.ten }}</span></td>
+                                <td class="text-muted fst-italic">{{ item.slug }}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light text-primary me-1"
+                                        onclick="openModal('the', '{{ item.id }}', '{{ item.ten }}', '', '', '{{ item.slug }}')"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-light text-danger"
+                                        onclick="confirmDelete('the', {{ item.id }})"><i
+                                            class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block modals %}
+<!-- ================= MODAL THÊM/SỬA CHUNG ================= -->
+<div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="" id="configForm">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Thêm mới dữ liệu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label for="inputName" class="form-label">Tên <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="inputName" name="ten" required
+                            placeholder="Nhập tên...">
+                    </div>
+
+                    <div class="mb-4 field-group" id="group-slug" style="display:none;">
+                        <label for="inputSlug" class="form-label">Slug (URL)</label>
+                        <input type="text" class="form-control" id="inputSlug" name="slug"
+                            placeholder="Tu-dong-tao-neu-trong">
+                        <div class="form-text text-muted small mt-1">Để trống để hệ thống tự tạo.</div>
+                    </div>
+
+                    <div class="mb-4 field-group" id="group-loai" style="display:none;">
+                        <label for="selectLoai" class="form-label">Loại vật dụng</label>
+                        <select class="form-select" id="selectLoai" name="loai_vat_dung">
+                            {% for loai in loai_vat_dungs %}
+                            <option value="{{ loai.id }}">{{ loai.ten }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4 field-group" id="group-mota" style="display:none;">
+                        <label for="inputMota" class="form-label">Mô tả chi tiết</label>
+                        <textarea class="form-control" id="inputMota" name="mo_ta" rows="3"
+                            placeholder="Nhập mô tả nếu có..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light text-muted border-0"
+                        data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-2"></i>Lưu dữ
+                        liệu</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock modals %}
+
+{% block extra_js %}
+<!-- Form ẩn dùng để submit xóa -->
+<form id="deleteForm" method="POST" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<script>
+    // --- 1. Xử lý Tab khi tải trang ---
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab') || '{{ active_tab }}';
+        if (tabParam) switchTab(tabParam);
+    });
+
+    // --- 2. Hàm chuyển Tab ---
+    function switchTab(tabId) {
+        // Ẩn tất cả nội dung
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        // Bỏ active button
+        document.querySelectorAll('.config-tab-btn').forEach(el => el.classList.remove('active'));
+
+        const targetContent = document.getElementById('tab-' + tabId);
+        const targetBtn = document.getElementById('btn-' + tabId);
+
+        if (targetContent && targetBtn) {
+            targetContent.classList.add('active');
+            targetBtn.classList.add('active');
+
+            // Cập nhật URL
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('tab', tabId);
+            window.history.pushState({}, '', newUrl);
+        }
+    }
+
+    // --- 3. Hàm Mở Modal ---
+    function openModal(modelType, id = null, ten = '', mota = '', loaiId = '', slug = '') {
+        if (!modelType) {
+            const activeTab = document.querySelector('.tab-content.active');
+            modelType = activeTab.getAttribute('data-model');
+        }
+
+        const form = document.getElementById('configForm');
+        form.reset();
+
+        document.getElementById('group-slug').style.display = 'none';
+        document.getElementById('group-loai').style.display = 'none';
+        document.getElementById('group-mota').style.display = 'none';
+
+        if (modelType === 'tinh-thanh' || modelType === 'the') {
+            document.getElementById('group-slug').style.display = 'block';
+        } else if (modelType === 'vat-dung') {
+            document.getElementById('group-loai').style.display = 'block';
+            document.getElementById('group-mota').style.display = 'block';
+        }
+
+        const modalTitle = document.getElementById('modalTitle');
+        const baseUrl = `/system-configuration/save/${modelType}/`;
+
+        if (id) {
+            form.action = baseUrl + id + '/';
+            modalTitle.innerText = 'Cập nhật: ' + ten;
+            document.getElementById('inputName').value = ten;
+            document.getElementById('inputSlug').value = slug;
+            document.getElementById('inputMota').value = mota;
+            document.getElementById('selectLoai').value = loaiId;
+        } else {
+            form.action = baseUrl;
+            modalTitle.innerText = 'Thêm mới dữ liệu';
+        }
+
+        // --- Mở Modal an toàn ---
+        var modalEl = document.getElementById('configModal');
+        if (typeof bootstrap !== 'undefined') {
+            var existingModal = bootstrap.Modal.getInstance(modalEl);
+            if (existingModal) existingModal.dispose();
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+
+            setTimeout(() => {
+                var myModal = new bootstrap.Modal(modalEl);
+                myModal.show();
+            }, 100);
+
+            modalEl.addEventListener('shown.bs.modal', function () {
+                const input = document.getElementById('inputName');
+                if (input) input.focus();
+            }, { once: true });
+        }
+    }
+
+    // --- 4. Hàm Xóa ---
+    function confirmDelete(modelType, id) {
+        if (confirm('Bạn có chắc chắn muốn xóa dữ liệu này không? Hành động này không thể hoàn tác.')) {
+            const form = document.getElementById('deleteForm');
+            form.action = `/system-configuration/delete/${modelType}/${id}/`;
+            form.submit();
+        }
+    }
+
+    // --- 5. Hàm Tìm kiếm ---
+    function filterTable(input, tableId) {
+        const filter = input.value.toUpperCase();
+        const tr = document.getElementById(tableId).getElementsByTagName("tr");
+        for (let i = 1; i < tr.length; i++) {
+            let visible = false;
+            const tds = tr[i].getElementsByTagName("td");
+            for (let j = 0; j < tds.length - 1; j++) {
+                if (tds[j] && tds[j].textContent.toUpperCase().indexOf(filter) > -1) {
+                    visible = true; break;
+                }
+            }
+            tr[i].style.display = visible ? "" : "none";
+        }
+    }
+
+    // --- 6. Sort Table ---
+    function sortTable(tableId, n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById(tableId);
+        switching = true;
+        dir = "asc";
+
+        var headers = table.querySelectorAll('th.sortable-header');
+        headers.forEach(function (th, index) {
+            var icon = th.querySelector('.sort-icon');
+            if (icon) {
+                if (index === n) {
+                    th.classList.add('active');
+                } else {
+                    th.classList.remove('active');
+                    icon.className = 'fas fa-sort sort-icon';
+                }
+            }
+        });
+
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                var xContent = x.textContent.trim();
+                var yContent = y.textContent.trim();
+                var xNum = parseFloat(xContent.replace('#', ''));
+                var yNum = parseFloat(yContent.replace('#', ''));
+                var isNumeric = !isNaN(xNum) && !isNaN(yNum);
+
+                if (dir == "asc") {
+                    if (isNumeric) { if (xNum > yNum) { shouldSwitch = true; break; } }
+                    else { if (xContent.localeCompare(yContent, 'vi') > 0) { shouldSwitch = true; break; } }
+                } else if (dir == "desc") {
+                    if (isNumeric) { if (xNum < yNum) { shouldSwitch = true; break; } }
+                    else { if (xContent.localeCompare(yContent, 'vi') < 0) { shouldSwitch = true; break; } }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+        var currentHeader = headers[n];
+        var icon = currentHeader.querySelector('.sort-icon');
+        if (icon) {
+            icon.className = (dir === "asc") ? "fas fa-sort-up sort-icon" : "fas fa-sort-down sort-icon";
+        }
+    }
+</script>
+{% endblock extra_js %}

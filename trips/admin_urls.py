@@ -15,4 +15,8 @@ urlpatterns = [
     path('<int:pk>/members-manage/', views.admin_trip_members_manage, name='trip_members_manage'),
     path('members/<int:member_id>/kick/', views.admin_kick_member, name='admin_kick_member'),
     path('members/<int:member_id>/restore/', views.admin_restore_member, name='admin_restore_member'),
+    # --- THÊM 2 DÒNG NÀY ĐỂ ADMIN DÙNG CHUNG VIEW VỚI USER ---
+    path('tao-moi/', views.create_trip_view, name='create_trip'),
+    path('<int:pk>/<slug:slug>/chinh-sua/', views.TripUpdateView.as_view(), name='update_trip'),
+    path('chon-cung-duong/', views.SelectTrekForTripView.as_view(), name='select_trek_for_trip'),
 ]

@@ -12,17 +12,23 @@ urlpatterns = [
     path('tai-khoan/', include(('accounts.urls', 'accounts'), namespace='accounts')),
     path('', home_view, name='home'),
     path('dashboard/', core_views.admin_dashboard_view, name='admin_dashboard'),
+     path('', include('core.urls')), 
 
-    # Dòng này sẽ trỏ đến file treks/admin_urls.py
+    # Admin Treks
     path('dashboard/cung-duong/', include('treks.admin_urls', namespace='treks_admin')),
 
-    # Dòng này sẽ trỏ đến file treks/urls.py
+    # Public Treks
     path('cung-duong/', include('treks.urls', namespace='treks')),
+    
     path('tinymce/', include('tinymce.urls')),
-    path('chuyen-di/', include('trips.urls')),
+    
+    # Public Trips (Người dùng) - Thêm namespace cho rõ ràng
+    path('chuyen-di/', include('trips.urls', namespace='trips')), 
+    
     path('thanh-tuu/', include(('gamification.urls', 'gamification'), namespace='gamification')),
-    path('dashboard/trips/', include('trips.admin_urls')),
-    path('admin-dashboard/trips/', include('trips.admin_urls')),
+    
+    # Admin Trips (Dashboard) - GIỮ DÒNG NÀY (Có namespace)
+    path('dashboard/trips/', include('trips.admin_urls', namespace='trips_admin')),
 
 ]
 

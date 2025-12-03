@@ -26,6 +26,18 @@ import json
 import csv
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+# trips/views.py
+
+def get_base_template(request):
+    """
+    Hàm này giúp Django nhận biết:
+    - Nếu link có chữ 'dashboard' hoặc 'admin' -> Trả về giao diện Admin (admin_base.html)
+    - Nếu không -> Trả về giao diện User (base.html)
+    """
+    path = request.path
+    if '/dashboard/' in path or '/admin-dashboard/' in path or '/admin/' in path:
+        return 'admin_base.html'
+    return 'base.html'
 class TripHubView(ListView):
     model = ChuyenDi
     template_name = 'trips/trip_hub.html'
@@ -165,9 +177,15 @@ def trip_events_api(request):
 @login_required
 def create_trip_view(request):
     cung_duong_slug = request.GET.get('cung_duong')
+    
+    # Logic kiểm tra Cung đường
     if not cung_duong_slug:
+        # Nếu là Admin tạo từ dashboard mà chưa chọn cung đường -> Chuyển hướng về list trek admin
+        if '/dashboard/' in request.path or '/admin-dashboard/' in request.path:
+             return redirect('treks_admin:cung_duong_list') # Hoặc trang chọn của Admin nếu có
         messages.error(request, "Vui lòng chọn một cung đường để bắt đầu.")
         return redirect('treks:cung_duong_list')
+        
     cung_duong = get_object_or_404(CungDuongTrek, slug=cung_duong_slug)
 
     if request.method == 'POST':
@@ -179,9 +197,8 @@ def create_trip_view(request):
                 chuyen_di = form.save(commit=False)
                 chuyen_di.nguoi_to_chuc = request.user
                 chuyen_di.cung_duong = cung_duong
-                
                 chuyen_di.trang_thai = 'DANG_TUYEN'
-
+                
                 # Snapshot dữ liệu
                 chuyen_di.cd_ten = cung_duong.ten
                 chuyen_di.cd_mo_ta = cung_duong.mo_ta
@@ -207,7 +224,13 @@ def create_trip_view(request):
                      for f in request.FILES.getlist('trip_media_files'):
                         ChuyenDiMedia.objects.create(chuyen_di=chuyen_di, user=request.user, file=f)
 
-                # --- REDIRECT SANG TRANG SUCCESS ---
+                # --- ĐIỀU HƯỚNG SAU KHI LƯU ---
+                # Nếu là Admin -> Về Dashboard
+                if '/dashboard/' in request.path or '/admin-dashboard/' in request.path:
+                    messages.success(request, "Đã tạo chuyến đi thành công.")
+                    return redirect('trips_admin:trip_list')
+                
+                # Nếu là User -> Về trang thành công
                 return redirect('trips:trip_create_success', pk=chuyen_di.pk)
         else:
             messages.error(request, "Có lỗi xảy ra, vui lòng kiểm tra lại thông tin bên dưới.")
@@ -215,16 +238,20 @@ def create_trip_view(request):
         form = ChuyenDiForm()
         timeline_formset = TimelineFormSet()
 
+    # Lấy base template
+    base_template = get_base_template(request)
+
     context = {
         'form': form, 
         'timeline_formset': timeline_formset, 
         'cung_duong': cung_duong, 
         'page_title': 'Lên kế hoạch Chuyến đi',
-        'is_edit': False
+        'is_edit': False,
+        'base_template': base_template, # Gửi tên file base xuống
+        'is_admin_view': 'admin_base.html' in base_template # Cờ đánh dấu để hiện/ẩn nút bấm
     }
     return render(request, 'trips/trip_form.html', context)
 
-# --- VIEW THÀNH CÔNG MỚI ---
 class TripCreateSuccessView(LoginRequiredMixin, DetailView):
     model = ChuyenDi
     template_name = 'trips/trip_success.html'
@@ -239,19 +266,29 @@ class TripUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     form_class = ChuyenDiForm
     template_name = 'trips/trip_form.html'
     
+    # 1. QUYỀN TRUY CẬP: Cho phép nếu là Chủ bài viết HOẶC là Admin (Staff)
     def test_func(self):
-        return self.get_object().nguoi_to_chuc == self.request.user
+        trip = self.get_object()
+        return trip.nguoi_to_chuc == self.request.user or self.request.user.is_staff
 
+    # 2. GỬI GIAO DIỆN XUỐNG TEMPLATE
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = f"Chỉnh sửa: {self.object.ten_chuyen_di}"
         context['is_edit'] = True
+        
+        # Xác định giao diện
+        context['base_template'] = get_base_template(self.request)
+        context['is_admin_view'] = 'admin_base.html' in context['base_template']
+        
+        # Formset timeline
         if self.request.POST:
             context['timeline_formset'] = TimelineFormSet(self.request.POST, instance=self.object)
         else:
             context['timeline_formset'] = TimelineFormSet(instance=self.object)
         return context
         
+    # 3. XỬ LÝ LƯU & CHUYỂN HƯỚNG
     def form_valid(self, form):
         context = self.get_context_data()
         timeline_formset = context['timeline_formset']
@@ -262,15 +299,21 @@ class TripUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 timeline_formset.instance = self.object
                 timeline_formset.save()
                 
-                # Lưu ảnh mới (nếu có)
+                # Lưu ảnh media (nếu có)
                 if self.request.FILES.getlist('trip_media_files'):
                     for f in self.request.FILES.getlist('trip_media_files'):
                         ChuyenDiMedia.objects.create(chuyen_di=self.object, user=self.request.user, file=f)
             
             messages.success(self.request, "Đã cập nhật chuyến đi thành công.")
+            
+            # QUAN TRỌNG: Nếu đang ở Dashboard -> Quay về danh sách Dashboard
+            path = self.request.path
+            if '/dashboard/' in path or '/admin-dashboard/' in path:
+                return redirect('trips_admin:trip_list')
+                
             return super().form_valid(form)
         else:
-            messages.error(self.request, "Vui lòng kiểm tra lại các lỗi.")
+            messages.error(self.request, "Vui lòng kiểm tra lại các lỗi bên dưới.")
             return self.render_to_response(context)
 
     def get_success_url(self):
@@ -467,19 +510,34 @@ def reject_member(request, pk, member_id):
     membership.trang_thai_tham_gia = 'BI_TU_CHOI'
     membership.save()
     return JsonResponse({'status': 'success', 'message': f'Đã từ chối thành viên {membership.user.username}.'})
-    
+
 @login_required
 @require_POST
 def upload_trip_media(request, pk):
     trip = get_object_or_404(ChuyenDi, pk=pk)
+    
+    # Logic phân quyền:
+    # 1. Là thành viên ĐÃ THAM GIA
     is_member = trip.thanh_vien.filter(user=request.user, trang_thai_tham_gia='DA_THAM_GIA').exists()
-    if not is_member:
-        return HttpResponseForbidden("Chỉ thành viên của chuyến đi mới có thể tải lên media.")
+    # 2. Là người tổ chức (Owner)
+    is_owner = trip.nguoi_to_chuc == request.user
+    # 3. Là Admin (Staff) - MỚI THÊM
+    is_admin = request.user.is_staff 
+
+    if not (is_member or is_owner or is_admin):
+        return HttpResponseForbidden("Bạn không có quyền tải lên media cho chuyến đi này.")
+        
     uploaded_files = []
     for f in request.FILES.getlist('files'):
+        # Tạo media
         media = ChuyenDiMedia.objects.create(chuyen_di=trip, user=request.user, file=f)
         uploaded_files.append({'id': media.id, 'url': media.file.url})
-    return JsonResponse({'status': 'success', 'message': f'Đã tải lên {len(uploaded_files)} file.', 'files': uploaded_files})
+        
+    return JsonResponse({
+        'status': 'success', 
+        'message': f'Đã tải lên {len(uploaded_files)} file.', 
+        'files': uploaded_files
+    })
 
 @login_required
 @require_POST
@@ -489,28 +547,43 @@ def set_trip_cover(request, pk, media_id):
     trip.anh_bia = media
     trip.save()
     return JsonResponse({'status': 'success', 'message': 'Đã đặt ảnh bìa thành công.'})
-
 @login_required
 @require_POST
 def delete_trip_media(request, media_id):
     media = get_object_or_404(ChuyenDiMedia, pk=media_id)
-    if not (media.chuyen_di.nguoi_to_chuc == request.user or media.user == request.user):
+    
+    # Logic phân quyền xóa:
+    # 1. Người tải lên ảnh đó (Owner của Media)
+    is_media_owner = media.user == request.user
+    # 2. Chủ chuyến đi (Owner của Trip)
+    is_trip_owner = media.chuyen_di.nguoi_to_chuc == request.user
+    # 3. Admin (Staff) - MỚI THÊM
+    is_admin = request.user.is_staff
+
+    if not (is_media_owner or is_trip_owner or is_admin):
         return HttpResponseForbidden("Bạn không có quyền xóa media này.")
+        
+    # Xử lý nếu ảnh bị xóa là ảnh bìa -> Reset ảnh bìa
     if media.chuyen_di.anh_bia_id == media.id:
         media.chuyen_di.anh_bia = None
         media.chuyen_di.save()
+        
     media.delete()
     return JsonResponse({'status': 'success', 'message': 'Đã xóa media.'})
+
+# trips/views.py
 
 class SelectTrekForTripView(LoginRequiredMixin, ListView):
     model = CungDuongTrek
     template_name = 'trips/select_trek.html'
     context_object_name = 'treks'
     paginate_by = 9
+
     def get_queryset(self):
         queryset = CungDuongTrek.objects.filter(trang_thai='DA_DUYET').annotate(
             so_chuyen_di=Count('chuyendi')
         ).select_related('tinh_thanh', 'do_kho').order_by('-so_chuyen_di', '-danh_gia_trung_binh')
+        
         self.filter_form = SelectTrekFilterForm(self.request.GET)
         if self.filter_form.is_valid():
             cleaned_data = self.filter_form.cleaned_data
@@ -521,10 +594,17 @@ class SelectTrekForTripView(LoginRequiredMixin, ListView):
             if do_kho := cleaned_data.get('do_kho'):
                 queryset = queryset.filter(do_kho=do_kho)
         return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Bước 1: Chọn Cung đường"
         context['filter_form'] = self.filter_form
+        
+        # --- LOGIC GIAO DIỆN ĐỘNG ---
+        context['base_template'] = get_base_template(self.request)
+        context['is_admin_view'] = 'admin_base.html' in context['base_template']
+        # ----------------------------
+        
         return context
     
 
@@ -1338,3 +1418,4 @@ def admin_restore_member(request, member_id):
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
