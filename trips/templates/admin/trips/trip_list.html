@@ -1,0 +1,623 @@
+{% extends 'admin_base.html' %}
+{% load static humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    :root {
+        --primary: #3e9f5f;
+        --primary-hover: #2d7a46; /* primary-dark */
+        --primary-light: #d1fae5;
+        --secondary: #10b981;
+        --success: #059669;
+        --danger: #dc2626;
+        --danger-light: #fef2f2;
+        --warning: #f59e0b;
+        --warning-light: #fffbeb;
+        --info: #0891b2;
+        --info-light: #cffafe; /* cyan-100 */
+        --text-dark: #0f172a;
+        --text-muted: #64748b;
+        --bg-light: #f8fafc;
+        --bg-lighter: #f1f5f9;
+        --border-color: #e2e8f0;
+        
+        /* Shadows & Radius */
+        --radius-sm: 0.375rem;
+        --radius-md: 0.625rem;
+        --radius-lg: 1rem;
+    }
+
+    /* --- Helper Classes để map Root Variable vào Tailwind HTML --- */
+    .text-primary { color: var(--primary) !important; }
+    .text-secondary { color: var(--secondary) !important; }
+    .text-danger { color: var(--danger) !important; }
+    .text-warning { color: var(--warning) !important; }
+    .text-info { color: var(--info) !important; }
+    .text-muted { color: var(--text-muted) !important; }
+    .text-dark { color: var(--text-dark) !important; }
+
+    .bg-primary { background-color: var(--primary) !important; }
+    .bg-primary-hover:hover { background-color: var(--primary-hover) !important; }
+    .bg-primary-light { background-color: var(--primary-light) !important; }
+    
+    .bg-danger { background-color: var(--danger) !important; }
+    .bg-danger-light { background-color: var(--danger-light) !important; }
+    
+    .bg-warning-light { background-color: var(--warning-light) !important; }
+    
+    .bg-info { background-color: var(--info) !important; }
+    .bg-info-light { background-color: var(--info-light) !important; }
+    
+    .bg-light { background-color: var(--bg-light) !important; }
+    
+    .border-primary { border-color: var(--primary) !important; }
+    .border-primary-light { border-color: var(--primary-light) !important; }
+    .border-std { border-color: var(--border-color) !important; }
+
+    * {
+        transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    html, body {
+        background: var(--bg-light); /* Sử dụng root */
+        color: var(--text-dark);      /* Sử dụng root */
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        scroll-behavior: smooth;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* --- FORM STYLES (Đã update dùng Root Variables) --- */
+    .filter-box {
+        background-color: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+    }
+
+    .filter-box label {
+        color: var(--text-muted);
+    }
+
+    .filter-box input, .filter-box select {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        padding-right: 2rem;
+        background-color: var(--bg-light); /* Root */
+        border: 1px solid var(--border-color); /* Root */
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        color: var(--text-dark); /* Root */
+        outline: none;
+        transition: all 0.15s ease-in-out;
+        appearance: none;
+        -webkit-appearance: none;
+        /* Icon mũi tên cho Select */
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+    }
+
+    .filter-box input {
+        background-image: none;
+    }
+
+    .filter-box input:focus, .filter-box select:focus {
+        border-color: var(--primary); /* Root */
+        box-shadow: 0 0 0 3px var(--primary-light); /* Root (dùng màu light làm shadow ring) */
+        background-color: white;
+    }
+    
+    /* Toast Animation */
+    .custom-toast {
+        transform: translateX(120%);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .custom-toast.show { transform: translateX(0); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen pb-20">
+    
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-dark">{{ page_title }}</h1>
+            <p class="text-muted mt-1 text-sm">Hệ thống quản lý vận hành Tour & Cộng đồng.</p>
+        </div>
+        <div class="flex gap-3">
+            <!-- Button Xuất Excel: dùng border-primary-light và text-primary -->
+            <a href="{% url 'trips_admin:trip_export' %}" class="flex items-center gap-2 px-4 py-2 bg-white text-primary border border-primary-light rounded-lg hover:bg-primary-light font-semibold shadow-sm transition-all text-sm no-underline">
+                <i class="fas fa-file-excel"></i>
+                Xuất Excel
+            </a>
+            <!-- Button Tạo Mới: dùng bg-primary -->
+            <a href="{% url 'trips:select_trek_for_trip' %}" class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 font-semibold shadow-lg shadow-green-500/30 transition-all transform hover:-translate-y-0.5 text-sm no-underline">
+                <i class="fas fa-plus"></i>
+                Tạo Chuyến Mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Card 1 -->
+        <div class="p-5 rounded-2xl border border-std shadow-sm hover:shadow-lg transition-all duration-300 bg-white group cursor-default">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-muted mb-1">Đang diễn ra</p>
+                    <h3 class="text-3xl font-bold text-secondary">{{ stats.ongoing_count }}</h3>
+                </div>
+                <div class="p-3 rounded-xl bg-green-50 text-secondary group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-walking fa-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="p-5 rounded-2xl border border-std shadow-sm hover:shadow-lg transition-all duration-300 bg-white group cursor-default">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-muted mb-1">Sắp đi (24h)</p>
+                    <h3 class="text-3xl font-bold text-warning">{{ stats.urgent_24h }}</h3>
+                </div>
+                <div class="p-3 rounded-xl bg-warning-light text-warning group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-clock fa-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="p-5 rounded-2xl border border-std shadow-sm hover:shadow-lg transition-all duration-300 bg-white group cursor-default">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-muted mb-1">Đang tuyển</p>
+                    <h3 class="text-3xl font-bold text-primary">{{ stats.total_active }}</h3>
+                </div>
+                <div class="p-3 rounded-xl bg-primary-light text-primary group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-bolt fa-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="p-5 rounded-2xl border border-std shadow-sm hover:shadow-lg transition-all duration-300 bg-white group cursor-default">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-muted mb-1">Đã hủy</p>
+                    <h3 class="text-3xl font-bold text-danger">{{ stats.canceled }}</h3>
+                </div>
+                <div class="p-3 rounded-xl bg-danger-light text-danger group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-ban fa-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar (Đã áp dụng Root CSS Variables) -->
+    <div class="bg-white rounded-xl shadow-sm p-5 mb-6 filter-box">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div class="md:col-span-4">
+                <label class="block text-xs font-bold uppercase mb-1.5">Từ khóa tìm kiếm</label>
+                <div class="relative">
+                    <!-- 
+                        UPDATE: 
+                        - Đổi left-3 -> left-4 để icon dịch vào trong 1 chút
+                        - text-primary để icon màu xanh 
+                    -->
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-primary z-10"></i>
+                    <!-- 
+                        UPDATE: 
+                        - Thêm !pl-12 để force padding-left rộng hơn (khoảng 48px), 
+                          tránh chữ bị đè lên icon. Dấu ! dùng để override CSS custom ở trên.
+                    -->
+                    <input type="text" name="q" value="{{ request.GET.q|default:'' }}" 
+                           class="!pl-12" placeholder="Tìm theo tên chuyến, địa điểm...">
+                </div>
+            </div>
+            <div class="md:col-span-3">
+                <label class="block text-xs font-bold uppercase mb-1.5">Cung đường</label>
+                {{ filter_form.cung_duong }}
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-xs font-bold uppercase mb-1.5">Tỉnh thành</label>
+                {{ filter_form.tinh_thanh }}
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-xs font-bold uppercase mb-1.5">Trạng thái</label>
+                {{ filter_form.admin_status }}
+            </div>
+            <div class="md:col-span-1">
+                <!-- UPDATE: Đổi bg-gray-800 thành bg-primary, thêm bg-primary-hover -->
+                <button type="submit" class="w-full py-2.5 bg-primary bg-primary-hover text-white rounded-lg transition-colors flex items-center justify-center shadow-md">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Section -->
+    <div class="bg-white rounded-xl shadow-soft border border-std overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-light border-b border-std text-xs uppercase text-muted font-bold tracking-wider">
+                        <th class="py-4 px-6 text-center w-[100px]">Thời gian</th>
+                        <th class="py-4 px-4 min-w-[250px]">Thông tin chuyến đi</th>
+                        <th class="py-4 px-4 text-center w-[180px]">Trạng thái</th>
+                        <th class="py-4 px-4 w-[220px]">Thành viên & Tiến độ</th>
+                        <th class="py-4 px-4 text-right w-[140px]">Tài chính</th>
+                        <th class="py-4 px-4 text-right pr-6 w-[120px]">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for trip in trips %}
+                    <tr class="group hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
+                        
+                        <!-- Date -->
+                        <td class="py-4 px-4 align-top">
+                            <div class="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-white border border-std shadow-sm group-hover:border-primary group-hover:shadow-md transition-all mx-auto">
+                                <span class="text-xl font-black text-primary">{{ trip.ngay_bat_dau|date:"d" }}</span>
+                                <span class="text-[10px] font-bold uppercase text-muted leading-none">{{ trip.ngay_bat_dau|date:"M" }}</span>
+                            </div>
+                            <div class="text-center mt-1 text-[10px] text-muted font-medium">{{ trip.ngay_bat_dau|date:"Y" }}</div>
+                        </td>
+
+                        <!-- Info -->
+                        <td class="py-4 px-4 align-top">
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                {% if trip.total_members < 2 and trip.trang_thai == 'DANG_TUYEN' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-danger-light text-danger border border-red-100" data-bs-toggle="tooltip" title="Đoàn ít người">
+                                    <i class="fas fa-ghost"></i> Vắng khách
+                                </span>
+                                {% endif %}
+                                
+                                {% if trip.chi_phi_uoc_tinh >= 5000000 %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-warning-light text-amber-700 border border-amber-100">
+                                    <i class="fas fa-coins"></i> Giá trị cao
+                                </span>
+                                {% endif %}
+
+                                {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-muted border border-gray-200">
+                                    <i class="fas fa-lock"></i> Riêng tư
+                                </span>
+                                {% endif %}
+
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-primary-light text-primary border border-green-100">
+                                    <i class="fas fa-mountain"></i> {{ trip.cung_duong.ten|upper }}
+                                </span>
+                            </div>
+
+                            <a href="{{ trip.get_absolute_url }}" class="block text-sm font-bold text-dark hover:text-primary transition-colors mb-2 line-clamp-2 leading-snug no-underline">
+                                {{ trip.ten_chuyen_di }}
+                            </a>
+
+                            <div class="flex items-center gap-4 text-xs text-muted">
+                                <div class="flex items-center gap-1.5">
+                                    <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}" class="w-5 h-5 rounded-full object-cover border border-gray-200" alt="Host">
+                                    <span class="font-medium text-gray-700 truncate max-w-[120px]">{{ trip.nguoi_to_chuc.last_name }} {{ trip.nguoi_to_chuc.first_name }}</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                    {{ trip.cung_duong.tinh_thanh.ten }}
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td class="py-4 px-4 align-middle text-center">
+                            {% if trip.trang_thai == 'DA_HUY' %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-danger-light text-danger border-red-200">
+                                    <i class="fas fa-ban"></i> Đã hủy
+                                </span>
+                            {% elif trip.trang_thai == 'TAM_HOAN' %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-gray-100 text-muted border-gray-200">
+                                    <i class="fas fa-pause-circle"></i> Tạm hoãn
+                                </span>
+                            {% elif trip.ngay_bat_dau <= now and trip.ngay_ket_thuc >= now %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-warning-light text-amber-700 border-amber-200">
+                                    <i class="fas fa-walking"></i> Đang đi
+                                </span>
+                            {% elif trip.ngay_ket_thuc < now %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-gray-100 text-muted border-gray-200">
+                                    <i class="fas fa-check-circle"></i> Đã xong
+                                </span>
+                            {% elif trip.total_members >= trip.so_luong_toi_da %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-indigo-50 text-indigo-700 border-indigo-200">
+                                    <i class="fas fa-users"></i> Đủ người
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-primary-light text-primary border-green-200">
+                                    <i class="fas fa-bolt"></i> Đang tuyển
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Members -->
+                        <td class="py-4 px-4 align-middle">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-xs font-semibold text-dark">{{ trip.total_members }}/{{ trip.so_luong_toi_da }} <span class="text-muted font-normal">khách</span></span>
+                                <a href="#" class="text-[10px] font-bold text-primary hover:underline no-underline manage-members-btn" 
+                                   data-url="{% url 'trips_admin:trip_members_manage' trip.pk %}" 
+                                   data-trip-name="{{ trip.ten_chuyen_di }}">
+                                   Quản lý
+                                </a>
+                            </div>
+
+                            <div class="flex -space-x-2 mb-2 pl-1 h-7">
+                                {% for mem in trip.thanh_vien.all|slice:":3" %}
+                                    <img src="{{ mem.user.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}" 
+                                         class="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm transition-transform hover:-translate-y-1 relative z-0 hover:z-10"
+                                         title="{{ mem.user.get_full_name }}">
+                                {% empty %}
+                                    <span class="text-[10px] text-muted italic flex items-center">Chưa có khách</span>
+                                {% endfor %}
+
+                                {% if trip.total_members > 3 %}
+                                    <div class="w-7 h-7 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[9px] font-bold text-muted relative z-0">
+                                        +{{ trip.total_members|add:"-3" }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                <!-- Thanh progress bar dùng class bg-primary mặc định -->
+                                <div class="h-full bg-primary js-progress-bar transition-all duration-500"
+                                     data-current="{{ trip.total_members }}" 
+                                     data-max="{{ trip.so_luong_toi_da }}"
+                                     style="width: 0%"></div>
+                            </div>
+                        </td>
+
+                        <!-- Finance -->
+                        <td class="py-4 px-4 align-middle text-right">
+                            {% if trip.chi_phi_uoc_tinh and trip.chi_phi_uoc_tinh > 0 %}
+                                <div>
+                                    <div class="text-sm font-bold text-dark">{{ trip.chi_phi_uoc_tinh|intcomma }}đ</div>
+                                    <div class="text-[10px] text-muted">/người</div>
+                                </div>
+                            {% else %}
+                                <span class="inline-block px-2 py-1 bg-primary-light text-primary text-[10px] font-bold rounded border border-green-100">
+                                    Miễn phí
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="py-4 px-4 pr-6 align-middle text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <!-- Edit: Xanh lá -->
+                                <a href="{% url 'trips:update_trip' trip.pk trip.slug %}" 
+                                   class="w-8 h-8 flex items-center justify-center rounded-lg text-primary bg-primary-light hover:bg-primary hover:text-white transition-all shadow-sm" 
+                                   title="Chỉnh sửa">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                
+                                <!-- Chat: Xanh dương -->
+                                <a href="{% url 'trips_admin:trip_chat_log' trip.pk %}" 
+                                   class="w-8 h-8 flex items-center justify-center rounded-lg text-info bg-info-light hover:bg-info hover:text-white transition-all shadow-sm" 
+                                   title="Chat">
+                                    <i class="fas fa-comments"></i>
+                                </a>
+                                
+                                <!-- Delete: Đỏ -->
+                                <button type="button" 
+                                        class="w-8 h-8 flex items-center justify-center rounded-lg text-danger bg-danger-light hover:bg-danger hover:text-white transition-all shadow-sm border-0 cursor-pointer" 
+                                        onclick="confirmForceCancel('{{ trip.id }}', '{{ trip.ten_chuyen_di|escapejs }}')" 
+                                        title="Hủy chuyến">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                
+                                <form id="cancel-form-{{ trip.id }}" action="{% url 'trips_admin:force_cancel' trip.pk %}" method="POST" style="display: none;">
+                                    {% csrf_token %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-muted">
+                                <i class="fas fa-search fa-3x mb-4 opacity-20"></i>
+                                <h3 class="text-lg font-bold text-gray-700 mb-1">Không tìm thấy dữ liệu</h3>
+                                <p class="text-sm">Vui lòng thử lại với bộ lọc khác.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="px-6 py-4 bg-gray-50 border-t border-std flex items-center justify-center">
+            <nav class="flex items-center gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?{{ query_params }}&page={{ page_obj.previous_page_number }}" class="p-2 rounded-lg border border-std bg-white text-muted hover:bg-light hover:text-primary transition-colors">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+                
+                <span class="text-xs font-bold text-dark px-3">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                
+                {% if page_obj.has_next %}
+                <a href="?{{ query_params }}&page={{ page_obj.next_page_number }}" class="p-2 rounded-lg border border-std bg-white text-muted hover:bg-light hover:text-primary transition-colors">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="memberManageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content shadow-xl border-0 rounded-2xl overflow-hidden">
+            <div class="modal-header border-b border-gray-100 bg-gray-50 p-4">
+                <h5 class="modal-title text-base font-bold text-dark flex items-center gap-2">
+                    <i class="fas fa-users-cog text-primary"></i>
+                    Quản lý Thành viên: <span id="modalTripName" class="text-primary truncate max-w-[300px]">...</span>
+                </h5>
+                <button type="button" class="btn-close opacity-50 hover:opacity-100" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" id="memberModalBody">
+                <div class="text-center py-12">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // --- Toast Notification ---
+    function showToast(message, type='success') {
+        const existingToast = document.querySelector('.custom-toast');
+        if (existingToast) existingToast.remove();
+
+        const toast = document.createElement('div');
+        // Sử dụng class bg-white border-l-4 và JS để check type
+        const borderColor = type === 'success' ? 'border-green-600' : 'border-red-600'; // Dùng tailwind cho nhanh ở JS hoặc map var
+        // Tuy nhiên tốt hơn là dùng inline style để map JS variable
+        
+        toast.className = `custom-toast fixed bottom-8 right-8 z-50 flex items-center gap-3 px-6 py-4 bg-white rounded-xl shadow-2xl border-l-4 transform translate-x-full transition-transform duration-300`;
+        toast.style.borderColor = type === 'success' ? 'var(--primary)' : 'var(--danger)';
+
+        const iconColorClass = type === 'success' ? 'text-primary' : 'text-danger';
+        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        toast.innerHTML = `
+            <i class="fas ${iconClass} fa-lg ${iconColorClass}"></i>
+            <span class="font-bold text-gray-800 text-sm">${message}</span>
+        `;
+        document.body.appendChild(toast);
+        
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+    }
+
+    // --- Force Cancel ---
+    function confirmForceCancel(tripId, tripName) {
+        if (confirm(`CẢNH BÁO QUAN TRỌNG:\n\nBạn có chắc chắn muốn HỦY chuyến đi "${tripName}"?\nHành động này không thể hoàn tác và sẽ thông báo đến tất cả thành viên.`)) {
+            document.getElementById('cancel-form-' + tripId).submit();
+        }
+    }
+
+    // --- Init ---
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tooltips (Bootstrap)
+        if(typeof bootstrap !== 'undefined') {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+              return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+        }
+
+        // Progress Bars Logic
+        const bars = document.querySelectorAll('.js-progress-bar');
+        bars.forEach(bar => {
+            const current = parseFloat(bar.getAttribute('data-current')) || 0;
+            const max = parseFloat(bar.getAttribute('data-max')) || 1;
+            let percent = (current / max) * 100;
+            if (percent > 100) percent = 100;
+            
+            // Xóa class hardcode, thay bằng class trỏ tới root var
+            bar.classList.remove('bg-primary', 'bg-warning', 'bg-danger');
+            
+            if(percent >= 100) { 
+                bar.classList.add('bg-danger'); // Map tới .bg-danger
+            } else if(percent >= 80) { 
+                bar.classList.add('bg-warning'); 
+            } else { 
+                bar.classList.add('bg-primary'); 
+            }
+            
+            setTimeout(() => { bar.style.width = percent + "%"; }, 200);
+        });
+
+        // Modal Logic
+        const memberModalEl = document.getElementById('memberManageModal');
+        if (memberModalEl && typeof bootstrap !== 'undefined') {
+            const memberModal = new bootstrap.Modal(memberModalEl);
+            
+            document.querySelectorAll('.manage-members-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const fetchUrl = this.getAttribute('data-url');
+                    const tripName = this.getAttribute('data-trip-name');
+                    
+                    document.getElementById('modalTripName').innerText = tripName;
+                    document.getElementById('memberModalBody').innerHTML = '<div class="text-center py-12"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted text-sm">Đang tải dữ liệu thành viên...</p></div>';
+                    
+                    memberModal.show();
+                    
+                    fetch(fetchUrl)
+                    .then(res => res.ok ? res.json() : Promise.reject(res))
+                    .then(data => {
+                        if(data.status === 'success') {
+                            document.getElementById('memberModalBody').innerHTML = data.html;
+                        } else {
+                            document.getElementById('memberModalBody').innerHTML = `<div class="p-4 m-4 bg-danger-light text-danger rounded-lg border border-red-100">${data.message}</div>`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        document.getElementById('memberModalBody').innerHTML = '<div class="p-4 m-4 bg-danger-light text-danger rounded-lg border border-red-100">Lỗi kết nối máy chủ (500/404).</div>';
+                    });
+                });
+            });
+        }
+    });
+
+    // --- Member Actions (Global) ---
+    window.kickMember = function(url) {
+        if(!confirm("Xác nhận CHẶN thành viên này khỏi chuyến đi?")) return;
+        performMemberAction(url);
+    };
+
+    window.restoreMember = function(url) {
+        if(!confirm("Xác nhận KHÔI PHỤC thành viên này?")) return;
+        performMemberAction(url);
+    };
+
+    function performMemberAction(url) {
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfInput) return showToast("Lỗi: Không tìm thấy CSRF Token.", 'error');
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfInput.value, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                showToast(data.message, 'success');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(() => showToast("Lỗi hệ thống.", 'error'));
+    }
+</script>
+{% endblock %}

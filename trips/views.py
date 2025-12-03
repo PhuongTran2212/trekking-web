@@ -1,5 +1,5 @@
 # trips/views.py
-
+from django.db.models import Case, When # Thêm vào đầu file views.py
 import datetime
 from django.db import transaction
 from django.http import JsonResponse, HttpResponseForbidden
@@ -14,16 +14,18 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from django.db.models import F, ExpressionWrapper, DurationField
 from treks.models import CungDuongTrek
+from treks.views import AdminRequiredMixin
 from .models import ChuyenDi, ChuyenDiThanhVien, ChuyenDiMedia
-from .forms import TripFilterForm, ChuyenDiForm, TimelineFormSet, SelectTrekFilterForm
+from .forms import TripAdminFilterForm, TripFilterForm, ChuyenDiForm, TimelineFormSet, SelectTrekFilterForm
 from django.db.models import Max, OuterRef, Subquery, Prefetch, Q
 from django.db.models import Sum, Count, Q
 from django.views.decorators.http import require_http_methods
 from .models import ChuyenDiTinNhan, ChuyenDiTinNhanMedia
-
+from django.contrib.auth.decorators import login_required, user_passes_test
 import json
-
-
+import csv
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 class TripHubView(ListView):
     model = ChuyenDi
     template_name = 'trips/trip_hub.html'
@@ -1062,3 +1064,277 @@ def delete_or_leave_trip(request, pk):
 
     # return phải thụt đúng
     return redirect('trips:my_trips')
+# ==========================================================
+# === CÁC VIEW QUẢN TRỊ (ADMIN DASHBOARD) ===
+# ==========================================================
+
+class TripAdminListView(AdminRequiredMixin, ListView):
+    model = ChuyenDi
+    template_name = 'admin/trips/trip_list.html'
+    context_object_name = 'trips'
+    paginate_by = 15
+
+    def get_queryset(self):
+        # 1. Base Query: Lấy dữ liệu + Annotate
+        queryset = ChuyenDi.objects.select_related(
+            'nguoi_to_chuc__taikhoanhoso', 
+            'cung_duong__tinh_thanh'
+        ).annotate(
+            # Đếm số người đã tham gia (Trạng thái = DA_THAM_GIA)
+            total_members=Count('thanh_vien', 
+                                filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA'), 
+                                distinct=True),
+            
+            # Đếm tương tác
+            total_msgs=Count('tin_nhan', distinct=True),
+            total_media=Count('media', distinct=True)
+        ).order_by('-ngay_bat_dau')
+
+        # 2. Xử lý Bộ lọc
+        self.filter_form = TripAdminFilterForm(self.request.GET)
+        
+        if self.filter_form.is_valid():
+            data = self.filter_form.cleaned_data
+            today = timezone.now()
+
+            # --- Lọc Từ khóa ---
+            if data.get('q'):
+                queryset = queryset.filter(
+                    Q(ten_chuyen_di__icontains=data['q']) | 
+                    Q(nguoi_to_chuc__username__icontains=data['q'])
+                )
+            
+            # --- Lọc Cung đường (MỚI) ---
+            if data.get('cung_duong'):
+                queryset = queryset.filter(cung_duong=data['cung_duong'])
+
+            # --- Lọc Tỉnh thành ---
+            if data.get('tinh_thanh'):
+                queryset = queryset.filter(cung_duong__tinh_thanh=data['tinh_thanh'])
+
+            # --- LỌC RỦI RO / TRẠNG THÁI ---
+            risk_type = data.get('admin_status')
+            
+            if risk_type == 'upcoming_urgent':
+                # Sắp đi trong 3 ngày tới
+                limit = today + datetime.timedelta(days=3)
+                queryset = queryset.filter(ngay_bat_dau__range=(today, limit), trang_thai='DANG_TUYEN')
+
+            elif risk_type == 'ghost':
+                # "Ma": Sắp đi (trong 7 ngày tới) NHƯNG < 2 người tham gia
+                # Đã mở rộng range lên 7 ngày để dễ bắt lỗi hơn
+                limit = today + datetime.timedelta(days=7)
+                queryset = queryset.filter(
+                    ngay_bat_dau__range=(today, limit),
+                    total_members__lt=2,
+                    trang_thai='DANG_TUYEN'
+                )
+
+            elif risk_type == 'crowded':
+                # Đã full slot
+                queryset = queryset.filter(total_members__gte=F('so_luong_toi_da'))
+
+            elif risk_type == 'high_risk':
+                # Thu tiền nhiều (> 5tr)
+                queryset = queryset.filter(chi_phi_uoc_tinh__gte=5000000)
+
+            elif risk_type == 'ongoing':
+                # Đang diễn ra
+                queryset = queryset.filter(ngay_bat_dau__lte=today, ngay_ket_thuc__gte=today)
+
+            elif risk_type == 'canceled':
+                # Đã hủy
+                queryset = queryset.filter(trang_thai__in=['DA_HUY', 'TAM_HOAN'])
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Thống kê nhanh
+        today = timezone.now()
+        base_qs = ChuyenDi.objects.all()
+        
+        context['stats'] = {
+            'total_active': base_qs.filter(trang_thai='DANG_TUYEN').count(),
+            'ongoing_count': base_qs.filter(ngay_bat_dau__lte=today, ngay_ket_thuc__gte=today).count(),
+            'urgent_24h': base_qs.filter(ngay_bat_dau__range=(today, today + datetime.timedelta(days=1))).count(),
+            'canceled': base_qs.filter(trang_thai='DA_HUY').count()
+        }
+        
+        context['page_title'] = "Giám sát & Quản lý Chuyến đi"
+        context['filter_form'] = getattr(self, 'filter_form', TripAdminFilterForm(self.request.GET))
+        
+        # Giữ param khi phân trang
+        params = self.request.GET.copy()
+        if 'page' in params: del params['page']
+        context['query_params'] = params.urlencode()
+        context['now'] = today
+        
+        return context
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Thống kê nhanh cho Dashboard Mini (Trên đầu trang danh sách)
+        today = timezone.now()
+        
+        # Queryset cơ sở để đếm thống kê (Tránh lặp lại code)
+        base_qs = ChuyenDi.objects.all()
+        
+        context['stats'] = {
+            'total_active': base_qs.filter(trang_thai='DANG_TUYEN').count(),
+            # Đếm số đoàn đang trên núi (Đang diễn ra)
+            'ongoing_count': base_qs.filter(ngay_bat_dau__lte=today, ngay_ket_thuc__gte=today).count(),
+            # Đếm số đoàn sắp đi trong 24h tới
+            'urgent_24h': base_qs.filter(ngay_bat_dau__range=(today, today + datetime.timedelta(days=1))).count(),
+            'canceled': base_qs.filter(trang_thai='DA_HUY').count()
+        }
+        
+        context['page_title'] = "Giám sát & Quản lý Chuyến đi"
+        # Khởi tạo form nếu chưa có (để tránh lỗi template khi không filter)
+        context['filter_form'] = getattr(self, 'filter_form', TripAdminFilterForm(self.request.GET))
+        
+        # Giữ param khi phân trang
+        params = self.request.GET.copy()
+        if 'page' in params: del params['page']
+        context['query_params'] = params.urlencode()
+        
+        # Truyền biến 'now' xuống template để so sánh ngày tháng (hiện badge 'Hôm nay')
+        context['now'] = today
+        
+        return context
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def force_cancel_trip(request, pk):
+    trip = get_object_or_404(ChuyenDi, pk=pk)
+    trip.trang_thai = 'DA_HUY'
+    trip.save()
+    messages.success(request, f"Đã hủy khẩn cấp chuyến đi: {trip.ten_chuyen_di}")
+    return redirect('trips_admin:trip_list')
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def export_trips_csv(request):
+    # Tạo response object với content type là CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="danh_sach_chuyen_di.csv"'
+    
+    # Cho phép viết tiếng Việt (UTF-8 BOM)
+    response.write(u'\ufeff'.encode('utf8')) 
+
+    writer = csv.writer(response)
+    
+    # 1. Viết tiêu đề cột
+    writer.writerow(['ID', 'Tên chuyến đi', 'Host (Leader)', 'Ngày đi', 'Ngày về', 'Số lượng', 'Chi phí', 'Trạng thái', 'Ngày tạo'])
+
+    # 2. Lấy dữ liệu (Có thể tái sử dụng logic lọc nếu muốn, ở đây ta lấy all cho đơn giản)
+    trips = ChuyenDi.objects.all().select_related('nguoi_to_chuc').order_by('-ngay_bat_dau')
+
+    # 3. Viết dữ liệu từng dòng
+    for trip in trips:
+        # Tính số thành viên
+        total_mem = trip.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
+        
+        writer.writerow([
+            trip.id,
+            trip.ten_chuyen_di,
+            trip.nguoi_to_chuc.username,
+            trip.ngay_bat_dau.strftime("%d/%m/%Y %H:%M"),
+            trip.ngay_ket_thuc.strftime("%d/%m/%Y %H:%M"),
+            f"{total_mem}/{trip.so_luong_toi_da}",
+            trip.chi_phi_uoc_tinh,
+            trip.get_trang_thai_display(),
+            trip.ngay_tao.strftime("%d/%m/%Y")
+        ])
+
+    return response
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_peek_chat(request, pk):
+    trip = get_object_or_404(ChuyenDi, pk=pk)
+    
+    # Lấy 100 tin nhắn gần nhất (tăng lên vì xem trang riêng rộng hơn)
+    messages_qs = ChuyenDiTinNhan.objects.filter(chuyen_di=trip)\
+        .select_related('nguoi_gui__taikhoanhoso')\
+        .prefetch_related('media')\
+        .order_by('-thoi_gian_gui')[:100]
+    
+    context = {
+        'trip': trip,
+        'messages': reversed(messages_qs), # Đảo ngược để tin cũ ở trên, tin mới ở dưới
+        'page_title': f'Log Chat: {trip.ten_chuyen_di}'
+    }
+    
+    # Thay đổi template trỏ đến file mới
+    return render(request, 'admin/trips/trip_chat_log_full.html', context)
+# ==========================================================
+# === CÁC VIEW QUẢN TRỊ VIÊN MỚI (MEMBER MANAGEMENT) ===
+# ==========================================================
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_trip_members_manage(request, pk):
+    trip = get_object_or_404(ChuyenDi, pk=pk)
+    
+    # Lấy danh sách thành viên (Leader lên đầu)
+    members = trip.thanh_vien.select_related('user__taikhoanhoso').order_by(
+        Case(When(vai_tro='TRUONG_DOAN', then=0), default=1),
+        'ngay_tham_gia'
+    )
+
+    # Render file HTML con (Partial View)
+    # Đảm bảo bạn đã tạo file templates/admin/trips/partial_member_list.html
+    html_content = render_to_string('admin/trips/partial_member_list.html', {
+        'members': members,
+        'trip': trip
+    }, request=request)
+
+    return JsonResponse({'status': 'success', 'html': html_content})
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def admin_kick_member(request, member_id):
+    """
+    Admin chặn thành viên (Chuyển trạng thái sang BI_TU_CHOI)
+    """
+    membership = get_object_or_404(ChuyenDiThanhVien, pk=member_id)
+    
+    # Không cho phép chặn Trưởng đoàn (tránh lỗi logic)
+    if membership.vai_tro == 'TRUONG_DOAN':
+        return JsonResponse({'status': 'error', 'message': 'Không thể chặn Trưởng đoàn. Hãy đổi Leader trước.'}, status=400)
+
+    try:
+        membership.trang_thai_tham_gia = 'BI_TU_CHOI'
+        membership.save()
+        return JsonResponse({
+            'status': 'success', 
+            'message': f'Đã chặn thành viên: {membership.user.username}'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def admin_restore_member(request, member_id):
+    """
+    Admin khôi phục thành viên (Chuyển trạng thái về DA_THAM_GIA)
+    """
+    membership = get_object_or_404(ChuyenDiThanhVien, pk=member_id)
+    trip = membership.chuyen_di
+
+    # Kiểm tra slot (Admin có thể override, nhưng nên cảnh báo nếu cần thiết)
+    # Ở đây ta cho phép Admin override luôn (quyền lực tối cao)
+    
+    try:
+        membership.trang_thai_tham_gia = 'DA_THAM_GIA'
+        membership.save()
+        return JsonResponse({
+            'status': 'success', 
+            'message': f'Đã khôi phục thành viên: {membership.user.username}'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

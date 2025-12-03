@@ -189,6 +189,54 @@ TimelineFormSet = forms.inlineformset_factory(
 )
 
 # === FORM MỚI CHO TRANG CHỌN CUNG ĐƯỜNG ===
+class TripAdminFilterForm(forms.Form):
+    # 1. Tìm kiếm chung (Tên chuyến, Tên Leader)
+    q = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': '🔍 Tìm tên chuyến, leader...'
+        })
+    )
+    
+    # 2. Lọc theo Cung đường (Mới thêm)
+    cung_duong = forms.ModelChoiceField(
+        queryset=CungDuongTrek.objects.filter(trang_thai='DA_DUYET').order_by('ten'),
+        required=False,
+        empty_label="--- Chọn Cung đường ---",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    # 3. Lọc theo Tỉnh thành
+    tinh_thanh = forms.ModelChoiceField(
+        queryset=TinhThanh.objects.all().order_by('ten'),
+        required=False,
+        empty_label="--- Chọn Tỉnh thành ---",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    # 4. BỘ LỌC TRẠNG THÁI & RỦI RO (Logic màu vàng)
+    STATUS_RISK_CHOICES = [
+        ('', '--- 🛡️ Kiểm tra trạng thái ---'),
+        ('upcoming_urgent', '🚀 Sắp đi (72h tới)'),
+        ('ghost', '👻 Vắng khách (Sắp đi + < 2 người)'),
+        ('crowded', '🔥 Full Slot (Đã đủ người)'),
+        ('high_risk', '💰 Rủi ro cao (Thu > 5tr)'),
+        ('ongoing', '⛺ Đang diễn ra'),
+        ('canceled', '❌ Đã hủy / Tạm hoãn'),
+    ]
+    
+    admin_status = forms.ChoiceField(
+        required=False,
+        choices=STATUS_RISK_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-select border-warning bg-warning-subtle text-dark fw-bold', 
+            'style': 'background-color: #fffbeb;' # Màu nền vàng nhạt
+        })
+    )
+    # ==========================================================
+# === FORM MỚI CHO TRANG CHỌN CUNG ĐƯỜNG ===
+# ==========================================================
 class SelectTrekFilterForm(forms.Form):
     q = forms.CharField(
         required=False,

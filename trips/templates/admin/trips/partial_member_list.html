@@ -1,0 +1,68 @@
+{% load static %}
+<div class="table-responsive">
+    <table class="table table-hover mb-0">
+        <thead class="bg-light">
+            <tr>
+                <th class="ps-4">Thành viên</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th class="text-end pe-4">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mem in members %}
+            <tr class="{% if mem.trang_thai_tham_gia == 'BI_TU_CHOI' %}table-danger{% endif %}">
+                <td class="ps-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="{{ mem.user.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}" 
+                             class="rounded-circle border" width="40" height="40" style="object-fit: cover;">
+                        <div>
+                            <div class="fw-bold text-dark">{{ mem.user.get_full_name|default:mem.user.username }}</div>
+                            <div class="small text-muted">{{ mem.user.email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if mem.vai_tro == 'TRUONG_DOAN' %}
+                        <span class="badge bg-warning text-dark border border-warning">LEADER</span>
+                    {% else %}
+                        <span class="badge bg-light text-secondary border">MEMBER</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if mem.trang_thai_tham_gia == 'DA_THAM_GIA' %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">Đã tham gia</span>
+                    {% elif mem.trang_thai_tham_gia == 'DA_GUI_YEU_CAU' %}
+                        <span class="badge bg-info-subtle text-info border border-info-subtle">Chờ duyệt</span>
+                    {% elif mem.trang_thai_tham_gia == 'BI_TU_CHOI' %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Bị chặn/Từ chối</span>
+                    {% elif mem.trang_thai_tham_gia == 'DA_ROI_DI' %}
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Đã rời đi</span>
+                    {% endif %}
+                </td>
+                <td class="text-end pe-4">
+                    {% if mem.vai_tro != 'TRUONG_DOAN' %}
+                        {% if mem.trang_thai_tham_gia == 'DA_THAM_GIA' or mem.trang_thai_tham_gia == 'DA_GUI_YEU_CAU' %}
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="kickMember('{% url 'trips_admin:admin_kick_member' mem.id %}')"
+                                    title="Chặn thành viên này">
+                                <i class="fas fa-ban me-1"></i>Chặn
+                            </button>
+                        {% elif mem.trang_thai_tham_gia == 'BI_TU_CHOI' or mem.trang_thai_tham_gia == 'DA_ROI_DI' %}
+                            <button class="btn btn-sm btn-outline-success" 
+                                    onclick="restoreMember('{% url 'trips_admin:admin_restore_member' mem.id %}')"
+                                    title="Cho phép tham gia lại">
+                                <i class="fas fa-undo me-1"></i>Khôi phục
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center py-4 text-muted">Chưa có thành viên nào.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

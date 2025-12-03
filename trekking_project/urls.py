@@ -21,6 +21,8 @@ urlpatterns = [
     path('tinymce/', include('tinymce.urls')),
     path('chuyen-di/', include('trips.urls')),
     path('thanh-tuu/', include(('gamification.urls', 'gamification'), namespace='gamification')),
+    path('dashboard/trips/', include('trips.admin_urls')),
+    path('admin-dashboard/trips/', include('trips.admin_urls')),
 
 ]
 

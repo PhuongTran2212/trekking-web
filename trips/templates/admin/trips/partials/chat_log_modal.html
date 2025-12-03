@@ -1,0 +1,107 @@
+{% load static humanize %}
+
+<!-- HEADER: Gọn gàng, Icon đẹp -->
+<div class="modal-header bg-white border-bottom py-3">
+    <div class="d-flex align-items-center">
+        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+            <i class="fas fa-comments fs-5"></i>
+        </div>
+        <div>
+            <h5 class="modal-title fw-bold text-dark mb-0">Nhật ký Chat</h5>
+            <div class="text-muted small">
+                Chuyến đi: <span class="fw-bold text-primary">{{ trip.ten_chuyen_di }}</span>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<!-- BODY: Chat style Messenger -->
+<div class="modal-body bg-light p-0">
+    <div class="admin-chat-container p-4" style="height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+        {% for msg in messages %}
+            {% if msg.da_xoa %}
+                <!-- Tin nhắn đã xóa -->
+                <div class="text-center my-2 opacity-50">
+                    <small class="badge bg-light text-secondary border fw-normal fst-italic py-2 px-3 rounded-pill">
+                        <i class="fas fa-trash-alt me-1"></i> Tin nhắn của {{ msg.nguoi_gui.username }} đã bị thu hồi
+                    </small>
+                </div>
+            {% else %}
+                <!-- Item tin nhắn -->
+                <div class="d-flex w-100 {% if msg.nguoi_gui == trip.nguoi_to_chuc %}flex-row-reverse{% endif %}">
+                    
+                    <!-- Avatar -->
+                    <div class="flex-shrink-0 {% if msg.nguoi_gui == trip.nguoi_to_chuc %}ms-3{% else %}me-3{% endif %}">
+                        {% if msg.nguoi_gui.taikhoanhoso.anh_dai_dien %}
+                            <img src="{{ msg.nguoi_gui.taikhoanhoso.anh_dai_dien.url }}" 
+                                 class="rounded-circle shadow-sm border border-white" 
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'images/default-avatar.png' %}" 
+                                 class="rounded-circle shadow-sm border border-white" 
+                                 style="width: 40px; height: 40px; object-fit: cover; background: #fff;">
+                        {% endif %}
+                    </div>
+
+                    <!-- Nội dung -->
+                    <div class="d-flex flex-column {% if msg.nguoi_gui == trip.nguoi_to_chuc %}align-items-end{% else %}align-items-start{% endif %}" style="max-width: 75%;">
+                        
+                        <!-- Tên + Badge + Giờ -->
+                        <div class="mb-1 small">
+                            {% if msg.nguoi_gui == trip.nguoi_to_chuc %}
+                                <span class="text-muted me-2" style="font-size: 0.75rem;">{{ msg.thoi_gian_gui|date:"H:i d/m" }}</span>
+                                <span class="badge bg-warning text-dark border border-warning me-1">HOST</span>
+                                <span class="fw-bold text-dark">{{ msg.nguoi_gui.username }}</span>
+                            {% else %}
+                                <span class="fw-bold text-dark">{{ msg.nguoi_gui.username }}</span>
+                                <span class="text-muted ms-2" style="font-size: 0.75rem;">{{ msg.thoi_gian_gui|date:"H:i d/m" }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Bong bóng chat -->
+                <div class="p-2 rounded-3 
+    {% if msg.nguoi_gui == trip.nguoi_to_chuc %}
+        msg-host
+    {% else %}
+        msg-other
+    {% endif %}
+">
+                            
+                            {{ msg.noi_dung|linebreaksbr }}
+
+                            <!-- Media đính kèm -->
+                            {% if msg.media.exists %}
+                                <div class="mt-2 pt-2 border-top border-secondary border-opacity-10">
+                                    {% for m in msg.media.all %}
+                                        <a href="{{ m.duong_dan_file.url }}" target="_blank" class="d-block text-decoration-none small mt-1">
+                                            {% if m.loai_media == 'ANH' %}
+                                                <i class="fas fa-image text-primary me-1"></i> Hình ảnh {{ forloop.counter }}
+                                            {% else %}
+                                                <i class="fas fa-paperclip text-secondary me-1"></i> File đính kèm
+                                            {% endif %}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <div class="h-100 d-flex flex-column justify-content-center align-items-center text-muted opacity-50">
+                <i class="far fa-comment-dots fa-4x mb-3"></i>
+                <p>Chưa có tin nhắn nào trong nhóm này.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- FOOTER -->
+<div class="modal-footer bg-white py-2 px-3 justify-content-between">
+    <div class="d-flex align-items-center text-muted small fst-italic">
+        <i class="fas fa-info-circle me-2"></i>
+        <span>Hiển thị tối đa 50 tin nhắn gần nhất.</span>
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+</div>
