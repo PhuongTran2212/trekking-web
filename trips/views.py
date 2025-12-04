@@ -1584,6 +1584,9 @@ class TripAdminCreateView(AdminRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Thêm Chuyến đi (Admin)"
         context['is_edit'] = False
+        context['base_template'] = 'admin_base.html' # Đảm bảo load đúng khung Admin
+        
+        # Xử lý Formset cho Timeline
         if self.request.POST:
             context['timeline_formset'] = TimelineFormSet(self.request.POST)
         else:
@@ -1594,33 +1597,42 @@ class TripAdminCreateView(AdminRequiredMixin, CreateView):
         context = self.get_context_data()
         timeline_formset = context['timeline_formset']
         
-        if timeline_formset.is_valid():
+        # Kiểm tra cả Form chính và Timeline Formset
+        if form.is_valid() and timeline_formset.is_valid():
             with transaction.atomic():
                 self.object = form.save(commit=False)
                 
-                # Nếu Admin không chọn người tổ chức, mặc định là Admin
-                if not self.object.nguoi_to_chuc_id:
-                    self.object.nguoi_to_chuc = self.request.user
+                # 1. Gán người tổ chức (Nếu form không chọn, lấy user hiện tại là Admin)
+                # Lưu ý: Nếu trong model bạn để null=False thì bắt buộc phải gán ở đây
+                if not getattr(self.object, 'nguoi_to_chuc', None):
+                     self.object.nguoi_to_chuc = self.request.user
+
+                # 2. SNAPSHOT DỮ LIỆU TỪ CUNG ĐƯỜNG (Quan trọng)
+                # Lấy cung đường từ form data (vì Admin chọn qua dropdown)
+                cd = form.cleaned_data.get('cung_duong')
+                if cd:
+                    self.object.cung_duong = cd # Gán lại cho chắc chắn
+                    self.object.cd_ten = cd.ten
+                    self.object.cd_mo_ta = cd.mo_ta
+                    self.object.cd_tinh_thanh_ten = cd.tinh_thanh.ten
+                    self.object.cd_do_kho_ten = cd.do_kho.ten if cd.do_kho else ""
+                    self.object.cd_do_dai_km = cd.do_dai_km
+                    self.object.cd_thoi_gian_uoc_tinh_gio = cd.thoi_gian_uoc_tinh_gio
+                    self.object.cd_tong_do_cao_leo_m = cd.tong_do_cao_leo_m
+                    self.object.cd_du_lieu_ban_do_geojson = cd.du_lieu_ban_do_geojson
                 
-                # Snapshot dữ liệu từ Cung đường
-                cd = self.object.cung_duong
-                self.object.cd_ten = cd.ten
-                self.object.cd_mo_ta = cd.mo_ta
-                self.object.cd_tinh_thanh_ten = cd.tinh_thanh.ten
-                self.object.cd_do_kho_ten = cd.do_kho.ten if cd.do_kho else ""
-                self.object.cd_do_dai_km = cd.do_dai_km
-                self.object.cd_thoi_gian_uoc_tinh_gio = cd.thoi_gian_uoc_tinh_gio
-                self.object.cd_tong_do_cao_leo_m = cd.tong_do_cao_leo_m
-                self.object.cd_du_lieu_ban_do_geojson = cd.du_lieu_ban_do_geojson
+                # 3. Mặc định trạng thái duyệt nếu Admin tạo
+                if not self.object.trang_thai:
+                    self.object.trang_thai = 'DANG_TUYEN'
                 
                 self.object.save()
-                form.save_m2m() # Lưu tags
-                
-                # Lưu Timeline
+                form.save_m2m() # Lưu Tags
+
+                # 4. Lưu Timeline
                 timeline_formset.instance = self.object
                 timeline_formset.save()
-                
-                # Tự động add người tổ chức vào nhóm (Trưởng đoàn)
+
+                # 5. Tự động add Admin vào làm Trưởng đoàn
                 ChuyenDiThanhVien.objects.create(
                     chuyen_di=self.object,
                     user=self.object.nguoi_to_chuc,
@@ -1628,7 +1640,7 @@ class TripAdminCreateView(AdminRequiredMixin, CreateView):
                     trang_thai_tham_gia='DA_THAM_GIA'
                 )
 
-                # XỬ LÝ UPLOAD ẢNH
+                # 6. Xử lý Upload Ảnh
                 if self.request.FILES.getlist('trip_media_files'):
                     for f in self.request.FILES.getlist('trip_media_files'):
                         media = ChuyenDiMedia.objects.create(
@@ -1636,14 +1648,14 @@ class TripAdminCreateView(AdminRequiredMixin, CreateView):
                             user=self.request.user, 
                             file=f
                         )
-                        # Tự động set ảnh đầu tiên làm ảnh bìa nếu chưa có
                         if not self.object.anh_bia:
                             self.object.anh_bia = media
                             self.object.save(update_fields=['anh_bia'])
-                
+
             messages.success(self.request, "Đã tạo chuyến đi thành công.")
             return redirect(self.success_url)
         else:
+            # Nếu lỗi, render lại form kèm lỗi
             return self.render_to_response(self.get_context_data(form=form))
 
 class TripAdminUpdateView(AdminRequiredMixin, UpdateView):
@@ -1713,3 +1725,4 @@ class TripAdminUpdateView(AdminRequiredMixin, UpdateView):
             return redirect(self.success_url)
         else:
             return self.render_to_response(self.get_context_data(form=form))
+    

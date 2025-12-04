@@ -289,6 +289,130 @@
         display: none; 
     }
 }
+.th-badge {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background-color: var(--th-danger);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: bold;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    transform: scale(0); /* Ẩn mặc định */
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.th-badge.show {
+    transform: scale(1);
+}
+
+.th-msg-list {
+    max-height: 350px;
+    overflow-y: auto;
+    width: 320px; /* Rộng hơn dropdown thường */
+}
+
+.th-msg-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 12px;
+    text-decoration: none;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.th-msg-item:hover {
+    background-color: var(--th-bg-hover);
+}
+
+.th-msg-item:last-child {
+    border-bottom: none;
+}
+
+.th-msg-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--th-border);
+}
+
+.th-msg-content {
+    flex: 1;
+    overflow: hidden;
+}
+
+.th-msg-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--th-text);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.th-msg-preview {
+    font-size: 0.8rem;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* Style cho tin mới (giả lập unread bằng cách bôi đậm) */
+.th-msg-item.unread .th-msg-preview {
+    color: var(--th-text);
+    font-weight: 600;
+}
+
+.th-msg-item.unread .th-msg-name::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: var(--th-primary);
+    border-radius: 50%;
+    margin-left: 6px;
+}
+
+.th-msg-time {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    white-space: nowrap;
+}
+
+.th-dropdown-header {
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--th-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.th-view-all {
+    font-size: 0.8rem;
+    color: var(--th-primary);
+    text-decoration: none;
+    font-weight: 600;
+    display: block;
+    text-align: center;
+    padding: 10px;
+    border-top: 1px solid var(--th-border);
+}
+.th-view-all:hover {
+    background-color: #f9fafb;
+}
 </style>
 
 <header class="th-header">
@@ -385,7 +509,7 @@
                     <a href="{% url 'accounts:profile-detail' username=user.username %}" class="th-dropdown-item">Profile của tôi</a>
                     <a href="#" class="th-dropdown-item">Cài đặt tài khoản</a>
                      <a href="{% url 'gamification:my_badges' %}" class="th-dropdown-item">
-                     <i class="fas fa-medal me-2 text-warning"></i> Thành tựu của tôi
+                      Thành tựu của tôi
                       </a>
 
                     {% if user.is_staff %}

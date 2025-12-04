@@ -1,156 +1,218 @@
 {% load humanize %}
 
-<a href="{% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}javascript:void(0){% else %}{{ trip.get_absolute_url }}{% endif %}" 
-   class="trip-card {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}js-locked-trip{% endif %}"
-   {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}data-bs-toggle="modal" data-bs-target="#tripCodeModal"data-trip-id="{{ trip.pk }}" {% endif %}>
-   
-    <div class="card-img-wrapper">
-        <img src="{{ trip.cover_url }}" class="card-img" alt="{{ trip.ten_chuyen_di }}" loading="lazy">
-        
-        {# --- 1. BADGE RIÊNG TƯ / CÔNG KHAI (Góc Trái Trên) --- #}
-        <span class="badge-privacy {% if trip.che_do_rieng_tu == 'RIENG_TU' %}bg-private{% else %}bg-public{% endif %}">
-            {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
-                <i class="fas fa-lock"></i> Riêng tư
-            {% else %}
-                <i class="fas fa-globe-asia"></i> Công khai
-            {% endif %}
-        </span>
+{# --- BẮT ĐẦU CARD --- #}
+<div class="card trip-card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+    
+    {# --- 1. PHẦN HÌNH ẢNH (Click vào để xem chi tiết) --- #}
+    {# Wrapper giữ relative để định vị badge #}
+    <div class="position-relative card-img-wrapper">
+        <a href="{% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}javascript:void(0){% else %}{{ trip.get_absolute_url }}{% endif %}" 
+           class="d-block w-100 text-decoration-none {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}js-locked-trip{% endif %}"
+           {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}"{% endif %}>
+            
+            {# Ảnh bìa: Thêm w-100 để tràn viền, tăng height lên 220px #}
+            <img src="{{ trip.cover_url }}" class="card-img-top w-100 object-fit-cover" alt="{{ trip.ten_chuyen_di }}" style="height: 220px;" loading="lazy">
+            
+            {# Badge: Privacy (Góc trái trên) #}
+            <div class="position-absolute top-0 start-0 m-2">
+                <span class="badge rounded-pill {% if trip.che_do_rieng_tu == 'RIENG_TU' %}bg-dark{% else %}bg-primary{% endif %} bg-opacity-75 backdrop-blur">
+                    {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
+                        <i class="fas fa-lock small"></i> Riêng tư
+                    {% else %}
+                        <i class="fas fa-globe-asia small"></i> Công khai
+                    {% endif %}
+                </span>
+            </div>
 
-        {# --- 2. TRẠNG THÁI NGƯỜI DÙNG (Nằm ngay dưới badge privacy) --- #}
-        {% if user.is_authenticated %}
-            {% if trip.nguoi_to_chuc == user %}
-                <span class="badge-user-status bg-warning text-dark"><i class="fas fa-crown"></i> Trưởng đoàn</span>
-            {% elif trip.user_status == 'DA_THAM_GIA' %}
-                <span class="badge-user-status bg-success"><i class="fas fa-check-circle"></i> Đã tham gia</span>
-            {% elif trip.user_status == 'DA_GUI_YEU_CAU' %}
-                <span class="badge-user-status bg-info"><i class="fas fa-clock"></i> Chờ duyệt</span>
-            {% elif trip.user_status == 'BI_TU_CHOI' %}
-                <span class="badge-user-status bg-danger"><i class="fas fa-ban"></i> Bị từ chối</span>
-            {% endif %}
-        {% endif %}
+            {# Badge: Status Trip (Góc phải trên) #}
+            <span class="position-absolute top-0 end-0 m-2 badge rounded-pill trip-status-badge shadow-sm"
+                  data-color="{{ trip.status_color|default_if_none:'#10b981'|escape }}"
+                  style="backdrop-filter: blur(4px);">
+                {{ trip.status_name|default:"Sắp diễn ra" }}
+            </span>
 
-        {# --- 3. TRẠNG THÁI TRIP (Góc Phải Trên) --- #}
-        <span class="badge rounded-pill shadow-sm text-white fw-bold trip-status-badge"
-              data-color="{{ trip.status_color|default_if_none:'#10b981'|escape }}"
-              style="position: absolute; top: 12px; right: 12px; z-index: 10; backdrop-filter: blur(2px);">
-            {{ trip.status_name|default:"Sắp diễn ra" }}
-        </span>
-        
-        {# --- 4. ĐỘ KHÓ (Góc Trái Dưới) --- #}
-        {% if trip.cung_duong.do_kho %}
-        <span class="badge-level">
-            <i class="fas fa-mountain"></i> {{ trip.cung_duong.do_kho.ten }}
-        </span>
-        {% endif %}
-
-        {# --- 5. GIÁ TIỀN (Góc Phải Dưới) --- #}
-        <span class="badge-price">
-            {% if trip.chi_phi_uoc_tinh > 0 %}
-                {{ trip.chi_phi_uoc_tinh|intcomma }}<small>VND</small>
-            {% else %}
-                Miễn phí
-            {% endif %}
-        </span>
-        
-        {# --- 6. OVERLAY Ổ KHÓA (Khi bị khóa) --- #}
-        {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}
-        <div class="locked-overlay">
-            <i class="fas fa-lock mb-1"></i>
-            <span>Nhập mã</span>
-        </div>
-        {% endif %}
-    </div>
-    {# ================================================================= #}
-        {# === BỔ SUNG: NÚT TẮT VÀO CHAT ROOM (Cho Host hoặc Thành viên) === #}
-        {# ================================================================= #}
-{% if user.is_authenticated %}
-    {% if trip.nguoi_to_chuc == user or trip.user_status == 'DA_THAM_GIA' %}
-        <object>
-            <a href="{% url 'trips:chat_room' trip.pk %}" 
-               class="badge rounded-pill shadow-sm text-decoration-none position-absolute d-flex align-items-center gap-2"
-               style="
-                   top: 45px; /* Nằm ngay dưới badge trạng thái (top:12px + height) */
-                   right: 12px; 
-                   z-index: 20; 
-                   background: rgba(255, 255, 255, 0.9);
-                   color: #0d6efd;
-                   backdrop-filter: blur(4px);
-                   padding: 6px 12px;
-                   font-weight: 700;
-                   font-size: 0.75rem;
-                   transition: transform 0.2s;
-               "
-               onmouseover="this.style.transform='scale(1.05)'"
-               onmouseout="this.style.transform='scale(1)'">
-                <i class="fas fa-comments"></i> Chat
-            </a>
-        </object>
-    {% endif %}
-{% endif %}
-    <div class="card-body">
-        <h3 class="card-title" title="{{ trip.ten_chuyen_di }}">
-            {{ trip.ten_chuyen_di }}
-        </h3>
-        
-        {# Cảnh báo khóa #}
-        {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}
-        <div class="text-warning small mb-2 fw-bold d-flex align-items-center">
-            <i class="fas fa-key me-2"></i> Yêu cầu mã tham gia
-        </div>
-        {% endif %}
-
-        <div class="card-location">
-            <i class="fas fa-map-marker-alt text-danger"></i>
-            <span>{{ trip.cung_duong.tinh_thanh.ten }} • {{ trip.cung_duong.ten }}</span>
-        </div>
-
-        <div class="card-meta">
-            <div class="meta-item">
-                <i class="far fa-calendar-alt text-primary"></i>
-                {{ trip.ngay_bat_dau|date:"d/m/Y" }}
+            {# Badge: Giá tiền (Góc phải dưới - Nổi hơn) #}
+            <div class="position-absolute bottom-0 end-0 m-2">
+                <span class="badge bg-white text-dark shadow fw-bold px-3 py-2 rounded-pill border">
+                    {% if trip.chi_phi_uoc_tinh > 0 %}
+                        {{ trip.chi_phi_uoc_tinh|intcomma }}₫
+                    {% else %}
+                        Miễn phí
+                    {% endif %}
+                </span>
             </div>
             
-            <div class="meta-item">
-                <i class="far fa-clock text-warning"></i>
-                {{ trip.thoi_gian_display }}
+            {# Overlay khi bị khóa (Riêng tư) #}
+            {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 text-white">
+                <div class="text-center">
+                    <i class="fas fa-lock fa-2x mb-2"></i>
+                    <div class="small fw-bold">Yêu cầu mã</div>
+                </div>
+            </div>
+            {% endif %}
+        </a>
+    </div>
+
+    {# --- 2. PHẦN NỘI DUNG --- #}
+    <div class="card-body d-flex flex-column p-3">
+        {# Tiêu đề: Đã thêm text-truncate #}
+        <h5 class="card-title mb-2 lh-base text-truncate">
+            <a href="{{ trip.get_absolute_url }}" class="text-dark text-decoration-none fw-bold" title="{{ trip.ten_chuyen_di }}">
+                {{ trip.ten_chuyen_di }}
+            </a>
+        </h5>
+
+        {# Thông tin: Địa điểm & Thời gian #}
+        <div class="small text-muted mb-3">
+            <div class="d-flex align-items-start mb-2">
+                <i class="fas fa-map-marker-alt text-danger mt-1 me-2 flex-shrink-0" style="width: 16px; text-align: center;"></i>
+                <span class="text-break">{{ trip.cung_duong.tinh_thanh.ten }} • {{ trip.cung_duong.ten }}</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <i class="far fa-calendar-alt text-primary me-2" style="width: 16px; text-align: center;"></i>
+                <span>{{ trip.ngay_bat_dau|date:"d/m/Y" }}</span>
+                <span class="mx-2 text-muted">|</span>
+                <i class="far fa-clock text-warning me-1"></i> {{ trip.thoi_gian_display }}
             </div>
         </div>
 
+        {# --- TAGS (Giới hạn 2 tag + Nút xem thêm) --- #}
         {% if trip.tags.all %}
-        <div class="card-tags">
-            {% for tag in trip.tags.all|slice:":3" %} 
-            <span class="tag-badge">#{{ tag.ten }}</span>
+        <div class="mb-3 d-flex flex-wrap gap-1 align-items-center">
+            {% for tag in trip.tags.all|slice:":2" %} 
+                <span class="badge bg-light text-secondary border fw-normal">#{{ tag.ten }}</span>
             {% endfor %}
-            {% if trip.tags.count > 3 %}
-            <span class="tag-badge">+{{ trip.tags.count|add:"-3" }}</span>
+
+            {% if trip.tags.count > 2 %}
+                <button type="button" 
+                        class="badge bg-secondary text-white border-0 cursor-pointer" 
+                        data-bs-toggle="popover" 
+                        data-bs-trigger="focus" 
+                        data-bs-placement="top"
+                        data-bs-html="true"
+                        title="Tất cả Tags"
+                        data-bs-content="<div class='d-flex flex-wrap gap-1'>{% for t in trip.tags.all %}<span class='badge bg-light text-dark border'>#{{ t.ten }}</span>{% endfor %}</div>">
+                    +{{ trip.tags.count|add:"-2" }}
+                </button>
             {% endif %}
         </div>
         {% endif %}
-    </div>
 
-    <div class="card-footer">
-        <div class="organizer">
-            {% if trip.nguoi_to_chuc.taikhoanhoso.avatar %}
-                <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar.url }}" alt="Avatar">
-            {% else %}
-                <div class="default-avatar">{{ trip.nguoi_to_chuc.username|slice:":1"|upper }}</div>
-            {% endif %}
-            <div class="organizer-info">
-                <span class="label">Host</span>
-                <span class="name text-truncate" style="max-width: 100px;">{{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}</span>
+        {# --- Spacer & Host Info --- #}
+        {# Dùng mt-auto để đẩy phần này xuống dưới cùng của body trước buttons #}
+        <div class="mt-auto pt-3 border-top mb-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                {% if trip.nguoi_to_chuc.taikhoanhoso.avatar %}
+                    <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar.url }}" class="rounded-circle me-2 object-fit-cover" width="28" height="28" alt="Avt">
+                {% else %}
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2 fw-bold" style="width: 28px; height: 28px; font-size: 12px;">
+                        {{ trip.nguoi_to_chuc.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+                <div class="d-flex flex-column" style="line-height: 1.2;">
+                    <small class="text-muted" style="font-size: 0.75rem;">Host</small>
+                    {# Tên host: Bỏ text-truncate để hiện full tên #}
+                    <small class="fw-bold">
+                        {{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}
+                    </small>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center bg-light rounded-pill px-2 py-1">
+                <i class="fas fa-user-friends me-1 {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-success{% endif %}" style="font-size: 0.8rem;"></i>
+                <span class="small fw-bold {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-dark{% endif %}">
+                    {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}
+                </span>
             </div>
         </div>
-        
-        <div class="slots {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-success{% endif %}">
-            <i class="fas fa-user-friends"></i> {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}
+
+        {# --- 3. KHU VỰC NÚT BẤM (ACTION BUTTONS) --- #}
+        <div class="row g-2">
+            {# Nút 1: Xem chi tiết #}
+            <div class="col-6">
+                <a href="{{ trip.get_absolute_url }}" class="btn btn-outline-secondary btn-sm w-100 fw-bold py-2">
+                    Chi tiết
+                </a>
+            </div>
+
+            {# Nút 2: Logic động #}
+            <div class="col-6">
+                {% if user.is_authenticated %}
+                    {# TÌNH HUỐNG 1: Là Host hoặc Đã tham gia -> NHẮN TIN #}
+                    {% if trip.nguoi_to_chuc == user or trip.user_status == 'DA_THAM_GIA' %}
+                        <a href="{% url 'trips:chat_room' trip.pk %}" class="btn btn-primary btn-sm w-100 fw-bold py-2">
+                            <i class="fas fa-comments me-1"></i> Nhắn tin
+                        </a>
+                    
+                    {# TÌNH HUỐNG 2: Đang chờ duyệt -> NÚT CHỜ (Vàng) #}
+                    {% elif trip.user_status == 'DA_GUI_YEU_CAU' %}
+                        <button class="btn btn-warning btn-sm w-100 fw-bold text-dark py-2" disabled>
+                            <i class="fas fa-clock me-1"></i> Chờ duyệt
+                        </button>
+                    
+                    {# TÌNH HUỐNG 3: Bị từ chối -> NÚT TỪ CHỐI (Đỏ) #}
+                    {% elif trip.user_status == 'BI_TU_CHOI' %}
+                        <button class="btn btn-danger btn-sm w-100 fw-bold py-2" disabled>
+                            <i class="fas fa-ban me-1"></i> Từ chối
+                        </button>
+
+                    {# TÌNH HUỐNG 4: Chưa tham gia -> THAM GIA #}
+                    {% else %}
+                        {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
+                             {# Riêng tư: Nhập mã #}
+                            <button class="btn btn-success btn-sm w-100 fw-bold py-2" data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}">
+                                <i class="fas fa-key me-1"></i> Nhập mã
+                            </button>
+                        {% else %}
+                             {# Công khai: Tham gia #}
+                            <a href="#" class="btn btn-success btn-sm w-100 fw-bold py-2" data-bs-toggle="modal" data-bs-target="#joinTripModal{{ trip.pk }}">
+                                Tham gia
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                
+                {% else %}
+                    {# Chưa đăng nhập #}
+                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-success btn-sm w-100 fw-bold py-2">
+                        Tham gia
+                    </a>
+                {% endif %}
+            </div>
         </div>
+
     </div>
-</a>
+</div>
 
 <script>
-(function(){
-    document.querySelectorAll('.trip-status-badge').forEach(function(el){
-        try { var c = el.dataset.color; if (c) { el.style.backgroundColor = c; el.classList.add('text-white'); } } catch(e) {}
+    document.addEventListener("DOMContentLoaded", function(){
+        // Màu badge trạng thái
+        document.querySelectorAll('.trip-status-badge').forEach(function(el){
+            var c = el.dataset.color;
+            if (c) { 
+                el.style.backgroundColor = c; 
+                el.classList.add('text-white'); 
+            }
+        });
+
+        // Init Popover Tags
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl, {
+                trigger: 'focus'
+            })
+        });
     });
-})();
 </script>
+
+<style>
+    .trip-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .trip-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .cursor-pointer { cursor: pointer; }
+    .backdrop-blur { backdrop-filter: blur(4px); }
+</style>

@@ -1,4 +1,4 @@
-{% extends base_template|default:'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}{{ page_title }}{% endblock %}
@@ -323,6 +323,9 @@
 <!-- Header -->
     <div class="page-header">
         <div class="d-flex flex-column align-items-start">
+            <a href="{% url 'treks:cung_duong_list' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
             <h1 class="page-title">{{ page_title }}</h1>
             <div class="subtitle">
                 <i class="fas fa-map-marked-alt"></i> 
