@@ -8,10 +8,13 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+
+from trips.models import ChuyenDi
 from .models import CungDuongTrek, CungDuongDanhGia, CungDuongAnhDanhGia
 from .forms import CungDuongFilterForm, CungDuongDanhGiaForm
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
+from django.db.models import Subquery, OuterRef, Count, Q
 # ==========================================================
 # === CungDuongListView (Không đổi) ===
 # ==========================================================
@@ -22,36 +25,41 @@ class CungDuongListView(ListView):
     paginate_by = 9
     
     def get_queryset(self):
-        # === BẮT ĐẦU VỚI QUERYSET GỐC VÀ THÊM ANNOTATION ===
-        # Dùng annotate để đếm số chuyến đi liên quan một cách hiệu quả
-        queryset = CungDuongTrek.objects.filter(trang_thai='DA_DUYET').annotate(
-            # Đếm số chuyến đi liên quan (dựa trên related_name='chuyendi')
-            so_chuyen_di=Count('chuyendi', distinct=True),
-            # Đếm số bình luận có nội dung thực sự (không null và không rỗng)
-            so_binh_luan=Count('danh_gia', filter=Q(danh_gia__binh_luan__isnull=False) & ~Q(danh_gia__binh_luan=''))
-        ).order_by('-danh_gia_trung_binh', '-ngay_cap_nhat')
+        # 1. Tạo Subquery đếm số chuyến đi (Tránh lỗi nhân bản dòng)
+        chuyen_di_subquery = ChuyenDi.objects.filter(
+            cung_duong=OuterRef('pk'),
+            is_deleted=False
+        ).values('cung_duong').annotate(cnt=Count('id')).values('cnt')
 
+        # 2. Tạo Subquery đếm số bình luận (Tránh lỗi nhân bản dòng)
+        binh_luan_subquery = CungDuongDanhGia.objects.filter(
+            cung_duong=OuterRef('pk')
+        ).exclude(
+            Q(binh_luan__isnull=True) | Q(binh_luan__exact='')
+        ).values('cung_duong').annotate(cnt=Count('id')).values('cnt')
+
+        # 3. Query chính: Áp dụng Subquery
+        queryset = CungDuongTrek.objects.filter(trang_thai='DA_DUYET').annotate(
+            so_chuyen_di=Subquery(chuyen_di_subquery),
+            so_binh_luan=Subquery(binh_luan_subquery)
+        ).select_related('tinh_thanh', 'do_kho').order_by('-danh_gia_trung_binh', '-ngay_cap_nhat')
+
+        # 4. Xử lý bộ lọc (Giữ nguyên logic cũ)
         form = CungDuongFilterForm(self.request.GET)
-        
         if form.is_valid():
             cleaned_data = form.cleaned_data
-            
-            # Filter theo tên
             q = cleaned_data.get('q')
             if q:
                 queryset = queryset.filter(ten__icontains=q)
             
-            # Filter theo tỉnh thành
             tinh_thanh = cleaned_data.get('tinh_thanh')
             if tinh_thanh:
                 queryset = queryset.filter(tinh_thanh=tinh_thanh)
 
-            # Filter theo độ khó
             do_kho = cleaned_data.get('do_kho')
             if do_kho:
                 queryset = queryset.filter(do_kho=do_kho)
 
-            # Filter theo độ dài (số thực)
             min_do_dai = cleaned_data.get('min_do_dai')
             if min_do_dai is not None:
                 queryset = queryset.filter(do_dai_km__gte=min_do_dai)
@@ -60,7 +68,6 @@ class CungDuongListView(ListView):
             if max_do_dai is not None:
                 queryset = queryset.filter(do_dai_km__lte=max_do_dai)
 
-            # === ÁP DỤNG CÁC BỘ LỌC MỚI ===
             min_danh_gia = cleaned_data.get('min_danh_gia')
             if min_danh_gia is not None:
                 queryset = queryset.filter(danh_gia_trung_binh__gte=min_danh_gia)

@@ -317,33 +317,53 @@
                         </td>
 
                         <!-- Status -->
-                        <td class="py-4 px-4 align-middle text-center">
-                            {% if trip.trang_thai == 'DA_HUY' %}
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-danger-light text-danger border-red-200">
-                                    <i class="fas fa-ban"></i> Đã hủy
-                                </span>
-                            {% elif trip.trang_thai == 'TAM_HOAN' %}
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-gray-100 text-muted border-gray-200">
-                                    <i class="fas fa-pause-circle"></i> Tạm hoãn
-                                </span>
-                            {% elif trip.ngay_bat_dau <= now and trip.ngay_ket_thuc >= now %}
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-warning-light text-amber-700 border-amber-200">
-                                    <i class="fas fa-walking"></i> Đang đi
-                                </span>
-                            {% elif trip.ngay_ket_thuc < now %}
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-gray-100 text-muted border-gray-200">
-                                    <i class="fas fa-check-circle"></i> Đã xong
-                                </span>
-                            {% elif trip.total_members >= trip.so_luong_toi_da %}
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-indigo-50 text-indigo-700 border-indigo-200">
-                                    <i class="fas fa-users"></i> Đủ người
-                                </span>
-                            {% else %}
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-primary-light text-primary border-green-200">
-                                    <i class="fas fa-bolt"></i> Đang tuyển
-                                </span>
-                            {% endif %}
-                        </td>
+<!-- Status -->
+<td class="py-4 px-4 align-middle text-center">
+    {# 1. Ưu tiên các trạng thái Admin/Host set cứng trước #}
+    
+    {% if trip.trang_thai == 'CHO_DUYET' %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-warning-light text-amber-700 border-amber-200">
+            <i class="fas fa-clock"></i> Chờ duyệt
+        </span>
+    
+    {% elif trip.trang_thai == 'BI_TU_CHOI' %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-danger-light text-danger border-red-200">
+            <i class="fas fa-times-circle"></i> Bị từ chối
+        </span>
+
+    {% elif trip.trang_thai == 'DA_HUY' %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-danger-light text-danger border-red-200">
+            <i class="fas fa-ban"></i> Đã hủy
+        </span>
+
+    {% elif trip.trang_thai == 'TAM_HOAN' %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-gray-100 text-muted border-gray-200">
+            <i class="fas fa-pause-circle"></i> Tạm hoãn
+        </span>
+
+    {# 2. Các trạng thái tính toán theo thời gian/số lượng (Chỉ hiện khi đã Public/Đang tuyển) #}
+
+    {% elif trip.ngay_bat_dau <= now and trip.ngay_ket_thuc >= now %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-blue-50 text-blue-700 border-blue-200">
+            <i class="fas fa-walking"></i> Đang đi
+        </span>
+
+    {% elif trip.ngay_ket_thuc < now %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-gray-100 text-muted border-gray-200">
+            <i class="fas fa-check-circle"></i> Đã xong
+        </span>
+
+    {% elif trip.total_members >= trip.so_luong_toi_da %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-indigo-50 text-indigo-700 border-indigo-200">
+            <i class="fas fa-users"></i> Đủ người
+        </span>
+
+    {% else %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-primary-light text-primary border-green-200">
+            <i class="fas fa-bolt"></i> Đang tuyển
+        </span>
+    {% endif %}
+</td>
 
                         <!-- Members -->
                         <td class="py-4 px-4 align-middle">
@@ -396,35 +416,55 @@
                         </td>
 
                         <!-- Actions -->
-                        <td class="py-4 px-4 pr-6 align-middle text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <!-- Edit: Xanh lá -->
-                                <a href="{% url 'trips_admin:update_trip' trip.pk trip.slug %}" 
-   class="w-8 h-8 flex items-center justify-center rounded-lg text-primary bg-primary-light hover:bg-primary hover:text-white transition-all shadow-sm" 
-   title="Chỉnh sửa">
-    <i class="fas fa-pen"></i>
-</a>
-                                
-                                <!-- Chat: Xanh dương -->
-                                <a href="{% url 'trips_admin:trip_chat_log' trip.pk %}" 
-                                   class="w-8 h-8 flex items-center justify-center rounded-lg text-info bg-info-light hover:bg-info hover:text-white transition-all shadow-sm" 
-                                   title="Chat">
-                                    <i class="fas fa-comments"></i>
-                                </a>
-                                
-                                <!-- Delete: Đỏ -->
-                                <button type="button" 
-                                        class="w-8 h-8 flex items-center justify-center rounded-lg text-danger bg-danger-light hover:bg-danger hover:text-white transition-all shadow-sm border-0 cursor-pointer" 
-                                        onclick="confirmForceCancel('{{ trip.id }}', '{{ trip.ten_chuyen_di|escapejs }}')" 
-                                        title="Hủy chuyến">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                
-                                <form id="cancel-form-{{ trip.id }}" action="{% url 'trips_admin:force_cancel' trip.pk %}" method="POST" style="display: none;">
-                                    {% csrf_token %}
-                                </form>
-                            </div>
-                        </td>
+              <td class="py-4 px-4 pr-6 align-middle text-right">
+    <div class="flex items-center justify-end gap-2">
+        
+        <!-- LOGIC ADMIN: DUYỆT / TỪ CHỐI -->
+        {% if trip.trang_thai == 'CHO_DUYET' %}
+            <form action="{% url 'trips_admin:approve_trip' trip.pk %}" method="POST" class="inline-block" onsubmit="return confirm('Xác nhận DUYỆT chuyến đi này?');">
+                {% csrf_token %}
+                <button type="submit" class="w-8 h-8 flex items-center justify-center rounded-lg text-green-600 bg-green-50 hover:bg-green-600 hover:text-white transition-all shadow-sm border border-green-200" title="Duyệt bài">
+                    <i class="fas fa-check"></i>
+                </button>
+            </form>
+
+            <button type="button" 
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-600 hover:text-white transition-all shadow-sm border border-amber-200" 
+                    onclick="openRejectModal('{{ trip.pk }}', '{{ trip.ten_chuyen_di|escapejs }}')"
+                    title="Từ chối">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="w-px h-4 bg-gray-300 mx-1"></div>
+        {% endif %}
+
+        <!-- Edit -->
+        <a href="{% url 'trips_admin:update_trip' trip.pk trip.slug %}" 
+           class="w-8 h-8 flex items-center justify-center rounded-lg text-primary bg-primary-light hover:bg-primary hover:text-white transition-all shadow-sm" 
+           title="Chỉnh sửa">
+            <i class="fas fa-pen"></i>
+        </a>
+        
+        <!-- Chat -->
+        <a href="{% url 'trips_admin:trip_chat_log' trip.pk %}" 
+           class="w-8 h-8 flex items-center justify-center rounded-lg text-info bg-info-light hover:bg-info hover:text-white transition-all shadow-sm" 
+           title="Xem Log Chat">
+            <i class="fas fa-comments"></i>
+        </a>
+        
+        <!-- DELETE (XÓA VĨNH VIỄN) -->
+        <button type="button" 
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-danger bg-danger-light hover:bg-danger hover:text-white transition-all shadow-sm border-0 cursor-pointer" 
+                onclick="confirmDeleteTrip('{{ trip.id }}', '{{ trip.ten_chuyen_di|escapejs }}')" 
+                title="Xóa vĩnh viễn">
+            <i class="fas fa-trash"></i>
+        </button>
+        
+        <!-- Form ẩn để submit xóa -->
+        <form id="delete-form-{{ trip.id }}" action="{% url 'trips_admin:delete_or_leave_trip' trip.pk %}" method="POST" style="display: none;">
+            {% csrf_token %}
+        </form>
+    </div>
+</td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -484,141 +524,127 @@
         </div>
     </div>
 </div>
+<!-- 2. [MỚI] Modal Từ Chối Chuyến Đi -->
+<div class="modal fade" id="rejectTripModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-xl border-0 rounded-2xl overflow-hidden">
+            <!-- Header màu đỏ -->
+            <div class="modal-header border-b border-red-100 bg-red-50 p-4">
+                <h5 class="modal-title text-base font-bold text-red-600 flex items-center gap-2">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Từ chối chuyến đi
+                </h5>
+                <button type="button" class="btn-close opacity-50 hover:opacity-100" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form id="rejectTripForm" method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-body p-5">
+                    <p class="text-sm text-gray-600 mb-3">
+                        Bạn đang từ chối chuyến đi: <strong id="rejectTripName" class="text-dark">...</strong>
+                    </p>
+                    
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1.5">Lý do từ chối <span class="text-danger">*</span></label>
+                    <textarea name="reason" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-200 focus:border-red-400 outline-none transition-all text-sm" rows="4" placeholder="VD: Nội dung vi phạm quy định, thiếu lịch trình chi tiết..." required></textarea>
+                    <p class="text-xs text-muted mt-2">Lý do này sẽ được gửi cho người tạo chuyến đi.</p>
+                </div>
+                
+                <div class="modal-footer border-t border-gray-100 bg-gray-50 p-3">
+                    <button type="button" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 text-sm font-medium transition-colors" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="px-4 py-2 bg-danger text-white rounded-lg hover:bg-red-700 shadow-md shadow-red-200 text-sm font-bold transition-colors">Xác nhận Từ chối</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // --- Toast Notification ---
+    // --- 1. Toast Notification ---
     function showToast(message, type='success') {
         const existingToast = document.querySelector('.custom-toast');
         if (existingToast) existingToast.remove();
-
         const toast = document.createElement('div');
-        // Sử dụng class bg-white border-l-4 và JS để check type
-        const borderColor = type === 'success' ? 'border-green-600' : 'border-red-600'; // Dùng tailwind cho nhanh ở JS hoặc map var
-        // Tuy nhiên tốt hơn là dùng inline style để map JS variable
-        
+        const borderColor = type === 'success' ? 'var(--primary)' : 'var(--danger)';
+        const iconClass = type === 'success' ? 'fa-check-circle text-primary' : 'fa-exclamation-circle text-danger';
         toast.className = `custom-toast fixed bottom-8 right-8 z-50 flex items-center gap-3 px-6 py-4 bg-white rounded-xl shadow-2xl border-l-4 transform translate-x-full transition-transform duration-300`;
-        toast.style.borderColor = type === 'success' ? 'var(--primary)' : 'var(--danger)';
-
-        const iconColorClass = type === 'success' ? 'text-primary' : 'text-danger';
-        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-        
-        toast.innerHTML = `
-            <i class="fas ${iconClass} fa-lg ${iconColorClass}"></i>
-            <span class="font-bold text-gray-800 text-sm">${message}</span>
-        `;
+        toast.style.borderColor = borderColor;
+        toast.innerHTML = `<i class="fas ${iconClass} fa-lg"></i><span class="font-bold text-gray-800 text-sm">${message}</span>`;
         document.body.appendChild(toast);
-        
         requestAnimationFrame(() => toast.classList.add('show'));
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400);
-        }, 3000);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
     }
 
-    // --- Force Cancel ---
-    function confirmForceCancel(tripId, tripName) {
-        if (confirm(`CẢNH BÁO QUAN TRỌNG:\n\nBạn có chắc chắn muốn HỦY chuyến đi "${tripName}"?\nHành động này không thể hoàn tác và sẽ thông báo đến tất cả thành viên.`)) {
-            document.getElementById('cancel-form-' + tripId).submit();
+    // --- 2. Confirm DELETE (Xóa vĩnh viễn) ---
+    function confirmDeleteTrip(tripId, tripName) {
+        if (confirm(`CẢNH BÁO: Bạn có chắc chắn muốn XÓA VĨNH VIỄN chuyến đi:\n"${tripName}"?\n\nHành động này sẽ xóa toàn bộ dữ liệu (thành viên, tin nhắn, ảnh) và KHÔNG THỂ khôi phục.`)) {
+            document.getElementById('delete-form-' + tripId).submit();
         }
     }
 
-    // --- Init ---
+    // --- 3. Open Reject Modal ---
+    function openRejectModal(tripId, tripName) {
+        const form = document.getElementById('rejectTripForm');
+        const nameSpan = document.getElementById('rejectTripName');
+        const baseUrl = "{% url 'trips_admin:reject_trip' 0 %}".replace('0', tripId);
+        form.action = baseUrl;
+        nameSpan.innerText = tripName;
+        new bootstrap.Modal(document.getElementById('rejectTripModal')).show();
+    }
+
+    // --- 4. DOM Loaded (Progress bar & Tooltips) ---
     document.addEventListener("DOMContentLoaded", function() {
-        // Tooltips (Bootstrap)
         if(typeof bootstrap !== 'undefined') {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-              return new bootstrap.Tooltip(tooltipTriggerEl)
+            [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (el) {
+              return new bootstrap.Tooltip(el)
             });
         }
 
-        // Progress Bars Logic
-        const bars = document.querySelectorAll('.js-progress-bar');
-        bars.forEach(bar => {
+        document.querySelectorAll('.js-progress-bar').forEach(bar => {
             const current = parseFloat(bar.getAttribute('data-current')) || 0;
             const max = parseFloat(bar.getAttribute('data-max')) || 1;
             let percent = (current / max) * 100;
             if (percent > 100) percent = 100;
-            
-            // Xóa class hardcode, thay bằng class trỏ tới root var
             bar.classList.remove('bg-primary', 'bg-warning', 'bg-danger');
-            
-            if(percent >= 100) { 
-                bar.classList.add('bg-danger'); // Map tới .bg-danger
-            } else if(percent >= 80) { 
-                bar.classList.add('bg-warning'); 
-            } else { 
-                bar.classList.add('bg-primary'); 
-            }
-            
+            if(percent >= 100) bar.classList.add('bg-danger'); 
+            else if(percent >= 80) bar.classList.add('bg-warning'); 
+            else bar.classList.add('bg-primary'); 
             setTimeout(() => { bar.style.width = percent + "%"; }, 200);
         });
 
-        // Modal Logic
+        // Modal Quản lý thành viên (Giữ nguyên logic cũ)
         const memberModalEl = document.getElementById('memberManageModal');
-        if (memberModalEl && typeof bootstrap !== 'undefined') {
+        if (memberModalEl) {
             const memberModal = new bootstrap.Modal(memberModalEl);
-            
             document.querySelectorAll('.manage-members-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     const fetchUrl = this.getAttribute('data-url');
-                    const tripName = this.getAttribute('data-trip-name');
-                    
-                    document.getElementById('modalTripName').innerText = tripName;
-                    document.getElementById('memberModalBody').innerHTML = '<div class="text-center py-12"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted text-sm">Đang tải dữ liệu thành viên...</p></div>';
-                    
+                    document.getElementById('modalTripName').innerText = this.getAttribute('data-trip-name');
+                    document.getElementById('memberModalBody').innerHTML = '<div class="text-center py-12"><div class="spinner-border text-primary"></div></div>';
                     memberModal.show();
-                    
-                    fetch(fetchUrl)
-                    .then(res => res.ok ? res.json() : Promise.reject(res))
-                    .then(data => {
-                        if(data.status === 'success') {
-                            document.getElementById('memberModalBody').innerHTML = data.html;
-                        } else {
-                            document.getElementById('memberModalBody').innerHTML = `<div class="p-4 m-4 bg-danger-light text-danger rounded-lg border border-red-100">${data.message}</div>`;
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        document.getElementById('memberModalBody').innerHTML = '<div class="p-4 m-4 bg-danger-light text-danger rounded-lg border border-red-100">Lỗi kết nối máy chủ (500/404).</div>';
+                    fetch(fetchUrl).then(res => res.json()).then(data => {
+                        document.getElementById('memberModalBody').innerHTML = data.status === 'success' ? data.html : `<div class="p-4 text-danger">${data.message}</div>`;
                     });
                 });
             });
         }
     });
 
-    // --- Member Actions (Global) ---
-    window.kickMember = function(url) {
-        if(!confirm("Xác nhận CHẶN thành viên này khỏi chuyến đi?")) return;
-        performMemberAction(url);
-    };
-
-    window.restoreMember = function(url) {
-        if(!confirm("Xác nhận KHÔI PHỤC thành viên này?")) return;
-        performMemberAction(url);
-    };
+    // --- 5. Member Actions (Global) ---
+    window.kickMember = function(url) { if(confirm("Chặn thành viên này?")) performMemberAction(url); };
+    window.restoreMember = function(url) { if(confirm("Khôi phục thành viên?")) performMemberAction(url); };
 
     function performMemberAction(url) {
         const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (!csrfInput) return showToast("Lỗi: Không tìm thấy CSRF Token.", 'error');
-
         fetch(url, {
             method: 'POST',
             headers: { 'X-CSRFToken': csrfInput.value, 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === 'success') {
-                showToast(data.message, 'success');
-                setTimeout(() => window.location.reload(), 800);
-            } else {
-                showToast(data.message, 'error');
-            }
-        })
-        .catch(() => showToast("Lỗi hệ thống.", 'error'));
+        }).then(res => res.json()).then(data => {
+            showToast(data.message, data.status === 'success' ? 'success' : 'error');
+            if(data.status === 'success') setTimeout(() => window.location.reload(), 800);
+        });
     }
 </script>
 {% endblock %}

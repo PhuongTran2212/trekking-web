@@ -60,10 +60,14 @@ class ChuyenDi(models.Model):
     so_luong_toi_da = models.PositiveIntegerField(_("Số lượng tối đa"))
     
     # --- Cài đặt & Trạng thái ---
+    # --- 1. CẬP NHẬT TRẠNG THÁI ---
     TRANG_THAI_CHOICES = [
-        ('DANG_TUYEN', 'Đang tuyển thành viên'), # Mặc định
-        ('DA_HUY', 'Đã hủy chuyến'),             # Admin hủy
-        ('TAM_HOAN', 'Tạm hoãn'),                # Admin hoãn
+        ('CHO_DUYET', 'Chờ duyệt'),          # Mặc định khi mới tạo
+        ('DANG_TUYEN', 'Đang tuyển thành viên'), # Sau khi Admin duyệt
+        ('BI_TU_CHOI', 'Bị từ chối'),        # Admin từ chối
+        ('DA_HUY', 'Đã hủy chuyến'),         # Host hủy khi đã có khách
+        ('DA_DONG', 'Đã đóng đăng ký'),      # Host đóng thủ công
+        ('TAM_HOAN', 'Tạm hoãn'),            # Ít dùng
     ]
 
     # 2. Field trạng thái dạng chuỗi (Thay vì ForeignKey)
@@ -71,13 +75,13 @@ class ChuyenDi(models.Model):
         _("Trạng thái"), 
         max_length=20, 
         choices=TRANG_THAI_CHOICES, 
-        default='DANG_TUYEN'
+        default='CHO_DUYET' # <--- Thay đổi default
     )
+
     CHE_DO_RIENG_TU_CHOICES = [('CONG_KHAI', 'Công khai'), ('RIENG_TU', 'Riêng tư')]
     che_do_rieng_tu = models.CharField(_("Chế độ"), max_length=15, choices=CHE_DO_RIENG_TU_CHOICES, default='CONG_KHAI')
     yeu_cau_ly_do = models.BooleanField(_("Yêu cầu lý do tham gia?"), default=False)
     ma_moi = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    is_deleted = models.BooleanField(_("Đã xóa mềm"), default=False, help_text="Đánh dấu đã xóa thay vì xóa thật.")
 
     # --- Thông tin bổ sung ---
     # Sử dụng Decimal('0') để tránh sai số float
@@ -97,6 +101,9 @@ class ChuyenDi(models.Model):
     cd_thoi_gian_uoc_tinh_gio = models.IntegerField(editable=False, blank=True, null=True)
     cd_tong_do_cao_leo_m = models.IntegerField(editable=False, blank=True, null=True)
     cd_du_lieu_ban_do_geojson = models.JSONField(editable=False, blank=True, default=dict)
+    ly_do_tu_choi = models.TextField(_("Lý do từ chối"), blank=True, null=True)
+    nguoi_duyet = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='trips_approved')
+    ngay_duyet = models.DateTimeField(_("Ngày duyệt"), blank=True, null=True)
 
     # --- Media ---
     anh_bia = models.ForeignKey('ChuyenDiMedia', on_delete=models.SET_NULL, null=True, blank=True, related_name='+', verbose_name=_("Ảnh bìa"))
@@ -142,48 +149,46 @@ class ChuyenDi(models.Model):
     # === CÁC HÀM TRỢ GIÚP (STATUS, COVER, THỜI GIAN) ===
     # ==========================================================
 
-    # Cấu hình màu sắc hiển thị (Badge Config)
+    # --- 4. CẬP NHẬT BADGE CONFIG ---
     BADGE_CONFIG = {
-        'CANCELLED':   {'name': 'Đã hủy',       'color': '#ef4444'}, # Đỏ
-        'ENDED':       {'name': 'Đã kết thúc',  'color': '#6b7280'}, # Xám
-        'ONGOING':     {'name': 'Đang diễn ra', 'color': '#3b82f6'}, # Xanh dương
-        'FULL':        {'name': 'Đã đủ người',  'color': '#f59e0b'}, # Vàng cam
-        'OPEN':        {'name': 'Sắp diễn ra',  'color': '#10b981'}, # Xanh lá
-        'PAUSED':      {'name': 'Tạm hoãn',     'color': '#6b7280'}, # Xám nhạt
+        'WAITING':     {'name': 'Chờ duyệt',    'color': '#d97706', 'bg': '#fffbeb'},
+        'REJECTED':    {'name': 'Bị từ chối',   'color': '#b91c1c', 'bg': '#fef2f2'},
+        'CANCELLED':   {'name': 'Đã hủy',       'color': '#ef4444', 'bg': '#fee2e2'},
+        'ENDED':       {'name': 'Đã kết thúc',  'color': '#6b7280', 'bg': '#f3f4f6'},
+        'ONGOING':     {'name': 'Đang diễn ra', 'color': '#3b82f6', 'bg': '#dbeafe'},
+        'FULL':        {'name': 'Đã đủ người',  'color': '#f59e0b', 'bg': '#fef3c7'},
+        'OPEN':        {'name': 'Đang tuyển',   'color': '#10b981', 'bg': '#d1fae5'},
+        'CLOSED':      {'name': 'Đã đóng',      'color': '#6b7280', 'bg': '#e5e7eb'},
     }
+
 
     @property
     def dynamic_status_info(self):
-        """Logic tính toán trạng thái động (Đã sửa lỗi logic cũ)"""
-        from django.utils import timezone
-        now = timezone.now()
-        
-        # 1. Ưu tiên Admin can thiệp (So sánh chuỗi, KHÔNG so sánh object)
-        if self.trang_thai == 'DA_HUY':
-            return self.BADGE_CONFIG['CANCELLED']
-        
-        if self.trang_thai == 'TAM_HOAN':
-            return self.BADGE_CONFIG['PAUSED']
+        # Ưu tiên trạng thái cứng trong DB trước
+        if self.trang_thai == 'CHO_DUYET': return self.BADGE_CONFIG['WAITING']
+        if self.trang_thai == 'BI_TU_CHOI': return self.BADGE_CONFIG['REJECTED']
+        if self.trang_thai == 'DA_HUY': return self.BADGE_CONFIG['CANCELLED']
+        if self.trang_thai == 'DA_DONG': return self.BADGE_CONFIG['CLOSED']
 
-        # 2. Kiểm tra Thời gian: Đã Kết Thúc
-        if self.ngay_ket_thuc and now > self.ngay_ket_thuc:
-            return self.BADGE_CONFIG['ENDED']
-
-        # 3. Kiểm tra Thời gian: Đang Diễn Ra
-        if self.ngay_bat_dau and now >= self.ngay_bat_dau:
-            return self.BADGE_CONFIG['ONGOING']
-
-        # 4. Kiểm tra Số lượng (Chỉ check khi chưa đi)
-        # Sử dụng getattr để tránh lỗi nếu view chưa annotate
-        current_members = getattr(self, 'so_thanh_vien_tham_gia', None)
-        if current_members is None:
-            # Query trực tiếp nếu không có annotate
-            current_members = self.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
+        # Nếu đang tuyển thì mới tính toán động
+        if self.trang_thai == 'DANG_TUYEN':
+            now = timezone.now()
+            if self.ngay_ket_thuc and now > self.ngay_ket_thuc:
+                return self.BADGE_CONFIG['ENDED']
+            if self.ngay_bat_dau and now >= self.ngay_bat_dau:
+                return self.BADGE_CONFIG['ONGOING']
             
-        if current_members >= self.so_luong_toi_da:
-            return self.BADGE_CONFIG['FULL']
-
-        # 5. Mặc định
+            # Check full slot
+            # Lấy số lượng từ annotate (nếu có) hoặc đếm trực tiếp
+            current_members = getattr(self, 'so_thanh_vien_tham_gia', None)
+            if current_members is None:
+                current_members = self.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').count()
+            
+            if current_members >= self.so_luong_toi_da:
+                return self.BADGE_CONFIG['FULL']
+            
+            return self.BADGE_CONFIG['OPEN']
+            
         return self.BADGE_CONFIG['OPEN']
 
     # --- WRAPPER CHO TEMPLATE DỄ GỌI ---

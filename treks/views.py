@@ -40,7 +40,7 @@ class CungDuongListView(AdminRequiredMixin, ListView):
     model = CungDuongTrek
     template_name = 'admin/treks/cungduong_list.html'
     context_object_name = 'cung_duong_list'
-    paginate_by = 10
+    paginate_by = 9
 
     # treks/views.py
 
@@ -152,7 +152,6 @@ class CungDuongListView(AdminRequiredMixin, ListView):
         if 'page' in params: del params['page']
         context['query_params'] = params.urlencode()
         
-        return context
         return context
 
 class CungDuongCreateView(AdminRequiredMixin, CungDuongBaseView, CreateView):

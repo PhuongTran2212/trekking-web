@@ -104,28 +104,25 @@ class ChuyenDiForm(forms.ModelForm):
         fields = [
             'ten_chuyen_di', 'mo_ta', 'ngay_bat_dau', 'ngay_ket_thuc', 'so_luong_toi_da', 
             'chi_phi_uoc_tinh', 'che_do_rieng_tu', 'yeu_cau_ly_do', 
-            'dia_diem_tap_trung', 'toa_do_tap_trung', 'tags' ,'trang_thai' # <--- Đã thêm toa_do_tap_trung
+            'dia_diem_tap_trung', 'toa_do_tap_trung', 'tags', 'trang_thai'
         ]
         widgets = {
             'ten_chuyen_di': forms.TextInput(attrs={'class': 'form-control'}),
-            'mo_ta': forms.Textarea(attrs={'rows': 5, 'class': 'form-control', 'placeholder': 'Giới thiệu về chuyến đi, lịch trình dự kiến, chi phí bao gồm những gì, yêu cầu về thể lực...'}),
+            'mo_ta': forms.Textarea(attrs={'rows': 5, 'class': 'form-control', 'placeholder': 'Giới thiệu về chuyến đi, lịch trình dự kiến...'}),
             'ngay_bat_dau': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control'},
-                format='%Y-%m-%dT%H:%M' # Quan trọng: Chỉ lấy đến Phút
+                format='%Y-%m-%dT%H:%M'
             ),
             'ngay_ket_thuc': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control'},
-                format='%Y-%m-%dT%H:%M' # Quan trọng: Chỉ lấy đến Phút
+                format='%Y-%m-%dT%H:%M'
             ),
             'so_luong_toi_da': forms.NumberInput(attrs={'class': 'form-control'}),
             'chi_phi_uoc_tinh': forms.NumberInput(attrs={'class': 'form-control'}),
             'che_do_rieng_tu': forms.Select(attrs={'class': 'form-select'}),
             'yeu_cau_ly_do': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'dia_diem_tap_trung': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên địa điểm...'}),
-            
-            # Widget ẩn để chứa JSON tọa độ từ Leaflet Map
-            'toa_do_tap_trung': forms.HiddenInput(), 
-            
+            'toa_do_tap_trung': forms.HiddenInput(),
             'tags': forms.SelectMultiple(attrs={'class': 'form-control select2'}),
             'trang_thai': forms.Select(attrs={'class': 'form-select fw-bold text-primary'}),
         }
@@ -140,18 +137,45 @@ class ChuyenDiForm(forms.ModelForm):
             'yeu_cau_ly_do': 'Yêu cầu người tham gia điền lý do',
             'dia_diem_tap_trung': 'Địa điểm tập trung',
             'tags': 'Chủ đề (Hashtag)',
+            'trang_thai': 'Trạng thái',
         }
+
     def __init__(self, *args, **kwargs):
+        # Lấy user từ view truyền vào để phân quyền
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        # Báo cho Django biết chỉ chấp nhận định dạng Giờ:Phút khi lưu
+        
+        # Config định dạng ngày tháng
         self.fields['ngay_bat_dau'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['ngay_ket_thuc'].input_formats = ['%Y-%m-%dT%H:%M']
+
+        # === LOGIC PHÂN QUYỀN TRẠNG THÁI ===
+        if self.user and not self.user.is_staff:
+            # User thường (Host) chỉ thấy các trạng thái vận hành cơ bản
+            allowed_choices = [
+                ('DANG_TUYEN', 'Đang tuyển thành viên'),
+                ('DA_DONG', 'Đóng đăng ký (Ngưng tuyển)'),
+                ('DA_HUY', 'Hủy chuyến đi'),
+            ]
+            
+            # Nếu đang CHỜ DUYỆT hoặc BỊ TỪ CHỐI -> Khóa không cho sửa trạng thái
+            if self.instance.pk and self.instance.trang_thai in ['CHO_DUYET', 'BI_TU_CHOI']:
+                self.fields['trang_thai'].disabled = True
+                self.fields['trang_thai'].help_text = "Trạng thái này đang được Admin xử lý."
+            else:
+                # Nếu đã được duyệt -> Chỉ hiện các lựa chọn cho phép
+                self.fields['trang_thai'].choices = allowed_choices
+        
+        # Admin thì thấy full quyền (Mặc định)
+
     def clean(self):
         cleaned_data = super().clean()
         start_date = cleaned_data.get("ngay_bat_dau")
         end_date = cleaned_data.get("ngay_ket_thuc")
+        
         if start_date and end_date and end_date < start_date:
             self.add_error('ngay_ket_thuc', "Ngày kết thúc không thể trước ngày bắt đầu.")
+        
         return cleaned_data
 
 

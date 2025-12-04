@@ -19,4 +19,7 @@ urlpatterns = [
     path('tao-moi/', views.create_trip_view, name='create_trip'),
     path('<int:pk>/<slug:slug>/chinh-sua/', views.TripUpdateView.as_view(), name='update_trip'),
     path('chon-cung-duong/', views.SelectTrekForTripView.as_view(), name='select_trek_for_trip'),
+    path('<int:pk>/approve/', views.approve_trip, name='approve_trip'),
+    path('<int:pk>/reject/', views.reject_trip, name='reject_trip'),
+    path('delete/<int:pk>/', views.delete_or_leave_trip, name='delete_or_leave_trip'),
 ]

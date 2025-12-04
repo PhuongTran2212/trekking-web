@@ -26,6 +26,7 @@ import json
 import csv
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.db.models import Case, When, Value, IntegerField 
 # trips/views.py
 
 def get_base_template(request):
@@ -59,7 +60,8 @@ class TripHubView(ListView):
         # 2. CHỈ LỌC: Sắp diễn ra & Không bị hủy
         # (BỎ hết đoạn lọc user.is_authenticated ở đây đi)
         queryset = queryset.filter(
-            ngay_bat_dau__gt=now
+            ngay_bat_dau__gt=now,
+            trang_thai='DANG_TUYEN'  # <--- CHỈ LẤY NHỮNG CHUYẾN ĐÃ DUYỆT
         ).exclude(trang_thai='DA_HUY')
 
         # =========================================================
@@ -178,67 +180,83 @@ def trip_events_api(request):
 def create_trip_view(request):
     cung_duong_slug = request.GET.get('cung_duong')
     
-    # Logic kiểm tra Cung đường
+    # Kiểm tra nếu chưa chọn cung đường
     if not cung_duong_slug:
-        # Nếu là Admin tạo từ dashboard mà chưa chọn cung đường -> Chuyển hướng về list trek admin
+        # Nếu là Admin đang ở trang Dashboard -> Về danh sách admin
         if '/dashboard/' in request.path or '/admin-dashboard/' in request.path:
-             return redirect('treks_admin:cung_duong_list') # Hoặc trang chọn của Admin nếu có
+             return redirect('treks_admin:cung_duong_list')
+        
+        # Nếu là User thường -> Về danh sách trek public
         messages.error(request, "Vui lòng chọn một cung đường để bắt đầu.")
         return redirect('treks:cung_duong_list')
         
     cung_duong = get_object_or_404(CungDuongTrek, slug=cung_duong_slug)
 
     if request.method == 'POST':
-        form = ChuyenDiForm(request.POST)
+        # [QUAN TRỌNG]: Truyền user=request.user vào form
+        form = ChuyenDiForm(request.POST, user=request.user)
         timeline_formset = TimelineFormSet(request.POST)
 
         if form.is_valid() and timeline_formset.is_valid():
-            with transaction.atomic():
-                chuyen_di = form.save(commit=False)
-                chuyen_di.nguoi_to_chuc = request.user
-                chuyen_di.cung_duong = cung_duong
-                chuyen_di.trang_thai = 'DANG_TUYEN'
-                
-                # Snapshot dữ liệu
-                chuyen_di.cd_ten = cung_duong.ten
-                chuyen_di.cd_mo_ta = cung_duong.mo_ta
-                chuyen_di.cd_tinh_thanh_ten = cung_duong.tinh_thanh.ten
-                chuyen_di.cd_do_kho_ten = cung_duong.do_kho.ten if cung_duong.do_kho else "Chưa xác định"
-                chuyen_di.cd_do_dai_km = cung_duong.do_dai_km
-                chuyen_di.cd_thoi_gian_uoc_tinh_gio = cung_duong.thoi_gian_uoc_tinh_gio
-                chuyen_di.cd_tong_do_cao_leo_m = cung_duong.tong_do_cao_leo_m
-                chuyen_di.cd_du_lieu_ban_do_geojson = cung_duong.du_lieu_ban_do_geojson
-                
-                chuyen_di.save()
-                form.save_m2m()
+            try:
+                with transaction.atomic():
+                    chuyen_di = form.save(commit=False)
+                    chuyen_di.nguoi_to_chuc = request.user
+                    chuyen_di.cung_duong = cung_duong
+                    
+                    # Mặc định khi tạo mới là CHỜ DUYỆT
+                    chuyen_di.trang_thai = 'CHO_DUYET'
+                    
+                    # Snapshot dữ liệu từ Cung đường (để lưu trữ lịch sử nếu cung đường gốc bị xóa/sửa)
+                    chuyen_di.cd_ten = cung_duong.ten
+                    chuyen_di.cd_mo_ta = cung_duong.mo_ta
+                    chuyen_di.cd_tinh_thanh_ten = cung_duong.tinh_thanh.ten
+                    chuyen_di.cd_do_kho_ten = cung_duong.do_kho.ten if cung_duong.do_kho else "Chưa xác định"
+                    chuyen_di.cd_do_dai_km = cung_duong.do_dai_km
+                    chuyen_di.cd_thoi_gian_uoc_tinh_gio = cung_duong.thoi_gian_uoc_tinh_gio
+                    chuyen_di.cd_tong_do_cao_leo_m = cung_duong.tong_do_cao_leo_m
+                    chuyen_di.cd_du_lieu_ban_do_geojson = cung_duong.du_lieu_ban_do_geojson
+                    
+                    chuyen_di.save()
+                    form.save_m2m() # Lưu tags
 
-                timeline_formset.instance = chuyen_di
-                timeline_formset.save()
+                    # Lưu Timeline
+                    timeline_formset.instance = chuyen_di
+                    timeline_formset.save()
 
-                ChuyenDiThanhVien.objects.create(
-                    chuyen_di=chuyen_di, user=request.user, 
-                    vai_tro='TRUONG_DOAN', trang_thai_tham_gia='DA_THAM_GIA'
-                )
+                    # Tự động thêm người tạo là Trưởng đoàn
+                    ChuyenDiThanhVien.objects.create(
+                        chuyen_di=chuyen_di, user=request.user, 
+                        vai_tro='TRUONG_DOAN', trang_thai_tham_gia='DA_THAM_GIA'
+                    )
 
-                if request.FILES.getlist('trip_media_files'):
-                     for f in request.FILES.getlist('trip_media_files'):
-                        ChuyenDiMedia.objects.create(chuyen_di=chuyen_di, user=request.user, file=f)
+                    # Lưu Media (Ảnh bìa/Ảnh chuyến đi)
+                    if request.FILES.getlist('trip_media_files'):
+                         for f in request.FILES.getlist('trip_media_files'):
+                            media = ChuyenDiMedia.objects.create(chuyen_di=chuyen_di, user=request.user, file=f)
+                            # Tự động lấy ảnh đầu tiên làm ảnh bìa nếu chưa có
+                            if not chuyen_di.anh_bia:
+                                chuyen_di.anh_bia = media
+                                chuyen_di.save(update_fields=['anh_bia'])
 
-                # --- ĐIỀU HƯỚNG SAU KHI LƯU ---
-                # Nếu là Admin -> Về Dashboard
-                if '/dashboard/' in request.path or '/admin-dashboard/' in request.path:
-                    messages.success(request, "Đã tạo chuyến đi thành công.")
-                    return redirect('trips_admin:trip_list')
-                
-                # Nếu là User -> Về trang thành công
-                return redirect('trips:trip_create_success', pk=chuyen_di.pk)
+                    # --- ĐIỀU HƯỚNG SAU KHI LƯU ---
+                    messages.success(request, "Đã tạo chuyến đi thành công! Vui lòng chờ Admin duyệt.")
+                    
+                    if '/dashboard/' in request.path or '/admin-dashboard/' in request.path:
+                        return redirect('trips_admin:trip_list')
+                    
+                    return redirect('trips:trip_create_success', pk=chuyen_di.pk)
+
+            except Exception as e:
+                messages.error(request, f"Đã xảy ra lỗi khi lưu: {str(e)}")
         else:
             messages.error(request, "Có lỗi xảy ra, vui lòng kiểm tra lại thông tin bên dưới.")
     else:
-        form = ChuyenDiForm()
+        # [QUAN TRỌNG]: Truyền user vào form lúc khởi tạo GET
+        form = ChuyenDiForm(user=request.user)
         timeline_formset = TimelineFormSet()
 
-    # Lấy base template
+    # Lấy base template để render đúng giao diện (Admin hoặc User)
     base_template = get_base_template(request)
 
     context = {
@@ -247,8 +265,8 @@ def create_trip_view(request):
         'cung_duong': cung_duong, 
         'page_title': 'Lên kế hoạch Chuyến đi',
         'is_edit': False,
-        'base_template': base_template, # Gửi tên file base xuống
-        'is_admin_view': 'admin_base.html' in base_template # Cờ đánh dấu để hiện/ẩn nút bấm
+        'base_template': base_template,
+        'is_admin_view': 'admin_base.html' in base_template
     }
     return render(request, 'trips/trip_form.html', context)
 
@@ -1123,26 +1141,56 @@ class MyTripsView(LoginRequiredMixin, ListView):
         
         context['page_title'] = "Quản lý Chuyến đi"
         return context
+@login_required
 @require_POST
 def delete_or_leave_trip(request, pk):
     trip = get_object_or_404(ChuyenDi, pk=pk)
+    user = request.user
 
-    # 1. Nếu là Host -> Xóa chuyến đi
-    if trip.nguoi_to_chuc == request.user:
-        # (Tùy chọn) Kiểm tra nếu có thành viên khác thì không cho xóa, hoặc thông báo
-        trip.delete()
-        messages.success(request, f"Đã hủy chuyến đi: {trip.ten_chuyen_di}")
-    
-    # 2. Nếu là Member -> Rời nhóm
+    # === SỬA Ở ĐÂY: Thêm 'or user.is_staff' ===
+    # Admin được quyền xóa mọi chuyến đi
+    is_owner = (trip.nguoi_to_chuc == user)
+    is_admin = user.is_staff
+
+    if is_owner or is_admin:
+        
+        # Đếm số thành viên (trừ chủ host ra)
+        guest_count = trip.thanh_vien.filter(trang_thai_tham_gia='DA_THAM_GIA').exclude(user=trip.nguoi_to_chuc).count()
+
+        # 1. XÓA VĨNH VIỄN NẾU:
+        # - Chưa duyệt
+        # - Hoặc chưa có khách
+        # - Hoặc là Admin (Admin có quyền tối cao xóa luôn nếu muốn)
+        if trip.trang_thai in ['CHO_DUYET', 'BI_TU_CHOI'] or guest_count == 0 or is_admin:
+            trip_name = trip.ten_chuyen_di
+            trip.delete()
+            messages.success(request, f"Đã xóa vĩnh viễn: {trip_name}")
+        
+        # 2. HỦY CHUYẾN (Nếu là Host và đã có khách)
+        else:
+            if trip.trang_thai != 'DA_HUY':
+                trip.trang_thai = 'DA_HUY'
+                trip.save()
+                messages.warning(request, f"Đã hủy chuyến: {trip.ten_chuyen_di}")
+            else:
+                messages.info(request, "Chuyến đi này đã hủy rồi.")
+        
+        # Redirect thông minh
+        if is_admin:
+            return redirect('trips_admin:trip_list')
+        return redirect('trips:my_trips')
+
+    # === TRƯỜNG HỢP 2: LÀ MEMBER (THÀNH VIÊN) ===
     else:
-        member = ChuyenDiThanhVien.objects.filter(chuyen_di=trip, user=request.user).first()
+        # Member thì chỉ có rời nhóm (Xóa record trong bảng ThanhVien)
+        member = ChuyenDiThanhVien.objects.filter(chuyen_di=trip, user=user).first()
         if member:
             member.delete()
-            messages.success(request, f"Đã rời khỏi chuyến đi: {trip.ten_chuyen_di}")
+            messages.success(request, f"Bạn đã rời khỏi chuyến đi: {trip.ten_chuyen_di}")
         else:
             messages.error(request, "Bạn không phải là thành viên của chuyến đi này.")
 
-    # return phải thụt đúng
+    # Redirect về trang quản lý của user
     return redirect('trips:my_trips')
 # ==========================================================
 # === CÁC VIEW QUẢN TRỊ (ADMIN DASHBOARD) ===
@@ -1155,22 +1203,35 @@ class TripAdminListView(AdminRequiredMixin, ListView):
     paginate_by = 15
 
     def get_queryset(self):
-        # 1. Base Query: Lấy dữ liệu + Annotate
+        # 1. Base Query: Lấy dữ liệu + Annotate số liệu
         queryset = ChuyenDi.objects.select_related(
             'nguoi_to_chuc__taikhoanhoso', 
             'cung_duong__tinh_thanh'
         ).annotate(
-            # Đếm số người đã tham gia (Trạng thái = DA_THAM_GIA)
+            # Đếm số thành viên chính thức (Đã tham gia)
             total_members=Count('thanh_vien', 
                                 filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA'), 
                                 distinct=True),
             
-            # Đếm tương tác
+            # Đếm tương tác (Tin nhắn, Media)
             total_msgs=Count('tin_nhan', distinct=True),
             total_media=Count('media', distinct=True)
-        ).order_by('-ngay_bat_dau')
+        )
 
-        # 2. Xử lý Bộ lọc
+        # 2. SẮP XẾP ƯU TIÊN (Quan trọng cho Admin duyệt bài)
+        # Thứ tự: Chờ duyệt (0) -> Đang tuyển (1) -> Các trạng thái khác (2)
+        # Sau đó mới sắp xếp theo ngày tạo mới nhất
+        queryset = queryset.order_by(
+            Case(
+                When(trang_thai='CHO_DUYET', then=Value(0)),
+                When(trang_thai='DANG_TUYEN', then=Value(1)),
+                default=Value(2),
+                output_field=IntegerField(),
+            ),
+            '-ngay_tao'
+        )
+
+        # 3. Xử lý Bộ lọc (Filter Form)
         self.filter_form = TripAdminFilterForm(self.request.GET)
         
         if self.filter_form.is_valid():
@@ -1184,7 +1245,7 @@ class TripAdminListView(AdminRequiredMixin, ListView):
                     Q(nguoi_to_chuc__username__icontains=data['q'])
                 )
             
-            # --- Lọc Cung đường (MỚI) ---
+            # --- Lọc Cung đường ---
             if data.get('cung_duong'):
                 queryset = queryset.filter(cung_duong=data['cung_duong'])
 
@@ -1196,13 +1257,12 @@ class TripAdminListView(AdminRequiredMixin, ListView):
             risk_type = data.get('admin_status')
             
             if risk_type == 'upcoming_urgent':
-                # Sắp đi trong 3 ngày tới
+                # Sắp đi trong 3 ngày tới & Đang tuyển
                 limit = today + datetime.timedelta(days=3)
                 queryset = queryset.filter(ngay_bat_dau__range=(today, limit), trang_thai='DANG_TUYEN')
 
             elif risk_type == 'ghost':
                 # "Ma": Sắp đi (trong 7 ngày tới) NHƯNG < 2 người tham gia
-                # Đã mở rộng range lên 7 ngày để dễ bắt lỗi hơn
                 limit = today + datetime.timedelta(days=7)
                 queryset = queryset.filter(
                     ngay_bat_dau__range=(today, limit),
@@ -1219,14 +1279,60 @@ class TripAdminListView(AdminRequiredMixin, ListView):
                 queryset = queryset.filter(chi_phi_uoc_tinh__gte=5000000)
 
             elif risk_type == 'ongoing':
-                # Đang diễn ra
-                queryset = queryset.filter(ngay_bat_dau__lte=today, ngay_ket_thuc__gte=today)
+                # Đang diễn ra (Đã duyệt & Trong thời gian đi)
+                queryset = queryset.filter(
+                    trang_thai='DANG_TUYEN',
+                    ngay_bat_dau__lte=today, 
+                    ngay_ket_thuc__gte=today
+                )
 
             elif risk_type == 'canceled':
-                # Đã hủy
-                queryset = queryset.filter(trang_thai__in=['DA_HUY', 'TAM_HOAN'])
+                # Đã hủy / Hoãn / Từ chối
+                queryset = queryset.filter(trang_thai__in=['DA_HUY', 'TAM_HOAN', 'BI_TU_CHOI'])
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Thống kê nhanh cho Dashboard Mini
+        today = timezone.now()
+        base_qs = ChuyenDi.objects.all()
+        
+        context['stats'] = {
+            # Tổng số chuyến đang hoạt động (Đã duyệt & Đang tuyển)
+            'total_active': base_qs.filter(trang_thai='DANG_TUYEN').count(),
+            
+            # Đang chờ duyệt (Quan trọng nhất với Admin)
+            'pending_count': base_qs.filter(trang_thai='CHO_DUYET').count(),
+            
+            # Đang diễn ra thực tế (Trên núi)
+            'ongoing_count': base_qs.filter(
+                trang_thai='DANG_TUYEN',
+                ngay_bat_dau__lte=today, 
+                ngay_ket_thuc__gte=today
+            ).count(),
+            
+            # Sắp đi gấp (24h tới)
+            'urgent_24h': base_qs.filter(
+                trang_thai='DANG_TUYEN',
+                ngay_bat_dau__range=(today, today + datetime.timedelta(days=1))
+            ).count(),
+            
+            # Đã hủy hoặc Bị từ chối
+            'canceled': base_qs.filter(trang_thai__in=['DA_HUY', 'BI_TU_CHOI']).count()
+        }
+        
+        context['page_title'] = "Giám sát & Quản lý Chuyến đi"
+        context['filter_form'] = getattr(self, 'filter_form', TripAdminFilterForm(self.request.GET))
+        
+        # Giữ lại param trên URL khi phân trang
+        params = self.request.GET.copy()
+        if 'page' in params: del params['page']
+        context['query_params'] = params.urlencode()
+        context['now'] = today
+        
+        return context
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1418,4 +1524,48 @@ def admin_restore_member(request, member_id):
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def approve_trip(request, pk):
+    """Admin duyệt chuyến đi"""
+    trip = get_object_or_404(ChuyenDi, pk=pk)
+    
+    if trip.trang_thai == 'CHO_DUYET':
+        trip.trang_thai = 'DANG_TUYEN'
+        trip.nguoi_duyet = request.user
+        trip.ngay_duyet = timezone.now()
+        trip.ly_do_tu_choi = None # Xóa lý do cũ nếu có
+        trip.save()
+        
+        # (Optional) Gửi thông báo cho người tạo trip tại đây
+        
+        messages.success(request, f"Đã duyệt chuyến đi: {trip.ten_chuyen_di}")
+    else:
+        messages.warning(request, "Chuyến đi này không ở trạng thái chờ duyệt.")
+        
+    return redirect('trips_admin:trip_list')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def reject_trip(request, pk):
+    """Admin từ chối chuyến đi"""
+    trip = get_object_or_404(ChuyenDi, pk=pk)
+    reason = request.POST.get('reason', '').strip()
+    
+    if not reason:
+        messages.error(request, "Vui lòng nhập lý do từ chối.")
+        return redirect('trips_admin:trip_list')
+
+    if trip.trang_thai == 'CHO_DUYET':
+        trip.trang_thai = 'BI_TU_CHOI'
+        trip.nguoi_duyet = request.user
+        trip.ngay_duyet = timezone.now()
+        trip.ly_do_tu_choi = reason
+        trip.save()
+        
+        messages.success(request, f"Đã từ chối chuyến đi: {trip.ten_chuyen_di}")
+    
+    return redirect('trips_admin:trip_list')
     
