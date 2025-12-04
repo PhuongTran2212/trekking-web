@@ -38,8 +38,74 @@ from .forms import (
 # ===================================================
 
 def home_view(request):
-    """View cho trang chủ."""
-    return render(request, 'home.html')
+    """View cho trang chủ với dữ liệu động."""
+    from treks.models import CungDuongTrek
+    from trips.models import ChuyenDi
+    from community.models import CongDongBaiViet
+    from knowledge.models import KienThucBaiHuongDan
+    from django.db.models import Count, Q
+    from django.utils import timezone
+    
+    # 1. Featured Treks - Top 4 cung đường có rating cao nhất
+    featured_treks = CungDuongTrek.objects.filter(
+        trang_thai='DA_DUYET'
+    ).select_related(
+        'tinh_thanh', 'do_kho'
+    ).order_by('-danh_gia_trung_binh', '-so_luot_danh_gia')[:4]
+    
+    # 2. Upcoming Trips - 6 chuyến đi sắp khởi hành
+    now = timezone.now()
+    upcoming_trips = ChuyenDi.objects.filter(
+        trang_thai='DANG_TUYEN',
+        ngay_bat_dau__gte=now,
+        che_do_rieng_tu='CONG_KHAI'
+    ).select_related(
+        'nguoi_to_chuc', 
+        'nguoi_to_chuc__taikhoanhoso',
+        'cung_duong',
+        'cung_duong__tinh_thanh'
+    ).annotate(
+        so_thanh_vien_tham_gia=Count(
+            'thanh_vien',
+            filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA')
+        )
+    )
+
+    # Annotate user_status nếu đã đăng nhập (để hiển thị nút Tham gia/Chờ duyệt đúng)
+    if request.user.is_authenticated:
+        from django.db.models import OuterRef, Subquery
+        status_subquery = ChuyenDiThanhVien.objects.filter(
+            chuyen_di=OuterRef('pk'),
+            user=request.user
+        ).values('trang_thai_tham_gia')[:1]
+        
+        upcoming_trips = upcoming_trips.annotate(
+            user_status=Subquery(status_subquery)
+        )
+        
+    upcoming_trips = upcoming_trips.order_by('ngay_bat_dau')[:6]
+    
+    # 3. Community Highlights - 3 bài viết mới nhất
+    community_posts = CongDongBaiViet.objects.filter(
+        trang_thai='DA_DUYET'
+    ).select_related(
+        'tac_gia',
+        'tac_gia__taikhoanhoso'
+    ).order_by('-ngay_dang')[:3]
+    
+    # 4. Knowledge Articles - 4 bài viết kiến thức mới nhất
+    knowledge_articles = KienThucBaiHuongDan.objects.select_related(
+        'tac_gia', 'tac_gia__taikhoanhoso'
+    ).order_by('-ngay_dang')[:4]
+    
+    context = {
+        'featured_treks': featured_treks,
+        'upcoming_trips': upcoming_trips,
+        'community_posts': community_posts,
+        'knowledge_articles': knowledge_articles,
+    }
+    
+    return render(request, 'home.html', context)
 
 def dang_ky_view(request):
     """View xử lý việc đăng ký tài khoản."""
