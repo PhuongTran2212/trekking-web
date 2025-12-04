@@ -1,4 +1,4 @@
-{% extends base_template|default:'base.html' %}
+{% extends 'admin_base.html' %}
 {% load static %}
 
 {% block title %}{{ page_title }}{% endblock %}
@@ -318,7 +318,6 @@
 
 {% block content %}
 <div class="container main-wrapper">
-
     <!-- Header -->
 <!-- Header -->
     <div class="page-header">
@@ -378,6 +377,21 @@
                             <span class="header-icon-box bg-icon-info"><i class="fas fa-info"></i></span>
                             Thông tin cơ bản
                         </div>
+                    </div>
+                    <div class="card-body-modern">
+        
+        <div class="form-group">
+            <label class="form-label-modern">Chọn Cung đường gốc <span class="text-danger">*</span></label>
+            {{ form.cung_duong }}
+            {% if form.cung_duong.errors %}
+                <div class="text-danger small mt-1">
+                    <i class="fas fa-exclamation-circle me-1"></i>{{ form.cung_duong.errors.0 }}
+                </div>
+            {% endif %}
+            <div class="form-text small text-muted fst-italic">
+                <i class="fas fa-magic text-warning"></i> Chọn cung đường để hệ thống tự động lấy dữ liệu (độ khó, địa hình, bản đồ...)
+            </div>
+        </div>
                     </div>
                     <div class="card-body-modern">
                         <div class="form-group">
@@ -693,7 +707,15 @@
 
 <script>
     $(document).ready(function () {
-        
+        $('#id_tags').select2({ theme: 'bootstrap-5', width: '100%', placeholder: "Chọn từ khóa...", selectionCssClass: 'select2-custom-height' });
+    
+    // [THÊM DÒNG NÀY] Khởi tạo Select2 cho Cung đường
+    $('#id_cung_duong').select2({ 
+        theme: 'bootstrap-5', 
+        width: '100%', 
+        placeholder: "🔍 Tìm kiếm và chọn cung đường...",
+        allowClear: true
+    });
         // --- 1. CONFIG TINYMCE (Đã fix lỗi update) ---
         if ($('#id_mo_ta').length) {
             tinymce.init({

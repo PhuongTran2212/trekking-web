@@ -278,3 +278,70 @@ class SelectTrekFilterForm(forms.Form):
         empty_label="Tất cả độ khó",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+
+    # ==========================================================
+# === FORM DÀNH RIÊNG CHO ADMIN (BẮT BUỘC PHẢI CÓ) ===
+# ==========================================================
+class TripAdminForm(forms.ModelForm):
+    # 1. Field chọn Cung đường (Giữ nguyên)
+    cung_duong = forms.ModelChoiceField(
+        queryset=CungDuongTrek.objects.filter(trang_thai='DA_DUYET').order_by('ten'),
+        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': '🔍 Tìm cung đường...'}),
+        label="Cung đường gốc",
+        help_text="Chọn cung đường để lấy dữ liệu cơ sở."
+    )
+
+    class Meta:
+        model = ChuyenDi
+        # [QUAN TRỌNG]: ĐÃ XÓA 'nguoi_to_chuc' KHỎI DANH SÁCH DƯỚI ĐÂY
+        # Để Form không kiểm tra field này nữa => Hết lỗi đỏ.
+        fields = [
+            'ten_chuyen_di', 'cung_duong', 'mo_ta', 
+            'ngay_bat_dau', 'ngay_ket_thuc', 
+            'so_luong_toi_da', 'chi_phi_uoc_tinh', 
+            'che_do_rieng_tu', 'trang_thai', 
+            'yeu_cau_ly_do', 
+            'dia_diem_tap_trung', 'toa_do_tap_trung', 
+            'tags' 
+            # Đã xóa 'nguoi_to_chuc' ở đây
+        ]
+        
+        widgets = {
+            'ten_chuyen_di': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên chuyến đi...'}),
+            'mo_ta': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            
+            # Giữ nguyên cấu hình ngày giờ (step: 60)
+            'ngay_bat_dau': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 60},
+                format='%Y-%m-%dT%H:%M'
+            ),
+            'ngay_ket_thuc': forms.DateTimeInput(
+                attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 60},
+                format='%Y-%m-%dT%H:%M'
+            ),
+
+            'so_luong_toi_da': forms.NumberInput(attrs={'class': 'form-control'}),
+            'chi_phi_uoc_tinh': forms.NumberInput(attrs={'class': 'form-control'}),
+            'che_do_rieng_tu': forms.Select(attrs={'class': 'form-select'}),
+            'trang_thai': forms.Select(attrs={'class': 'form-select fw-bold text-primary'}),
+            'dia_diem_tap_trung': forms.TextInput(attrs={'class': 'form-control'}),
+            'toa_do_tap_trung': forms.HiddenInput(),
+            'tags': forms.SelectMultiple(attrs={'class': 'form-control select2'}),
+            'yeu_cau_ly_do': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Format ngày giờ để tránh lỗi validation
+        formats = ['%Y-%m-%dT%H:%M', '%Y-%m-%dT%H:%M:%S']
+        self.fields['ngay_bat_dau'].input_formats = formats
+        self.fields['ngay_ket_thuc'].input_formats = formats
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('ngay_bat_dau')
+        end = cleaned_data.get('ngay_ket_thuc')
+        
+        if start and end and end < start:
+            self.add_error('ngay_ket_thuc', "Ngày kết thúc phải sau ngày bắt đầu.")
+        return cleaned_data

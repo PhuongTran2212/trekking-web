@@ -22,4 +22,6 @@ urlpatterns = [
     path('<int:pk>/approve/', views.approve_trip, name='approve_trip'),
     path('<int:pk>/reject/', views.reject_trip, name='reject_trip'),
     path('delete/<int:pk>/', views.delete_or_leave_trip, name='delete_or_leave_trip'),
+    path('create/', views.TripAdminCreateView.as_view(), name='create_trip'),
+    path('update/<int:pk>/', views.TripAdminUpdateView.as_view(), name='update_trip'),
 ]

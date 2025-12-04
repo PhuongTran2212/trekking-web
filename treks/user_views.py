@@ -8,7 +8,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-
+from django.db.models.functions import Coalesce
 from trips.models import ChuyenDi
 from .models import CungDuongTrek, CungDuongDanhGia, CungDuongAnhDanhGia
 from .forms import CungDuongFilterForm, CungDuongDanhGiaForm
@@ -25,55 +25,55 @@ class CungDuongListView(ListView):
     paginate_by = 9
     
     def get_queryset(self):
-        # 1. Tạo Subquery đếm số chuyến đi (Tránh lỗi nhân bản dòng)
+        # 1. Tạo Subquery đếm số chuyến đi SẮP DIỄN RA
+        # [FIX LỖI]: Thay is_deleted bằng logic trang_thai và thời gian
         chuyen_di_subquery = ChuyenDi.objects.filter(
             cung_duong=OuterRef('pk'),
-            is_deleted=False
+            trang_thai='DANG_TUYEN',       # Chỉ đếm chuyến đang tuyển
+            ngay_bat_dau__gt=timezone.now() # Chỉ đếm chuyến trong tương lai
         ).values('cung_duong').annotate(cnt=Count('id')).values('cnt')
 
-        # 2. Tạo Subquery đếm số bình luận (Tránh lỗi nhân bản dòng)
+        # 2. Tạo Subquery đếm số bình luận (Giữ nguyên logic tốt của bạn)
         binh_luan_subquery = CungDuongDanhGia.objects.filter(
             cung_duong=OuterRef('pk')
         ).exclude(
             Q(binh_luan__isnull=True) | Q(binh_luan__exact='')
         ).values('cung_duong').annotate(cnt=Count('id')).values('cnt')
 
-        # 3. Query chính: Áp dụng Subquery
+        # 3. Query chính: Áp dụng Subquery + Coalesce
+        # Coalesce(..., 0) giúp chuyển None thành 0 nếu không tìm thấy dữ liệu
         queryset = CungDuongTrek.objects.filter(trang_thai='DA_DUYET').annotate(
-            so_chuyen_di=Subquery(chuyen_di_subquery),
-            so_binh_luan=Subquery(binh_luan_subquery)
+            so_chuyen_di=Coalesce(Subquery(chuyen_di_subquery), 0),
+            so_binh_luan=Coalesce(Subquery(binh_luan_subquery), 0)
         ).select_related('tinh_thanh', 'do_kho').order_by('-danh_gia_trung_binh', '-ngay_cap_nhat')
 
-        # 4. Xử lý bộ lọc (Giữ nguyên logic cũ)
+        # 4. Xử lý bộ lọc (Giữ nguyên logic của bạn)
         form = CungDuongFilterForm(self.request.GET)
         if form.is_valid():
             cleaned_data = form.cleaned_data
-            q = cleaned_data.get('q')
-            if q:
+            
+            # Lọc theo từ khóa
+            if q := cleaned_data.get('q'):
                 queryset = queryset.filter(ten__icontains=q)
             
-            tinh_thanh = cleaned_data.get('tinh_thanh')
-            if tinh_thanh:
+            # Lọc theo Dropdown (ForeignKey)
+            if tinh_thanh := cleaned_data.get('tinh_thanh'):
                 queryset = queryset.filter(tinh_thanh=tinh_thanh)
 
-            do_kho = cleaned_data.get('do_kho')
-            if do_kho:
+            if do_kho := cleaned_data.get('do_kho'):
                 queryset = queryset.filter(do_kho=do_kho)
 
-            min_do_dai = cleaned_data.get('min_do_dai')
-            if min_do_dai is not None:
+            # Lọc theo khoảng số (Range)
+            if (min_do_dai := cleaned_data.get('min_do_dai')) is not None:
                 queryset = queryset.filter(do_dai_km__gte=min_do_dai)
             
-            max_do_dai = cleaned_data.get('max_do_dai')
-            if max_do_dai is not None:
+            if (max_do_dai := cleaned_data.get('max_do_dai')) is not None:
                 queryset = queryset.filter(do_dai_km__lte=max_do_dai)
 
-            min_danh_gia = cleaned_data.get('min_danh_gia')
-            if min_danh_gia is not None:
+            if (min_danh_gia := cleaned_data.get('min_danh_gia')) is not None:
                 queryset = queryset.filter(danh_gia_trung_binh__gte=min_danh_gia)
 
-            min_do_cao = cleaned_data.get('min_do_cao')
-            if min_do_cao is not None:
+            if (min_do_cao := cleaned_data.get('min_do_cao')) is not None:
                 queryset = queryset.filter(tong_do_cao_leo_m__gte=min_do_cao)
                 
         return queryset
@@ -81,6 +81,7 @@ class CungDuongListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Khám phá Cung đường"
+        # Truyền form vào context để hiển thị lại lựa chọn cũ trên giao diện
         context['filter_form'] = CungDuongFilterForm(self.request.GET or None)
         return context
 

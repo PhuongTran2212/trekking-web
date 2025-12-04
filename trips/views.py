@@ -4,7 +4,7 @@ import datetime
 from django.db import transaction
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, DetailView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
@@ -28,7 +28,8 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.db.models import Case, When, Value, IntegerField 
 # trips/views.py
-
+from django.views.generic import ListView, DetailView, UpdateView, CreateView 
+from .forms import TripAdminForm 
 def get_base_template(request):
     """
     Hàm này giúp Django nhận biết:
@@ -1569,3 +1570,146 @@ def reject_trip(request, pk):
     
     return redirect('trips_admin:trip_list')
     
+# ==========================================================
+# === VIEW ADMIN: TẠO & SỬA CHUYẾN ĐI (RIÊNG BIỆT) ===
+# ==========================================================
+
+class TripAdminCreateView(AdminRequiredMixin, CreateView):
+    model = ChuyenDi
+    form_class = TripAdminForm
+    template_name = 'admin/trips/trip_form.html'
+    success_url = reverse_lazy('trips_admin:trip_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = "Thêm Chuyến đi (Admin)"
+        context['is_edit'] = False
+        if self.request.POST:
+            context['timeline_formset'] = TimelineFormSet(self.request.POST)
+        else:
+            context['timeline_formset'] = TimelineFormSet()
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        timeline_formset = context['timeline_formset']
+        
+        if timeline_formset.is_valid():
+            with transaction.atomic():
+                self.object = form.save(commit=False)
+                
+                # Nếu Admin không chọn người tổ chức, mặc định là Admin
+                if not self.object.nguoi_to_chuc_id:
+                    self.object.nguoi_to_chuc = self.request.user
+                
+                # Snapshot dữ liệu từ Cung đường
+                cd = self.object.cung_duong
+                self.object.cd_ten = cd.ten
+                self.object.cd_mo_ta = cd.mo_ta
+                self.object.cd_tinh_thanh_ten = cd.tinh_thanh.ten
+                self.object.cd_do_kho_ten = cd.do_kho.ten if cd.do_kho else ""
+                self.object.cd_do_dai_km = cd.do_dai_km
+                self.object.cd_thoi_gian_uoc_tinh_gio = cd.thoi_gian_uoc_tinh_gio
+                self.object.cd_tong_do_cao_leo_m = cd.tong_do_cao_leo_m
+                self.object.cd_du_lieu_ban_do_geojson = cd.du_lieu_ban_do_geojson
+                
+                self.object.save()
+                form.save_m2m() # Lưu tags
+                
+                # Lưu Timeline
+                timeline_formset.instance = self.object
+                timeline_formset.save()
+                
+                # Tự động add người tổ chức vào nhóm (Trưởng đoàn)
+                ChuyenDiThanhVien.objects.create(
+                    chuyen_di=self.object,
+                    user=self.object.nguoi_to_chuc,
+                    vai_tro='TRUONG_DOAN',
+                    trang_thai_tham_gia='DA_THAM_GIA'
+                )
+
+                # XỬ LÝ UPLOAD ẢNH
+                if self.request.FILES.getlist('trip_media_files'):
+                    for f in self.request.FILES.getlist('trip_media_files'):
+                        media = ChuyenDiMedia.objects.create(
+                            chuyen_di=self.object, 
+                            user=self.request.user, 
+                            file=f
+                        )
+                        # Tự động set ảnh đầu tiên làm ảnh bìa nếu chưa có
+                        if not self.object.anh_bia:
+                            self.object.anh_bia = media
+                            self.object.save(update_fields=['anh_bia'])
+                
+            messages.success(self.request, "Đã tạo chuyến đi thành công.")
+            return redirect(self.success_url)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+class TripAdminUpdateView(AdminRequiredMixin, UpdateView):
+    model = ChuyenDi
+    form_class = TripAdminForm
+    template_name = 'admin/trips/trip_form.html'
+    success_url = reverse_lazy('trips_admin:trip_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f"Chỉnh sửa: {self.object.ten_chuyen_di}"
+        context['is_edit'] = True
+        if self.request.POST:
+            context['timeline_formset'] = TimelineFormSet(self.request.POST, instance=self.object)
+        else:
+            context['timeline_formset'] = TimelineFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        timeline_formset = context['timeline_formset']
+        
+        if timeline_formset.is_valid():
+            with transaction.atomic():
+                # 1. Dùng commit=False để chưa lưu xuống DB ngay
+                self.object = form.save(commit=False)
+                
+                # ========================================================
+                # 2. LOGIC SNAPSHOT (BỔ SUNG CHO GIỐNG create_trip_view)
+                # Cập nhật lại dữ liệu từ Cung đường gốc (đề phòng Admin đổi cung đường)
+                # ========================================================
+                cd = self.object.cung_duong
+                if cd:
+                    self.object.cd_ten = cd.ten
+                    self.object.cd_mo_ta = cd.mo_ta
+                    self.object.cd_tinh_thanh_ten = cd.tinh_thanh.ten
+                    self.object.cd_do_kho_ten = cd.do_kho.ten if cd.do_kho else ""
+                    self.object.cd_do_dai_km = cd.do_dai_km
+                    self.object.cd_thoi_gian_uoc_tinh_gio = cd.thoi_gian_uoc_tinh_gio
+                    self.object.cd_tong_do_cao_leo_m = cd.tong_do_cao_leo_m
+                    self.object.cd_du_lieu_ban_do_geojson = cd.du_lieu_ban_do_geojson
+
+                # 3. Lưu chính thức
+                self.object.save()
+                
+                # 4. Lưu Tags (Bắt buộc khi dùng commit=False với ManyToMany)
+                form.save_m2m() 
+
+                # 5. Lưu Timeline
+                timeline_formset.instance = self.object
+                timeline_formset.save()
+                
+                # 6. Xử lý upload thêm ảnh (Logic giữ nguyên)
+                if self.request.FILES.getlist('trip_media_files'):
+                    for f in self.request.FILES.getlist('trip_media_files'):
+                        media = ChuyenDiMedia.objects.create(
+                            chuyen_di=self.object, 
+                            user=self.request.user, 
+                            file=f
+                        )
+                        # Nếu chưa có ảnh bìa thì lấy ảnh mới làm ảnh bìa luôn
+                        if not self.object.anh_bia:
+                            self.object.anh_bia = media
+                            self.object.save(update_fields=['anh_bia'])
+            
+            messages.success(self.request, "Đã cập nhật chuyến đi thành công.")
+            return redirect(self.success_url)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))

@@ -142,7 +142,7 @@
                 Xuất Excel
             </a>
             <!-- Button Tạo Mới: dùng bg-primary -->
-<a href="{% url 'trips_admin:select_trek_for_trip' %}" 
+<a href="{% url 'trips_admin:create_trip' %}" 
    class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 font-semibold shadow-lg shadow-green-500/30 transition-all transform hover:-translate-y-0.5 text-sm no-underline">
     <i class="fas fa-plus"></i>
     Tạo Chuyến Mới
@@ -438,7 +438,7 @@
         {% endif %}
 
         <!-- Edit -->
-        <a href="{% url 'trips_admin:update_trip' trip.pk trip.slug %}" 
+        <a href="{% url 'trips_admin:update_trip' trip.pk %}" 
            class="w-8 h-8 flex items-center justify-center rounded-lg text-primary bg-primary-light hover:bg-primary hover:text-white transition-all shadow-sm" 
            title="Chỉnh sửa">
             <i class="fas fa-pen"></i>
