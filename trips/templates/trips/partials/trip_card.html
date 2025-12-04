@@ -3,18 +3,22 @@
 {# --- BẮT ĐẦU CARD --- #}
 <div class="card trip-card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
     
-    {# --- 1. PHẦN HÌNH ẢNH (Click vào để xem chi tiết) --- #}
+    {# --- 1. PHẦN HÌNH ẢNH & OVERLAY --- #}
     {# Wrapper giữ relative để định vị badge #}
     <div class="position-relative card-img-wrapper">
+        
+        {# === [REMOVED] Menu 3 chấm ở đây đã được chuyển xuống dưới === #}
+
+        {# === LINK BAO HÌNH ẢNH (Click xem chi tiết) === #}
         <a href="{% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}javascript:void(0){% else %}{{ trip.get_absolute_url }}{% endif %}" 
            class="d-block w-100 text-decoration-none {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}js-locked-trip{% endif %}"
            {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}"{% endif %}>
             
-            {# Ảnh bìa: Thêm w-100 để tràn viền, tăng height lên 220px #}
+            {# Ảnh bìa #}
             <img src="{{ trip.cover_url }}" class="card-img-top w-100 object-fit-cover" alt="{{ trip.ten_chuyen_di }}" style="height: 220px;" loading="lazy">
             
             {# Badge: Privacy (Góc trái trên) #}
-            <div class="position-absolute top-0 start-0 m-2">
+            <div class="position-absolute top-0 start-0 m-2" style="z-index: 5;">
                 <span class="badge rounded-pill {% if trip.che_do_rieng_tu == 'RIENG_TU' %}bg-dark{% else %}bg-primary{% endif %} bg-opacity-75 backdrop-blur">
                     {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
                         <i class="fas fa-lock small"></i> Riêng tư
@@ -24,15 +28,16 @@
                 </span>
             </div>
 
-            {# Badge: Status Trip (Góc phải trên) #}
-            <span class="position-absolute top-0 end-0 m-2 badge rounded-pill trip-status-badge shadow-sm"
+            {# Badge: Status Trip #}
+            {# [UPDATED] Bỏ margin-right 50px vì không còn nút menu ở đây #}
+            <span class="position-absolute top-0 end-0 m-2 trip-status-badge badge rounded-pill shadow-sm"
                   data-color="{{ trip.status_color|default_if_none:'#10b981'|escape }}"
-                  style="backdrop-filter: blur(4px);">
+                  style="z-index: 5; backdrop-filter: blur(4px);">
                 {{ trip.status_name|default:"Sắp diễn ra" }}
             </span>
 
-            {# Badge: Giá tiền (Góc phải dưới - Nổi hơn) #}
-            <div class="position-absolute bottom-0 end-0 m-2">
+            {# Badge: Giá tiền #}
+            <div class="position-absolute bottom-0 end-0 m-2" style="z-index: 5;">
                 <span class="badge bg-white text-dark shadow fw-bold px-3 py-2 rounded-pill border">
                     {% if trip.chi_phi_uoc_tinh > 0 %}
                         {{ trip.chi_phi_uoc_tinh|intcomma }}₫
@@ -42,9 +47,9 @@
                 </span>
             </div>
             
-            {# Overlay khi bị khóa (Riêng tư) #}
+            {# Overlay khi bị khóa #}
             {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}
-            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 text-white">
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 text-white" style="z-index: 15;">
                 <div class="text-center">
                     <i class="fas fa-lock fa-2x mb-2"></i>
                     <div class="small fw-bold">Yêu cầu mã</div>
@@ -56,14 +61,70 @@
 
     {# --- 2. PHẦN NỘI DUNG --- #}
     <div class="card-body d-flex flex-column p-3">
-        {# Tiêu đề: Đã thêm text-truncate #}
-        <h5 class="card-title mb-2 lh-base text-truncate">
-            <a href="{{ trip.get_absolute_url }}" class="text-dark text-decoration-none fw-bold" title="{{ trip.ten_chuyen_di }}">
-                {{ trip.ten_chuyen_di }}
-            </a>
-        </h5>
+        
+        {# === [UPDATED] HÀNG TIÊU ĐỀ + MENU 3 CHẤM === #}
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            {# Tiêu đề #}
+            <h5 class="card-title lh-base text-truncate m-0 pe-2" style="flex: 1;">
+                <a href="{{ trip.get_absolute_url }}" class="text-dark text-decoration-none fw-bold" title="{{ trip.ten_chuyen_di }}">
+                    {{ trip.ten_chuyen_di }}
+                </a>
+            </h5>
 
-        {# Thông tin: Địa điểm & Thời gian #}
+            {# Menu 3 chấm (Đã chuyển xuống đây) #}
+            <div class="dropdown">
+                <button class="btn btn-link text-muted p-0 text-decoration-none" 
+                        type="button" 
+                        data-bs-toggle="dropdown" 
+                        aria-expanded="false"
+                        style="width: 24px; height: 24px; line-height: 24px;">
+                    <i class="fas fa-ellipsis-v fa-lg"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 animated-dropdown">
+                    {# --- LOGIC CHO HOST --- #}
+                    {% if trip.nguoi_to_chuc == user %}
+                        <li>
+                            <a class="dropdown-item" href="{% url 'trips:update_trip' pk=trip.pk slug=trip.slug|default:'' %}">
+                                <i class="fas fa-edit me-2 text-primary"></i> Chỉnh sửa
+                            </a>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item text-danger" 
+                                    data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" 
+                                    onclick="confirmDelete(this.dataset.url, true)">
+                                <i class="fas fa-trash-alt me-2"></i> Hủy chuyến đi
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    
+                    {# --- LOGIC CHO MEMBER ĐÃ THAM GIA --- #}
+                    {% elif trip.user_status == 'DA_THAM_GIA' %}
+                        <li>
+                            <button type="button" class="dropdown-item text-danger" 
+                                    data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" 
+                                    onclick="confirmDelete(this.dataset.url, false)">
+                                <i class="fas fa-sign-out-alt me-2"></i> Rời nhóm
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    {% endif %}
+
+                    {# --- LOGIC CHUNG --- #}
+                    <li>
+                        <button class="dropdown-item" onclick="toggleLikeTrip('{{ trip.pk }}')">
+                            <i class="far fa-heart me-2 text-danger"></i> Yêu thích
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reportTripModal" data-trip-id="{{ trip.pk }}">
+                            <i class="fas fa-flag me-2 text-warning"></i> Báo cáo
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {# Thông tin #}
         <div class="small text-muted mb-3">
             <div class="d-flex align-items-start mb-2">
                 <i class="fas fa-map-marker-alt text-danger mt-1 me-2 flex-shrink-0" style="width: 16px; text-align: center;"></i>
@@ -77,7 +138,7 @@
             </div>
         </div>
 
-        {# --- TAGS (Giới hạn 2 tag + Nút xem thêm) --- #}
+        {# --- TAGS --- #}
         {% if trip.tags.all %}
         <div class="mb-3 d-flex flex-wrap gap-1 align-items-center">
             {% for tag in trip.tags.all|slice:":2" %} 
@@ -99,8 +160,7 @@
         </div>
         {% endif %}
 
-        {# --- Spacer & Host Info --- #}
-        {# Dùng mt-auto để đẩy phần này xuống dưới cùng của body trước buttons #}
+        {# --- HOST INFO --- #}
         <div class="mt-auto pt-3 border-top mb-3 d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 {% if trip.nguoi_to_chuc.taikhoanhoso.avatar %}
@@ -112,7 +172,6 @@
                 {% endif %}
                 <div class="d-flex flex-column" style="line-height: 1.2;">
                     <small class="text-muted" style="font-size: 0.75rem;">Host</small>
-                    {# Tên host: Bỏ text-truncate để hiện full tên #}
                     <small class="fw-bold">
                         {{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}
                     </small>
@@ -127,53 +186,40 @@
             </div>
         </div>
 
-        {# --- 3. KHU VỰC NÚT BẤM (ACTION BUTTONS) --- #}
+        {# --- NÚT ACTION (Dưới cùng) --- #}
         <div class="row g-2">
-            {# Nút 1: Xem chi tiết #}
             <div class="col-6">
                 <a href="{{ trip.get_absolute_url }}" class="btn btn-outline-secondary btn-sm w-100 fw-bold py-2">
                     Chi tiết
                 </a>
             </div>
 
-            {# Nút 2: Logic động #}
             <div class="col-6">
                 {% if user.is_authenticated %}
-                    {# TÌNH HUỐNG 1: Là Host hoặc Đã tham gia -> NHẮN TIN #}
                     {% if trip.nguoi_to_chuc == user or trip.user_status == 'DA_THAM_GIA' %}
                         <a href="{% url 'trips:chat_room' trip.pk %}" class="btn btn-primary btn-sm w-100 fw-bold py-2">
                             <i class="fas fa-comments me-1"></i> Nhắn tin
                         </a>
-                    
-                    {# TÌNH HUỐNG 2: Đang chờ duyệt -> NÚT CHỜ (Vàng) #}
                     {% elif trip.user_status == 'DA_GUI_YEU_CAU' %}
                         <button class="btn btn-warning btn-sm w-100 fw-bold text-dark py-2" disabled>
                             <i class="fas fa-clock me-1"></i> Chờ duyệt
                         </button>
-                    
-                    {# TÌNH HUỐNG 3: Bị từ chối -> NÚT TỪ CHỐI (Đỏ) #}
                     {% elif trip.user_status == 'BI_TU_CHOI' %}
                         <button class="btn btn-danger btn-sm w-100 fw-bold py-2" disabled>
                             <i class="fas fa-ban me-1"></i> Từ chối
                         </button>
-
-                    {# TÌNH HUỐNG 4: Chưa tham gia -> THAM GIA #}
                     {% else %}
                         {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
-                             {# Riêng tư: Nhập mã #}
                             <button class="btn btn-success btn-sm w-100 fw-bold py-2" data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}">
                                 <i class="fas fa-key me-1"></i> Nhập mã
                             </button>
                         {% else %}
-                             {# Công khai: Tham gia #}
                             <a href="#" class="btn btn-success btn-sm w-100 fw-bold py-2" data-bs-toggle="modal" data-bs-target="#joinTripModal{{ trip.pk }}">
                                 Tham gia
                             </a>
                         {% endif %}
                     {% endif %}
-                
                 {% else %}
-                    {# Chưa đăng nhập #}
                     <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-success btn-sm w-100 fw-bold py-2">
                         Tham gia
                     </a>
@@ -185,8 +231,38 @@
 </div>
 
 <script>
+    // Hàm xác nhận xóa/rời nhóm
+    function confirmDelete(url, isHost) {
+        const form = document.getElementById('deleteForm');
+        const msg = document.getElementById('deleteMsg');
+        const modalEl = document.getElementById('deleteModal');
+        
+        if(form && modalEl) {
+            form.action = url; 
+            if(msg) {
+                if(isHost) {
+                    msg.innerText = "Bạn là Leader. Hành động này sẽ HỦY chuyến đi vĩnh viễn và thông báo cho tất cả thành viên.";
+                } else {
+                    msg.innerText = "Bạn có chắc chắn muốn rời khỏi chuyến đi này không?";
+                }
+            }
+            var myModal = new bootstrap.Modal(modalEl);
+            myModal.show();
+        } else {
+            const text = isHost ? "Hủy chuyến đi này?" : "Rời nhóm?";
+            if(confirm(text)) {
+                window.location.href = url; 
+            }
+        }
+    }
+
+    // Hàm giả lập Yêu thích
+    function toggleLikeTrip(tripId) {
+        // Logic AJAX gọi lên server để like/unlike
+        alert("Đã thêm chuyến đi " + tripId + " vào yêu thích!");
+    }
+
     document.addEventListener("DOMContentLoaded", function(){
-        // Màu badge trạng thái
         document.querySelectorAll('.trip-status-badge').forEach(function(el){
             var c = el.dataset.color;
             if (c) { 
@@ -195,7 +271,6 @@
             }
         });
 
-        // Init Popover Tags
         var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
         var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
             return new bootstrap.Popover(popoverTriggerEl, {
@@ -215,4 +290,12 @@
     }
     .cursor-pointer { cursor: pointer; }
     .backdrop-blur { backdrop-filter: blur(4px); }
+    /* Animation cho dropdown mượt hơn */
+    .animated-dropdown {
+        animation: fadeIn 0.2s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
