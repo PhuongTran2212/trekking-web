@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'post.apps.PostConfig',              # Của bạn
     'report_admin.apps.ReportAdminConfig', # Của bạn
     'articles.apps.ArticlesConfig',      # Của bạn
+    'user_admin.apps.UserAdminConfig',   # Của bạn (Mới)
 ]
 
 MIDDLEWARE = [

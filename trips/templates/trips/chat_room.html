@@ -1124,6 +1124,64 @@
     font-size: 1.5rem; font-weight: bold;
     pointer-events: none; /* Click xuyên qua */
 }
+/* --- 1. CSS CHO TÌM KIẾM (Highlight) --- */
+.search-highlight {
+    background-color: #ffeb3b;
+    color: #000;
+    font-weight: bold;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+.search-match-active { /* Kết quả đang được focus */
+    background-color: #ff9800; 
+    color: white;
+}
+
+/* --- 2. CSS CHO MEDIA SIDEBAR (+N ảnh) --- */
+/* Ẩn các ảnh thừa đi */
+.media-grid .media-item.hidden-thumb-sidebar {
+    display: none;
+}
+
+/* Tạo lớp phủ cho ảnh thứ 9 (nếu có hơn 9 ảnh) */
+.media-item.more-overlay-wrapper {
+    position: relative;
+    display: block;
+}
+.media-item.more-overlay-wrapper::after {
+    content: attr(data-more-count); /* Lấy số lượng từ attribute */
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    pointer-events: none; /* Để vẫn click được vào ảnh */
+}
+
+/* --- 3. CSS CHO THÀNH VIÊN (+N người) --- */
+.member-more-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background: #f3f4f6;
+    color: var(--text-sub);
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 5px;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.member-more-btn:hover {
+    background: #e5e7eb;
+    color: var(--primary);
+}
 </style>
 {% endblock %}
 
@@ -1253,84 +1311,117 @@
     </main>
 
     <!-- 3. CỘT PHẢI: THÔNG TIN -->
-    <aside class="right-sidebar" id="right-sidebar">
-        <div class="rs-content">
-            <div class="rs-header">
-                <img src="{{ trip.cover_url }}">
-                <h5>{{ trip.ten_chuyen_di }}</h5>
-                <a href="{{ trip.get_absolute_url }}" class="text-decoration-none text-primary">
-                    <i class="fas fa-external-link-alt me-1"></i>Xem chi tiết chuyến đi
-                </a>
-            </div>
+<aside class="right-sidebar" id="right-sidebar">
+    <div class="rs-content">
+        <div class="rs-header">
+            <img src="{{ trip.cover_url }}">
+            <h5>{{ trip.ten_chuyen_di }}</h5>
+            <a href="{{ trip.get_absolute_url }}" class="text-decoration-none text-primary">
+                <i class="fas fa-external-link-alt me-1"></i>Xem chi tiết
+            </a>
+        </div>
 
-            <!-- Tìm kiếm -->
-            <div class="rs-section">
-                <button class="rs-btn" onclick="toggleSearch()">
-                    <span><i class="fas fa-search me-2"></i>Tìm kiếm tin nhắn</span>
-                    <i class="fas fa-chevron-right text-muted"></i>
-                </button>
-                <div class="search-box" id="search-container">
-                    <i class="fas fa-search text-muted me-2"></i>
-                    <input type="text" id="chat-search" placeholder="Nhập từ khóa...">
+        <!-- 1. TÌM KIẾM TIN NHẮN (Đã sửa ID và logic) -->
+        <div class="rs-section">
+            <button class="rs-btn" onclick="toggleSearch()">
+                <span><i class="fas fa-search me-2"></i>Tìm kiếm tin nhắn</span>
+                <i class="fas fa-chevron-right text-muted"></i>
+            </button>
+            <div class="search-box" id="search-container">
+                <i class="fas fa-search text-muted me-2"></i>
+                <!-- Thêm onkeyup để kích hoạt tìm kiếm -->
+                <input type="text" id="chat-search-input" placeholder="Nhập từ khóa..." onkeyup="handleChatSearch(this.value)">
+                <!-- Hiển thị kết quả -->
+                <span id="search-result-count" class="ms-2 small text-muted" style="display:none">0/0</span>
+                <div class="ms-auto d-flex gap-1" id="search-nav-btns" style="display:none">
+                    <button class="btn btn-sm btn-light" onclick="navSearch('up')"><i class="fas fa-chevron-up"></i></button>
+                    <button class="btn btn-sm btn-light" onclick="navSearch('down')"><i class="fas fa-chevron-down"></i></button>
                 </div>
             </div>
+        </div>
 
-            <!-- Thành viên -->
-            <div class="rs-section">
-                <button class="rs-btn" data-bs-toggle="collapse" data-bs-target="#collapseMembers">
-                    <span><i class="fas fa-users me-2"></i>Thành viên ({{ members.count }})</span>
-                    <i class="fas fa-chevron-down text-muted"></i>
-                </button>
-                <div class="collapse show" id="collapseMembers">
-                    <div class="mt-2" style="max-height: 220px; overflow-y: auto;">
-                        <div class="member-row">
-                            <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}">
-                            <div>
-                                <div class="fw-bold">{{ trip.nguoi_to_chuc.get_full_name|default:trip.nguoi_to_chuc.username }}</div>
-                                <small class="text-warning fw-bold" style="font-size: 0.7rem;">
-                                    <i class="fas fa-crown me-1"></i>Trưởng đoàn
-                                </small>
-                            </div>
+        <!-- 2. THÀNH VIÊN (Giới hạn hiển thị 5 người) -->
+        <div class="rs-section">
+            <button class="rs-btn" data-bs-toggle="collapse" data-bs-target="#collapseMembers">
+                <span><i class="fas fa-users me-2"></i>Thành viên ({{ members.count }})</span>
+                <i class="fas fa-chevron-down text-muted"></i>
+            </button>
+            <div class="collapse show" id="collapseMembers">
+                <div class="mt-2">
+                    <!-- Luôn hiện Trưởng đoàn -->
+                    <div class="member-row">
+                        <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}">
+                        <div>
+                            <div class="fw-bold">{{ trip.nguoi_to_chuc.get_full_name|default:trip.nguoi_to_chuc.username }}</div>
+                            <small class="text-warning fw-bold" style="font-size: 0.7rem;">
+                                <i class="fas fa-crown me-1"></i>Trưởng đoàn
+                            </small>
                         </div>
-                        {% for member in members %}
-                            {% if member.user != trip.nguoi_to_chuc %}
+                    </div>
+
+                    <!-- Hiển thị 4 thành viên tiếp theo -->
+                    {% for member in members %}
+                        {% if member.user != trip.nguoi_to_chuc %}
+                            {% if forloop.counter <= 5 %} 
                             <div class="member-row">
                                 <img src="{{ member.user.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}">
                                 <div class="fw-bold">{{ member.user.get_full_name|default:member.user.username }}</div>
                             </div>
                             {% endif %}
-                        {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Nếu > 5 người (Trừ trưởng đoàn và 4 người kia) thì hiện nút xem thêm -->
+                    {% if members.count > 5 %}
+                    <div class="member-more-btn" title="Xem danh sách đầy đủ">
+                        + {{ members.count|add:"-5" }} thành viên khác
                     </div>
+                    {% endif %}
                 </div>
             </div>
+        </div>
 
-            <!-- File phương tiện -->
-            <div class="rs-section">
-                <button class="rs-btn" data-bs-toggle="collapse" data-bs-target="#collapseMedia">
-                    <span><i class="fas fa-images me-2"></i>Kho Ảnh & Video</span>
-                    <i class="fas fa-chevron-down text-muted"></i>
-                </button>
-<div class="collapse show" id="collapseMedia">
-    <div id="light-gallery-sidebar" class="media-grid">
-        {% regroup chat_media_files by tin_nhan.nguoi_gui as sender_list %}
-        {% for sender in sender_list %}
-            {% for media in sender.list %}
-                {% if media.loai_media == 'ANH' %}
-                <a href="{{ media.duong_dan_file.url }}" 
-                   class="media-item media-msg-{{ media.tin_nhan.id }}" 
-                   data-sub-html="Gửi bởi {{ sender.grouper.username }}">
-                    <img src="{{ media.duong_dan_file.url }}">
-                </a>
-                {% endif %}
-            {% endfor %}
-        {% empty %}
-            <p id="no-media-text" class="text-muted small text-center w-100 py-3">Chưa có ảnh nào.</p>
-        {% endfor %}
-    </div>
-</div>
+        <!-- 3. KHO ẢNH & VIDEO (Giới hạn hiển thị 9 ảnh, cái thứ 9 hiện overlay) -->
+        <div class="rs-section">
+            <button class="rs-btn" data-bs-toggle="collapse" data-bs-target="#collapseMedia">
+                <span><i class="fas fa-images me-2"></i>Kho Ảnh & Video ({{ chat_media_files|length }})</span>
+                <i class="fas fa-chevron-down text-muted"></i>
+            </button>
+            <div class="collapse show" id="collapseMedia">
+                <div id="light-gallery-sidebar" class="media-grid">
+                    {% for media in chat_media_files %}
+                        {% if media.loai_media == 'ANH' %}
+                            <!-- Logic: 
+                                - Index < 9: Hiện bình thường
+                                - Index == 9: Hiện với overlay +N
+                                - Index > 9: Ẩn (nhưng vẫn để trong DOM cho LightGallery đọc) 
+                            -->
+                            {% if forloop.counter < 9 %}
+                                <a href="{{ media.duong_dan_file.url }}" class="media-item media-msg-{{ media.tin_nhan.id }}">
+                                    <img src="{{ media.duong_dan_file.url }}">
+                                </a>
+                            {% elif forloop.counter == 9 %}
+                                {% with remaining=chat_media_files|length|add:"-8" %}
+                                <a href="{{ media.duong_dan_file.url }}" 
+                                   class="media-item media-msg-{{ media.tin_nhan.id }} more-overlay-wrapper"
+                                   data-more-count="+{{ remaining }}">
+                                    <img src="{{ media.duong_dan_file.url }}">
+                                </a>
+                                {% endwith %}
+                            {% else %}
+                                <a href="{{ media.duong_dan_file.url }}" class="media-item media-msg-{{ media.tin_nhan.id }} hidden-thumb-sidebar">
+                                    <img src="{{ media.duong_dan_file.url }}">
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    {% empty %}
+                        <p id="no-media-text" class="text-muted small text-center w-100 py-3">Chưa có ảnh nào.</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-    </aside>
+    </div>
+</aside>
 </div>
 {% endblock %}
 {% block extra_js %}
@@ -1660,5 +1751,116 @@
 
         fileInput.addEventListener('change', () => { if(fileInput.files.length) Array.from(fileInput.files).forEach(f=>{ pendingFiles.push(f); const r=new FileReader(); r.onload=e=>{ previewBox.innerHTML+=`<div class="preview-img-wrap"><img src="${e.target.result}"><div class="btn-remove-preview" onclick="removeFile(this,'${f.name}')">×</div></div>`; }; r.readAsDataURL(f); }); fileInput.value=''; });
     });
+    /* ==========================================
+   LOGIC TÌM KIẾM TIN NHẮN (Highlight & Scroll)
+   ========================================== */
+let searchMatches = []; // Lưu các vị trí tìm thấy
+let currentMatchIndex = -1;
+
+function handleChatSearch(keyword) {
+    keyword = keyword.trim().toLowerCase();
+    const chatBox = document.getElementById('chat-box');
+    const bubbles = chatBox.querySelectorAll('.msg-bubble');
+    
+    // 1. Reset highlight cũ
+    bubbles.forEach(bubble => {
+        // Khôi phục HTML gốc (xóa thẻ span highlight)
+        if (bubble.dataset.originalHtml) {
+            bubble.innerHTML = bubble.dataset.originalHtml;
+        }
+    });
+    searchMatches = [];
+    currentMatchIndex = -1;
+    document.getElementById('search-result-count').style.display = 'none';
+    document.getElementById('search-nav-btns').style.display = 'none';
+
+    if (!keyword) return;
+
+    // 2. Tìm và Highlight
+    let count = 0;
+    bubbles.forEach((bubble, index) => {
+        const text = bubble.innerText;
+        if (text.toLowerCase().includes(keyword)) {
+            // Lưu HTML gốc để restore sau này
+            if (!bubble.dataset.originalHtml) {
+                bubble.dataset.originalHtml = bubble.innerHTML;
+            }
+            
+            // Highlight text (Dùng regex replace an toàn)
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            // Lưu ý: Replace trực tiếp innerHTML có thể làm hỏng event listener của nút con, 
+            // nhưng với cấu trúc chat hiện tại thì tạm ổn.
+            // Cách an toàn hơn là chỉ traverse textNodes, nhưng phức tạp.
+            // Ở đây ta replace text đơn giản.
+            
+            // Tìm tất cả text node để thay thế (tránh thay thế attribute trong thẻ HTML)
+            highlightTextInNode(bubble, regex);
+
+            // Lưu phần tử vào mảng matches
+            // Tìm các span vừa tạo
+            const highlights = bubble.querySelectorAll('.search-highlight');
+            highlights.forEach(hl => {
+                hl.id = `search-match-${count}`;
+                searchMatches.push(hl);
+                count++;
+            });
+        }
+    });
+
+    // 3. Cập nhật UI điều hướng
+    if (count > 0) {
+        document.getElementById('search-result-count').innerText = `1/${count}`;
+        document.getElementById('search-result-count').style.display = 'inline';
+        document.getElementById('search-nav-btns').style.display = 'flex';
+        
+        // Nhảy đến kết quả mới nhất (cuối cùng)
+        currentMatchIndex = count - 1;
+        scrollToMatch(currentMatchIndex);
+    } else {
+        document.getElementById('search-result-count').innerText = `0/0`;
+        document.getElementById('search-result-count').style.display = 'inline';
+    }
+}
+
+// Hàm đệ quy để highlight text mà không làm hỏng thẻ HTML (img, button...)
+function highlightTextInNode(node, regex) {
+    if (node.nodeType === 3) { // Text node
+        const match = node.data.match(regex);
+        if (match) {
+            const span = document.createElement('span');
+            span.innerHTML = node.data.replace(regex, '<span class="search-highlight">$1</span>');
+            node.parentNode.replaceChild(span, node);
+        }
+    } else if (node.nodeType === 1 && node.childNodes && !/(script|style|button|textarea)/i.test(node.tagName)) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+            highlightTextInNode(node.childNodes[i], regex);
+        }
+    }
+}
+
+function navSearch(direction) {
+    if (searchMatches.length === 0) return;
+
+    if (direction === 'up') {
+        currentMatchIndex--;
+        if (currentMatchIndex < 0) currentMatchIndex = searchMatches.length - 1;
+    } else {
+        currentMatchIndex++;
+        if (currentMatchIndex >= searchMatches.length) currentMatchIndex = 0;
+    }
+    scrollToMatch(currentMatchIndex);
+}
+
+function scrollToMatch(index) {
+    // Xóa class active cũ
+    document.querySelectorAll('.search-match-active').forEach(el => el.classList.remove('search-match-active'));
+    
+    const el = searchMatches[index];
+    if (el) {
+        el.classList.add('search-match-active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('search-result-count').innerText = `${index + 1}/${searchMatches.length}`;
+    }
+}
 </script>
 {% endblock %}

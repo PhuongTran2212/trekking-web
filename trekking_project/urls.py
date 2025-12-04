@@ -45,6 +45,9 @@ urlpatterns = [
 
     # 5. Articles Admin: Của bạn bạn
     path('dashboard/articles/', include('articles.urls', namespace='articles')),
+
+    # 6. User Admin: Của bạn (Mới)
+    path('dashboard/users/', include('user_admin.urls', namespace='user_admin')),
 ]
 
 # Chỉ dùng khi DEBUG=True để phục vụ media trong dev

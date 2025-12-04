@@ -50,7 +50,7 @@
         <div class="nav-label text-uppercase text-secondary fw-bold px-3 mt-4 mb-2" style="font-size: 0.7rem;">Cộng đồng</div>
 
         <div class="nav-item">
-            <a href="#" class="nav-link {% if 'users' in request.path %}active{% endif %}">
+            <a href="{% url 'user_admin:user_list' %}" class="nav-link {% if 'users' in request.path %}active{% endif %}">
                 <i class="fas fa-users-cog"></i>
                 <span class="nav-link-text">Quản lý Users</span>
             </a>
