@@ -1,5 +1,3 @@
-# trekking_project/settings.py
-
 import os
 from pathlib import Path
 
@@ -7,41 +5,41 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-Thanh7778' # Giữ nguyên key tự tạo của dự án của bạn
+SECRET_KEY = 'django-insecure-Thanh7778'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
-LANGUAGE_CODE = 'vi' 
-USE_I18N = True
-USE_L10N = True
-USE_THOUSAND_SEPARATOR = True 
-
-NUMBER_GROUPING = 3
-THOUSAND_SEPARATOR = '.'
-DECIMAL_SEPARATOR = ','
-# Application definition
+# ==============================================================================
+# === APPLICATION DEFINITION (Đã gộp đầy đủ các App) ===
+# ==============================================================================
 INSTALLED_APPS = [
+    # 1. Django Default Apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles', # Đã có sẵn, rất tốt
+    'django.contrib.staticfiles',
+    'django.contrib.humanize', # Giữ cái này của bạn bạn (rất hữu ích để format số)
+
+    # 2. Third Party Apps
     'tinymce',
-    
-    
-    # KHAI BÁO CÁC APP CỦA BẠN
+    'taggit', # App quản lý tag của bạn
+
+    # 3. Local Apps (Của cả 2 người)
     'core.apps.CoreConfig',
     'accounts.apps.AccountsConfig',
     'treks.apps.TreksConfig',
     'trips.apps.TripsConfig',
-    'community.apps.CommunityConfig',
-    'knowledge.apps.KnowledgeConfig',
-    'gamification.apps.GamificationConfig',
-     'django.contrib.humanize', 
+    'community.apps.CommunityConfig',    # Của bạn bạn
+    'knowledge.apps.KnowledgeConfig',    # Của bạn bạn
+    'gamification.apps.GamificationConfig', # Của bạn bạn
+    'post.apps.PostConfig',              # Của bạn
+    'report_admin.apps.ReportAdminConfig', # Của bạn
+    'articles.apps.ArticlesConfig',      # Của bạn
 ]
 
 MIDDLEWARE = [
@@ -75,7 +73,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'trekking_project.wsgi.application'
 
 
-# Database
+# ==============================================================================
+# === DATABASE ===
+# Lưu ý: Đang dùng Port 3306 (Của bạn). 
+# Nếu máy bạn đổi port XAMPP sang 3307 thì sửa lại dòng 'PORT' bên dưới.
+# ==============================================================================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -83,7 +85,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': '127.0.0.1',
-        'PORT': '3307',
+        'PORT': '3307', 
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -94,41 +96,47 @@ DATABASES = {
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    # ... (giữ nguyên)
+    { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
 ]
 
 
-# Internationalization
-LANGUAGE_CODE = 'vi-vn'
+# ==============================================================================
+# === INTERNATIONALIZATION & FORMATTING ===
+# ==============================================================================
+LANGUAGE_CODE = 'vi-vn' # Tiếng Việt
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
-USE_I1N = True
-USE_TZ = False
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True # Khuyến nghị dùng True để quản lý giờ giấc chuẩn quốc tế
+
+# Định dạng số (Lấy của bạn bạn - Rất tốt cho hiển thị tiền tệ VN)
+USE_THOUSAND_SEPARATOR = True 
+NUMBER_GROUPING = 3
+THOUSAND_SEPARATOR = '.' # Dấu chấm phân cách hàng nghìn (VD: 100.000)
+DECIMAL_SEPARATOR = ','  # Dấu phẩy phân cách thập phân
 
 
 # ==============================================================================
-# === PHẦN CẤU HÌNH STATIC & MEDIA (ĐÃ ĐƯỢC DỌN DẸP VÀ SỬA LỖI) ===
+# === STATIC & MEDIA FILES ===
 # ==============================================================================
+STATIC_URL = '/static/'
+# Sử dụng cú pháp hiện đại kết hợp os.path.join cho chắc chắn
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# URL để truy cập các file tĩnh (CSS, JS) trong trình duyệt
-STATIC_URL = 'static/'
-
-# Đường dẫn đến thư mục chứa các file tĩnh chung của project
-# SỬA LỖI: Sử dụng BASE_DIR / 'static' cho cú pháp Pathlib hiện đại
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
-# URL để truy cập các file do người dùng upload (ảnh, video)
 MEDIA_URL = '/media/'
-
-# Đường dẫn đến thư mục chứa các file media trên server
 MEDIA_ROOT = BASE_DIR / 'media'
-
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==============================================================================
+# === TINYMCE CONFIG (Gộp cấu hình tối ưu) ===
+# ==============================================================================
 TINYMCE_DEFAULT_CONFIG = {
-    "height": "320px",
+    "height": "500px", # Giữ độ cao lớn của bạn cho dễ nhìn
     "width": "100%",
     "menubar": "file edit view insert format tools table help",
     "plugins": "advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code "
@@ -139,7 +147,5 @@ TINYMCE_DEFAULT_CONFIG = {
     "fullscreen  preview save print | insertfile image media pageembed template link anchor codesample | "
     "a11ycheck ltr rtl | showcomments addcomment code",
     "custom_undo_redo_levels": 10,
-    "language": "vi",  # Hỗ trợ tiếng Việt
+    "language": "vi",  # Giữ tiếng Việt của bạn bạn
 }
-
-# --- ĐÃ XÓA CÁC DÒNG BỊ LẶP LẠI VÀ LỖI CHÍNH TẢ Ở CUỐI FILE ---

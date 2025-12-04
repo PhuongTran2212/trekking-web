@@ -2,7 +2,7 @@
 
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-           <a href="{% url 'admin_dashboard' %}" class="logo text-decoration-none d-flex align-items-center">
+        <a href="{% url 'admin_dashboard' %}" class="logo text-decoration-none d-flex align-items-center">
             <svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;">
                 <path fill="white" d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z"/>
             </svg>
@@ -57,28 +57,47 @@
         </div>
 
         <div class="nav-item">
-            <a href="#" class="nav-link {% if 'community' in request.path %}active{% endif %}">
-                <i class="fas fa-comments"></i>
-                <span class="nav-link-text">Diễn đàn & Bài viết</span>
+            <a href="#submenu-community" data-bs-toggle="collapse" class="nav-link d-flex justify-content-between align-items-center {% if 'posts' in request.path or 'reports' in request.path %}active{% endif %}">
+                <div>
+                    <i class="fas fa-comments"></i>
+                    <span class="nav-link-text">Diễn đàn & Bài viết</span>
+                </div>
+                <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
             </a>
+            
+            <div class="collapse {% if 'posts' in request.path or 'report-admin' in request.path %}show{% endif %}" id="submenu-community" style="background-color: rgba(0,0,0,0.02);">
+                <a href="{% url 'post_admin:post_list' %}" class="nav-link ps-5 py-2 {% if 'posts' in request.path %}text-primary fw-bold{% endif %}" style="font-size: 0.9rem;">
+                    <i class="fas fa-angle-right me-2"></i> DS Bài viết
+                </a>
+                <a href="{% url 'report_admin:report_list' %}" class="nav-link ps-5 py-2 {% if 'report-admin' in request.path %}text-primary fw-bold{% endif %}" style="font-size: 0.9rem;">
+                    <i class="fas fa-angle-right me-2"></i> Bài viết bị báo cáo
+                </a>
+            </div>
         </div>
 
-        <div class="nav-label text-uppercase text-secondary fw-bold px-3 mt-4 mb-2" style="font-size: 0.7rem;">Hệ thống</div>
+        <div class="nav-label text-uppercase text-secondary fw-bold px-3 mt-4 mb-2" style="font-size: 0.7rem;">Hệ thống & Nội dung</div>
 
         <div class="nav-item">
-            <a href="#" class="nav-link {% if 'reports' in request.path %}active{% endif %}">
-                <i class="fas fa-flag"></i>
-                <span class="nav-link-text">Xử lý Báo cáo vi phạm</span>
+            <a href="#submenu-knowledge" data-bs-toggle="collapse" class="nav-link d-flex justify-content-between align-items-center {% if 'articles' in request.path %}active{% endif %}">
+                <div>
+                    <i class="fas fa-book"></i>
+                    <span class="nav-link-text">Quản lý Kiến thức</span>
+                </div>
+                <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
             </a>
-        </div>
 
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-book"></i>
-                <span class="nav-link-text">Quản lý Kiến thức</span>
-            </a>
+            <div class="collapse {% if 'articles' in request.path %}show{% endif %}" id="submenu-knowledge" style="background-color: rgba(0,0,0,0.02);">
+                <a href="{% url 'articles:admin-list' %}" class="nav-link ps-5 py-2 {% if request.resolver_match.url_name == 'admin-list' %}text-primary fw-bold{% endif %}" style="font-size: 0.9rem;">
+                    <i class="fas fa-list me-2"></i> DS Hướng dẫn
+                </a>
+                <a href="{% url 'articles:admin-create' %}" class="nav-link ps-5 py-2 {% if request.resolver_match.url_name == 'admin-create' %}text-primary fw-bold{% endif %}" style="font-size: 0.9rem;">
+                    <i class="fas fa-plus me-2"></i> Tạo bài mới
+                </a>
+                <a href="{% url 'articles:admin-category-list' %}" class="nav-link ps-5 py-2 {% if 'category' in request.path %}text-primary fw-bold{% endif %}" style="font-size: 0.9rem;">
+                    <i class="fas fa-tags me-2"></i> Chuyên mục
+                </a>
+            </div>
         </div>
-
 <div class="nav-item">
             <a href="{% url 'system_config' %}" class="nav-link {% if 'system-configuration' in request.path %}active{% endif %}">
                 <i class="fas fa-cogs"></i>
@@ -88,3 +107,20 @@
 
     </nav>
 </aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const collapses = document.querySelectorAll('.collapse');
+        collapses.forEach(el => {
+            el.addEventListener('show.bs.collapse', function () {
+                const icon = this.previousElementSibling.querySelector('.fa-chevron-down');
+                if(icon) icon.style.transform = 'rotate(180deg)';
+                if(icon) icon.style.transition = 'transform 0.3s';
+            });
+            el.addEventListener('hide.bs.collapse', function () {
+                const icon = this.previousElementSibling.querySelector('.fa-chevron-down');
+                if(icon) icon.style.transform = 'rotate(0deg)';
+            });
+        });
+    });
+</script>

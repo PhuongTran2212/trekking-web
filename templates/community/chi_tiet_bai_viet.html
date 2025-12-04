@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ bai_viet.tieu_de }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/community.css' %}">
+<style>
+    /* =========================================
+       DESIGN SYSTEM
+       ========================================= */
+    :root {
+        --primary-lightest: #f0f7e3;
+        --primary-light: #c8e6c9;
+        --primary-medium: #7cb342;
+        --primary-dark: #4D7111;
+        --primary-darker: #3d5a0d;
+        
+        --gray-50: #fafafa;
+        --gray-100: #f3f4f6;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-900: #111827;
+        
+        --shadow-md: 0 4px 6px -1px rgba(77, 113, 17, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(77, 113, 17, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* Animations */
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    /* Post Detail Styles */
+    .post-detail {
+        background: linear-gradient(135deg, #ffffff 0%, #fafbf7 100%);
+        border-radius: 16px;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--primary-lightest);
+        padding: 2.5rem;
+        animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+    }
+
+    .post-detail-header { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid var(--primary-lightest); animation: fadeInDown 0.6s ease-out 0.2s both; }
+    .post-detail-title { font-size: 2.25rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1.5rem; }
+    .post-detail-meta { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+    
+    .post-author-section { display: flex; align-items: center; gap: 12px; animation: slideInLeft 0.6s ease-out 0.3s both; }
+    .post-author-avatar-sm { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-lightest); }
+    .post-author-name { font-size: 1.0625rem; font-weight: 700; color: var(--primary-dark); display: block; }
+    .post-date-time { font-size: 0.875rem; color: var(--gray-500); font-weight: 500; }
+
+    .badge { padding: 8px 16px; border-radius: 9999px; font-weight: 600; font-size: 0.875rem; color: white; }
+    .badge-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .badge-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .badge-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+    .post-trip-info { margin-top: 1.5rem; padding: 12px 16px; background: linear-gradient(135deg, var(--primary-lightest) 0%, rgba(200, 230, 201, 0.5) 100%); border-radius: 12px; border-left: 4px solid var(--primary-medium); font-weight: 500; color: var(--primary-dark); animation: slideInLeft 0.6s ease-out 0.35s both; }
+    .post-trip-info a { color: var(--primary-dark); font-weight: 700; text-decoration: none; }
+
+    .tinymce-content { font-size: 1.0625rem; line-height: 1.8; color: var(--gray-700); margin-bottom: 2rem; animation: fadeInUp 0.6s ease-out 0.4s both; }
+    .tinymce-content img { max-width: 100%; height: auto; border-radius: 12px; margin: 1.5rem 0; box-shadow: var(--shadow-md); }
+
+    .post-tags-section { margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 8px; animation: fadeInUp 0.6s ease-out 0.45s both; }
+    .badge-primary { background: var(--primary-lightest); color: var(--primary-dark); padding: 8px 14px; border-radius: 20px; text-decoration: none; font-weight: 600; border: 1px solid var(--primary-light); }
+    .badge-primary:hover { background: var(--primary-medium); color: white; }
+
+    /* --- Media Gallery & Lightbox (UPDATED) --- */
+    .post-media-gallery { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+        gap: 12px; 
+        margin-top: 1.5rem; 
+    }
+    .media-item { 
+        position: relative; 
+        aspect-ratio: 1; 
+        overflow: hidden; 
+        border-radius: 12px; 
+        cursor: pointer; 
+        background: var(--gray-100); 
+        animation: scaleIn 0.5s ease-out backwards; 
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .media-item:hover { transform: scale(1.02); transition: transform 0.2s; }
+    .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
+    
+    .video-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2.5rem; pointer-events: none; z-index: 2; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+    /* Overlay cho ảnh thứ 4 khi có nhiều hơn 4 ảnh */
+    .media-item-more { 
+        position: absolute; 
+        inset: 0; 
+        background: rgba(0, 0, 0, 0.6); 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        color: white; 
+        font-size: 2rem; 
+        font-weight: 700; 
+        backdrop-filter: blur(2px);
+        transition: background 0.3s;
+        z-index: 5;
+    }
+    .media-item:hover .media-item-more { background: rgba(0, 0, 0, 0.5); }
+
+    .lightbox-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.98); padding-top: 50px; }
+    .lightbox-content-wrapper { display: flex; justify-content: center; align-items: center; height: 85%; flex-direction: column; }
+    .lightbox-content { max-width: 90%; max-height: 85vh; object-fit: contain; }
+    .lightbox-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; cursor: pointer; z-index: 10001; }
+    .lightbox-prev, .lightbox-next { cursor: pointer; position: absolute; top: 50%; padding: 16px; color: white; font-size: 30px; z-index: 10000; background: rgba(77, 113, 17, 0.4); border-radius: 8px; margin-top: -50px; }
+    .lightbox-next { right: 20px; } .lightbox-prev { left: 20px; }
+    .lightbox-counter { color: #ccc; margin-top: 20px; font-weight: 600; font-size: 1.1rem; }
+
+    /* Interaction Bar */
+    .post-interaction-section { 
+        border-top: 2px solid var(--primary-lightest); 
+        padding-top: 1.5rem; 
+        display: flex; 
+        gap: 24px; 
+        align-items: center; 
+        flex-wrap: wrap; 
+        margin-bottom: 0.5rem; 
+        animation: fadeInUp 0.6s ease-out 0.5s both; 
+    }
+    .upvote-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 1rem; color: var(--gray-600); font-weight: 600; padding: 8px 12px; border-radius: 8px; transition: all 0.3s ease; }
+    .upvote-btn.active { color: var(--primary-dark); font-weight: 700; }
+    .upvote-btn.active svg { fill: rgba(77, 113, 17, 0.2); stroke: var(--primary-dark); }
+    .comment-count-display { display: flex; align-items: center; gap: 8px; color: var(--gray-600); font-weight: 600; }
+    .post-actions-menu { margin-left: auto; }
+    .post-actions-menu a { color: #ef4444; text-decoration: none; font-weight: 600; }
+
+    /* --- COMMENT FORM STYLES --- */
+    .comments-section { 
+        margin-top: 0.5rem;
+        animation: fadeInUp 0.6s ease-out 0.55s both; 
+    }
+    .comments-section-title { font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.75rem; }
+    
+    .comment-form-container { 
+        margin-bottom: 2rem; 
+        padding: 1rem 1.25rem; 
+        background: linear-gradient(135deg, var(--primary-lightest) 0%, rgba(240, 247, 227, 0.5) 100%); 
+        border-radius: 12px; 
+        border: 2px solid var(--primary-light); 
+    }
+    .comment-form { display: flex; flex-direction: column; gap: 8px; }
+    
+    #id_noi_dung {
+        width: 100%;
+        padding: 10px 12px;
+        border: 2px solid var(--primary-light);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 50px; 
+        color: var(--gray-900);
+        transition: all 0.3s ease;
+    }
+    #id_noi_dung:focus {
+        outline: none;
+        border-color: var(--primary-medium);
+        box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1);
+        min-height: 80px; 
+    }
+
+    .btn.btn-primary { background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%); color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; box-shadow: var(--shadow-md); align-self: flex-start; }
+    .reply-tag-container { margin-bottom: 8px; }
+    .reply-tag-badge { background: rgba(124, 179, 66, 0.12); color: var(--primary-medium); font-weight: 700; padding: 4px 10px; border-radius: 16px; border: 1px solid rgba(124, 179, 66, 0.25); display: inline-flex; align-items: center; font-size: 0.85rem; }
+    .btn-remove-tag { background: none; border: none; color: var(--primary-medium); font-size: 1.1rem; margin-left: 6px; cursor: pointer; }
+
+    /* --- COMMENT ITEM STYLES --- */
+    .comment-item { display: flex; gap: 12px; margin-bottom: 12px; animation: fadeInUp 0.5s ease-out backwards; }
+    .avatar-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-lightest); flex-shrink: 0; }
+    .avatar-img-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-lightest); flex-shrink: 0; }
+    .comment-body { flex: 1; }
+
+    .comment-bubble {
+        background: var(--gray-100);
+        padding: 8px 14px;
+        border-radius: 18px;
+        display: block;
+        width: fit-content; 
+        max-width: 90%; 
+        transition: all 0.3s ease;
+    }
+    
+    .comment-item:hover .comment-bubble { background: var(--primary-lightest); }
+    .comment-author { font-size: 0.95rem; color: var(--primary-dark); font-weight: 700; }
+    .comment-content { font-size: 0.95rem; color: var(--gray-700); margin-top: 2px; line-height: 1.4; }
+    
+    .comment-meta { font-size: 0.8rem; color: var(--gray-500); margin: 4px 0 0 12px; display: flex; gap: 16px; }
+    
+    .btn-reply, .btn-delete { background: none; border: none; padding: 0; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
+    .btn-reply { color: var(--gray-500); } .btn-reply:hover { color: var(--primary-medium); }
+    .btn-delete { color: #ef4444; }
+
+    .comment-replies { margin-top: 6px; padding-left: 10px; border-left: 2px solid var(--primary-light); margin-left: 22px; }
+    .reply-item { display: flex; gap: 10px; margin-top: 8px; }
+    .reply-body .comment-bubble { background: rgba(124, 179, 66, 0.08); font-size: 0.9rem; }
+    .reply-tag-link { font-weight: 700; color: var(--primary-dark); text-decoration: none; margin-right: 5px; }
+
+    .view-replies-trigger {
+        background: none; border: none; color: var(--gray-600); font-weight: 600; font-size: 0.85rem; cursor: pointer; margin-left: 12px; margin-top: 4px; display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    .view-replies-trigger:hover { color: var(--primary-dark); text-decoration: underline; }
+    .view-replies-trigger svg { width: 14px; height: 14px; transition: transform 0.3s ease; }
+    .view-replies-trigger.open svg { transform: rotate(180deg); }
+
+    @media (max-width: 768px) {
+        .post-detail { padding: 1.5rem; }
+        .post-detail-title { font-size: 1.75rem; }
+        .post-detail-meta { flex-direction: column; }
+        .comment-replies { margin-left: 10px; }
+        .post-media-gallery { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <article class="post-detail">
+        <!-- Post Header -->
+        <header class="post-detail-header">
+            <div class="post-header-content">
+                <h1 class="post-detail-title">{{ bai_viet.tieu_de }}</h1>
+                <div class="post-detail-meta">
+                    <div class="post-author-section">
+                        {% if bai_viet.tac_gia.taikhoanhoso.anh_dai_dien %}
+                            <img src="{{ bai_viet.tac_gia.taikhoanhoso.anh_dai_dien.url }}" alt="{{ bai_viet.tac_gia.username }}" class="post-author-avatar-sm">
+                        {% else %}
+                            <img src="{% static 'images/default_avatar.png' %}" alt="Default" class="post-author-avatar-sm">
+                        {% endif %}
+                        <div class="post-author-info">
+                            <strong class="post-author-name">{{ bai_viet.tac_gia.get_full_name|default:bai_viet.tac_gia.username }}</strong>
+                            <span class="post-date-time">{{ bai_viet.ngay_dang|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                    <div class="post-status-badge">
+                        {% if bai_viet.trang_thai == 'da_duyet' %}
+                            <span class="badge badge-success">Đã duyệt</span>
+                        {% elif bai_viet.trang_thai == 'cho_duyet' %}
+                            <span class="badge badge-warning">Chờ duyệt</span>
+                        {% else %}
+                            <span class="badge badge-danger">Từ chối</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if bai_viet.chuyen_di %}
+                <div class="post-trip-info">
+                    <span>Chuyến đi:</span> <a href="#">{{ bai_viet.chuyen_di.ten_chuyen_di }}</a>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Post Content -->
+        <div class="post-detail-body">
+            <div class="post-content tinymce-content">
+                {{ bai_viet.noi_dung|safe }}
+            </div>
+
+            {% if bai_viet.tags.all %}
+            <div class="post-tags-section">
+                {% for tag in bai_viet.tags.all %}
+                    <a href="#" class="badge badge-primary">#{{ tag.ten }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- MEDIA GALLERY SECTION (UPDATED) -->
+            {% if bai_viet.media.all %}
+            <div class="post-media-section" style="margin-bottom: 2rem;">
+                <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary-dark);">Album ảnh & Video</h4>
+                
+                <div class="post-media-gallery">
+                    {% with media_list=bai_viet.media.all %}
+                        {% for media in media_list %}
+                            {# Chỉ hiển thị tối đa 4 item #}
+                            {% if forloop.counter <= 4 %}
+                                <div class="media-item" onclick="openLightbox({{ forloop.counter0 }})">
+                                    {% if media.loai_media == 'anh' %}
+                                        <img src="{{ media.duong_dan_file.url }}" alt="Hình ảnh bài viết" loading="lazy">
+                                    {% elif media.loai_media == 'video' %}
+                                        <video><source src="{{ media.duong_dan_file.url }}" type="video/mp4"></video>
+                                        <div class="video-play-icon">▶</div>
+                                    {% endif %}
+
+                                    {# Nếu là item thứ 4 VÀ tổng số item > 4 thì hiện lớp phủ #}
+                                    {% if forloop.counter == 4 and media_list|length > 4 %}
+                                        <div class="media-item-more">
+                                            +{{ media_list|length|add:"-4" }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                </div>
+            </div>
+
+            <!-- Dữ liệu JS vẫn chứa toàn bộ ảnh để Lightbox hoạt động đúng -->
+            <script>
+                const galleryData = [
+                    {% for media in bai_viet.media.all %}
+                    {
+                        type: "{{ media.loai_media }}",
+                        url: "{{ media.duong_dan_file.url }}"
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ];
+            </script>
+            {% endif %}
+
+            <!-- Interaction Bar -->
+            <div class="post-interaction-section">
+                <input type="hidden" id="csrf_token_global" value="{{ csrf_token }}">
+
+                <button type="button" 
+                        id="upvoteBtn" 
+                        class="upvote-btn {% if is_approved and da_upvote %}active{% endif %}" 
+                        data-post-id="{{ bai_viet.id }}" 
+                        data-url="{% url 'community:toggle-upvote' bai_viet.id %}"
+                        {% if not is_approved %}disabled{% endif %}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                    <span>Thích (<span id="upvoteCount">{{ bai_viet.luot_binh_chon }}</span>)</span>
+                </button>
+                
+                <div class="comment-count-display">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span>{{ bai_viet.so_luong_binh_luan }} bình luận</span>
+                </div>
+
+                {% if user.is_authenticated and is_approved %}
+                <div class="post-actions-menu">
+                     <a href="{% url 'community:bao-cao-bai-viet' bai_viet.id %}">Báo cáo bài viết</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- COMMENTS SECTION -->
+        {% if is_approved %}
+        <section class="comments-section">
+            <div class="comment-form-container" id="main-comment-form-container">
+                <h3 class="comments-section-title">Bình luận</h3>
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'community:chi-tiet-bai-viet' bai_viet.id %}" class="comment-form" id="global-comment-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="tra_loi_binh_luan_id" id="tra_loi_binh_luan_id" value="">
+                    
+                    <div id="reply-tag-container" class="reply-tag-container" style="display: none;">
+                        <span class="reply-tag-badge">
+                            <b id="reply-to-name">User</b>
+                            <button type="button" class="btn-remove-tag" id="btn-cancel-reply">&times;</button>
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.noi_dung }}
+                    </div>
+
+                    <div class="comment-form-actions">
+                        <button type="submit" class="btn btn-primary">Gửi</button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-info">
+                    Vui lòng <a href="{% url 'accounts:login' %}?next={{ request.path }}">đăng nhập</a> để bình luận.
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if binh_luan_goc %}
+            <div class="comments-list">
+                {% for binh_luan in binh_luan_goc %}
+                <div class="comment-item" id="comment-{{ binh_luan.id }}">
+                    <div class="comment-avatar">
+                        {% if binh_luan.user.taikhoanhoso.anh_dai_dien %}
+                            <img src="{{ binh_luan.user.taikhoanhoso.anh_dai_dien.url }}" class="avatar-img">
+                        {% else %}
+                            <img src="{% static 'images/default_avatar.png' %}" class="avatar-img">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="comment-body">
+                        <div class="comment-bubble">
+                            <div class="comment-header">
+                                <strong class="comment-author">{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}</strong>
+                            </div>
+                            <div class="comment-content">{{ binh_luan.noi_dung|linebreaks }}</div>
+                        </div>
+                        
+                        <div class="comment-meta">
+                            <span class="comment-date">{{ binh_luan.ngay_binh_luan|date:"d/m H:i" }}</span>
+                            {% if user.is_authenticated %}
+                                <button type="button" class="btn-reply" 
+                                        data-comment-id="{{ binh_luan.id }}" 
+                                        data-comment-author="{{ binh_luan.user.get_full_name|default:binh_luan.user.username }}">
+                                    Trả lời
+                                </button>
+                            {% endif %}
+                            {% if user == binh_luan.user or user.is_staff %}
+                                <form action="{% url 'community:xoa-binh-luan' binh_luan.id %}" method="post" class="d-inline" onsubmit="return confirm('Xóa bình luận này?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-delete">Xóa</button>
+                                </form>
+                            {% endif %}
+                        </div>
+
+                        <div class="reply-input-placeholder" id="reply-box-{{ binh_luan.id }}"></div>
+
+                        <!-- XEM/ẨN PHẢN HỒI -->
+                        {% with reply_count=binh_luan.cac_tra_loi.all|length %}
+                        {% if reply_count > 0 %}
+                            <button class="view-replies-trigger" onclick="toggleReplies('replies-{{ binh_luan.id }}', this, {{ reply_count }})">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                                <span>Xem {{ reply_count }} phản hồi</span>
+                            </button>
+
+                            <div class="comment-replies" id="replies-{{ binh_luan.id }}" style="display: none;">
+                                {% for tra_loi in binh_luan.cac_tra_loi.all %}
+                                <div class="reply-item">
+                                    <div class="reply-avatar">
+                                        {% if tra_loi.user.taikhoanhoso.anh_dai_dien %}
+                                            <img src="{{ tra_loi.user.taikhoanhoso.anh_dai_dien.url }}" class="avatar-img-sm">
+                                        {% else %}
+                                            <img src="{% static 'images/default_avatar.png' %}" class="avatar-img-sm">
+                                        {% endif %}
+                                    </div>
+                                    <div class="reply-body">
+                                        <div class="comment-bubble">
+                                            <div class="reply-header">
+                                                <strong class="reply-author">{{ tra_loi.user.get_full_name|default:tra_loi.user.username }}</strong>
+                                            </div>
+                                            <div class="reply-content">
+                                                {% if tra_loi.tra_loi_binh_luan.user and tra_loi.tra_loi_binh_luan.user != tra_loi.user %}
+                                                    <a href="#" class="reply-tag-link">{{ tra_loi.tra_loi_binh_luan.user.get_full_name|default:tra_loi.tra_loi_binh_luan.user.username }}</a>
+                                                {% endif %}
+                                                {{ tra_loi.noi_dung|linebreaks }}
+                                            </div>
+                                        </div>
+                                        <div class="comment-meta">
+                                            <span class="reply-date">{{ tra_loi.ngay_binh_luan|date:"d/m H:i" }}</span>
+                                            {% if user.is_authenticated %}
+                                                <button type="button" class="btn-reply" 
+                                                        data-comment-id="{{ binh_luan.id }}" 
+                                                        data-comment-author="{{ tra_loi.user.get_full_name|default:tra_loi.user.username }}">
+                                                    Trả lời
+                                                </button>
+                                            {% endif %}
+                                            {% if user == tra_loi.user or user.is_staff %}
+                                                <form action="{% url 'community:xoa-binh-luan' tra_loi.id %}" method="post" class="d-inline" onsubmit="return confirm('Xóa?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn-delete">Xóa</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+    </article>
+</div>
+
+<!-- LIGHTBOX MODAL -->
+<div id="lightbox-modal" class="lightbox-modal">
+    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+    <a class="lightbox-prev" onclick="changeSlide(-1)">&#10094;</a>
+    <a class="lightbox-next" onclick="changeSlide(1)">&#10095;</a>
+    <div class="lightbox-content-wrapper">
+        <img id="lightbox-img" class="lightbox-content" src="/placeholder.svg" style="display: none;">
+        <video id="lightbox-video" class="lightbox-content" controls style="display: none;"></video>
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+    </div>
+</div>
+
+<script>
+// Toggle Replies
+function toggleReplies(elementId, btn, count) {
+    const repliesDiv = document.getElementById(elementId);
+    const textSpan = btn.querySelector('span');
+    
+    if (repliesDiv.style.display === 'none') {
+        repliesDiv.style.display = 'block';
+        repliesDiv.style.opacity = 0;
+        let opacity = 0;
+        const timer = setInterval(function () {
+            if (opacity >= 1) clearInterval(timer);
+            repliesDiv.style.opacity = opacity;
+            opacity += 0.1;
+        }, 20);
+
+        textSpan.textContent = 'Ẩn phản hồi';
+        btn.classList.add('open');
+    } else {
+        repliesDiv.style.display = 'none';
+        textSpan.textContent = `Xem ${count} phản hồi`;
+        btn.classList.remove('open');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const upvoteBtn = document.getElementById('upvoteBtn');
+    if (upvoteBtn && !upvoteBtn.disabled) {
+        upvoteBtn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            fetch(`/community/toggle-upvote/${postId}/`, {
+                method: 'POST',
+                headers: { 
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 
+                    'Content-Type': 'application/json' 
+                }
+            }).then(r => r.json()).then(d => {
+                if (d.success) { 
+                    upvoteBtn.classList.toggle('active'); 
+                    document.getElementById('upvoteCount').textContent = d.luot_binh_chon; 
+                } else { 
+                    alert(d.error || 'Lỗi'); 
+                }
+            });
+        });
+    }
+
+    const globalForm = document.getElementById('global-comment-form');
+    const mainFormContainer = document.getElementById('main-comment-form-container');
+    const replyButtons = document.querySelectorAll('.btn-reply');
+    
+    const replyIdInput = document.getElementById('tra_loi_binh_luan_id');
+    const replyTagContainer = document.getElementById('reply-tag-container');
+    const replyToNameSpan = document.getElementById('reply-to-name');
+    const cancelReplyBtn = document.getElementById('btn-cancel-reply');
+    const textarea = globalForm ? globalForm.querySelector('textarea') : null;
+
+    function resetFormToDefault() {
+        if (!globalForm || !mainFormContainer) return;
+        replyIdInput.value = '';
+        replyTagContainer.style.display = 'none';
+        mainFormContainer.appendChild(globalForm);
+    }
+
+    if (replyButtons) {
+        replyButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const commentId = this.dataset.commentId;
+                const authorName = this.dataset.commentAuthor;
+                const placeholder = document.getElementById(`reply-box-${commentId}`);
+                
+                if (placeholder && globalForm) {
+                    placeholder.appendChild(globalForm);
+                    replyIdInput.value = commentId;
+                    replyToNameSpan.textContent = authorName;
+                    replyTagContainer.style.display = 'block';
+                    if(textarea) textarea.focus();
+                }
+            });
+        });
+    }
+
+    if (cancelReplyBtn) {
+        cancelReplyBtn.addEventListener('click', function() {
+            resetFormToDefault();
+        });
+    }
+});
+
+let currentSlideIndex = 0;
+const modal = document.getElementById('lightbox-modal');
+const lightboxImg = document.getElementById('lightbox-img');
+const lightboxVideo = document.getElementById('lightbox-video');
+const counterText = document.getElementById('lightbox-counter');
+
+function openLightbox(n) {
+    if (typeof galleryData === 'undefined' || galleryData.length === 0) return;
+    modal.style.display = "block";
+    showSlide(n);
+    document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+    modal.style.display = "none";
+    lightboxVideo.pause();
+    lightboxVideo.src = ""; 
+    document.body.style.overflow = "auto";
+}
+
+function changeSlide(n) {
+    showSlide(currentSlideIndex + n);
+}
+
+function showSlide(n) {
+    if (n >= galleryData.length) currentSlideIndex = 0;
+    else if (n < 0) currentSlideIndex = galleryData.length - 1;
+    else currentSlideIndex = n;
+
+    const item = galleryData[currentSlideIndex];
+    counterText.innerText = `${currentSlideIndex + 1} / ${galleryData.length}`;
+
+    if (item.type === 'anh') {
+        lightboxVideo.style.display = "none";
+        lightboxVideo.pause();
+        lightboxImg.src = item.url;
+        lightboxImg.style.display = "block";
+    } else if (item.type === 'video') {
+        lightboxImg.style.display = "none";
+        lightboxVideo.src = item.url;
+        lightboxVideo.style.display = "block";
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (modal.style.display === "block") {
+        if (e.key === "Escape") closeLightbox();
+        if (e.key === "ArrowLeft") changeSlide(-1);
+        if (e.key === "ArrowRight") changeSlide(1);
+    }
+});
+
+modal.addEventListener('click', function(e) {
+    if (e.target === modal || e.target.classList.contains('lightbox-content-wrapper')) {
+        closeLightbox();
+    }
+});
+</script>
+{% endblock %}
