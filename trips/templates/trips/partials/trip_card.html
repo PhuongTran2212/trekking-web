@@ -4,18 +4,18 @@
 <div class="card trip-card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
     
     {# --- 1. PHẦN HÌNH ẢNH & OVERLAY --- #}
-    {# Wrapper giữ relative để định vị badge #}
     <div class="position-relative card-img-wrapper">
         
-        {# === [REMOVED] Menu 3 chấm ở đây đã được chuyển xuống dưới === #}
-
-        {# === LINK BAO HÌNH ẢNH (Click xem chi tiết) === #}
-        <a href="{% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}javascript:void(0){% else %}{{ trip.get_absolute_url }}{% endif %}" 
+        {# === LINK BAO HÌNH ẢNH === #}
+        {# Logic khóa link: Nếu riêng tư (chưa join) HOẶC chuyến đi đã hủy/bị từ chối #}
+        {# Note: Django template 'with' không hỗ trợ expression phức tạp, nên logic được đưa trực tiếp vào if #}
+        
+        <a href="{% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' or trip.trang_thai == 'DA_HUY' or trip.trang_thai == 'BI_TU_CHOI' %}javascript:void(0){% else %}{{ trip.get_absolute_url }}{% endif %}" 
            class="d-block w-100 text-decoration-none {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}js-locked-trip{% endif %}"
-           {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}"{% endif %}>
+           {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' and trip.trang_thai != 'DA_HUY' and trip.trang_thai != 'BI_TU_CHOI' %}data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}"{% endif %}>
             
             {# Ảnh bìa #}
-            <img src="{{ trip.cover_url }}" class="card-img-top w-100 object-fit-cover" alt="{{ trip.ten_chuyen_di }}" style="height: 220px;" loading="lazy">
+            <img src="{{ trip.cover_url }}" class="card-img-top w-100 object-fit-cover {% if trip.trang_thai == 'DA_HUY' or trip.trang_thai == 'BI_TU_CHOI' %}grayscale{% endif %}" alt="{{ trip.ten_chuyen_di }}" style="height: 220px;" loading="lazy">
             
             {# Badge: Privacy (Góc trái trên) #}
             <div class="position-absolute top-0 start-0 m-2" style="z-index: 5;">
@@ -28,12 +28,23 @@
                 </span>
             </div>
 
-            {# Badge: Status Trip #}
-            {# [UPDATED] Bỏ margin-right 50px vì không còn nút menu ở đây #}
-            <span class="position-absolute top-0 end-0 m-2 trip-status-badge badge rounded-pill shadow-sm"
-                  data-color="{{ trip.status_color|default_if_none:'#10b981'|escape }}"
-                  style="z-index: 5; backdrop-filter: blur(4px);">
-                {{ trip.status_name|default:"Sắp diễn ra" }}
+            {# Badge: Status Trip (Xử lý theo TRANG_THAI_CHOICES) #}
+            <span class="position-absolute top-0 end-0 m-2 badge rounded-pill shadow-sm backdrop-blur" style="z-index: 5;">
+                {% if trip.trang_thai == 'CHO_DUYET' %}
+                    <span class="bg-warning text-dark px-2 py-1 rounded-pill">Chờ duyệt</span>
+                {% elif trip.trang_thai == 'DANG_TUYEN' %}
+                    <span class="bg-success text-white px-2 py-1 rounded-pill">Đang tuyển</span>
+                {% elif trip.trang_thai == 'DA_DONG' %}
+                    <span class="bg-secondary text-white px-2 py-1 rounded-pill">Đã đóng</span>
+                {% elif trip.trang_thai == 'TAM_HOAN' %}
+                    <span class="bg-warning text-dark px-2 py-1 rounded-pill">Tạm hoãn</span>
+                {% elif trip.trang_thai == 'DA_HUY' %}
+                    <span class="bg-danger text-white px-2 py-1 rounded-pill">Đã hủy</span>
+                {% elif trip.trang_thai == 'BI_TU_CHOI' %}
+                    <span class="bg-danger text-white px-2 py-1 rounded-pill">Bị từ chối</span>
+                {% else %}
+                    <span class="bg-info text-white px-2 py-1 rounded-pill">{{ trip.get_trang_thai_display }}</span>
+                {% endif %}
             </span>
 
             {# Badge: Giá tiền #}
@@ -47,12 +58,24 @@
                 </span>
             </div>
             
-            {# Overlay khi bị khóa #}
-            {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}
+            {# Overlay: Riêng tư (Locked but NOT Disabled) #}
+            {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' and trip.trang_thai != 'DA_HUY' and trip.trang_thai != 'BI_TU_CHOI' %}
             <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 text-white" style="z-index: 15;">
                 <div class="text-center">
                     <i class="fas fa-lock fa-2x mb-2"></i>
                     <div class="small fw-bold">Yêu cầu mã</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Overlay: Đã hủy / Từ chối (Disabled) #}
+            {% if trip.trang_thai == 'DA_HUY' or trip.trang_thai == 'BI_TU_CHOI' %}
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-secondary bg-opacity-75 text-white" style="z-index: 15;">
+                <div class="text-center">
+                    <i class="fas fa-ban fa-3x mb-2"></i>
+                    <div class="fw-bold text-uppercase">
+                        {% if trip.trang_thai == 'DA_HUY' %}ĐÃ HỦY{% else %}DỪNG HOẠT ĐỘNG{% endif %}
+                    </div>
                 </div>
             </div>
             {% endif %}
@@ -62,69 +85,42 @@
     {# --- 2. PHẦN NỘI DUNG --- #}
     <div class="card-body d-flex flex-column p-3">
         
-        {# === [UPDATED] HÀNG TIÊU ĐỀ + MENU 3 CHẤM === #}
+        {# HEADER: TIÊU ĐỀ + MENU 3 CHẤM #}
         <div class="d-flex justify-content-between align-items-start mb-2">
-            {# Tiêu đề #}
             <h5 class="card-title lh-base text-truncate m-0 pe-2" style="flex: 1;">
                 <a href="{{ trip.get_absolute_url }}" class="text-dark text-decoration-none fw-bold" title="{{ trip.ten_chuyen_di }}">
                     {{ trip.ten_chuyen_di }}
                 </a>
             </h5>
 
-            {# Menu 3 chấm (Đã chuyển xuống đây) #}
+            {# Menu 3 chấm #}
             <div class="dropdown">
-                <button class="btn btn-link text-muted p-0 text-decoration-none" 
-                        type="button" 
-                        data-bs-toggle="dropdown" 
-                        aria-expanded="false"
-                        style="width: 24px; height: 24px; line-height: 24px;">
+                <button class="btn btn-link text-muted p-0 text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 24px;">
                     <i class="fas fa-ellipsis-v fa-lg"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 animated-dropdown">
-                    {# --- LOGIC CHO HOST --- #}
                     {% if trip.nguoi_to_chuc == user %}
+                        <li><a class="dropdown-item" href="{% url 'trips:update_trip' pk=trip.pk slug=trip.slug|default:'' %}"><i class="fas fa-edit me-2 text-primary"></i> Chỉnh sửa</a></li>
                         <li>
-                            <a class="dropdown-item" href="{% url 'trips:update_trip' pk=trip.pk slug=trip.slug|default:'' %}">
-                                <i class="fas fa-edit me-2 text-primary"></i> Chỉnh sửa
-                            </a>
-                        </li>
-                        <li>
-                            <button type="button" class="dropdown-item text-danger" 
-                                    data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" 
-                                    onclick="confirmDelete(this.dataset.url, true)">
+                            <button type="button" class="dropdown-item text-danger" data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" onclick="confirmDelete(this.dataset.url, true)">
                                 <i class="fas fa-trash-alt me-2"></i> Hủy chuyến đi
                             </button>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
-                    
-                    {# --- LOGIC CHO MEMBER ĐÃ THAM GIA --- #}
                     {% elif trip.user_status == 'DA_THAM_GIA' %}
                         <li>
-                            <button type="button" class="dropdown-item text-danger" 
-                                    data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" 
-                                    onclick="confirmDelete(this.dataset.url, false)">
+                            <button type="button" class="dropdown-item text-danger" data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" onclick="confirmDelete(this.dataset.url, false)">
                                 <i class="fas fa-sign-out-alt me-2"></i> Rời nhóm
                             </button>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
                     {% endif %}
-
-                    {# --- LOGIC CHUNG --- #}
-                    <li>
-                        <button class="dropdown-item" onclick="toggleLikeTrip('{{ trip.pk }}')">
-                            <i class="far fa-heart me-2 text-danger"></i> Yêu thích
-                        </button>
-                    </li>
-                    <li>
-                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reportTripModal" data-trip-id="{{ trip.pk }}">
-                            <i class="fas fa-flag me-2 text-warning"></i> Báo cáo
-                        </button>
-                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><button class="dropdown-item" onclick="toggleLikeTrip('{{ trip.pk }}')"><i class="far fa-heart me-2 text-danger"></i> Yêu thích</button></li>
+                    <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reportTripModal" data-trip-id="{{ trip.pk }}"><i class="fas fa-flag me-2 text-warning"></i> Báo cáo</button></li>
                 </ul>
             </div>
         </div>
 
-        {# Thông tin #}
+        {# INFO: Địa điểm & Thời gian #}
         <div class="small text-muted mb-3">
             <div class="d-flex align-items-start mb-2">
                 <i class="fas fa-map-marker-alt text-danger mt-1 me-2 flex-shrink-0" style="width: 16px; text-align: center;"></i>
@@ -138,91 +134,84 @@
             </div>
         </div>
 
-        {# --- TAGS --- #}
+        {# TAGS #}
         {% if trip.tags.all %}
         <div class="mb-3 d-flex flex-wrap gap-1 align-items-center">
             {% for tag in trip.tags.all|slice:":2" %} 
                 <span class="badge bg-light text-secondary border fw-normal">#{{ tag.ten }}</span>
             {% endfor %}
-
             {% if trip.tags.count > 2 %}
-                <button type="button" 
-                        class="badge bg-secondary text-white border-0 cursor-pointer" 
-                        data-bs-toggle="popover" 
-                        data-bs-trigger="focus" 
-                        data-bs-placement="top"
-                        data-bs-html="true"
-                        title="Tất cả Tags"
-                        data-bs-content="<div class='d-flex flex-wrap gap-1'>{% for t in trip.tags.all %}<span class='badge bg-light text-dark border'>#{{ t.ten }}</span>{% endfor %}</div>">
-                    +{{ trip.tags.count|add:"-2" }}
-                </button>
+                <button type="button" class="badge bg-secondary text-white border-0 cursor-pointer" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-html="true" title="Tất cả Tags" data-bs-content="<div class='d-flex flex-wrap gap-1'>{% for t in trip.tags.all %}<span class='badge bg-light text-dark border'>#{{ t.ten }}</span>{% endfor %}</div>">+{{ trip.tags.count|add:"-2" }}</button>
             {% endif %}
         </div>
         {% endif %}
 
-        {# --- HOST INFO --- #}
+        {# HOST INFO & SLOT #}
         <div class="mt-auto pt-3 border-top mb-3 d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 {% if trip.nguoi_to_chuc.taikhoanhoso.avatar %}
                     <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar.url }}" class="rounded-circle me-2 object-fit-cover" width="28" height="28" alt="Avt">
                 {% else %}
-                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2 fw-bold" style="width: 28px; height: 28px; font-size: 12px;">
-                        {{ trip.nguoi_to_chuc.username|slice:":1"|upper }}
-                    </div>
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2 fw-bold" style="width: 28px; height: 28px; font-size: 12px;">{{ trip.nguoi_to_chuc.username|slice:":1"|upper }}</div>
                 {% endif %}
                 <div class="d-flex flex-column" style="line-height: 1.2;">
                     <small class="text-muted" style="font-size: 0.75rem;">Host</small>
-                    <small class="fw-bold">
-                        {{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}
-                    </small>
+                    <small class="fw-bold">{{ trip.nguoi_to_chuc.last_name|default:trip.nguoi_to_chuc.username }}</small>
                 </div>
             </div>
-            
             <div class="d-flex align-items-center bg-light rounded-pill px-2 py-1">
                 <i class="fas fa-user-friends me-1 {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-success{% endif %}" style="font-size: 0.8rem;"></i>
-                <span class="small fw-bold {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-dark{% endif %}">
-                    {{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}
-                </span>
+                <span class="small fw-bold {% if trip.so_thanh_vien_tham_gia >= trip.so_luong_toi_da %}text-danger{% else %}text-dark{% endif %}">{{ trip.so_thanh_vien_tham_gia }}/{{ trip.so_luong_toi_da }}</span>
             </div>
         </div>
 
-        {# --- NÚT ACTION (Dưới cùng) --- #}
+        {# --- NÚT ACTION (Logic phức tạp theo trạng thái) --- #}
         <div class="row g-2">
             <div class="col-6">
-                <a href="{{ trip.get_absolute_url }}" class="btn btn-outline-secondary btn-sm w-100 fw-bold py-2">
-                    Chi tiết
-                </a>
+                <a href="{{ trip.get_absolute_url }}" class="btn btn-outline-secondary btn-sm w-100 fw-bold py-2">Chi tiết</a>
             </div>
 
             <div class="col-6">
                 {% if user.is_authenticated %}
+                    {# 1. Nếu là Host hoặc Member: Vào Chat #}
                     {% if trip.nguoi_to_chuc == user or trip.user_status == 'DA_THAM_GIA' %}
-                        <a href="{% url 'trips:chat_room' trip.pk %}" class="btn btn-primary btn-sm w-100 fw-bold py-2">
-                            <i class="fas fa-comments me-1"></i> Nhắn tin
-                        </a>
+                        <a href="{% url 'trips:chat_room' trip.pk %}" class="btn btn-primary btn-sm w-100 fw-bold py-2"><i class="fas fa-comments me-1"></i> Nhắn tin</a>
+                    
+                    {# 2. Nếu đã gửi yêu cầu: Chờ duyệt #}
                     {% elif trip.user_status == 'DA_GUI_YEU_CAU' %}
-                        <button class="btn btn-warning btn-sm w-100 fw-bold text-dark py-2" disabled>
-                            <i class="fas fa-clock me-1"></i> Chờ duyệt
-                        </button>
+                        <button class="btn btn-warning btn-sm w-100 fw-bold text-dark py-2" disabled><i class="fas fa-clock me-1"></i> Chờ duyệt</button>
+                    
+                    {# 3. Nếu bị từ chối #}
                     {% elif trip.user_status == 'BI_TU_CHOI' %}
-                        <button class="btn btn-danger btn-sm w-100 fw-bold py-2" disabled>
-                            <i class="fas fa-ban me-1"></i> Từ chối
-                        </button>
+                        <button class="btn btn-danger btn-sm w-100 fw-bold py-2" disabled><i class="fas fa-ban me-1"></i> Bị từ chối</button>
+
+                    {# 4. Xử lý theo TRANG_THAI chuyến đi #}
                     {% else %}
-                        {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
-                            <button class="btn btn-success btn-sm w-100 fw-bold py-2" data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}">
-                                <i class="fas fa-key me-1"></i> Nhập mã
-                            </button>
+                        {% if trip.trang_thai == 'DANG_TUYEN' %}
+                            {# Chỉ cho tham gia khi ĐANG TUYỂN #}
+                            {% if trip.che_do_rieng_tu == 'RIENG_TU' %}
+                                <button class="btn btn-success btn-sm w-100 fw-bold py-2" data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}"><i class="fas fa-key me-1"></i> Nhập mã</button>
+                            {% else %}
+                                <a href="#" class="btn btn-success btn-sm w-100 fw-bold py-2" data-bs-toggle="modal" data-bs-target="#joinTripModal{{ trip.pk }}">Tham gia</a>
+                            {% endif %}
+                        
+                        {% elif trip.trang_thai == 'DA_DONG' %}
+                             <button class="btn btn-secondary btn-sm w-100 fw-bold py-2" disabled>Đã đóng</button>
+                        {% elif trip.trang_thai == 'DA_HUY' %}
+                             <button class="btn btn-danger btn-sm w-100 fw-bold py-2" disabled>Đã hủy</button>
+                        {% elif trip.trang_thai == 'CHO_DUYET' %}
+                             <button class="btn btn-warning btn-sm w-100 fw-bold py-2" disabled>Chờ duyệt</button>
                         {% else %}
-                            <a href="#" class="btn btn-success btn-sm w-100 fw-bold py-2" data-bs-toggle="modal" data-bs-target="#joinTripModal{{ trip.pk }}">
-                                Tham gia
-                            </a>
+                             <button class="btn btn-secondary btn-sm w-100 fw-bold py-2" disabled>Tạm dừng</button>
                         {% endif %}
                     {% endif %}
                 {% else %}
-                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-success btn-sm w-100 fw-bold py-2">
-                        Tham gia
-                    </a>
+                    {# Chưa đăng nhập #}
+                    {% if trip.trang_thai == 'DANG_TUYEN' %}
+                        <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-success btn-sm w-100 fw-bold py-2">Tham gia</a>
+                    {% else %}
+                        <button class="btn btn-secondary btn-sm w-100 fw-bold py-2" disabled>Đã đóng</button>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -231,71 +220,31 @@
 </div>
 
 <script>
-    // Hàm xác nhận xóa/rời nhóm
+    // Giữ nguyên script confirmDelete và popover...
     function confirmDelete(url, isHost) {
         const form = document.getElementById('deleteForm');
         const msg = document.getElementById('deleteMsg');
         const modalEl = document.getElementById('deleteModal');
-        
         if(form && modalEl) {
             form.action = url; 
-            if(msg) {
-                if(isHost) {
-                    msg.innerText = "Bạn là Leader. Hành động này sẽ HỦY chuyến đi vĩnh viễn và thông báo cho tất cả thành viên.";
-                } else {
-                    msg.innerText = "Bạn có chắc chắn muốn rời khỏi chuyến đi này không?";
-                }
-            }
-            var myModal = new bootstrap.Modal(modalEl);
-            myModal.show();
-        } else {
-            const text = isHost ? "Hủy chuyến đi này?" : "Rời nhóm?";
-            if(confirm(text)) {
-                window.location.href = url; 
-            }
+            if(msg) msg.innerText = isHost ? "Bạn là Leader. Hành động này sẽ HỦY chuyến đi vĩnh viễn và thông báo cho tất cả thành viên." : "Bạn có chắc chắn muốn rời khỏi chuyến đi này không?";
+            new bootstrap.Modal(modalEl).show();
+        } else if(confirm(isHost ? "Hủy chuyến đi này?" : "Rời nhóm?")) {
+            window.location.href = url; 
         }
     }
-
-    // Hàm giả lập Yêu thích
-    function toggleLikeTrip(tripId) {
-        // Logic AJAX gọi lên server để like/unlike
-        alert("Đã thêm chuyến đi " + tripId + " vào yêu thích!");
-    }
-
+    function toggleLikeTrip(tripId) { alert("Đã thêm chuyến đi " + tripId + " vào yêu thích!"); }
     document.addEventListener("DOMContentLoaded", function(){
-        document.querySelectorAll('.trip-status-badge').forEach(function(el){
-            var c = el.dataset.color;
-            if (c) { 
-                el.style.backgroundColor = c; 
-                el.classList.add('text-white'); 
-            }
-        });
-
-        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-            return new bootstrap.Popover(popoverTriggerEl, {
-                trigger: 'focus'
-            })
-        });
+        [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]')).map(function (el) { return new bootstrap.Popover(el, {trigger: 'focus'}) });
     });
 </script>
 
 <style>
-    .trip-card {
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .trip-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-    }
+    .trip-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .trip-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
     .cursor-pointer { cursor: pointer; }
     .backdrop-blur { backdrop-filter: blur(4px); }
-    /* Animation cho dropdown mượt hơn */
-    .animated-dropdown {
-        animation: fadeIn 0.2s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    .grayscale { filter: grayscale(100%); }
+    .animated-dropdown { animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 </style>

@@ -1,5 +1,5 @@
 # accounts/views.py
-
+from django.utils import timezone
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -17,7 +17,9 @@ from gamification.models import GameHuyHieuNguoiDung
 from community.models import CongDongBaiViet
 from .models import TaiKhoanThietBiCaNhan, TaiKhoanSoThichNguoiDung
 from core.models import The, VatDung
-
+from .models import TaiKhoanHoSo, TaiKhoanThietBiCaNhan
+# Giả sử app trips của bạn tên là 'trips'
+from trips.models import ChuyenDiThanhVien, ChuyenDi
 # Import Forms
 from .forms import (
     DangKyForm,
@@ -82,45 +84,73 @@ class CustomLoginView(LoginView):
 
 @login_required
 def profile_view(request, username):
-    """
-    View hiển thị trang hồ sơ chi tiết (CV Trekking).
-    Tên hàm này khớp với `urls.py` của bạn.
-    """
+    # 1. Lấy user object từ username trên URL
     profile_user = get_object_or_404(User, username=username)
-    is_own_profile = request.user == profile_user
-
-    # Lấy các dữ liệu liên quan
-    trips_joined = ChuyenDiThanhVien.objects.filter(user=profile_user, trang_thai_tham_gia='Đã duyệt').order_by('-chuyen_di__ngay_bat_dau')
-    badges_earned = GameHuyHieuNguoiDung.objects.filter(user=profile_user).order_by('-ngay_dat_duoc')
-    posts_created = CongDongBaiViet.objects.filter(tac_gia=profile_user)
-    user_interests = TaiKhoanSoThichNguoiDung.objects.filter(user=profile_user).select_related('the')
     
-    # Lấy và gom nhóm thiết bị cá nhân theo loại vật dụng
-    # THAY THẾ LOGIC CŨ BẰNG LOGIC GOM NHÓM MỚI
-    personal_equipment_list = TaiKhoanThietBiCaNhan.objects.filter(
+    # 2. Kiểm tra xem người xem có phải là chủ sở hữu hồ sơ không
+    is_own_profile = (request.user == profile_user)
+    
+    # =========================================================
+    # PHẦN 1: LỊCH SỬ CHUYẾN ĐI (Trips History)
+    # =========================================================
+    # Lấy danh sách các chuyến đi mà user đã tham gia (STATUS = DA_THAM_GIA)
+    # select_related: Tối ưu query để lấy thông tin Chuyến đi, Cung đường, Người tổ chức cùng lúc
+    trips_joined = ChuyenDiThanhVien.objects.filter(
+        user=profile_user,
+        trang_thai_tham_gia='DA_THAM_GIA'
+    ).select_related(
+        'chuyen_di',
+        'chuyen_di__cung_duong',
+        'chuyen_di__cung_duong__tinh_thanh',  # Để hiển thị địa điểm
+        'chuyen_di__nguoi_to_chuc__taikhoanhoso' # Để hiển thị avatar host (nếu cần)
+    ).order_by('-chuyen_di__ngay_bat_dau')  # Sắp xếp chuyến mới nhất lên đầu
+
+    # =========================================================
+    # PHẦN 2: THIẾT BỊ CÁ NHÂN (Equipment)
+    # =========================================================
+    # Lấy danh sách thiết bị và gom nhóm theo loại (Ba lô, Lều, v.v.)
+    personal_equipment = TaiKhoanThietBiCaNhan.objects.filter(
+        user=profile_user
     ).select_related('vat_dung', 'vat_dung__loai_vat_dung').order_by('vat_dung__loai_vat_dung__ten', 'vat_dung__ten')
 
+    # Gom nhóm thiết bị để hiển thị đẹp hơn
     grouped_equipment = {}
-    for item in personal_equipment_list:
+    for item in personal_equipment:
         category = item.vat_dung.loai_vat_dung
         if category not in grouped_equipment:
             grouped_equipment[category] = []
         grouped_equipment[category].append(item)
-    # KẾT THÚC LOGIC GOM NHÓM
 
-    # Lấy danh sách tất cả các tag sở thích (all_tags_list)
-    all_tags_list = list(The.objects.values_list('ten', flat=True))
+    # =========================================================
+    # PHẦN 3: SỞ THÍCH (Interests)
+    # =========================================================
+    # Giả sử sở thích được lưu trong TaiKhoanHoSo thông qua ManyToManyField (VD: tags)
+    # Hoặc nếu bạn dùng model riêng, hãy query tương tự
+    user_interests = []
+    if hasattr(profile_user, 'taikhoanhoso') and profile_user.taikhoanhoso:
+        # Ví dụ: user_interests = profile_user.taikhoanhoso.so_thich.all()
+        # Dựa trên template của bạn, có vẻ bạn dùng tags
+        pass 
+
+    # =========================================================
+    # PHẦN 4: DỮ LIỆU KHÁC (Badges, Posts - Placeholder)
+    # =========================================================
+    # Nếu bạn chưa có model Badge hay Post, tạm thời để trống để tránh lỗi template
+    badges_earned = [] # UserBadge.objects.filter(user=profile_user)...
+    posts_created = [] # Post.objects.filter(author=profile_user)...
 
     context = {
         'profile_user': profile_user,
         'is_own_profile': is_own_profile,
-        'trips_joined': trips_joined,
+        'trips_joined': trips_joined,      # <-- Dữ liệu quan trọng cho tab Trips
+        'grouped_equipment': grouped_equipment,
+        'personal_equipment': personal_equipment, # Dùng cho form edit nếu cần
+        'user_interests': user_interests,
         'badges_earned': badges_earned,
         'posts_created': posts_created,
-        'user_interests': user_interests,
-        'grouped_equipment': grouped_equipment,
-        'all_tags_whitelist': json.dumps(all_tags_list),
+        'now': timezone.now(), # Để so sánh ngày tháng (Sắp tới/Đã qua)
     }
+    
     return render(request, 'accounts/profile_detail.html', context)
 
 

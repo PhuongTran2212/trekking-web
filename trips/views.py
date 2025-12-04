@@ -1081,7 +1081,10 @@ class MyTripsView(LoginRequiredMixin, ListView):
         user = self.request.user
         
         # 1. Base Query
-        # --- SỬA LỖI Ở ĐÂY: Đã xóa 'trang_thai' khỏi select_related ---
+        # --- CẬP NHẬT: Thêm annotation so_thanh_vien_tham_gia ---
+        # Sử dụng distinct=True để đảm bảo không đếm trùng
+        # Lưu ý: Theo logic tạo chuyến đi (create_trip_view), Admin/Host luôn được add vào bảng thành viên với status DA_THAM_GIA.
+        # Nên hàm Count này sẽ tính luôn cả Admin.
         queryset = ChuyenDi.objects.filter(
             Q(thanh_vien__user=user) | Q(nguoi_to_chuc=user)
         ).distinct().select_related(
@@ -1094,7 +1097,9 @@ class MyTripsView(LoginRequiredMixin, ListView):
                     chuyen_di=OuterRef('pk'),
                     user=user
                 ).values('trang_thai_tham_gia')[:1]
-            )
+            ),
+            # Đếm tất cả thành viên có trạng thái ĐÃ THAM GIA (Bao gồm cả Host/Admin nếu dữ liệu chuẩn)
+            so_thanh_vien_tham_gia=Count('thanh_vien', filter=Q(thanh_vien__trang_thai_tham_gia='DA_THAM_GIA'), distinct=True)
         )
 
         # 2. XỬ LÝ BỘ LỌC (Giữ nguyên)

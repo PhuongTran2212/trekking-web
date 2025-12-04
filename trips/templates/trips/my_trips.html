@@ -1,39 +1,22 @@
 {% extends 'base.html' %}
 {% load static humanize %}
 
-{% block title %}{{ page_title }}{% endblock %}
+{% block title %}{{ page_title|default:"Chuyến đi của tôi" }}{% endblock %}
 
 {% block extra_css %}
 <style>
     /* ===== ANIMATIONS ===== */
     @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes scaleIn {
-        from {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
     }
 
-    @keyframes shimmer {
-        0% { background-position: -200% center; }
-        100% { background-position: 200% center; }
-    }
-
-    /* ===== STAT CARDS ===== */
+    /* ===== STAT CARDS (GIỮ NGUYÊN) ===== */
     .stat-card {
         border-radius: var(--radius-lg);
         overflow: hidden;
@@ -53,9 +36,7 @@
         transition: left 0.5s;
     }
 
-    .stat-card:hover::before {
-        left: 100%;
-    }
+    .stat-card:hover::before { left: 100%; }
 
     .stat-card:hover {
         transform: translateY(-4px);
@@ -71,19 +52,10 @@
         transform: translateY(-50%);
     }
 
-    /* Gradient backgrounds */
-    .stat-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-.stat-success {
-    background: linear-gradient(135deg, #34d399 0%, #059669 100%);
-}
-    .stat-warning {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-    .stat-info {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
+    .stat-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stat-success { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
+    .stat-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat-info    { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
 
     /* ===== TOOLBAR ===== */
     .toolbar-card {
@@ -125,130 +97,6 @@
         box-shadow: 0 0 0 3px var(--primary-light);
     }
 
-    /* ===== TRIP CARDS ===== */
-    .trip-card {
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: scaleIn 0.5s ease forwards;
-        border: 1px solid var(--border-color);
-        background: white;
-    }
-
-    .trip-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: var(--shadow-xl);
-        border-color: var(--primary-light);
-    }
-
-    .trip-card-image {
-        height: 200px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .trip-card-image img {
-        transition: transform 0.5s ease;
-    }
-
-    .trip-card:hover .trip-card-image img {
-        transform: scale(1.1);
-    }
-
-    .trip-card-image::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 50%;
-        background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
-    }
-
-    .role-badge {
-        z-index: 2;
-        backdrop-filter: blur(10px);
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        border-radius: var(--radius-sm);
-        padding: 0.4rem 0.8rem;
-    }
-
-    .badge-leader {
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-        color: #78350f;
-    }
-
-    .badge-member {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        color: white;
-    }
-
-    .dropdown-menu-custom {
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-color);
-        box-shadow: var(--shadow-lg);
-        padding: 0.5rem;
-        animation: scaleIn 0.2s ease;
-    }
-
-    .dropdown-item-custom {
-        border-radius: var(--radius-sm);
-        padding: 0.6rem 1rem;
-        margin-bottom: 0.25rem;
-        transition: all 0.2s;
-    }
-
-    .dropdown-item-custom:hover {
-        background: var(--bg-light);
-        transform: translateX(4px);
-    }
-
-    /* ===== BUTTONS ===== */
-    .btn-custom {
-        border-radius: var(--radius-md);
-        padding: 0.65rem 1.5rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        border: none;
-    }
-
-    .btn-primary-custom {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        color: white;
-    }
-
-    .btn-primary-custom:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(62, 159, 95, 0.3);
-    }
-
-    .btn-outline-custom {
-        border: 2px solid var(--primary);
-        color: var(--primary);
-        background: white;
-    }
-
-    .btn-outline-custom:hover {
-        background: var(--primary);
-        color: rgb(57, 212, 57);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(62, 159, 95, 0.3);
-    }
-
-    .btn-reset {
-        background: var(--bg-light);
-        border: 2px solid var(--border-color);
-        color: var(--text-muted);
-        transition: all 0.3s;
-    }
-
-    .btn-reset:hover {
-        background: white;
-        border-color: var(--primary);
-        color: var(--primary);
-    }
-
     /* ===== EMPTY STATE ===== */
     .empty-state {
         border-radius: var(--radius-xl);
@@ -257,16 +105,14 @@
         background: white;
     }
 
-    .empty-state-icon {
-        animation: float 3s ease-in-out infinite;
-    }
+    .empty-state-icon { animation: float 3s ease-in-out infinite; }
 
     @keyframes float {
         0%, 100% { transform: translateY(0px); }
         50% { transform: translateY(-10px); }
     }
 
-    /* ===== MODAL ===== */
+    /* ===== MODAL STYLE ===== */
     .modal-custom .modal-content {
         border-radius: var(--radius-lg);
         border: none;
@@ -292,26 +138,20 @@
         background-clip: text;
     }
 
-    .hover-link {
-        transition: color 0.3s ease;
-    }
-
-    .hover-link:hover {
-        color: var(--primary) !important;
-    }
-
     /* Animation delays for stagger effect */
     .stat-card:nth-child(1) { animation-delay: 0.1s; }
     .stat-card:nth-child(2) { animation-delay: 0.2s; }
     .stat-card:nth-child(3) { animation-delay: 0.3s; }
     .stat-card:nth-child(4) { animation-delay: 0.4s; }
 
-    .trip-card:nth-child(1) { animation-delay: 0.1s; }
-    .trip-card:nth-child(2) { animation-delay: 0.2s; }
-    .trip-card:nth-child(3) { animation-delay: 0.3s; }
-    .trip-card:nth-child(4) { animation-delay: 0.4s; }
-    .trip-card:nth-child(5) { animation-delay: 0.5s; }
-    .trip-card:nth-child(6) { animation-delay: 0.6s; }
+    /* CSS cho Wrapper cột chứa card */
+    .trip-col { animation: scaleIn 0.5s ease forwards; }
+    .trip-col:nth-child(1) { animation-delay: 0.1s; }
+    .trip-col:nth-child(2) { animation-delay: 0.2s; }
+    .trip-col:nth-child(3) { animation-delay: 0.3s; }
+    .trip-col:nth-child(4) { animation-delay: 0.4s; }
+    .trip-col:nth-child(5) { animation-delay: 0.5s; }
+    .trip-col:nth-child(6) { animation-delay: 0.6s; }
     
 </style>
 {% endblock %}
@@ -394,7 +234,7 @@
                 </div>
 
                 <div class="col-md-2">
-                    <a href="{% url 'trips:my_trips' %}" class="btn btn-reset btn-custom w-100">
+                    <a href="{% url 'trips:my_trips' %}" class="btn btn-light border w-100 fw-bold">
                         <i class="fas fa-redo-alt me-2"></i>Làm mới
                     </a>
                 </div>
@@ -406,84 +246,9 @@
     {% if trips %}
         <div class="row g-4">
             {% for trip in trips %}
-            <div class="col-md-6 col-lg-4">
-                <div class="card trip-card h-100 border-0 shadow-sm position-relative">
-                    
-                    <!-- Menu 3 chấm -->
-                    <div class="dropdown position-absolute top-0 end-0 m-3" style="z-index: 10;">
-                        <button class="btn btn-light btn-sm rounded-circle shadow" type="button" data-bs-toggle="dropdown" style="width: 36px; height: 36px;">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-custom dropdown-menu-end shadow-lg border-0">
-                            {% if trip.nguoi_to_chuc == user %}
-                                <li>
-                                    <a class="dropdown-item dropdown-item-custom" href="{% url 'trips:update_trip' pk=trip.pk slug=trip.slug %}">
-                                        <i class="fas fa-edit me-2 text-primary"></i> Chỉnh sửa
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider my-1"></li>
-                                <li>
-                                    <button type="button" class="dropdown-item dropdown-item-custom text-danger" 
-                                            data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" 
-                                            onclick="confirmDelete(this.dataset.url, true)">
-                                        <i class="fas fa-trash-alt me-2"></i> Hủy chuyến đi
-                                    </button>
-                                </li>
-                            {% else %}
-                                <li>
-                                    <button type="button" class="dropdown-item dropdown-item-custom text-danger" 
-                                            data-url="{% url 'trips:delete_or_leave_trip' trip.pk %}" 
-                                            onclick="confirmDelete(this.dataset.url, false)">
-                                        <i class="fas fa-sign-out-alt me-2"></i> Rời nhóm
-                                    </button>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </div>
-
-                    <!-- Ảnh bìa -->
-                    <div class="trip-card-image">
-                        <img src="{{ trip.cover_url }}" class="w-100 h-100 object-fit-cover" alt="{{ trip.ten_chuyen_di }}">
-                        
-                        <!-- Badge vai trò -->
-                        {% if trip.nguoi_to_chuc == user %}
-                            <span class="position-absolute top-0 start-0 m-3 role-badge badge-leader shadow">
-                                <i class="fas fa-crown me-1"></i> Leader
-                            </span>
-                        {% else %}
-                            <span class="position-absolute top-0 start-0 m-3 role-badge badge-member shadow">
-                                <i class="fas fa-hiking me-1"></i> Member
-                            </span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Nội dung -->
-                    <div class="card-body d-flex flex-column p-4">
-                        <h5 class="card-title fw-bold mb-3 text-truncate">
-                            <a href="{{ trip.get_absolute_url }}" class="text-decoration-none text-dark hover-link">
-                                {{ trip.ten_chuyen_di }}
-                            </a>
-                        </h5>
-                        
-                        <div class="d-flex justify-content-between text-muted mb-4" style="font-size: 0.9rem;">
-                            <span><i class="far fa-calendar me-2 text-primary"></i>{{ trip.ngay_bat_dau|date:"d/m/Y" }}</span>
-                            <span><i class="fas fa-map-marker-alt me-2 text-danger"></i>{{ trip.cung_duong.tinh_thanh.ten }}</span>
-                        </div>
-
-                        <!-- Nút Chat -->
-                        <div class="mt-auto">
-                            {% if trip.my_status == 'DA_THAM_GIA' or trip.nguoi_to_chuc == user %}
-                                <a href="{{ trip.get_chat_url }}" class="btn btn-outline-custom btn-custom w-100">
-                                    <i class="fas fa-comments me-2"></i>Vào Chat Nhóm
-                                </a>
-                            {% elif trip.my_status == 'DA_GUI_YEU_CAU' %}
-                                <button class="btn btn-custom w-100" disabled style="background: var(--bg-light); color: var(--text-muted);">
-                                    <i class="fas fa-clock me-2"></i>Chờ duyệt...
-                                </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+            <div class="col-md-6 col-lg-4 trip-col">
+                {# --- TẬN DỤNG CARD TỪ trip_card.html --- #}
+                {% include "trips/partials/trip_card.html" %} 
             </div>
             {% endfor %}
         </div>
@@ -505,7 +270,7 @@
             <p class="text-muted mb-4" style="max-width: 400px; margin: 0 auto;">
                 Bạn chưa tham gia chuyến đi nào hoặc bộ lọc không tìm thấy kết quả phù hợp.
             </p>
-            <a href="{% url 'trips:trip_hub' %}" class="btn btn-primary-custom btn-custom shadow">
+            <a href="{% url 'trips:trip_hub' %}" class="btn btn-primary shadow fw-bold rounded-pill px-4">
                 <i class="fas fa-compass me-2"></i>Khám phá ngay
             </a>
         </div>
@@ -513,7 +278,7 @@
 
 </div>
 
-<!-- 4. MODAL XÁC NHẬN -->
+<!-- 4. MODAL XÁC NHẬN (Cần thiết cho logic Hủy/Rời nhóm trong trip_card) -->
 <div class="modal fade modal-custom" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-xl">
@@ -527,10 +292,10 @@
                 <form id="deleteForm" method="post" action="">
                     {% csrf_token %}
                     <div class="d-flex gap-3">
-                        <button type="button" class="btn btn-custom btn-reset flex-fill" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-light border flex-fill fw-bold" data-bs-dismiss="modal">
                             <i class="fas fa-times me-2"></i>Hủy bỏ
                         </button>
-                        <button type="submit" class="btn btn-custom flex-fill text-white" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                        <button type="submit" class="btn btn-danger flex-fill fw-bold shadow-sm">
                             <i class="fas fa-check me-2"></i>Xác nhận
                         </button>
                     </div>
@@ -543,22 +308,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    function confirmDelete(url, isHost) {
-        const form = document.getElementById('deleteForm');
-        const msg = document.getElementById('deleteMsg');
-        
-        if (form) {
-            form.action = url;
-            if(isHost) {
-                msg.innerText = "Bạn là Leader. Hành động này sẽ HỦY bỏ chuyến đi vĩnh viễn và không thể hoàn tác.";
-            } else {
-                msg.innerText = "Bạn muốn rời khỏi nhóm này? Bạn có thể tham gia lại sau nếu còn chỗ trống.";
-            }
-            
-            var myModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            myModal.show();
-        }
-    }
-</script>
+{# Script confirmDelete đã được tích hợp sẵn trong trip_card.html nên không cần khai báo lại ở đây #}
 {% endblock %}
