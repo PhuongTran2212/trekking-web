@@ -8,8 +8,8 @@
     /* Colors - Green Theme for Trekking */
     --primary-green: #2d5016;
     --primary-green-hover: #3d6b1f;
-    --accent-green: #7cb342;
-    --accent-green-hover: #689f38;
+    --accent-green: #10b981;
+    --accent-green-hover: #059669;
     --light-green: #e8f5e9;
 
     /* Neutral Colors */
@@ -51,9 +51,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #2d5016 0%, #3d6b1f 50%, #7cb342 100%);
+    background: linear-gradient(135deg, #2d5016 0%, #3d6b1f 50%, #10b981 100%);
     background-image:
-        linear-gradient(135deg, rgba(45, 80, 22, 0.85), rgba(124, 179, 66, 0.75)),
+        linear-gradient(135deg, rgba(45, 80, 22, 0.85), rgba(16, 185, 129, 0.75)),
         url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920');
     background-size: cover;
     background-position: center;
