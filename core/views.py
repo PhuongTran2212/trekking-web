@@ -3,7 +3,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils.text import slugify
-from django.db.models import Count
+from django.db.models import Count, Q, F
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth.models import User
 
 # Import các Model và Form
 from .models import TinhThanh, LoaiVatDung, VatDung, The
@@ -18,7 +21,100 @@ def is_admin_check(user):
 @login_required
 @user_passes_test(is_admin_check)
 def admin_dashboard_view(request):
-    return render(request, 'admin/dashboard.html')
+    """
+    Dashboard quản trị với KPI Cards, Quick Actions, Recent Activities, Risk List
+    """
+    from trips.models import ChuyenDi  # Import tại đây để tránh circular import
+    from community.models import CongDongBaiViet
+    from treks.models import CungDuongTrek
+    
+    today = timezone.now().date()
+    now = timezone.now()
+    seven_days_later = now + timedelta(days=7)
+    three_days_later = now + timedelta(days=3)
+    
+    # ==========================================
+    # 1. KPI CARDS
+    # ==========================================
+    
+    # Thành viên mới hôm nay
+    new_users_today = User.objects.filter(
+        date_joined__date=today
+    ).count()
+    
+    # Cần duyệt gấp (Bài viết + Cung đường chờ duyệt)
+    pending_posts = CongDongBaiViet.objects.filter(
+        trang_thai='CHO_DUYET'
+    ).count()
+    
+    pending_treks = CungDuongTrek.objects.filter(
+        trang_thai='CHO_DUYET'
+    ).count()
+    
+    pending_total = pending_posts + pending_treks
+    
+    # Sắp khởi hành trong 7 ngày
+    upcoming_trips_count = ChuyenDi.objects.filter(
+        ngay_bat_dau__range=[now, seven_days_later],
+        trang_thai__in=['TUYEN_THANH_VIEN', 'CHUAN_BI']
+    ).count()
+    
+    # Chuyến có rủi ro (sắp đi trong 3 ngày nhưng chưa đủ người hoặc chưa có ai)
+    risk_trips = ChuyenDi.objects.filter(
+        ngay_bat_dau__range=[now, three_days_later],
+        trang_thai__in=['TUYEN_THANH_VIEN', 'CHUAN_BI']
+    ).annotate(
+        member_count=Count('thanh_vien')
+    ).filter(
+        member_count__lt=2  # Chuyến có ít hơn 2 người
+    ).select_related('nguoi_to_chuc', 'cung_duong')[:5]
+    
+    risk_count = risk_trips.count()
+    
+    # ==========================================
+    # 2. RECENT ACTIVITIES
+    # ==========================================
+    # Chuyến đi mới tạo
+    recent_trips = ChuyenDi.objects.select_related(
+        'nguoi_to_chuc', 'cung_duong'
+    ).order_by('-ngay_tao')[:5]
+    
+    # Cung đường mới tạo
+    recent_treks = CungDuongTrek.objects.select_related(
+        'nguoi_tao', 'tinh_thanh'
+    ).order_by('-ngay_tao')[:5]
+    
+    # Bài viết cộng đồng mới
+    recent_posts = CongDongBaiViet.objects.select_related(
+        'tac_gia'
+    ).order_by('-ngay_dang')[:5]
+    
+    # ==========================================
+    # 3. CONTEXT
+    # ==========================================
+    context = {
+        'title': 'Dashboard',
+        
+        # KPI Cards
+        'kpi': {
+            'new_users': new_users_today,
+            'pending': pending_total,
+            'pending_posts': pending_posts,
+            'pending_treks': pending_treks,
+            'upcoming': upcoming_trips_count,
+        },
+        'risk_count': risk_count,
+        
+        # Recent Activities
+        'recent_trips': recent_trips,
+        'recent_treks': recent_treks,
+        'recent_posts': recent_posts,
+        
+        # Risk List
+        'risk_trips': risk_trips,
+    }
+    
+    return render(request, 'admin/dashboard.html', context)
 
 @login_required
 @user_passes_test(is_admin_check)
