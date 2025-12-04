@@ -88,7 +88,10 @@
         {# HEADER: TIÊU ĐỀ + MENU 3 CHẤM #}
         <div class="d-flex justify-content-between align-items-start mb-2">
             <h5 class="card-title lh-base text-truncate m-0 pe-2" style="flex: 1;">
-                <a href="{{ trip.get_absolute_url }}" class="text-dark text-decoration-none fw-bold" title="{{ trip.ten_chuyen_di }}">
+                <a href="{% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' or trip.trang_thai == 'DA_HUY' or trip.trang_thai == 'BI_TU_CHOI' %}javascript:void(0){% else %}{{ trip.get_absolute_url }}{% endif %}" 
+                   class="text-dark text-decoration-none fw-bold {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' %}js-locked-trip{% endif %}" 
+                   title="{{ trip.ten_chuyen_di }}"
+                   {% if trip.che_do_rieng_tu == 'RIENG_TU' and trip.nguoi_to_chuc != user and trip.user_status != 'DA_THAM_GIA' and trip.trang_thai != 'DA_HUY' and trip.trang_thai != 'BI_TU_CHOI' %}data-bs-toggle="modal" data-bs-target="#tripCodeModal" data-trip-id="{{ trip.pk }}"{% endif %}>
                     {{ trip.ten_chuyen_di }}
                 </a>
             </h5>
@@ -208,7 +211,7 @@
                 {% else %}
                     {# Chưa đăng nhập #}
                     {% if trip.trang_thai == 'DANG_TUYEN' %}
-                        <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-success btn-sm w-100 fw-bold py-2">Tham gia</a>
+                        <button class="btn btn-success btn-sm w-100 fw-bold py-2" data-require-auth>Tham gia</button>
                     {% else %}
                         <button class="btn btn-secondary btn-sm w-100 fw-bold py-2" disabled>Đã đóng</button>
                     {% endif %}
@@ -220,7 +223,7 @@
 </div>
 
 <script>
-    // Giữ nguyên script confirmDelete và popover...
+    // Giữ nguyên script confirmDelete...
     function confirmDelete(url, isHost) {
         const form = document.getElementById('deleteForm');
         const msg = document.getElementById('deleteMsg');
@@ -234,9 +237,30 @@
         }
     }
     function toggleLikeTrip(tripId) { alert("Đã thêm chuyến đi " + tripId + " vào yêu thích!"); }
-    document.addEventListener("DOMContentLoaded", function(){
-        [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]')).map(function (el) { return new bootstrap.Popover(el, {trigger: 'focus'}) });
-    });
+    
+    (function() {
+        function initPopovers() {
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                // Check if already initialized to avoid duplicates
+                if (bootstrap.Popover.getInstance(popoverTriggerEl)) {
+                    return;
+                }
+                return new bootstrap.Popover(popoverTriggerEl, {
+                    trigger: 'focus',
+                    html: true,
+                    container: 'body', // Fix clipping
+                    sanitize: false // Allow complex HTML
+                })
+            })
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPopovers);
+        } else {
+            initPopovers();
+        }
+    })();
 </script>
 
 <style>

@@ -399,6 +399,35 @@ class TripDetailView(DetailView):
             'nguoi_to_chuc__taikhoanhoso', 'cung_duong__tinh_thanh', 'cung_duong__do_kho', 'anh_bia'
         ).prefetch_related('timeline', 'media', 'thanh_vien__user__taikhoanhoso')
 
+    def dispatch(self, request, *args, **kwargs):
+        """Kiểm tra quyền truy cập trip riêng tư"""
+        trip = self.get_object()
+        
+        # Nếu là trip công khai → Cho phép truy cập
+        if trip.che_do_rieng_tu == 'CONG_KHAI':
+            return super().dispatch(request, *args, **kwargs)
+        
+        # Nếu chưa đăng nhập → Yêu cầu đăng nhập
+        if not request.user.is_authenticated:
+            from django.contrib import messages
+            from django.urls import reverse
+            messages.warning(request, 'Chuyến đi này ở chế độ riêng tư. Vui lòng đăng nhập.')
+            return redirect(f"{reverse('accounts:dang-nhap')}?next={request.path}")
+        
+        # Kiểm tra quyền: Chủ trip, thành viên, hoặc đã nhập mã
+        is_organizer = (trip.nguoi_to_chuc == request.user)
+        membership = trip.thanh_vien.filter(user=request.user).first()
+        is_member = (membership and membership.trang_thai_tham_gia == 'DA_THAM_GIA')
+        has_session_access = request.session.get(f'access_granted_{trip.pk}', False)
+        
+        # Nếu có quyền → Cho phép truy cập
+        if is_organizer or is_member or has_session_access:
+            return super().dispatch(request, *args, **kwargs)
+        
+        # Không có quyền → Hiện form nhập mã (template sẽ xử lý)
+        # Template đã có modal #tripCodeModal
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         trip = self.object
