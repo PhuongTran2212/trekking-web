@@ -1,6 +1,5 @@
 # TrekViet - Vietnam Trekking Management System
 
-![TrekViet Banner](./docs/images/banner.png)
 *A comprehensive platform connecting Vietnam's trekking community*
 
 ## 📖 Overview
@@ -503,22 +502,24 @@ Details: See `migration-report.md`
 ## 📸 Screenshots
 
 ### Homepage
-![Homepage](./docs/images/homepage.png)
+![TrekViet Homepage](./docs/images/homepage.png)
+*The main landing page showcasing featured trekking routes and community highlights*
 
-### Route Detail Page
-![Route Detail](./docs/images/route-detail.png)
+### Trekking Routes
+![Routes Explorer](./docs/images/routes-page.png)
+*Browse and filter trekking routes across Vietnam with detailed information*
 
 ### Trip Planning
-![Trip Planning](./docs/images/trip-planning.png)
+![Trip Hub](./docs/images/trips-page.png)
+*Organize and join trekking trips with the community*
 
-### Chat Interface
-![Chat](./docs/images/chat-interface.png)
+### Community
+![Community Posts](./docs/images/community-page.png)
+*Share experiences, photos, and connect with fellow trekkers*
 
-### User Profile
-![Profile](./docs/images/user-profile.png)
-
-### Admin Dashboard
-![Dashboard](./docs/images/admin-dashboard-full.png)
+### Admin Panel
+![Admin Login](./docs/images/admin-login.png)
+*Secure admin access for content moderation and system management*
 
 ## 🤝 Contributing
 
