@@ -8,11 +8,11 @@
 
 ### 1. Interactive Home Page
 A modern landing page designed to showcase the beauty of Vietnam's nature and provide quick access to popular trails.
-> ![Home Page 1](picture/so1.jpg)
-> ![Home Page 2](picture/so2.jpg)
-> ![Home Page 3](picture/so3.jpg)
-> ![Home Page 2](picture/so4.jpg)
-> ![Home Page 3](picture/so5.jpg)
+> ![Home Page 1](picture/so1.png)
+> ![Home Page 2](picture/so2.png)
+> ![Home Page 3](picture/so3.png)
+> ![Home Page 2](picture/so4.png)
+> ![Home Page 3](picture/so5.png)
 
 ### 2. Advanced Trek Discovery
 A comprehensive library of trekking routes with GIS data.
@@ -22,9 +22,6 @@ A comprehensive library of trekking routes with GIS data.
 > ![Trek Discovery](picture/so6.png)
 > ![Trek Discovery](picture/so6.1.png)
 > ![Trek Discovery](picture/so6.2.png)
-
-)
-
 ### 3. Expedition & Trip Hub
 Organize group adventures or join existing expeditions.
 *   **Member Management:** Role-based access (Lead, Co-lead, Member) with an approval system for new joiners.
