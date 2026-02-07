@@ -1,12 +1,7 @@
-<<<<<<< HEAD
-=======
-# gamification/models.py
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
 from django.db import models
 from django.contrib.auth.models import User
 
 class GameHuyHieu(models.Model):
-<<<<<<< HEAD
     # --- DANH SÁCH ĐIỀU KIỆN ---
     CONDITION_TYPES = [
         ('COUNT_TRIPS', 'Số chuyến đi tham gia'),
@@ -69,27 +64,13 @@ class GameHuyHieu(models.Model):
 
 class GameHuyHieuNguoiDung(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='badges')
-=======
-    ten = models.CharField(max_length=100, unique=True)
-    mo_ta = models.TextField()
-    anh_huy_hieu = models.CharField(max_length=200)
-
-    def __str__(self):
-        return self.ten
-
-class GameHuyHieuNguoiDung(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     huy_hieu = models.ForeignKey(GameHuyHieu, on_delete=models.CASCADE)
     ngay_dat_duoc = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'huy_hieu')
-<<<<<<< HEAD
         verbose_name = "Huy hiệu người dùng"
         verbose_name_plural = "Danh sách người dùng đạt huy hiệu"
 
     def __str__(self):
         return f"{self.user.username} - {self.huy_hieu.ten}"
-=======
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

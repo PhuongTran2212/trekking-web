@@ -1,5 +1,4 @@
 from django.contrib import admin
-<<<<<<< HEAD
 from django.utils.html import format_html
 from .models import (
     CongDongBaiViet,
@@ -142,7 +141,3 @@ class CongDongBinhLuanAdmin(admin.ModelAdmin):
     def noi_dung_ngan(self, obj):
         return obj.noi_dung[:50] + '...' if len(obj.noi_dung) > 50 else obj.noi_dung
     noi_dung_ngan.short_description = 'Nội dung'
-=======
-
-# Register your models here.
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

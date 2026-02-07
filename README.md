@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🏔️ TrekViet - Trekking Route & Expedition Management Platform
 
 **TrekViet** is a professional full-stack platform designed for the trekking and hiking community in Vietnam. It enables users to discover new trails, organize group expeditions with detailed logistics, and share survival expertise.
@@ -43,15 +42,34 @@ Dedicated chat rooms for every trip to ensure seamless coordination.
 *   **Activity Stats:** Data-driven tracking of total kilometers conquered and summits reached.
 > ![User Dashboard](picture/so9.png)
 
-### 6. Community & Knowledge Base
-A social space for sharing experiences and learning survival skills.
-*   **Trip Reviews:** Rate and review completed trails with photos.
-*   **Survival Guides:** Professional articles on first aid, navigation, and gear prep.
+## 6. Community
+
+A social space where trekkers connect, share real experiences, and inspire each other.
+
+### Features
+- **Trip Reviews:** Users can rate and review completed trekking routes with photos and personal insights.
+- **Experience Sharing:** Community posts about memorable journeys, challenges, and tips.
+- **Discussion Feed:** A space to ask questions, exchange advice, and build connections with fellow trekkers.
 > ![Community Feed](picture/so10.png)
 > ![Community Feed](picture/so11.png)
+> ![Community Feed](picture/so11.1.png)
 > ![Community Feed](picture/so12.png)
+> ![Community Feed](picture/so12.1.png)
 > ![Community Feed](picture/so13.png)
+> ![Community Feed](picture/so13.1.png)
 
+## 7. Knowledge Base
+
+A structured learning hub providing essential trekking knowledge and survival skills.
+
+### Features
+- **Survival Guides:** Professional articles covering first aid, navigation, and wilderness safety.
+- **Preparation Tips:** Gear selection, packing strategies, and trip planning advice.
+- **Skill Development:** Practical techniques for outdoor endurance, safety awareness, and responsible trekking.
+
+### Preview
+![Knowledge Base](picture/so14.png)
+![Knowledge Base](picture/so15.png)
 ---
 
 ## 👑 Administrative Hub (System Command Center)
@@ -160,7 +178,3 @@ python manage.py createsuperuser # Create your Admin account
 
 # Start the server
 python manage.py runserver
-=======
-# trekking-web
-Dự án website quản lý cung đường trekking bằng Django.
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

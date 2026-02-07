@@ -1,5 +1,4 @@
 {% load static %}
-<<<<<<< HEAD
 <style>
     /* --- TREKVIET HEADER VARIABLES --- */
     :root {
@@ -479,24 +478,10 @@
         </div>
 
         <button class="th-mobile-toggle" id="th-toggle-btn">
-=======
-<!-- HEADER TREKKER (Người dùng đã đăng nhập) -->
-<nav class="navbar">
-    <div class="navbar-container">
-        <!-- Logo & Brand -->
-        <a href="{% url 'home' %}" class="navbar-brand">
-            <img src="{% static 'images/logo.png' %}" alt="TrekViet Logo">
-            TrekViet
-        </a>
-
-        <!-- Mobile Menu Toggle -->
-        <button class="navbar-toggle" id="navbar-toggle">
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
             <span></span>
             <span></span>
             <span></span>
         </button>
-<<<<<<< HEAD
     </div>
 </header>
 
@@ -511,141 +496,6 @@ document.addEventListener('DOMContentLoaded', function() {
             navMenu.classList.toggle('active');
             this.classList.toggle('open');
         });
-=======
-
-        <!-- Main Navigation -->
-        <ul class="navbar-nav" id="navbar-nav">
-            <!-- Khám phá Dropdown -->
-                       <li>
-        <a href="#" class="nav-link">
-            Cung đường
-        </a>
-    </li>
-
-            <!-- Chuyến đi Dropdown -->
-                   <li>
-        <a href="#" class="nav-link">
-             Chuyến đi
-        </a>
-    </li>
-
-            <!-- Cộng đồng Dropdown -->
-            <li class="dropdown">
-                <a href="#" class="nav-link">
-                    Cộng đồng
-                </a>
-            </li>
-
-            <li><a href="#" class="nav-link">Kiến thức</a></li>
-        </ul>
-                    <!-- Search Bar -->
-            <form action="#" method="GET" class="header-search">
-                <svg class="search-icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                <input type="search" class="form-control" name="q" placeholder="Tìm kiếm thông minh..." style="width: 250px;">
-            </form>
-
-        <!-- Quick Actions & Profile Section -->
-        <div class="header-actions">
-            <!-- Notifications -->
-            <div class="dropdown">
-                <button class="btn btn-ghost btn-icon" title="Thông báo">
-                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                    <span class="notification-badge" style="display: none;"></span>
-                </button>
-                <div class="dropdown-content" style="right: 0; left: auto; min-width: 320px;">
-                    <!-- Nội dung thông báo -->
-                </div>
-            </div>
-
-            <!-- Messages -->
-            <div class="dropdown">
-                <button class="btn btn-ghost btn-icon" title="Tin nhắn">
-                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                    <span class="notification-badge" style="display: none;"></span>
-                </button>
-                <div class="dropdown-content" style="right: 0; left: auto; min-width: 320px;">
-                    <!-- Nội dung tin nhắn -->
-                </div>
-            </div>
-
-            <!-- Profile Menu -->
-            <div class="dropdown">
-                <button class="btn btn-ghost p-1">
-                    <img src="{% static 'images/default_avatar.png' %}" 
-                         alt="{{ user.username }}" 
-                         class="rounded-full" 
-                         style="width: 32px; height: 32px; object-fit: cover;">
-                </button>
-                <div class="dropdown-content" style="right: 0; left: auto;">
-                    <div class="p-3 border-bottom">
-                        <div class="font-semibold">{{ user.first_name }} {{ user.last_name }}</div>
-                        <div class="text-sm text-muted">@{{ user.username }}</div>
-                    </div>
-                    <a href="#">Profile của tôi</a>
-                    <a href="#">Cài đặt tài khoản</a>
-                    <a href="#">Huy hiệu & thành tích</a>
-                                        <!-- =================================================== -->
-                    <!-- === KHỐI CODE MỚI DÀNH RIÊNG CHO ADMIN === -->
-                    {% if user.is_staff %}
-                    <div class="dropdown-divider"></div>
-                    <a href="{% url 'admin_dashboard' %}" class="font-semibold" style="background-color: var(--primary-lightest); color: var(--primary-dark);">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px; height:20px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                        </svg>
-                        Vào trang Quản trị
-                    </a>
-                    {% endif %}
-                    <!-- =================================================== -->
-                    <div class="dropdown-divider"></div>
-                    <a href="{% url 'accounts:dang-xuat' %}" class="text-danger">Đăng xuất</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<style>
-/* Dropdown animation */
-.dropdown-content {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
-}
-
-.dropdown:hover .dropdown-content {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.chevron-down {
-    width: 14px;
-    height: 14px;
-    margin-left: 4px;
-}
-</style>
-
-<script>
-// Mobile menu toggle
-document.getElementById('navbar-toggle').addEventListener('click', function() {
-    document.getElementById('navbar-nav').classList.toggle('active');
-});
-
-// Theme toggle function
-function toggleTheme() {
-    document.body.classList.toggle('dark-theme');
-    const theme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
-    localStorage.setItem('theme', theme);
-}
-
-// Apply saved theme
-document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-theme');
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     }
 });
 </script>

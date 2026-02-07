@@ -1,5 +1,4 @@
 # core/views.py
-<<<<<<< HEAD
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
@@ -301,19 +300,3 @@ def delete_master_data(request, model_type, pk):
             return redirect(f'/system-configuration/?tab={tab}')
             
     return redirect('system_config')
-=======
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required, user_passes_test
-def demo_view(request):
-    # Hàm này chỉ có một nhiệm vụ: hiển thị file base.html
-    return render(request, 'base.html')
-
-def is_admin_check(user):
-    return user.is_staff
-
-@login_required
-@user_passes_test(is_admin_check)
-def admin_dashboard_view(request):
-    # RENDER FILE dashboard.html NẰM TRONG THƯ MỤC templates/admin/
-    return render(request, 'admin/dashboard.html')
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

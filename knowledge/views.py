@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # knowledge/views.py
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -75,8 +74,3 @@ class ContributionCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Đóng góp kiến thức"
         return context
-=======
-from django.shortcuts import render
-
-# Create your views here.
->>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
