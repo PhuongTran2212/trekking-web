@@ -55,8 +55,7 @@ A social space where trekkers connect, share real experiences, and inspire each 
 > ![Community Feed](picture/so11.1.png)
 > ![Community Feed](picture/so12.png)
 > ![Community Feed](picture/so12.1.png)
-> ![Community Feed](picture/so13.png)
-> ![Community Feed](picture/so13.1.png)
+
 
 ## 7. Knowledge Base
 
@@ -68,6 +67,8 @@ A structured learning hub providing essential trekking knowledge and survival sk
 - **Skill Development:** Practical techniques for outdoor endurance, safety awareness, and responsible trekking.
 
 ### Preview
+![Knowledge Base](picture/so13.png)
+> ![Knowledge Base](picture/so13.1.png)
 ![Knowledge Base](picture/so14.png)
 ![Knowledge Base](picture/so15.png)
 ---
