@@ -1,0 +1,541 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head_extra %}
+    <!-- 1. Thư viện Bản đồ Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- 2. Thư viện Ảnh LightGallery -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
+    
+    <style>
+        #map { 
+            height: 350px; 
+            border-radius: 8px; 
+            border: 1px solid #dee2e6;
+        }
+        
+        .smart-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.75rem;
+        }
+        .gallery-item {
+            position: relative; width: 100%; padding-top: 100%;
+            border-radius: 8px; overflow: hidden; cursor: pointer;
+            display: none;
+        }
+        .gallery-item:nth-child(-n+5) {
+            display: block;
+        }
+        .gallery-item img {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .gallery-item:hover img { transform: scale(1.05); }
+        .gallery-item-more-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background-color: rgba(0,0,0,0.6); color: white;
+            font-size: 2rem; font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .gallery-item:hover .gallery-item-more-overlay {
+            background-color: rgba(0,0,0,0.7);
+        }
+        /* --- PHẦN STYLE MỚI CHO REVIEW --- */
+    .filter-bar {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid #e9ecef;
+    }
+
+    .review-card {
+        background: #fff;
+        border: 1px solid #f0f0f0;
+        border-radius: 12px;
+        transition: all 0.2s ease-in-out;
+        position: relative;
+    }
+
+    .review-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #dee2e6;
+    }
+
+    .review-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .review-avatar-placeholder {
+        width: 48px; height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6B7280 0%, #374151 100%);
+        color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; font-size: 1.2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .star-display { color: #fbbf24; font-size: 0.9rem; letter-spacing: 1px; }
+    .star-display .empty { color: #e5e7eb; }
+
+    .review-date { font-size: 0.75rem; color: #9ca3af; font-weight: 500; }
+    
+    .btn-delete-review {
+        color: #ef4444;
+        background: #fef2f2;
+        border: 1px solid #fee2e2;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-delete-review:hover {
+        background: #ef4444; color: white;
+        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+    }
+
+    .review-img-thumb {
+        width: 70px; height: 70px;
+        border-radius: 8px;
+        object-fit: cover;
+        cursor: zoom-in;
+        transition: transform 0.2s;
+        border: 1px solid #e5e7eb;
+    }
+    .review-img-thumb:hover { transform: scale(1.05); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">{{ page_title }}</h4>
+        <div>
+            <a href="{% url 'treks_admin:cung_duong_update' trek.pk %}" class="btn btn-secondary">Chỉnh sửa</a>
+            <a href="{% url 'treks_admin:cung_duong_list' %}" class="btn btn-ghost">Quay lại danh sách</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- ẢNH BÌA -->
+                {% with cover_media=trek.cover_media %}
+                    {% if cover_media %}
+                        <img src="{{ cover_media.file.url }}" alt="Ảnh bìa của {{ trek.ten }}" class="img-fluid rounded mb-4" style="max-height: 400px; width: 100%; object-fit: cover;">
+                    {% else %}
+                        <div class="alert alert-secondary">Chưa có ảnh bìa.</div>
+                    {% endif %}
+                {% endwith %}
+                <hr>
+
+                <h5>Mô tả chi tiết</h5>
+                <div class="description-content">{{ trek.mo_ta|safe }}</div>
+                <hr>
+
+                <h5>Vị trí trên bản đồ</h5>
+                {% if trek.du_lieu_ban_do_geojson %}
+                    <div id="map" class="mb-4"></div>
+                {% else %}
+                    <div class="alert alert-warning">Chưa có dữ liệu bản đồ.</div>
+                {% endif %}
+                <hr>
+
+                <h5>Thư viện Media</h5>
+                {% with gallery=trek.gallery_media %}
+                    <div id="lightgallery" class="smart-gallery">
+                        {% for media in gallery %}
+                            <a class="gallery-item" href="{{ media.file.url }}" data-sub-html="<h4>{{ trek.ten }}</h4>">
+                                <img src="{{ media.file.url }}" />
+                                {% if forloop.counter == 5 and gallery.count > 5 %}
+                                    <div class="gallery-item-more-overlay">
+                                        +{{ gallery.count|add:"-5" }}
+                                    </div>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                    {% if not gallery %}
+                        <p class="text-muted">Thư viện media trống.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- CỘT PHẢI: THÔNG TIN TÓM TẮT -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header"><h5 class="mb-0">Thông tin cơ bản</h5></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            {% if trek.tinh_thanh %}<li><strong>Tỉnh/Thành:</strong> {{ trek.tinh_thanh.ten }}</li>{% endif %}
+                            {% if trek.do_kho %}<li><strong>Độ khó:</strong> {{ trek.do_kho.ten }}</li>{% endif %}
+                            <li><strong>Trạng thái:</strong> 
+                                {% if trek.trang_thai == 'DA_DUYET' %}<span class="badge bg-success">{{ trek.get_trang_thai_display }}</span>
+                                {% elif trek.trang_thai == 'CHO_DUYET' %}<span class="badge bg-warning text-dark">{{ trek.get_trang_thai_display }}</span>
+                                {% else %}<span class="badge bg-danger">{{ trek.get_trang_thai_display }}</span>
+                                {% endif %}
+                            </li>
+                            <li><strong>Đánh giá:</strong> 
+                                {{ trek.danh_gia_trung_binh|floatformat:1 }} ★ 
+                                <small class="text-muted">({{ trek.so_luot_danh_gia }} lượt)</small>
+                            </li>
+                            <hr>
+                            <li><strong>Độ dài:</strong> {{ trek.do_dai_km|floatformat:2 }} km</li>
+                            <li><strong>Thời gian:</strong> {{ trek.thoi_gian_uoc_tinh_gio }} giờ</li>
+                            <li><strong>Độ cao leo:</strong> {{ trek.tong_do_cao_leo_m|default:"N/A" }} m</li>
+                            <li><strong>Mùa đẹp nhất:</strong> {{ trek.mua_dep_nhat|default:"N/A" }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header"><h5 class="mb-0">Vật dụng gợi ý</h5></div>
+                    <div class="card-body">
+                        {% if trek.vat_dung_goi_y.all %}
+                        <ul class="list-unstyled">
+                            {% for item in trek.vat_dung_goi_y.all %}
+                                <li>- {{ item.vat_dung.ten }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                            <p class="mb-0 text-muted">Chưa có gợi ý vật dụng.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr>
+
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h5 class="fw-bold mb-1 text-dark">Đánh giá từ cộng đồng</h5>
+        <p class="text-muted small mb-0">Quản lý {{ total_reviews_count }} lượt phản hồi</p>
+    </div>
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" class="row g-3 align-items-center">
+        <div class="col-md-auto">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-star"></i></span>
+                <select name="rating" class="form-select border-start-0 ps-0" style="min-width: 130px;">
+                    <option value="">Tất cả sao</option>
+                    <option value="5" {% if current_filters.rating == '5' %}selected{% endif %}>5 Tuyệt vời</option>
+                    <option value="4" {% if current_filters.rating == '4' %}selected{% endif %}>4 Tốt</option>
+                    <option value="3" {% if current_filters.rating == '3' %}selected{% endif %}>3 Trung bình</option>
+                    <option value="2" {% if current_filters.rating == '2' %}selected{% endif %}>2 Tệ</option>
+                    <option value="1" {% if current_filters.rating == '1' %}selected{% endif %}>1 Rất tệ</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-auto">
+            <div class="d-flex gap-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="has_img" id="filterHasImg" {% if current_filters.has_img == 'on' %}checked{% endif %}>
+                    <label class="form-check-label small fw-medium text-secondary" for="filterHasImg">Có ảnh</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="has_content" id="filterHasContent" {% if current_filters.has_content == 'on' %}checked{% endif %}>
+                    <label class="form-check-label small fw-medium text-secondary" for="filterHasContent">Có lời bình luận</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-auto ms-auto">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0 text-muted">Sắp xếp</span>
+                <select name="sort" class="form-select border-start-0 ps-0">
+                    <option value="newest" {% if current_filters.sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+                    <option value="oldest" {% if current_filters.sort == 'oldest' %}selected{% endif %}>Cũ nhất</option>
+                    <option value="high_rating" {% if current_filters.sort == 'high_rating' %}selected{% endif %}>Điểm cao nhất</option>
+                    <option value="low_rating" {% if current_filters.sort == 'low_rating' %}selected{% endif %}>Điểm thấp nhất</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-sm btn-primary px-3 fw-bold">Lọc</button>
+            <a href="{% url 'treks_admin:cung_duong_detail' trek.pk %}" class="btn btn-sm btn-light border text-secondary ms-1" title="Reset bộ lọc"><i class="fas fa-redo"></i></a>
+        </div>
+    </form>
+</div>
+
+<div id="review-list-container" class="review-list d-flex flex-column gap-3">
+    {% for review in reviews %}
+    <div class="review-card p-3">
+        <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-3">
+                {% if review.user.taikhoanhoso.anh_dai_dien %}
+                    <img src="{{ review.user.taikhoanhoso.anh_dai_dien.url }}" class="review-avatar" alt="Avatar">
+                {% else %}
+                    <div class="review-avatar-placeholder">
+                        {{ review.user.username|slice:":1"|upper|default:"U" }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="d-flex flex-column">
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="fw-bold text-dark mb-0" style="font-size: 1rem;">
+                                {{ review.user.username|default:"Người dùng ẩn danh" }}
+                            </h6>
+                            
+                            <div class="d-flex align-items-center" style="font-size: 0.85rem;">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.diem_danh_gia %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="fas fa-star text-muted opacity-25"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <span class="review-date text-muted small mt-1">
+                            <i class="far fa-clock me-1"></i>{{ review.ngay_danh_gia|date:"H:i, d/m/Y" }}
+                        </span>
+                    </div>
+                    
+                    <a href="{% url 'treks_admin:review_delete_admin' review.pk %}" 
+                       class="btn-delete-review"
+                       title="Xóa đánh giá này"
+                       onclick="return confirm('CẢNH BÁO: Bạn chắc chắn muốn xóa đánh giá của {{ review.user.username }}? Hành động này không thể hoàn tác.');">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                </div>
+
+                <div class="bg-light p-2 rounded-3 mb-2 mt-2">
+                    {% if review.binh_luan %}
+                        <p class="mb-0 text-secondary" style="font-size: 0.95rem; line-height: 1.5;">
+                            {{ review.binh_luan|linebreaksbr }}
+                        </p>
+                    {% else %}
+                        <p class="mb-0 text-muted fst-italic small">Người dùng không để lại lời bình.</p>
+                    {% endif %}
+                </div>
+
+                {% if review.anh_danh_gia.all %}
+                    <div class="review-gallery-container d-flex flex-wrap gap-2 mt-2 pt-2 border-top border-light">
+                        {% for img in review.anh_danh_gia.all %}
+                            <a href="{{ img.hinh_anh.url }}" class="review-gallery-item" data-sub-html="Ảnh review bởi {{ review.user.username }}">
+                                <img src="{{ img.hinh_anh.url }}" class="review-img-thumb shadow-sm">
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+        <div class="text-center py-5 border rounded-3 bg-white border-dashed">
+            <div class="mb-3 text-muted" style="font-size: 3rem; opacity: 0.3;"><i class="fas fa-comments"></i></div>
+            <h6 class="text-secondary fw-bold">Chưa có đánh giá nào</h6>
+            <p class="small text-muted mb-0">Thử thay đổi bộ lọc hoặc chờ người dùng phản hồi.</p>
+        </div>
+    {% endfor %}
+</div>
+
+<div id="pagination-container">
+    {% if reviews.has_other_pages %}
+    <nav aria-label="Review pagination" class="mt-4">
+        <ul class="pagination justify-content-center pagination-sm">
+            {% if reviews.has_previous %}
+                <li class="page-item">
+                    <a class="page-link border-0 text-dark" href="?page={{ reviews.previous_page_number }}&{{ filter_params }}"><i class="fas fa-chevron-left"></i></a>
+                </li>
+            {% endif %}
+
+            {% for i in reviews.paginator.page_range %}
+                {% if reviews.number == i %}
+                    <li class="page-item active"><span class="page-link bg-primary border-primary fw-bold">{{ i }}</span></li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link border-0 text-dark" href="?page={{ i }}&{{ filter_params }}">{{ i }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if reviews.has_next %}
+                <li class="page-item">
+                    <a class="page-link border-0 text-dark" href="?page={{ reviews.next_page_number }}&{{ filter_params }}"><i class="fas fa-chevron-right"></i></a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+<!-- THẺ SCRIPT AN TOÀN ĐỂ TRUYỀN DỮ LIỆU BẢN ĐỒ -->
+{{ trek.du_lieu_ban_do_geojson|json_script:"map-data" }}
+
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/zoom/lg-zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ==========================================
+    // 1. KHỞI TẠO BẢN ĐỒ (LEAFLET MAP) - ĐÃ KHÔI PHỤC
+    // ==========================================
+    const mapElement = document.getElementById('map');
+    const mapDataElement = document.getElementById('map-data');
+    
+    if (mapElement && mapDataElement && mapDataElement.textContent) {
+        try {
+            const geojsonData = JSON.parse(mapDataElement.textContent);
+            
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                const feature = geojsonData.features[0];
+                if (feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
+                    
+                    // Tạo map
+                    const map = L.map(mapElement, { scrollWheelZoom: false, dragging: true, zoomControl: true });
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    // Vẽ đường đi
+                    const routeLayer = L.geoJSON(geojsonData, { 
+                        style: () => ({ color: '#EF4444', weight: 5, opacity: 0.8 }) 
+                    }).addTo(map);
+
+                    // Marker điểm đầu/cuối
+                    const coords = feature.geometry.coordinates;
+                    const startLatLng = L.latLng(coords[0][1], coords[0][0]);
+                    const endLatLng = L.latLng(coords[coords.length - 1][1], coords[coords.length - 1][0]);
+
+                    // Icon (dùng link CDN ổn định)
+                    const startIcon = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+                    const endIcon = L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+
+                    L.marker(startLatLng, { icon: startIcon }).addTo(map).bindPopup('Điểm bắt đầu');
+                    L.marker(endLatLng, { icon: endIcon }).addTo(map).bindPopup('Điểm kết thúc');
+
+                    // Zoom vừa khung hình
+                    setTimeout(() => { map.fitBounds(routeLayer.getBounds()); }, 100);
+                }
+            }
+        } catch (e) { console.error("Lỗi dữ liệu bản đồ:", e); }
+    }
+
+    // ==========================================
+    // 2. KHỞI TẠO MEDIA GALLERY CHÍNH - ĐÃ KHÔI PHỤC
+    // ==========================================
+    const lgContainer = document.getElementById('lightgallery');
+    if (lgContainer) {
+        lightGallery(lgContainer, {
+            plugins: [lgZoom, lgThumbnail],
+            speed: 500,
+            download: true,
+            selector: '.gallery-item' // Chỉ chọn các thẻ a có class gallery-item
+        });
+    }
+
+    // ==========================================
+    // 3. XỬ LÝ PHẦN REVIEW (AJAX & GALLERY CON)
+    // ==========================================
+    
+    // Hàm khởi tạo LightGallery cho từng Review (chạy lại mỗi khi load AJAX xong)
+    function initReviewGallery() {
+        const reviewGalleries = document.querySelectorAll('.review-gallery-container');
+        reviewGalleries.forEach(gallery => {
+            // Hủy instance cũ nếu có để tránh lỗi conflict
+            if (gallery.getAttribute('lg-uid')) {
+                window.lightGallery(gallery).destroy(true); 
+            }
+            lightGallery(gallery, {
+                plugins: [lgZoom, lgThumbnail],
+                speed: 500,
+                selector: '.review-gallery-item',
+                download: false
+            });
+        });
+    }
+
+    // Chạy lần đầu cho các review đang hiển thị
+    initReviewGallery();
+
+    // --- LOGIC AJAX FILTER ---
+    const filterForm = document.querySelector('.filter-bar form');
+    const reviewContainer = document.getElementById('review-list-container');
+    const paginationContainer = document.getElementById('pagination-container');
+
+    // Hàm gọi dữ liệu AJAX
+    function fetchReviews(url) {
+        reviewContainer.style.opacity = '0.6';
+        reviewContainer.style.pointerEvents = 'none';
+
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const newReviews = doc.getElementById('review-list-container').innerHTML;
+                const newPagination = doc.getElementById('pagination-container') ? doc.getElementById('pagination-container').innerHTML : '';
+
+                reviewContainer.innerHTML = newReviews;
+                if (paginationContainer) paginationContainer.innerHTML = newPagination;
+
+                window.history.pushState({}, '', url);
+
+                // Quan trọng: Khởi tạo lại gallery cho review mới tải về
+                initReviewGallery();
+                
+                attachPaginationEvents();
+            })
+            .catch(err => console.error('Lỗi tải review:', err))
+            .finally(() => {
+                reviewContainer.style.opacity = '1';
+                reviewContainer.style.pointerEvents = 'auto';
+            });
+    }
+
+    // Gán sự kiện click cho phân trang
+    function attachPaginationEvents() {
+        const pageLinks = document.querySelectorAll('#pagination-container a.page-link');
+        pageLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                fetchReviews(this.href);
+            });
+        });
+    }
+
+    // Xử lý form lọc
+    if (filterForm) {
+        filterForm.addEventListener('change', function() {
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams(formData);
+            const url = `${window.location.pathname}?${params.toString()}`;
+            fetchReviews(url);
+        });
+        
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+        });
+    }
+
+    attachPaginationEvents();
+});
+</script>
+{% endblock %}

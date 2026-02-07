@@ -1,0 +1,351 @@
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        :root {
+            --primary-light: #91EAAF;
+            --primary-medium: #C3E956;
+            --primary-dark: #4D7111;
+            --primary-darkest: #1F4B2C;
+            --gray-50: #FAFAFA;
+            --gray-100: #F4F4F5;
+            --gray-300: #D4D4D8;
+            --gray-400: #A1A1AA;
+            --gray-500: #71717A;
+            --gray-600: #52525B;
+            --gray-700: #3F3F46;
+            --gray-800: #27272A;
+            --gray-900: #18181B;
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-heading: 'Montserrat', 'Inter', sans-serif;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-full: 9999px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --transition-fast: 150ms ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--gray-50);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+        }
+
+        .demo-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            color: var(--gray-700);
+        }
+
+        /* Clean, Simple Footer */
+        .site-footer {
+            background-color: var(--gray-800);
+            color: var(--gray-400);
+            padding: var(--spacing-2xl) 0 var(--spacing-lg);
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr;
+            gap: var(--spacing-2xl);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        /* Brand Section - Clean & Minimal */
+        .footer-brand {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            transition: opacity var(--transition-fast);
+        }
+
+        .footer-logo:hover {
+            opacity: 0.8;
+        }
+
+        .footer-logo img {
+            height: 36px;
+            width: 36px;
+            object-fit: contain;
+            margin-right: var(--spacing-sm);
+        }
+
+        .footer-logo-text {
+            font-family: var(--font-heading);
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.025em;
+        }
+
+        .footer-description {
+            color: var(--gray-300);
+            line-height: 1.6;
+            font-size: 0.9375rem;
+            max-width: 280px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: var(--gray-700);
+            color: var(--gray-400);
+            text-decoration: none;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+        }
+
+        .social-link:hover {
+            background-color: var(--primary-dark);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* Footer Links - Simple Lists */
+        .footer-column h4 {
+            color: white;
+            font-family: var(--font-heading);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-lg);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-column ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .footer-column a {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color var(--transition-fast);
+            line-height: 1.5;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        /* Bottom Section - Ultra Clean */
+        .footer-bottom {
+            border-top: 1px solid var(--gray-700);
+            padding-top: var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8125rem;
+        }
+
+        .footer-bottom p {
+            color: var(--gray-500);
+            margin: 0;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: var(--spacing-lg);
+        }
+
+        .footer-links a {
+            color: var(--gray-500);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        .footer-links a:hover {
+            color: var(--gray-300);
+        }
+        .social-link.facebook:hover {
+    background-color: #1877F2; /* Màu chính của Facebook */
+    color: white;
+}
+
+.social-link.instagram:hover {
+    background: #d6249f; /* Màu chính của Instagram (gradient) */
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%,#d6249f 60%,#285AEB 90%);
+    color: white;
+}
+
+.social-link.youtube:hover {
+    background-color: #FF0000; /* Màu chính của YouTube */
+    color: white;
+}
+
+.social-link.zalo:hover {
+    background-color: #0068FF; /* Màu chính của Zalo */
+    color: white;
+}
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-xl);
+                text-align: center;
+            }
+
+            .footer-brand {
+                align-items: center;
+            }
+
+            .footer-description {
+                max-width: none;
+            }
+
+            .footer-social {
+                justify-content: center;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+                text-align: left;
+            }
+
+            .footer-brand {
+                grid-column: span 2;
+                text-align: center;
+                align-items: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .site-footer {
+                padding: var(--spacing-xl) 0 var(--spacing-lg);
+            }
+
+            .footer-content {
+                gap: var(--spacing-lg);
+            }
+        }
+    </style>
+
+
+  <footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <!-- Brand Section -->
+            <div class="footer-brand">
+                <a href="{% url 'home' %}" class="footer-logo">
+                    <!-- === THAY THẾ LOGO TẠI ĐÂY === -->
+                
+                    <span class="footer-logo-text">TrekViet</span>
+                </a>
+                
+                <p class="footer-description">
+                    Nền tảng kết nối cộng đồng đam mê trekking và khám phá thiên nhiên Việt Nam.
+                </p>
+                
+                <div class="footer-social">
+                    <!-- === THÊM ICON VÀ CLASS MÀU VÀO ĐÂY === -->
+                    <a href="#" class="social-link facebook" aria-label="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="social-link instagram" aria-label="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="social-link youtube" aria-label="YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                    <a href="#" class="social-link zalo" aria-label="Zalo">
+                        <i class="fas fa-comment"></i> <!-- Zalo không có icon chính thức, dùng icon chat thay thế -->
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="footer-column">
+    <h4>Khám Phá</h4>
+    <ul>
+        <li><a href="#">Tất cả Cung đường</a></li>
+        <li><a href="#">Tìm Chuyến đi</a></li>
+        <li><a href="#">Kho Kiến thức</a></li>
+        <li><a href="#">Thành viên nổi bật</a></li>
+    </ul>
+</div>
+
+            <!-- Services -->
+            <div class="footer-column">
+    <h4>Tương Tác</h4>
+    <ul>
+        <li><a href="#">Tạo Chuyến đi mới</a></li>
+        <li><a href="#">Viết bài Chia sẻ</a></li>
+        <li><a href="#">Đóng góp Cung đường</a></li>
+        <li><a href="#">Thảo luận Cộng đồng</a></li>
+    </ul>
+</div>
+
+            <!-- Support -->
+            <div class="footer-column">
+                <h4>Hỗ trợ</h4>
+                <ul>
+                    <li><a href="#">Về chúng tôi</a></li>
+                    <li><a href="#">Câu hỏi thường gặp</a></li>
+                    <li><a href="#">Liên hệ</a></li>
+                    <li><a href="#">Trợ giúp</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; {% now "Y" %} TrekViet. Tất cả quyền được bảo lưu.</p>
+            <div class="footer-links">
+                <a href="#">Điều khoản</a>
+                <a href="#">Bảo mật</a>
+                <a href="#">Quy chế</a>
+            </div>
+        </div>
+    </div>
+</footer>

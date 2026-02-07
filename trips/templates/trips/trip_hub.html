@@ -1,0 +1,1045 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+<style>
+    :root {
+        --primary-color: #10b981;
+        --primary-hover: #059669;
+        --primary-light: #d1fae5;
+        --text-dark: #111827;
+        --text-muted: #6b7280;
+        --bg-light: #f9fafb;
+        --border-color: #e5e7eb;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+        --radius-lg: 20px;
+        --radius-md: 12px;
+    }
+    
+    body { 
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .trip-hub-container {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 2.5rem;
+        align-items: start;
+    }
+
+    /* ========== SIDEBAR STYLING ========== */
+    .filter-sidebar {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        position: sticky;
+        top: 2rem;
+        overflow: hidden;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+    
+    .filter-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #059669 100%);
+        color: white;
+        padding: 1.5rem 1.75rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: flex; 
+        align-items: center; 
+        gap: 0.75rem;
+        letter-spacing: -0.02em;
+    }
+    
+    .filter-header i {
+        font-size: 1.3rem;
+        opacity: 0.9;
+    }
+    
+    .filter-body { 
+        padding: 1.75rem 2rem; 
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    
+    .filter-body::-webkit-scrollbar { width: 6px; }
+    .filter-body::-webkit-scrollbar-track { background: #f3f4f6; }
+    .filter-body::-webkit-scrollbar-thumb { background: #d1d5db36; border-radius: 10px; }
+    
+    .form-label { 
+        font-size: 0.75rem; 
+        font-weight: 700; 
+        color: var(--text-dark); 
+        text-transform: uppercase; 
+        margin-bottom: 0.6rem; 
+        letter-spacing: 0.8px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-left: 4px;
+    }
+    
+    .form-control, .form-select { 
+        border-radius: var(--radius-md); 
+        font-size: 0.95rem; 
+        border: 1.5px solid var(--border-color);
+        padding: 0.65rem 1rem;
+        transition: all 0.2s;
+        background: #fafafa;
+    }
+    
+    .form-control:focus, .form-select:focus { 
+        border-color: var(--primary-color); 
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
+        background: white;
+    }
+    
+    .btn-primary { 
+        background: linear-gradient(135deg, var(--primary-color) 0%, #059669 100%);
+        border: none; 
+        font-weight: 700; 
+        padding: 0.9rem; 
+        border-radius: var(--radius-md); 
+        width: 100%; 
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-primary:hover { 
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .checkbox-group-scroll { 
+        max-height: 180px; 
+        overflow-y: auto; 
+        padding-right: 8px;
+        padding-left: 12px;
+    }
+    
+    .checkbox-group-scroll::-webkit-scrollbar { width: 5px; }
+    .checkbox-group-scroll::-webkit-scrollbar-thumb { 
+        background: var(--primary-color); 
+        border-radius: 10px; 
+    }
+    
+    .form-check { 
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    
+    .form-check:hover {
+        background: var(--primary-light);
+    }
+    
+    .form-check-input { 
+        width: 1.1rem; 
+        height: 1.1rem;
+        border: 2px solid #d1d5db;
+        cursor: pointer;
+    }
+    
+    .form-check-input:checked { 
+        background-color: var(--primary-color); 
+        border-color: var(--primary-color);
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-dark);
+        margin-left: 0.5rem;
+    }
+
+    hr.divider {
+        border: none;
+        height: 1px;
+        background: #d1d5db;
+        margin: 1.5rem 0;
+    }
+
+    .create-trip-cta {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        padding: 1.5rem;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        text-align: center;
+        border-top: 1px solid rgba(251, 191, 36, 0.2);
+    }
+    
+    .create-trip-cta p {
+        font-size: 0.8rem;
+        color: #78350f;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.75rem;
+    }
+    
+    .create-trip-cta .btn {
+        background: white;
+        color: #d97706;
+        font-weight: 700;
+        border: none;
+        padding: 0.7rem 1.5rem;
+        border-radius: 100px;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .create-trip-cta .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    main {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header {
+        background: white;
+        padding: 2rem 2.5rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 2.5rem;
+        border-left: 5px solid var(--primary-color);
+    }
+    
+    .page-header h1 {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.03em;
+    }
+    
+    .page-header p {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+    
+    .page-header strong {
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    /* ========== TRIP GRID ========== */
+    .trip-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+
+    /* ========== TRIP CARD REDESIGN ========== */
+    .trip-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .trip-card:hover {
+        transform: translateY(-8px) scale(1.01);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        border-color: var(--primary-color);
+    }
+    
+    .trip-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), #fbbf24);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .trip-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Card Image */
+    .card-img-wrapper {
+        height: 220px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    }
+    
+    .card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .trip-card:hover .card-img {
+        transform: scale(1.08) rotate(1deg);
+    }
+    
+    .card-img-wrapper::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.3));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .trip-card:hover .card-img-wrapper::after {
+        opacity: 1;
+    }
+
+    /* Badges */
+    .badge-status {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 2;
+    }
+    
+    .badge-price {
+        position: absolute;
+        bottom: 14px;
+        right: 14px;
+        background: white;
+        color: var(--primary-color);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-weight: 900;
+        font-size: 1rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+    
+    .badge-price small {
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+    
+/* --- Badge Cấp độ (Độ khó) --- */
+.badge-level {
+    /* 1. Vị trí: Góc Trái Dưới */
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    z-index: 10; /* Đảm bảo nổi lên trên ảnh */
+
+    /* 2. Màu sắc: Gradient Vàng Cam -> Chữ Nâu Đậm (Tương phản tốt) */
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #78350f; 
+
+    /* 3. Kích thước & Font */
+    font-size: 0.7rem;
+    font-weight: 800; /* Chữ đậm */
+    text-transform: uppercase; /* Viết hoa toàn bộ */
+    letter-spacing: 0.5px;
+    padding: 6px 12px;
+    border-radius: 100px; /* Bo tròn dạng viên thuốc */
+
+    /* 4. Hiệu ứng & Căn chỉnh */
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); /* Đổ bóng màu cam */
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Khoảng cách giữa icon núi và chữ */
+}
+
+/* Chỉnh icon núi nhỏ lại một chút cho cân đối */
+.badge-level i {
+    font-size: 0.75rem;
+    margin-bottom: 1px; /* Căn chỉnh icon cho thẳng hàng với chữ */
+}
+
+    /* Card Body */
+    .card-body {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        letter-spacing: -0.02em;
+        transition: color 0.3s;
+    }
+    
+    .trip-card:hover .card-title {
+        color: var(--primary-color);
+    }
+    
+    .card-location {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+    }
+    
+    .card-location i {
+        font-size: 1rem;
+    }
+
+    /* Card Meta */
+    .card-meta {
+        display: flex;
+        gap: 10px;
+        font-size: 0.85rem;
+        flex-wrap: wrap;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        padding: 6px 12px;
+        border-radius: 100px;
+        font-weight: 600;
+        color: var(--text-dark);
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+    }
+    
+    .trip-card:hover .meta-item {
+        background: var(--primary-light);
+        border-color: var(--primary-color);
+    }
+    
+    .meta-item i {
+        font-size: 0.9rem;
+    }
+
+    /* Tags */
+    .card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: auto;
+    }
+    
+    .tag-badge {
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        color: #374151;
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-weight: 700;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    
+    .trip-card:hover .tag-badge {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* Card Footer */
+    .card-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fafafa;
+        margin-top: auto;
+    }
+    
+    .organizer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .organizer img,
+    .default-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .default-avatar {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #059669 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 800;
+    }
+    
+    .organizer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .organizer-info .label {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .organizer-info .name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    
+    .slots {
+        font-size: 0.9rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 100px;
+        background: white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    
+    .slots i {
+        font-size: 1rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .empty-state i {
+        font-size: 5rem;
+        color: #d1d5db;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-state h4 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-state p {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .trip-hub-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        .filter-sidebar {
+            position: static;
+        }
+        
+        .filter-body {
+            max-height: none;
+        }
+        
+        .trip-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .trip-hub-container {
+            padding: 1.5rem 1rem;
+        }
+        
+        .page-header {
+            padding: 1.5rem;
+        }
+        
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+        
+        .trip-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .badge-privacy {
+    position: absolute;
+    top: 14px;
+    left: 14px; /* Góc trái trên */
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+    z-index: 15;
+    text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Badge Trạng thái User (Tham gia, chờ duyệt...) */
+.badge-user-status {
+    position: absolute;
+    top: 45px; /* Nằm dưới badge privacy */
+    left: 14px;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    z-index: 15;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Hiệu ứng khi bị khóa */
+.js-locked-trip {
+    cursor: not-allowed;
+}
+.js-locked-trip:hover {
+    border-color: #f59e0b; /* Viền vàng cảnh báo */
+}
+.js-locked-trip:hover::before {
+    background: linear-gradient(90deg, #f59e0b, #d97706); /* Đổi thanh line trên cùng sang vàng */
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trip-hub-container">
+    
+    <aside class="filter-sidebar">
+        <div class="filter-header">
+            <i class="fas fa-sliders-h"></i>
+            <span>Bộ Lọc Tìm Kiếm</span>
+        </div>
+        
+        <div class="filter-body">
+            <form method="get">
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-search"></i> Từ khóa
+                    </label>
+                    {{ filter_form.q }}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-map-marked-alt"></i> Tỉnh thành
+                    </label>
+                    {{ filter_form.tinh_thanh }}
+                </div>
+
+                <hr class="divider">
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-sort-amount-down"></i> Sắp xếp
+                    </label>
+                    {{ filter_form.sort_by }}
+                </div>
+                
+                <div class="form-check mb-3">
+                    {{ filter_form.con_cho }}
+                    <label class="form-check-label" for="{{ filter_form.con_cho.id_for_label }}">
+                        Chỉ hiện chuyến còn chỗ
+                    </label>
+                </div>
+
+                <hr class="divider">
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-mountain"></i> Cấp độ
+                    </label>
+                    <div class="checkbox-group-scroll d-flex flex-column gap-1">
+                        {% for checkbox in filter_form.do_kho %}
+                        <div class="form-check">
+                            {{ checkbox.tag }}
+                            <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                {{ checkbox.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <div class="mb-2">
+                    <label class="form-label">
+                        <i class="fas fa-wallet"></i> Ngân sách (VNĐ)
+                    </label>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    {{ filter_form.price_min }}
+                    {{ filter_form.price_max }}
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-day"></i> Số ngày
+                    </label>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    {{ filter_form.duration_min }}
+                    {{ filter_form.duration_max }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-check"></i> Khởi hành sau
+                    </label>
+                    {{ filter_form.start_date }}
+                </div>
+
+                <hr class="divider">
+
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="fas fa-hashtag"></i> Chủ đề
+                    </label>
+                    {{ filter_form.tags }}
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
+                
+                <a href="{% url 'trips:trip_hub' %}" class="btn btn-link w-100 text-decoration-none text-muted small mt-2" style="font-weight: 600;">
+                    <i class="fas fa-redo-alt me-1"></i> Đặt lại bộ lọc
+                </a>
+            </form>
+        </div>
+        
+        {% if user.is_authenticated %}
+        <div class="create-trip-cta">
+            <p>Bạn là Leader?</p>
+            <a href="{% url 'trips:select_trek_for_trip' %}" class="btn">
+                <i class="fas fa-plus-circle me-2"></i>Tạo chuyến mới
+            </a>
+        </div>
+        {% endif %}
+    </aside>
+<!-- === 2. MODAL POPUP NHẬP MÃ (Đặt ở cuối file, trước endblock) === -->
+<div class="modal fade" id="tripCodeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 bg-light rounded-top-4 pb-0">
+                <!-- Tiêu đề sẽ đổi bằng JS -->
+                <h5 class="modal-title fw-bold fs-6 text-uppercase text-muted" id="modalTitle">...</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <div style="width: 60px; height: 60px; background: #fff7ed; color: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-key fs-2"></i>
+                    </div>
+                </div>
+                
+                <p class="text-muted small mb-3" id="modalDesc">...</p>
+                
+                <!-- INPUT ẨN: Lưu ID trip cần mở khóa (Nếu có) -->
+                <input type="hidden" id="target-trip-id" value="">
+
+                <input type="text" id="popup-trip-code" class="form-control form-control-lg text-center fw-bold mb-3" 
+                       placeholder="Nhập mã..." style="letter-spacing: 1px; font-size: 1.1rem;">
+                
+                <button onclick="handleTripCodeSubmit()" class="btn btn-warning w-100 fw-bold text-white">
+                    <i class="fas fa-arrow-right me-1"></i> Tiếp tục
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <main>
+<div class="page-header mb-4">
+    <!-- Sử dụng d-flex để chia layout: 
+         - flex-column flex-md-row: Mobile xếp dọc, PC xếp ngang
+         - justify-content-between: Đẩy 2 phần sang 2 đầu trái/phải 
+         - align-items-end: Căn chỉnh đáy (hoặc center nếu muốn giữa) -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        
+        <!-- PHẦN 1: TIÊU ĐỀ (BÊN TRÁI) -->
+        <div>
+            <h1 class="mb-1">{{ page_title }}</h1>
+            <p class="mb-0 text-muted">
+                Tìm thấy <strong>{{ paginator.count|default:trips.count }}</strong> chuyến đi phù hợp với bạn
+            </p>
+        </div>
+
+        <!-- PHẦN 2: NÚT NHẬP MÃ (BÊN PHẢI) -->
+        <!-- Đặt min-width để nút không bị co quá nhỏ -->
+        <div style="min-width: 220px;">
+            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
+                <div class="p-3 cursor-pointer position-relative d-flex align-items-center justify-content-between" 
+                     data-bs-toggle="modal" data-bs-target="#tripCodeModal"
+                     style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; cursor: pointer; transition: 0.3s;">
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-qrcode fs-4"></i> <!-- Icon to hơn chút -->
+                        <div>
+                            <h6 class="fw-bold mb-0 text-uppercase" style="font-size: 0.85rem;">Nhập mã Trip</h6>
+                            <small style="font-size: 0.7rem; opacity: 0.9; display: block; line-height: 1;">Tham gia ngay</small>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right opacity-50 ms-3"></i>
+                </div>
+            </div>
+        </div>
+            <!-- ============================================= -->
+        </div>
+</div>
+
+        <div class="trip-grid">
+            {% for trip in trips %}
+                {% include 'trips/partials/trip_card.html' with trip=trip %}
+            {% empty %}
+                <div class="empty-state">
+                    <i class="far fa-compass"></i>
+                    <h4>Chưa tìm thấy chuyến đi nào</h4>
+                    <p>Thử thay đổi bộ lọc hoặc tìm kiếm từ khóa khác nhé!</p>
+                    <a href="{% url 'trips:trip_hub' %}" class="btn btn-primary">
+                        <i class="fas fa-redo-alt me-2"></i>Xóa bộ lọc
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+        <div class="mt-5 d-flex justify-content-center">
+            {% include 'trips/partials/pagination.html' %}
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // --- 1. KÍCH HOẠT SELECT2 CHO TAGS (CHỌN NHIỀU) ---
+        // Tìm tất cả các ô select có class 'select2' (đã khai báo trong forms.py)
+        $('.select2').select2({
+            theme: "bootstrap-5", // Sử dụng theme Bootstrap 5 cho đẹp
+            width: '100%',        // Full chiều rộng
+            placeholder: $(this).data('placeholder'), // Lấy placeholder từ attribute HTML
+            allowClear: true,     // Cho phép xóa chọn
+            closeOnSelect: false, // Giữ menu mở để chọn tiếp nhiều cái
+            language: {
+                noResults: function() {
+                    return "Không tìm thấy kết quả";
+                }
+            }
+        });
+
+        // --- 2. XỬ LÝ NHẬP MÃ TRIP (Code cũ của bạn) ---
+        // Xử lý khi nhấn Enter trong ô input
+        const popupInput = document.getElementById('popup-trip-code');
+        if (popupInput) {
+            popupInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') submitTripCode();
+            });
+        }
+
+        // Auto focus vào ô input khi mở modal
+        const tripModal = document.getElementById('tripCodeModal');
+        if (tripModal) {
+            tripModal.addEventListener('show.bs.modal', function (event) {
+                // Nút/Card vừa được bấm
+                const button = event.relatedTarget; 
+                
+                // Các phần tử trong modal
+                const inputId = document.getElementById('target-trip-id');
+                const inputCode = document.getElementById('popup-trip-code');
+                const title = document.getElementById('modalTitle');
+                const desc = document.getElementById('modalDesc');
+
+                // Reset dữ liệu cũ
+                inputCode.value = '';
+                inputId.value = '';
+
+                // KIỂM TRA LOGIC
+                if (button && button.hasAttribute('data-trip-id')) {
+                    // TRƯỜNG HỢP 1: Bấm vào Card bị khóa -> CHẾ ĐỘ XÁC THỰC
+                    // Lấy ID từ card bỏ vào ô ẩn
+                    const tripId = button.getAttribute('data-trip-id');
+                    inputId.value = tripId; 
+                    
+                    title.innerText = "Mở khóa Trip Riêng Tư";
+                    desc.innerText = "Nhập mã để xem nội dung chuyến đi này.";
+                    inputCode.placeholder = "Mã bảo mật...";
+                } else {
+                    // TRƯỜNG HỢP 2: Bấm nút Sidebar -> CHẾ ĐỘ TÌM KIẾM
+                    // Ô ẩn để rỗng
+                    inputId.value = ""; 
+                    
+                    title.innerText = "Tìm kiếm Chuyến đi";
+                    desc.innerText = "Nhập mã chuyến đi bất kỳ để truy cập nhanh.";
+                    inputCode.placeholder = "Nhập mã tìm kiếm...";
+                }
+            });
+
+            // Focus vào ô nhập
+            tripModal.addEventListener('shown.bs.modal', function () {
+                document.getElementById('popup-trip-code').focus();
+            });
+        }
+
+        // Enter để submit
+        document.getElementById('popup-trip-code').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleTripCodeSubmit();
+        });
+    });
+
+    // --- HÀM XỬ LÝ CHÍNH ---
+    function handleTripCodeSubmit() {
+        const tripId = document.getElementById('target-trip-id').value; // Lấy ID (nếu có)
+        const code = document.getElementById('popup-trip-code').value.trim();
+        const btn = document.querySelector('button[onclick="handleTripCodeSubmit()"]');
+        const inputCode = document.getElementById('popup-trip-code');
+
+        if (!code) {
+            alert("Vui lòng nhập mã!");
+            inputCode.focus();
+            return;
+        }
+
+        // Loading UI
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+        btn.disabled = true;
+
+        if (tripId) {
+            // ============================================================
+            // LOGIC 1: MỞ KHÓA TRIP CỤ THỂ (Strict Mode)
+            // ============================================================
+            // Chỉ gọi API verify của ĐÚNG tripId đó.
+            // Nếu mã đúng của trip khác -> API trả về lỗi -> Không chuyển trang.
+            
+            const verifyUrl = `/chuyen-di/${tripId}/verify-access/`; 
+            const fd = new FormData();
+            fd.append('access_code', code);
+
+            fetch(verifyUrl, {
+                method: 'POST',
+                body: fd,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Mã đúng -> Reload để vào trang chi tiết
+                    window.location.reload(); 
+                } else {
+                    // Mã sai (hoặc mã của trip khác) -> Báo lỗi
+                    alert("Mã không đúng với chuyến đi này!");
+                    resetBtn(btn, oldText, inputCode);
+                }
+            })
+            .catch(() => { alert("Lỗi hệ thống."); resetBtn(btn, oldText, inputCode); });
+
+        } else {
+            // ============================================================
+            // LOGIC 2: TÌM KIẾM TỰ DO (Search Mode)
+            // ============================================================
+            // Gọi API tìm kiếm chung -> Có mã nào đi trip đó
+            
+            fetch(`{% url 'trips:find_trip_by_code' %}?code=${code}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = data.url;
+                    } else {
+                        alert(data.message);
+                        resetBtn(btn, oldText, inputCode);
+                    }
+                })
+                .catch(() => { alert("Lỗi kết nối."); resetBtn(btn, oldText, inputCode); });
+        }
+    }
+
+    function resetBtn(btn, text, input) {
+        btn.innerHTML = text;
+        btn.disabled = false;
+        input.value = '';
+        input.focus();
+    }
+</script>
+{% endblock %}

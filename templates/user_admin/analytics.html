@@ -1,0 +1,350 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">Thống kê tổng quan</h4>
+            <p class="text-muted small mb-0">Tổng hợp dữ liệu hoạt động của hệ thống</p>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="d-flex gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-white border shadow-sm dropdown-toggle" type="button" id="exportDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-download me-2"></i>Xuất báo cáo
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                        <li><a class="dropdown-item" href="{% url 'user_admin:analytics_export' %}"><i
+                                    class="fas fa-file-csv me-2 text-success"></i>Xuất Excel (.csv)</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportPDF()"><i
+                                    class="fas fa-file-pdf me-2 text-danger"></i>Xuất PDF (.pdf)</a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary shadow-sm" onclick="window.location.reload()"><i
+                        class="fas fa-sync-alt me-2"></i>Làm mới</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs (Giao diện mới) -->
+    <div class="card shadow-sm border-0 mb-4 rounded-3">
+        <div class="card-header bg-white p-2 border-bottom-0">
+            <ul class="nav nav-pills card-header-pills">
+                <li class="nav-item">
+                    <a class="nav-link active shadow-sm fw-bold px-3" href="#">
+                        <i class="fas fa-chart-pie me-2"></i>Tổng quan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_users' %}">
+                        <i class="fas fa-users me-2"></i>Người dùng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_trips' %}">
+                        <i class="fas fa-suitcase-rolling me-2"></i>Chuyến đi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_treks' %}">
+                        <i class="fas fa-map-marked-alt me-2"></i>Cung đường
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_content' %}">
+                        <i class="fas fa-newspaper me-2"></i>Bài viết
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Row 1: KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-2 text-primary">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span class="text-muted fw-bold small">TỔNG THÀNH VIÊN</span>
+                    </div>
+                    <h3 class="fw-bold mb-0">{{ kpi.total_users|intcomma }}</h3>
+                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i>Tăng trưởng ổn định</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-2 me-2 text-success">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <span class="text-muted fw-bold small">CHUYẾN ĐI HOẠT ĐỘNG</span>
+                    </div>
+                    <h3 class="fw-bold mb-0">{{ kpi.active_trips }}</h3>
+                    <small class="text-muted">Đang tuyển / Đang chạy</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-2 me-2 text-warning">
+                            <i class="fas fa-percent"></i>
+                        </div>
+                        <span class="text-muted fw-bold small">TỶ LỆ LẤP ĐẦY TB</span>
+                    </div>
+                    <h3 class="fw-bold mb-0">{{ kpi.avg_fill_rate }}%</h3>
+                    <small class="{% if kpi.avg_fill_rate < 50 %}text-danger{% else %}text-success{% endif %}">
+                        {{ kpi.avg_fill_rate|floatformat:0 }}/100 điểm hiệu quả
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-2 me-2 text-info">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <span class="text-muted fw-bold small">DOANH THU ƯỚC TÍNH</span>
+                    </div>
+                    <h3 class="fw-bold mb-0">{{ kpi.est_revenue|intcomma }} ₫</h3>
+                    <small class="text-muted">Tổng giá trị giao dịch (GMV)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Operations -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-chart-area me-2 text-primary"></i>Biểu đồ số lượng chuyến
+                        đi theo tháng (6 tháng gần nhất)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="chartGrowth"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-chart-pie me-2 text-warning"></i>Biểu đồ phân bố trạng thái
+                        chuyến đi</h6>
+                </div>
+                <div class="card-body">
+                    <div id="chartStatus"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Analysis (BCG & Radar) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div
+                    class="card-header bg-white border-bottom-0 py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold m-0"><i class="fas fa-th me-2 text-danger"></i>Ma trận đánh giá cung đường (Chất
+                        lượng vs Độ phổ biến)</h6>
+                    <small class="text-muted">Mỗi chấm là 1 cung đường</small>
+                </div>
+                <div class="card-body">
+                    <div id="chartBCG"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-satellite-dish me-2 text-info"></i>Biểu đồ cung đường theo
+                        hashtag</h6>
+                </div>
+                <div class="card-body">
+                    <div id="chartRadar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 4: User Funnel & Geo -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-filter me-2 text-success"></i>Biểu đồ phân loại người dùng
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="chartFunnel"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-map-marked-alt me-2 text-secondary"></i>Biểu đồ phân bố địa
+                        lý người dùng (Top 10 tỉnh thành)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="chartGeo"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 5: Trends (Word Cloud / Treemap) -->
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-tags me-2 text-primary"></i>Biểu đồ hashtags phổ biến trong
+                        cộng đồng</h6>
+                </div>
+                <div class="card-body">
+                    <div id="chartWordCloud"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+    function exportPDF() {
+        const element = document.querySelector('.container-fluid');
+        const opt = {
+            margin: 0.5,
+            filename: 'analytics_dashboard.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // --- 1. Growth Chart (Area) ---
+    var growthData = {{ charts.growth| safe }};
+    var optionsGrowth = {
+        series: [{ name: 'Số chuyến đi', data: growthData.data }],
+        chart: { type: 'area', height: 300, toolbar: { show: false } },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 2 },
+        xaxis: { categories: growthData.labels },
+        colors: ['#0d6efd'],
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3 } }
+    };
+    new ApexCharts(document.querySelector("#chartGrowth"), optionsGrowth).render();
+
+    // --- 2. Status Chart (Donut) ---
+    var statusData = {{ charts.status| safe }};
+    var optionsStatus = {
+        series: statusData.data,
+        labels: statusData.labels,
+        chart: { type: 'donut', height: 300 },
+        colors: ['#ffc107', '#0dcaf0', '#dc3545', '#6c757d', '#0d6efd', '#198754', '#212529'],
+        legend: { position: 'bottom' }
+    };
+    new ApexCharts(document.querySelector("#chartStatus"), optionsStatus).render();
+
+    // --- 3. BCG Matrix (Scatter) ---
+    var bcgData = {{ charts.bcg| safe }};
+    // ApexCharts Scatter format: [[x, y], [x, y]] but we want tooltips with names.
+    // We need to transform data slightly for ApexCharts series
+    var scatterSeries = [{
+        name: "Cung đường",
+        data: bcgData.map(item => { return { x: item.x, y: item.y, name: item.name }; })
+    }];
+
+    var optionsBCG = {
+        series: scatterSeries,
+        chart: { type: 'scatter', height: 350, toolbar: { show: false } },
+        xaxis: {
+            title: { text: 'Độ phổ biến (Số chuyến đi)' },
+            tickAmount: 5
+        },
+        yaxis: {
+            title: { text: 'Chất lượng (Điểm đánh giá)' },
+            max: 5, min: 0
+        },
+        markers: { size: 6, hover: { size: 9 } },
+        colors: ['#dc3545'],
+        tooltip: {
+            custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+                var data = w.config.series[seriesIndex].data[dataPointIndex];
+                return '<div class="p-2">' +
+                    '<b>' + data.name + '</b><br>' +
+                    'Số chuyến: ' + data.x + '<br>' +
+                    'Đánh giá: ' + data.y + '⭐' +
+                    '</div>';
+            }
+        }
+    };
+    new ApexCharts(document.querySelector("#chartBCG"), optionsBCG).render();
+
+    // --- 4. Radar Chart ---
+    var radarData = {{ charts.radar| safe }};
+    var optionsRadar = {
+        series: [{ name: 'Số lượng chuyến', data: radarData.data }],
+        chart: { type: 'radar', height: 350, toolbar: { show: false } },
+        labels: radarData.labels,
+        stroke: { width: 2, colors: ['#0dcaf0'] },
+        fill: { opacity: 0.2, colors: ['#0dcaf0'] },
+        markers: { size: 4 }
+    };
+    new ApexCharts(document.querySelector("#chartRadar"), optionsRadar).render();
+
+    // --- 5. Funnel Chart (Bar) ---
+    var funnelData = {{ charts.funnel| safe }};
+    var optionsFunnel = {
+        series: [{ name: 'Thành viên', data: funnelData.data }],
+        chart: { type: 'bar', height: 300, toolbar: { show: false } },
+        plotOptions: {
+            bar: { borderRadius: 4, horizontal: true, barHeight: '50%', distributed: true }
+        },
+        colors: ['#6c757d', '#0d6efd', '#198754', '#ffc107'],
+        dataLabels: { enabled: true },
+        xaxis: { categories: funnelData.categories }
+    };
+    new ApexCharts(document.querySelector("#chartFunnel"), optionsFunnel).render();
+
+    // --- 6. Geo Chart (Bar) ---
+    var geoData = {{ charts.geo| safe }};
+    var optionsGeo = {
+        series: [{ name: 'Thành viên', data: geoData.data }],
+        chart: { type: 'bar', height: 300, toolbar: { show: false } },
+        plotOptions: {
+            bar: { borderRadius: 4, horizontal: true }
+        },
+        colors: ['#6610f2'],
+        xaxis: { categories: geoData.labels }
+    };
+    new ApexCharts(document.querySelector("#chartGeo"), optionsGeo).render();
+
+    // --- 7. Word Cloud (Treemap) ---
+    var wordcloudData = {{ charts.wordcloud| safe }};
+    var optionsWordCloud = {
+        series: [{ data: wordcloudData }],
+        chart: { type: 'treemap', height: 350, toolbar: { show: false } },
+        title: { text: 'Top Hashtags & Chủ đề', align: 'center' },
+        colors: ['#3B93A5', '#F7B844', '#ADD8C7', '#EC3C65', '#CDD7B6', '#C1F666', '#D43F97', '#1E5D8C', '#421243', '#7F94B0', '#EF6537', '#C0ADDB'],
+        plotOptions: { treemap: { distributed: true, enableShades: false } }
+    };
+    new ApexCharts(document.querySelector("#chartWordCloud"), optionsWordCloud).render();
+</script>
+{% endblock %}

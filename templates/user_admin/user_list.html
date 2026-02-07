@@ -1,0 +1,404 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% load user_admin_tags %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-color: #10b981;
+        --primary-hover: #059669;
+        --primary-light: #d1fae5;
+        --text-dark: #111827;
+        --text-muted: #6b7280;
+        --bg-light: #f9fafb;
+        --border-color: #e5e7eb;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --radius-lg: 20px;
+        --radius-md: 12px;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .premium-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(0, 0, 0, 0.02);
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .card-header-custom {
+        background: transparent;
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.5rem;
+    }
+
+    .form-control-custom,
+    .form-select-custom {
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .form-control-custom:focus,
+    .form-select-custom:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px var(--primary-light);
+    }
+
+    .btn-primary-custom {
+        background: var(--primary-color);
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-primary-custom:hover {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+    }
+
+    .table-custom {
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+
+    .table-custom thead th {
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 1rem;
+    }
+
+    .table-custom tbody tr {
+        background: white;
+        box-shadow: var(--shadow-sm);
+        border-radius: var(--radius-md);
+        transition: all 0.2s;
+    }
+
+    .table-custom tbody tr:hover {
+        transform: scale(1.01);
+        box-shadow: var(--shadow-md);
+    }
+
+    .table-custom td {
+        border: none;
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .table-custom td:first-child {
+        border-top-left-radius: var(--radius-md);
+        border-bottom-left-radius: var(--radius-md);
+    }
+
+    .table-custom td:last-child {
+        border-top-right-radius: var(--radius-md);
+        border-bottom-right-radius: var(--radius-md);
+    }
+
+    .avatar-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .avatar-img {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        object-fit: cover;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .status-badge {
+        padding: 0.35em 0.8em;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background-color: var(--primary-light);
+        color: var(--primary-hover);
+    }
+
+    .status-inactive {
+        background-color: #fee2e2;
+        color: #ef4444;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        border: none;
+        background: #f3f4f6;
+        color: var(--text-muted);
+    }
+
+    .action-btn:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .action-btn.delete:hover {
+        background: #ef4444;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 mb-1 fw-bold text-dark">{{ title }}</h2>
+            <p class="text-muted mb-0">Quản lý và theo dõi người dùng hệ thống</p>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="premium-card p-3 d-flex align-items-center">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-primary">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0">{{ stats.total }}</h3>
+                    <small class="text-muted">Tổng người dùng</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="premium-card p-3 d-flex align-items-center">
+                <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success">
+                    <i class="fas fa-user-check fa-2x"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0">{{ stats.active }}</h3>
+                    <small class="text-muted">Đang hoạt động</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="premium-card p-3 d-flex align-items-center">
+                <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3 text-info">
+                    <i class="fas fa-user-plus fa-2x"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0">{{ stats.new_today }}</h3>
+                    <small class="text-muted">Mới hôm nay</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="premium-card p-3 d-flex align-items-center">
+                <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3 text-danger">
+                    <i class="fas fa-user-lock fa-2x"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0">{{ stats.locked }}</h3>
+                    <small class="text-muted">Tài khoản bị khóa</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="premium-card mb-4">
+        <div class="card-header-custom">
+            <h6 class="m-0 fw-bold" style="color: var(--text-dark);">
+                <i class="fas fa-filter me-2 text-primary"></i>Bộ lọc & Tìm kiếm
+            </h6>
+        </div>
+        <div class="p-4">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"
+                            style="border-radius: var(--radius-md) 0 0 var(--radius-md); border-color: var(--border-color);">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control form-control-custom border-start-0"
+                            placeholder="Tìm theo tên, email, sđt..." value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select form-select-custom">
+                        <option value="">-- Trạng thái --</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Hoạt động</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Đã khóa</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="role" class="form-select form-select-custom">
+                        <option value="">-- Vai trò --</option>
+                        <option value="staff" {% if role_filter == 'staff' %}selected{% endif %}>Quản trị viên</option>
+                        <option value="user" {% if role_filter == 'user' %}selected{% endif %}>Người dùng</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary-custom w-100 text-white">
+                        Áp dụng
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Table -->
+    <div class="table-responsive px-2">
+        <table class="table table-custom w-100">
+            <thead>
+                <tr>
+                    <th>Người dùng</th>
+                    <th>Thông tin liên hệ</th>
+                    <th>Ngày tham gia</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-wrapper me-3">
+                                {% if user|has_profile and user.taikhoanhoso.avatar_url %}
+                                <img src="{{ user.taikhoanhoso.avatar_url }}" class="avatar-img" alt="Avatar">
+                                {% else %}
+                                <img src="{% static 'images/default_avatar.png' %}" class="avatar-img" alt="Avatar">
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">{{ user.username }}</div>
+                                {% if user.is_staff %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary"
+                                    style="font-size: 0.65rem;">ADMIN</span>
+                                {% else %}
+                                <span class="text-muted small">Thành viên</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="text-dark mb-1"><i class="far fa-envelope me-2 text-muted"></i>{{ user.email }}</span>
+                            <span class="text-muted small"><i class="fas fa-phone me-2"></i>{{ user.taikhoanhoso.sdt|default:"---" }}</span>
+                        </div>
+                    </td>
+                    <td class="text-muted">
+                        {{ user.date_joined|date:"d/m/Y" }}
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                        <span class="status-badge status-active">Hoạt động</span>
+                        {% else %}
+                        <span class="status-badge status-inactive">Đã khóa</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'user_admin:user_detail' user.id %}" class="action-btn" title="Chi tiết">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+
+                            {% if not user.is_superuser %}
+                            <form method="post" action="{% url 'user_admin:user_toggle_status' user.id %}"
+                                class="d-inline" onsubmit="return confirm('Xác nhận thay đổi trạng thái?');">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn"
+                                    title="{% if user.is_active %}Khóa{% else %}Mở khóa{% endif %}">
+                                    <i class="fas {% if user.is_active %}fa-lock{% else %}fa-unlock{% endif %}"></i>
+                                </button>
+                            </form>
+
+                            <form method="post" action="{% url 'user_admin:user_delete' user.id %}" class="d-inline"
+                                onsubmit="return confirm('CẢNH BÁO: Xóa vĩnh viễn?');">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn delete" title="Xóa">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="fas fa-users fa-3x mb-3 text-gray-300"></i>
+                        <p>Không tìm thấy người dùng nào phù hợp.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if users.has_previous %}
+            <li class="page-item">
+                <a class="page-link border-0 rounded-circle mx-1 shadow-sm"
+                    href="?page={{ users.previous_page_number }}&q={{ search_query }}&status={{ status_filter }}&role={{ role_filter }}"
+                    style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for i in users.paginator.page_range %}
+            {% if users.number == i %}
+            <li class="page-item active">
+                <span class="page-link border-0 rounded-circle mx-1 shadow-sm bg-success"
+                    style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background-color: var(--primary-color) !important;">{{
+                    i }}</span>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link border-0 rounded-circle mx-1 shadow-sm text-dark"
+                    href="?page={{ i }}&q={{ search_query }}&status={{ status_filter }}&role={{ role_filter }}"
+                    style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">{{ i
+                    }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if users.has_next %}
+            <li class="page-item">
+                <a class="page-link border-0 rounded-circle mx-1 shadow-sm"
+                    href="?page={{ users.next_page_number }}&q={{ search_query }}&status={{ status_filter }}&role={{ role_filter }}"
+                    style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

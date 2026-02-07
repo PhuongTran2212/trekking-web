@@ -1,0 +1,135 @@
+/* static/css/header_admin.css */
+
+/*
+ * CSS ĐỘC LẬP CHỈ DÀNH CHO HEADER
+ * Các quy tắc ở đây chỉ áp dụng cho các class bên trong .header
+ */
+
+.header {
+    background-color: white;
+    border-bottom: 1px solid var(--gray-200, #E4E4E7);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-lg, 1.5rem);
+    height: var(--admin-header-height, 64px);
+    position: fixed; /* Bổ sung để đảm bảo header luôn cố định */
+    top: 0;
+    left: var(--admin-sidebar-width, 280px); /* Bổ sung */
+    right: 0;
+    z-index: 1030; /* Bổ sung */
+    transition: left 300ms ease; /* Bổ sung */
+}
+
+.header .header-left,
+.header .header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md, 1rem);
+}
+
+/* Thanh tìm kiếm trong Header */
+.header .admin-search { 
+    position: relative; 
+}
+.header .admin-search .search-icon {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400, #A1A1AA);
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+}
+.header .admin-search .search-input {
+    width: 100%;
+    min-width: 360px;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1px solid var(--gray-300, #D4D4D8);
+    border-radius: var(--radius-lg, 0.75rem);
+    background-color: var(--gray-50, #FAFAFA);
+    transition: all 150ms ease;
+    font-size: 0.9375rem;
+}
+.header .admin-search .search-input:focus {
+    background-color: white;
+    border-color: var(--primary-medium, #22C55E);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    outline: none;
+}
+.header .admin-search .search-input::placeholder { 
+    color: var(--gray-400, #A1A1AA); 
+}
+
+
+
+/* Dropdown của User Menu trong Header */
+.header .profile-menu { 
+    position: relative; 
+}
+.header .profile-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full, 9999px);
+    border: 2px solid var(--gray-300, #D4D4D8);
+    cursor: pointer;
+    background: none;
+    padding: 0;
+    overflow: hidden;
+}
+.header .profile-btn img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+.header .dropdown-menu { 
+    display: none; 
+    position: absolute; 
+    top: calc(100% + 8px); 
+    right: 0; 
+    width: 280px; 
+    background-color: white; 
+    border-radius: var(--radius-lg, 0.75rem); 
+    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgb(0 0 0 / 0.1)); 
+    border: 1px solid var(--gray-200, #E4E4E7); 
+    padding: 0.5rem; 
+    z-index: 1050; 
+}
+.header .dropdown-menu.active { 
+    display: block; 
+}
+.header .dropdown-header {
+    padding: var(--spacing-md, 1rem);
+    border-bottom: 1px solid var(--gray-100, #F4F4F5);
+}
+.header .dropdown-divider {
+    height: 1px;
+    background-color: var(--gray-200, #E4E4E7);
+    margin: var(--spacing-sm, 0.5rem) 0;
+}
+.header .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md, 1rem);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    color: var(--gray-700, #3F3F46);
+    border-radius: var(--radius-md, 0.5rem);
+    transition: all 150ms ease;
+}
+.header .dropdown-item:hover {
+    background-color: var(--gray-50, #FAFAFA);
+    color: var(--gray-900, #18181B);
+}
+.header .dropdown-item.danger:hover {
+    background-color: var(--danger, #EF4444) !important;
+    color: white !important;
+}
+
+/* Responsive cho Header */
+@media (max-width: 768px) {
+    .header .admin-search {
+        display: none; /* Ẩn thanh tìm kiếm trên mobile */
+    }
+}

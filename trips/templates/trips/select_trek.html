@@ -1,0 +1,494 @@
+{% extends base_template|default:'base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --trek-primary: #2d5016;
+        --trek-primary-hover: #1f3810;
+        --trek-accent: #10b981;
+        --trek-bg: #fafafa;
+        --trek-card-bg: #ffffff;
+        --trek-text: #1a1a1a;
+        --trek-text-muted: #666666;
+        --trek-border: #e5e5e5;
+        --trek-shadow: rgba(0, 0, 0, 0.08);
+        --trek-shadow-hover: rgba(0, 0, 0, 0.12);
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .page-header {
+        background: white;
+        /* Giảm padding trên dưới để gọn hơn */
+        padding: 1.5rem 0 1.25rem;
+        /* Giảm khoảng cách dưới header */
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--trek-border);
+    }
+    
+    .page-header h1 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.75rem; /* Giảm size chữ chút cho cân đối */
+        font-weight: 700;
+        color: var(--trek-text);
+        margin-bottom: 0.5rem;
+    }
+    
+    .page-header p {
+        color: var(--trek-text-muted);
+        font-size: 0.95rem;
+        margin: 0 auto;
+        max-width: 700px;
+    }
+
+    /* === FILTER FORM (Đã thu gọn khoảng cách) === */
+    .filter-form-wrapper {
+        max-width: 1100px; 
+        margin: 0 auto 2rem; /* Giảm margin bottom từ 3rem -> 2rem */
+        background: #fff; 
+        padding: 1.25rem; /* Giảm padding trong từ 1.75rem -> 1.25rem */
+        border-radius: 12px; 
+        border: 1px solid var(--trek-border); 
+        box-shadow: var(--trek-shadow);
+    }
+    
+    .filter-form-wrapper form {
+        display: flex;
+        gap: 0.75rem; /* Giảm khoảng cách giữa các ô từ 1rem -> 0.75rem */
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    
+    .filter-form-wrapper .form-group {
+        flex: 1;
+        min-width: 180px; /* Cho phép co nhỏ hơn chút */
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+    
+    .filter-form-wrapper .form-group.search {
+        flex: 2;
+        min-width: 220px;
+    }
+    
+    .filter-form-wrapper .form-group.action {
+        flex: 0 0 auto;
+        display: flex;
+        gap: 0.5rem; /* Giảm khoảng cách giữa 2 nút */
+    }
+    
+    .filter-form-wrapper .form-label {
+        font-weight: 600;
+        font-size: 0.8rem; /* Chữ label nhỏ gọn hơn */
+        color: var(--trek-text-muted);
+        margin: 0;
+    }
+    
+    .filter-form-wrapper .form-control,
+    .filter-form-wrapper .form-select {
+        font-size: 0.9rem;
+        padding: 0.55rem 0.85rem; /* Input gọn hơn */
+        border: 1px solid var(--trek-border);
+        border-radius: 6px;
+        transition: var(--transition-smooth);
+        height: calc(1.5em + 1rem + 2px); /* Chiều cao input thấp hơn chút */
+    }
+    
+    .filter-form-wrapper .form-control:focus,
+    .filter-form-wrapper .form-select:focus {
+        border-color: var(--trek-accent);
+        box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1);
+        outline: none;
+    }
+    
+    .filter-form-wrapper .btn {
+        padding: 0.55rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        width: auto;
+        height: calc(1.5em + 1rem + 2px); /* Khớp chiều cao input mới */
+        transition: var(--transition-smooth);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    
+    .filter-form-wrapper .btn.btn-primary {
+        background: var(--trek-primary); 
+        color: white;
+    }
+    .filter-form-wrapper .btn.btn-primary:hover {
+        background: var(--trek-primary-hover); 
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(45, 80, 22, 0.15);
+    }
+
+    .filter-form-wrapper .btn-reset {
+        background: #6b7280;
+        color: white;
+        display: none;
+    }
+    .filter-form-wrapper .btn-reset:hover {
+        background: #4b5563;
+    }
+    .filter-form-wrapper .btn-reset.show {
+        display: inline-flex;
+    }
+    
+    /* === TREK CARDS (Cũng thu gọn lại) === */
+    .select-trek-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Card nhỏ hơn xíu */
+        gap: 1.5rem; /* Giảm khoảng cách giữa các card từ 2rem -> 1.5rem */
+        margin-bottom: 2rem;
+        padding: 0 0.5rem;
+    }
+    .trek-card {
+        background: var(--trek-card-bg);
+        border-radius: 12px; /* Bo góc nhỏ hơn xíu cho hợp compact */
+        overflow: hidden;
+        border: 2px solid var(--trek-border);
+        transition: var(--transition-smooth);
+        display: flex;
+        flex-direction: column;
+        text-decoration: none;
+        color: inherit;
+        height: 100%;
+        position: relative;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .trek-card-selectable { cursor: pointer; }
+    .trek-card-selectable:hover {
+        border-color: var(--trek-accent);
+        box-shadow: 0 4px 12px var(--trek-shadow-hover);
+        transform: translateY(-2px);
+    }
+    .trek-card-selectable.selected {
+        border-color: var(--trek-primary);
+        box-shadow: 0 0 0 3px rgba(45, 80, 22, 0.15);
+        background: #f8fdf4;
+    }
+    
+    .selection-checkmark {
+        position: absolute; top: 12px; left: 12px; width: 32px; height: 32px;
+        background-color: var(--trek-primary); color: white; border-radius: 50%;
+        display: none; align-items: center; justify-content: center;
+        font-size: 1rem; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .trek-card-selectable.selected .selection-checkmark { display: flex; animation: checkmarkPop 0.3s ease; }
+    @keyframes checkmarkPop { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    
+    .trek-card-selectable input[type="radio"] { display: none; }
+    
+    .trek-card-image-wrapper { position: relative; width: 100%; height: 200px; /* Giảm chiều cao ảnh chút */ overflow: hidden; background: var(--trek-bg); }
+    .trek-card-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .trek-card-selectable:hover .trek-card-image { transform: scale(1.05); }
+    
+    .trek-card-badge {
+        position: absolute; top: 10px; right: 10px; padding: 0.4rem 0.8rem;
+        border-radius: 20px; font-weight: 700; font-size: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); z-index: 1;
+    }
+    [data-difficulty="de"] { background: #10b981; color: white; }
+    [data-difficulty="trung-binh"], [data-difficulty="trungbinh"] { background: #f59e0b; color: white; }
+    [data-difficulty="kho"] { background: #f97316; color: white; }
+    [data-difficulty="rat-kho"], [data-difficulty="ratkho"] { background: #ef4444; color: white; }
+    
+    .trek-card-body { padding: 1.25rem; /* Giảm padding body */ flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+    .trek-card-header { display: flex; flex-direction: column; gap: 0.4rem; }
+    .trek-card-title { font-family: 'Montserrat', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--trek-text); line-height: 1.3; margin: 0; }
+    .trek-card-location { display: flex; align-items: center; gap: 0.375rem; color: var(--trek-text-muted); font-size: 0.85rem; font-weight: 500; }
+    .trek-card-location svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--trek-accent); }
+    
+    .trek-card-metrics { display: flex; gap: 1rem; align-items: center; padding: 0.6rem 0; border-top: 1px solid var(--trek-border); border-bottom: 1px solid var(--trek-border); }
+    .trek-metric-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 500; color: var(--trek-text-muted); }
+    .trek-metric-item i { color: var(--trek-accent); font-size: 0.85rem; }
+    .trek-metric-item strong { color: var(--trek-text); }
+    
+    .trek-card-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: auto; }
+    .trek-stat { text-align: center; }
+    .trek-stat-value { display: block; font-weight: 700; font-size: 1.05rem; color: var(--trek-primary); margin-bottom: 0.1rem; }
+    .trek-stat-label { font-size: 0.65rem; color: var(--trek-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .trek-details-link { font-size: 0.8rem; text-decoration: none; font-weight: 600; color: var(--trek-primary); margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 0.35rem; transition: var(--transition-smooth); }
+    .trek-details-link:hover { color: var(--trek-primary-hover); gap: 0.5rem; }
+    .trek-details-link i { font-size: 0.7rem; }
+  
+    /* === FOOTER BUTTON (Giữ nguyên fix position) === */
+    .continue-button-wrapper {
+        position: fixed; 
+        bottom: 0; 
+        right: 0;
+        left: 0; /* Default left: 0 cho mobile */
+        background: white; 
+        padding: 1rem; /* Giảm padding footer */
+        text-align: center; 
+        border-top: 1px solid #e2e8f0; 
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.08); 
+        z-index: 1000; 
+        transition: left 0.3s ease-in-out; 
+    }
+    
+    .continue-button-wrapper .btn { min-width: 260px; padding: 0.75rem 2rem; font-size: 1rem; font-weight: 600; border-radius: 8px; background: var(--trek-primary); border: none; color: white; transition: var(--transition-smooth); width: auto; height: auto; cursor: pointer; }
+    .continue-button-wrapper .btn:hover:not(:disabled) { background: var(--trek-primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(45, 80, 22, 0.3); }
+    .continue-button-wrapper .btn:disabled { background: #d1d5db; cursor: not-allowed; opacity: 0.6; }
+    
+    .main-content { padding-bottom: 5rem; } /* Giảm padding bottom body */
+    
+    .empty-state { grid-column: 1 / -1; text-align: center; padding: 2rem 1rem; background: white; border-radius: 12px; border: 1px solid var(--trek-border); }
+    .empty-state i { font-size: 2.5rem; color: var(--trek-text-muted); margin-bottom: 0.75rem; }
+    .empty-state p { color: var(--trek-text-muted); margin: 0; font-size: 0.95rem; }
+    
+    @media (max-width: 768px) {
+        .page-header { padding: 1.25rem 1rem; margin-bottom: 1.5rem; }
+        .page-header h1 { font-size: 1.4rem; }
+        .filter-form-wrapper { padding: 1rem; margin-bottom: 1.5rem; }
+        .filter-form-wrapper form { flex-direction: column; gap: 0.75rem; align-items: stretch; }
+        .filter-form-wrapper .form-group { width: 100%; min-width: unset; }
+        .filter-form-wrapper .btn { width: 100%; }
+        .filter-form-wrapper .form-group.action { flex-direction: column; }
+        .select-trek-grid { grid-template-columns: 1fr; gap: 1rem; padding: 0; }
+        .continue-button-wrapper .btn { min-width: auto; width: 100%; }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .select-trek-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1400px) {
+        .container { max-width: 1300px; } /* Giới hạn max-width lại chút cho đỡ loãng */
+        .select-trek-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container my-4" style="max-width: 1200px;">
+        <div class="page-header text-center">
+            <h1>{{ page_title }}</h1>
+            <p>Mọi chuyến đi đều bắt đầu từ một cung đường. Hãy chọn điểm khởi đầu cho hành trình của bạn.</p>
+        </div>
+
+        <!-- FORM LỌC -->
+        <div class="filter-form-wrapper">
+            <form method="get">
+                <div class="form-group search">
+                    <label for="{{ filter_form.q.id_for_label }}" class="form-label">Tìm tên cung đường</label>
+                    {{ filter_form.q }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ filter_form.tinh_thanh.id_for_label }}" class="form-label">Tỉnh thành</label>
+                    {{ filter_form.tinh_thanh }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ filter_form.do_kho.id_for_label }}" class="form-label">Độ khó</label>
+                    {{ filter_form.do_kho }}
+                </div>
+
+                <div class="form-group action">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search me-1"></i> Lọc
+                    </button>
+                    <a href="?" class="btn btn-reset" id="reset-filter-btn">
+                        <i class="fas fa-redo me-1"></i> Đặt lại
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- DANH SÁCH CUNG ĐƯỜNG (CARD GRID) -->
+        <form id="select-trek-form" method="get" action="{% if is_admin_view %}{% url 'trips_admin:create_trip' %}{% else %}{% url 'trips:create_trip' %}{% endif %}">
+            <div class="select-trek-grid">
+                {% for trek in treks %}
+                <label class="trek-card trek-card-selectable" for="trek-{{ trek.pk }}">
+                    <input type="radio" name="cung_duong" value="{{ trek.slug }}" id="trek-{{ trek.pk }}" class="trek-radio">
+                    <div class="selection-checkmark">
+                        <i class="fas fa-check"></i>
+                    </div>
+
+                    <div class="trek-card-image-wrapper">
+                        <img src="{{ trek.anh_bia_url }}" alt="{{ trek.ten }}" class="trek-card-image">
+                        <div class="trek-card-badge" data-difficulty="{{ trek.do_kho.slug|lower|slugify }}">{{ trek.do_kho.ten }}</div>
+                    </div>
+                    
+                    <div class="trek-card-body">
+                        <div class="trek-card-header">
+                            <h2 class="trek-card-title">{{ trek.ten }}</h2>
+                            <div class="trek-card-location">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                {{ trek.tinh_thanh.ten }}
+                            </div>
+                        </div>
+                        
+                        <div class="trek-card-metrics">
+                            <div class="trek-metric-item" title="{{ trek.so_luot_danh_gia }} lượt đánh giá">
+                                <i class="fas fa-star" style="color: #f59e0b;"></i>
+                                <strong>{{ trek.danh_gia_trung_binh|floatformat:1 }}</strong>
+                            </div>
+                            <div class="trek-metric-item" title="{{ trek.so_chuyen_di }} chuyến đi đã được tổ chức">
+                                <i class="fas fa-users"></i>
+                                <strong>{{ trek.so_chuyen_di }} chuyến</strong>
+                            </div>
+                        </div>
+
+                        <div class="trek-card-stats">
+                            <div class="trek-stat">
+                                <span class="trek-stat-value">{{ trek.do_dai_km|floatformat:1 }}</span>
+                                <span class="trek-stat-label">km</span>
+                            </div>
+                            <div class="trek-stat">
+                                <span class="trek-stat-value">{{ trek.thoi_gian_uoc_tinh_gio|default:"N/A" }}</span>
+                                <span class="trek-stat-label">giờ</span>
+                            </div>
+                            <div class="trek-stat">
+                                <span class="trek-stat-value">{{ trek.tong_do_cao_leo_m|default:"N/A" }}</span>
+                                <span class="trek-stat-label">m leo</span>
+                            </div>
+                        </div>
+
+                        <a href="{{ trek.get_absolute_url }}" target="_blank" class="trek-details-link" onclick="event.stopPropagation();">
+                            Xem chi tiết <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                </label>
+                {% empty %}
+                <div class="empty-state">
+                    <i class="fas fa-mountain"></i>
+                    <p>Không tìm thấy cung đường nào phù hợp với bộ lọc.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </form>
+
+        {% include 'trips/partials/pagination.html' with page_obj=page_obj paginator=paginator is_paginated=is_paginated %}
+    </div>
+</div>
+
+<!-- NÚT TIẾP TỤC (FIXED FOOTER) -->
+<div class="continue-button-wrapper">
+    <button type="submit" form="select-trek-form" id="continue-btn" class="btn btn-primary btn-lg" disabled>
+        Tiếp tục với cung đường đã chọn <i class="fas fa-arrow-right ms-2"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ==========================================
+    // 1. LOGIC FIX VỊ TRÍ NÚT "TIẾP TỤC" (TRÁNH ĐÈ SIDEBAR)
+    // ==========================================
+    const sidebar = document.getElementById('sidebar'); 
+    const footerWrapper = document.querySelector('.continue-button-wrapper');
+
+    function adjustFooterPosition() {
+        if (sidebar && footerWrapper) {
+            // Lấy chiều rộng hiện tại của sidebar
+            const sidebarWidth = sidebar.offsetWidth;
+            
+            // Nếu trên mobile (sidebar width = 0 hoặc ẩn) -> left = 0
+            // Nếu trên desktop (sidebar hiện) -> left = sidebarWidth
+            if (window.innerWidth <= 768) {
+                 footerWrapper.style.left = '0px';
+            } else {
+                 footerWrapper.style.left = sidebarWidth + 'px';
+            }
+        }
+    }
+
+    // Chạy ngay khi load
+    adjustFooterPosition();
+
+    // Chạy khi resize trình duyệt
+    window.addEventListener('resize', adjustFooterPosition);
+
+    // Chạy khi Sidebar thay đổi kích thước (dùng ResizeObserver cho chính xác)
+    if (sidebar) {
+        const resizeObserver = new ResizeObserver(() => adjustFooterPosition());
+        resizeObserver.observe(sidebar);
+    }
+    
+    // Fallback cho nút toggle sidebar (nếu có)
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+    if (sidebarToggleBtn) {
+        sidebarToggleBtn.addEventListener('click', () => setTimeout(adjustFooterPosition, 310));
+    }
+
+
+    // ==========================================
+    // 2. LOGIC NÚT "ĐẶT LẠI" BỘ LỌC
+    // ==========================================
+    const resetBtn = document.getElementById('reset-filter-btn');
+    if (resetBtn) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.delete('page'); // Bỏ qua tham số page
+        
+        // Nếu còn tham số khác -> Hiện nút Reset
+        if (urlParams.toString().length > 0) {
+            resetBtn.classList.add('show');
+        }
+    }
+
+    // ==========================================
+    // 3. LOGIC CHỌN CARD & HIGHLIGHT
+    // ==========================================
+    const trekGrid = document.querySelector('.select-trek-grid');
+    const continueBtn = document.getElementById('continue-btn');
+    
+    if (trekGrid && continueBtn) {
+        const allCards = trekGrid.querySelectorAll('.trek-card-selectable');
+
+        trekGrid.addEventListener('click', function(event) {
+            const selectedCard = event.target.closest('.trek-card-selectable');
+            if (!selectedCard) return;
+
+            event.preventDefault(); // Chặn hành vi mặc định của label để tự xử lý radio
+            const radio = selectedCard.querySelector('input[type="radio"]');
+            if (!radio) return;
+
+            const isAlreadySelected = selectedCard.classList.contains('selected');
+
+            // Reset tất cả các card khác
+            allCards.forEach(card => {
+                card.classList.remove('selected');
+                const r = card.querySelector('input[type="radio"]');
+                if (r) r.checked = false;
+            });
+
+            // Nếu click lại card đang chọn -> Bỏ chọn (Optional, tùy logic bạn muốn)
+            // Ở đây mình logic: Click là chọn, không cho bỏ chọn hết (phải chọn ít nhất 1 để tiếp tục)
+            // Nhưng code cũ của bạn cho phép bỏ chọn, nên mình giữ logic đó:
+            if (isAlreadySelected) {
+                continueBtn.disabled = true;
+                radio.checked = false;
+            } else {
+                selectedCard.classList.add('selected');
+                radio.checked = true;
+                continueBtn.disabled = false;
+            }
+        });
+
+        // Kiểm tra nếu có radio nào đã được checked sẵn (khi back lại trang)
+        const checkedRadio = document.querySelector('.trek-radio:checked');
+        if (checkedRadio) {
+            const selectedCard = checkedRadio.closest('.trek-card-selectable');
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+                continueBtn.disabled = false;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

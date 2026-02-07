@@ -1,0 +1,503 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% load user_admin_tags %}
+
+{% block title %}Dashboard Quản trị - TrekViet{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #10b981;
+        --primary-hover: #059669;
+        --primary-soft: #ecfdf5;
+        --text-dark: #1e293b;
+        --text-gray: #64748b;
+        --bg-body: #f8fafc;
+        --card-bg: #ffffff;
+        --border-color: #e2e8f0;
+        
+        --radius-xl: 16px;
+        --radius-lg: 12px;
+        --radius-md: 8px;
+        
+        --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    body { background-color: var(--bg-body); color: var(--text-dark); font-family: 'Inter', sans-serif; }
+
+    /* --- Dashboard Card --- */
+    .dash-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        transition: all 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+    .dash-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary-soft);
+    }
+
+    /* --- KPI Box --- */
+    .kpi-value { font-size: 2rem; font-weight: 700; line-height: 1.2; color: var(--text-dark); }
+    .kpi-label { font-size: 0.875rem; font-weight: 600; text-transform: uppercase; color: var(--text-gray); letter-spacing: 0.5px; }
+    
+    .icon-box {
+        width: 56px; height: 56px;
+        border-radius: var(--radius-lg);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        transition: transform 0.3s;
+    }
+    .dash-card:hover .icon-box { transform: scale(1.1) rotate(5deg); }
+
+    /* Color Themes for Icons/Badges */
+    .theme-blue { background: #eff6ff; color: #3b82f6; }
+    .theme-orange { background: #fff7ed; color: #f97316; }
+    .theme-green { background: #ecfdf5; color: #10b981; }
+    .theme-red { background: #fef2f2; color: #ef4444; }
+
+    /* --- Quick Actions (NEW DESIGN) --- */
+    .btn-quick {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 1.5rem 1rem;
+        background: white; 
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        text-decoration: none; 
+        color: var(--text-dark);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        height: 100%;
+        position: relative;
+    }
+    
+    /* Icon Styling: Clean Gray Default -> Vibrant Green Hover */
+    .btn-quick i { 
+        font-size: 1.8rem; 
+        margin-bottom: 1rem; 
+        transition: all 0.3s ease;
+        width: 64px; height: 64px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%;
+        background: #f1f5f9; /* Light Gray */
+        color: var(--text-gray); /* Dark Gray */
+    }
+    
+    .btn-quick span { 
+        font-weight: 600; 
+        font-size: 0.95rem; 
+        color: var(--text-dark);
+        transition: color 0.3s;
+    }
+
+    /* Hover Effects */
+    .btn-quick:hover {
+        border-color: var(--primary);
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+    }
+    
+    .btn-quick:hover i { 
+        background: var(--primary); 
+        color: white; 
+        transform: scale(1.1);
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-quick:hover span { color: var(--primary-hover); }
+
+    /* --- Refresh Button (NEW DESIGN) --- */
+    .btn-refresh {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 50px; /* Pill Shape */
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        color: var(--text-gray);
+        box-shadow: var(--shadow-card);
+        transition: all 0.2s;
+        display: inline-flex; align-items: center; gap: 8px;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+    .btn-refresh:hover {
+        color: var(--primary);
+        border-color: var(--primary);
+        background: var(--primary-soft);
+        transform: translateY(-2px);
+    }
+
+    /* --- Activity List Items --- */
+    .activity-item {
+        padding: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; gap: 1rem;
+        transition: background 0.2s;
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-item:hover { background: #f8fafc; }
+
+    /* Thumbnails for List Items */
+    .item-thumb {
+        width: 60px; height: 60px;
+        border-radius: var(--radius-md);
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #f1f5f9;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .item-thumb i { font-size: 1.5rem; color: #cbd5e1; }
+
+    .item-content { flex: 1; min-width: 0; }
+    .item-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; color: var(--text-dark); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .item-meta { font-size: 0.8rem; color: var(--text-gray); display: flex; align-items: center; gap: 10px; }
+
+    /* --- Small Action Button (NEW DESIGN) --- */
+    .btn-icon-action {
+        width: 36px; height: 36px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%;
+        background: #f8fafc;
+        color: var(--text-gray);
+        border: 1px solid #f1f5f9;
+        transition: all 0.2s;
+    }
+    .btn-icon-action:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: scale(1.1);
+    }
+
+    /* Status Badges */
+    .badge-status {
+        padding: 4px 10px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 600;
+        white-space: nowrap;
+    }
+    .status-pending { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+    .status-success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .status-danger  { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+    /* --- Risk/Alert Card --- */
+    .risk-card {
+        background: #fff;
+        border: 1px solid #fee2e2;
+        border-left: 4px solid #ef4444;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- 1. Header Section -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4 gap-3">
+        <div>
+            <h6 class="text-uppercase text-muted fw-bold small ls-1 mb-1">Tổng quan hệ thống</h6>
+            <h3 class="fw-bold text-dark m-0">Xin chào, {{ request.user.last_name|default:request.user.username }}! 👋</h3>
+            <p class="text-muted small m-0 mt-1">Hôm nay là {{ "now"|date:"l, d/m/Y" }}</p>
+        </div>
+        <div>
+            <!-- Updated Refresh Button -->
+            <button class="btn-refresh" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt"></i>Làm mới
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. KPI Scorecards -->
+    <div class="row g-4 mb-5">
+        <!-- New Users -->
+        <div class="col-xl-3 col-md-6">
+            <div class="dash-card p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-label mb-2">Thành viên mới</div>
+                        <div class="kpi-value">{{ kpi.new_users|default:"0" }}</div>
+                        <div class="mt-2 text-success small fw-bold bg-success bg-opacity-10 px-2 py-1 rounded d-inline-block">
+                            <i class="fas fa-arrow-up me-1"></i>Hôm nay
+                        </div>
+                    </div>
+                    <div class="icon-box theme-blue"><i class="fas fa-user-plus"></i></div>
+                </div>
+            </div>
+        </div>
+        <!-- Pending Requests -->
+        <div class="col-xl-3 col-md-6">
+            <div class="dash-card p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-label mb-2">Cần duyệt gấp</div>
+                        <div class="kpi-value">{{ kpi.pending|default:"0" }}</div>
+                        <div class="mt-2 text-warning small fw-bold bg-warning bg-opacity-10 px-2 py-1 rounded d-inline-block">
+                            <i class="fas fa-clock me-1"></i>Yêu cầu chờ
+                        </div>
+                    </div>
+                    <div class="icon-box theme-orange"><i class="fas fa-clipboard-check"></i></div>
+                </div>
+            </div>
+        </div>
+        <!-- Upcoming Trips -->
+        <div class="col-xl-3 col-md-6">
+            <div class="dash-card p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-label mb-2">Sắp khởi hành</div>
+                        <div class="kpi-value">{{ kpi.upcoming|default:"0" }}</div>
+                        <div class="mt-2 text-primary small fw-bold bg-primary bg-opacity-10 px-2 py-1 rounded d-inline-block">
+                            <i class="fas fa-plane me-1"></i>7 ngày tới
+                        </div>
+                    </div>
+                    <div class="icon-box theme-green"><i class="fas fa-map-marked-alt"></i></div>
+                </div>
+            </div>
+        </div>
+        <!-- Risk Alerts -->
+        <div class="col-xl-3 col-md-6">
+            <div class="dash-card p-4 border-danger border-opacity-25" style="background: #fffafa;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-label text-danger mb-2">Cảnh báo rủi ro</div>
+                        <div class="kpi-value text-danger">{{ risk_trips.count|default:"0" }}</div>
+                        <div class="mt-2 text-danger small fw-bold bg-danger bg-opacity-10 px-2 py-1 rounded d-inline-block">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Vắng khách
+                        </div>
+                    </div>
+                    <div class="icon-box theme-red"><i class="fas fa-bell"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Quick Actions (Updated HTML structure for cleaner styling) -->
+    <h5 class="fw-bold text-dark mb-3 px-1"><i class="fas fa-bolt text-warning me-2"></i>Thao tác nhanh</h5>
+    <div class="row g-3 mb-5">
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{% url 'trips_admin:trip_list' %}?status=CHO_DUYET" class="btn-quick">
+                <i class="fas fa-tasks"></i>
+                <span>Duyệt Chuyến đi</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{% url 'post_admin:post_list' %}" class="btn-quick">
+                <i class="fas fa-feather-alt"></i>
+                <span>Duyệt Bài viết</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{% url 'treks_admin:cung_duong_list' %}?status=CHO_DUYET" class="btn-quick">
+                <i class="fas fa-route"></i>
+                <span>Duyệt Cung đường</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{% url 'user_admin:user_list' %}" class="btn-quick">
+                <i class="fas fa-users-cog"></i>
+                <span>Quản lý User</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="{% url 'user_admin:analytics' %}" class="btn-quick">
+                <i class="fas fa-chart-pie"></i>
+                <span>Báo cáo</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <a href="#" class="btn-quick opacity-50" style="cursor: not-allowed;" title="Đang phát triển">
+                <i class="fas fa-comment-dots"></i>
+                <span>Gửi Thông báo</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 4. Main Content Grid -->
+    <div class="row g-4">
+        <!-- LEFT: Activity Feed -->
+        <div class="col-lg-8">
+            <div class="dash-card">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold m-0 text-dark"><i class="fas fa-stream me-2 text-primary"></i>Hoạt động gần đây</h6>
+                    
+                    <ul class="nav nav-pills nav-pills-sm" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active rounded-pill fw-bold small px-3" id="pills-trips-tab" data-bs-toggle="pill" data-bs-target="#pills-trips" type="button">Chuyến đi</button>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <button class="nav-link rounded-pill fw-bold small px-3" id="pills-treks-tab" data-bs-toggle="pill" data-bs-target="#pills-treks" type="button">Cung đường</button>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <button class="nav-link rounded-pill fw-bold small px-3" id="pills-posts-tab" data-bs-toggle="pill" data-bs-target="#pills-posts" type="button">Bài viết</button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="tab-content" id="pills-tabContent">
+                    <!-- Tab Trips -->
+                    <div class="tab-pane fade show active" id="pills-trips">
+                        <div class="list-group list-group-flush">
+                            {% for trip in recent_trips %}
+                            <div class="activity-item">
+                                {% if trip.cover_url %}
+                                    <img src="{{ trip.cover_url }}" class="item-thumb" alt="Cover">
+                                {% else %}
+                                    <div class="item-thumb"><i class="fas fa-suitcase"></i></div>
+                                {% endif %}
+                                
+                                <div class="item-content">
+                                    <div class="item-title">{{ trip.ten_chuyen_di }}</div>
+                                    <div class="item-meta">
+                                        <span><i class="far fa-user me-1"></i>{{ trip.nguoi_to_chuc.username }}</span>
+                                        <span>•</span>
+                                        <span><i class="far fa-clock me-1"></i>{{ trip.ngay_tao|time_ago_vi }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    {% if trip.trang_thai == 'CHO_DUYET' %}
+                                        <span class="badge-status status-pending">Chờ duyệt</span>
+                                    {% else %}
+                                        <span class="badge-status status-success">{{ trip.get_trang_thai_display }}</span>
+                                    {% endif %}
+                                    <div class="mt-2">
+                                        <a href="{% url 'trips_admin:update_trip' trip.id %}" class="btn-icon-action mx-auto" title="Xem chi tiết"><i class="fas fa-chevron-right"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-5 text-muted">Chưa có dữ liệu chuyến đi.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Tab Treks -->
+                    <div class="tab-pane fade" id="pills-treks">
+                        <div class="list-group list-group-flush">
+                            {% for trek in recent_treks %}
+                            <div class="activity-item">
+                                {% if trek.anh_bia_url %}
+                                    <img src="{{ trek.anh_bia_url }}" class="item-thumb" alt="Cover">
+                                {% else %}
+                                    <div class="item-thumb"><i class="fas fa-mountain"></i></div>
+                                {% endif %}
+
+                                <div class="item-content">
+                                    <div class="item-title">{{ trek.ten }}</div>
+                                    <div class="item-meta">
+                                        <span><i class="fas fa-map-marker-alt me-1 text-danger"></i>{{ trek.tinh_thanh.ten|default:"Chưa cập nhật" }}</span>
+                                        <span>•</span>
+                                        <span>{{ trek.ngay_tao|time_ago_vi }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    {% if trek.trang_thai == 'CHO_DUYET' %}
+                                        <span class="badge-status status-pending">Chờ duyệt</span>
+                                    {% else %}
+                                        <span class="badge-status status-success">Đã duyệt</span>
+                                    {% endif %}
+                                    <div class="mt-2">
+                                        <a href="{% url 'treks_admin:cung_duong_detail' trek.pk %}" class="btn-icon-action mx-auto"><i class="fas fa-chevron-right"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-5 text-muted">Chưa có dữ liệu cung đường.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Tab Posts -->
+                    <div class="tab-pane fade" id="pills-posts">
+                        <div class="list-group list-group-flush">
+                            {% for post in recent_posts %}
+                            <div class="activity-item">
+                                <!-- Hiển thị ảnh nếu có -->
+                                {% if post.media.first %}
+                                    <img src="{{ post.media.first.duong_dan_file.url }}" class="item-thumb" alt="Post Img">
+                                {% else %}
+                                    <div class="item-thumb"><i class="fas fa-newspaper"></i></div>
+                                {% endif %}
+
+                                <div class="item-content">
+                                    <div class="item-title" title="{{ post.tieu_de }}">
+                                        {{ post.tieu_de|default:post.noi_dung|truncatewords:10 }}
+                                    </div>
+                                    <div class="item-meta">
+                                        <span><i class="far fa-user-circle me-1"></i>{{ post.tac_gia.username }}</span>
+                                        <span>•</span>
+                                        <span>{{ post.ngay_dang|time_ago_vi }}</span>
+                                        {% if post.likes_count %}
+                                        <span class="ms-2"><i class="fas fa-thumbs-up text-primary me-1"></i>{{ post.likes_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    {% if post.trang_thai == 'CHO_DUYET' %}
+                                        <span class="badge-status status-pending">Chờ duyệt</span>
+                                    {% else %}
+                                        <span class="badge-status status-success">Hiển thị</span>
+                                    {% endif %}
+                                    <div class="mt-2">
+                                        <a href="{% url 'post_admin:post_detail' post.id %}" class="btn-icon-action mx-auto"><i class="fas fa-chevron-right"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-5 text-muted">Chưa có bài viết mới.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white text-center border-top py-3">
+                    <a href="{% url 'trips_admin:trip_list' %}" class="text-decoration-none fw-bold text-primary small hover-link">
+                        Xem tất cả hoạt động <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Risk Alerts -->
+        <div class="col-lg-4">
+            <div class="dash-card risk-card h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center">
+                    <div class="icon-box theme-red me-3" style="width: 40px; height: 40px; font-size: 1.2rem;">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h6 class="fw-bold m-0 text-danger">Cần chú ý gấp</h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if risk_trips %}
+                        <div class="list-group list-group-flush">
+                            {% for trip in risk_trips %}
+                            <div class="activity-item">
+                                <div class="item-content">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size: 0.7rem;">Vắng khách</span>
+                                        <small class="text-muted fw-bold">{{ trip.ngay_bat_dau|date:"d/m" }}</small>
+                                    </div>
+                                    <div class="item-title mb-1">{{ trip.ten_chuyen_di }}</div>
+                                    <div class="small text-muted">Host: <strong>{{ trip.nguoi_to_chuc.username }}</strong></div>
+                                </div>
+                                <a href="{% url 'trips_admin:update_trip' trip.id %}" class="btn btn-sm btn-outline-danger fw-bold ms-2">Xem</a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 px-3">
+                            <div class="mb-3 text-success opacity-50"><i class="fas fa-check-circle fa-4x"></i></div>
+                            <h6 class="fw-bold text-dark">Hệ thống ổn định!</h6>
+                            <p class="text-muted small mb-0">Không có chuyến đi nào gặp rủi ro vắng khách hiện tại.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

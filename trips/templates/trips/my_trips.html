@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}{{ page_title|default:"Chuyến đi của tôi" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== ANIMATIONS ===== */
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ===== STAT CARDS (GIỮ NGUYÊN) ===== */
+    .stat-card {
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        position: relative;
+        animation: slideUp 0.5s ease forwards;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .stat-card:hover::before { left: 100%; }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl) !important;
+    }
+
+    .stat-card .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.15;
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .stat-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stat-success { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
+    .stat-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat-info    { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+    /* ===== TOOLBAR ===== */
+    .toolbar-card {
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+        animation: slideUp 0.6s ease forwards;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .search-input-group {
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        border: 2px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .search-input-group:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .search-input-group input {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .filter-select {
+        border-radius: var(--radius-md);
+        border: 2px solid var(--border-color);
+        padding: 0.65rem 1rem;
+        transition: all 0.3s ease;
+        background: white;
+        font-weight: 500;
+    }
+
+    .filter-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+        border-radius: var(--radius-xl);
+        animation: scaleIn 0.6s ease;
+        border: 2px dashed var(--border-color);
+        background: white;
+    }
+
+    .empty-state-icon { animation: float 3s ease-in-out infinite; }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    /* ===== MODAL STYLE ===== */
+    .modal-custom .modal-content {
+        border-radius: var(--radius-lg);
+        border: none;
+        overflow: hidden;
+    }
+
+    .modal-icon-warning {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+    }
+
+    /* ===== UTILITY ===== */
+    .text-gradient {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Animation delays for stagger effect */
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    /* CSS cho Wrapper cột chứa card */
+    .trip-col { animation: scaleIn 0.5s ease forwards; }
+    .trip-col:nth-child(1) { animation-delay: 0.1s; }
+    .trip-col:nth-child(2) { animation-delay: 0.2s; }
+    .trip-col:nth-child(3) { animation-delay: 0.3s; }
+    .trip-col:nth-child(4) { animation-delay: 0.4s; }
+    .trip-col:nth-child(5) { animation-delay: 0.5s; }
+    .trip-col:nth-child(6) { animation-delay: 0.6s; }
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    
+    <!-- 1. DASHBOARD THỐNG KÊ -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3 col-6">
+            <div class="card stat-card stat-primary border-0 shadow-sm h-100 text-white position-relative">
+                <div class="card-body text-center d-flex flex-column justify-content-center py-4 position-relative" style="z-index: 1;">
+                    <i class="fas fa-flag-checkered fa-3x mb-3"></i>
+                    <h2 class="fw-bold mb-1">{{ stats.total_trips }}</h2>
+                    <small class="text-uppercase fw-semibold opacity-90" style="font-size: 0.75rem; letter-spacing: 1px;">Đã hoàn thành</small>
+                </div>
+                <i class="fas fa-flag-checkered stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card stat-success border-0 shadow-sm h-100 text-white position-relative">
+                <div class="card-body text-center d-flex flex-column justify-content-center py-4 position-relative" style="z-index: 1;">
+                    <i class="fas fa-hiking fa-3x mb-3"></i>
+                    <h2 class="fw-bold mb-1">{{ stats.total_km|default:0|floatformat:0 }}</h2>
+                    <small class="text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 1px;">Km chinh phục</small>
+                </div>
+                <i class="fas fa-hiking stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card stat-warning border-0 shadow-sm h-100 text-white position-relative">
+                <div class="card-body text-center d-flex flex-column justify-content-center py-4 position-relative" style="z-index: 1;">
+                    <i class="fas fa-crown fa-3x mb-3"></i>
+                    <h2 class="fw-bold mb-1">{{ stats.hosted }}</h2>
+                    <small class="text-uppercase fw-semibold opacity-90" style="font-size: 0.75rem; letter-spacing: 1px;">Lần làm Leader</small>
+                </div>
+                <i class="fas fa-crown stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card stat-info border-0 shadow-sm h-100 text-white position-relative">
+                <div class="card-body text-center d-flex flex-column justify-content-center py-4 position-relative" style="z-index: 1;">
+                    <i class="fas fa-wallet fa-3x mb-3"></i>
+                    <h2 class="fw-bold mb-1">{{ stats.total_spent|default:0|intcomma }}</h2>
+                    <small class="text-uppercase fw-semibold opacity-90" style="font-size: 0.75rem; letter-spacing: 1px;">Chi phí (VND)</small>
+                </div>
+                <i class="fas fa-wallet stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. THANH CÔNG CỤ -->
+    <div class="card toolbar-card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-center">
+                <!-- Tìm kiếm -->
+                <div class="col-md-4">
+                    <div class="search-input-group d-flex align-items-center bg-white">
+                        <span class="ps-3"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-0" placeholder="Tìm kiếm chuyến đi..." value="{{ request.GET.q }}" style="padding-left: 1rem;">
+                    </div>
+                </div>
+                
+                <!-- Lọc Thời gian -->
+                <div class="col-md-3">
+                    <select name="status" class="form-select filter-select" onchange="this.form.submit()">
+                        <option value="">🕐 Tất cả thời gian</option>
+                        <option value="upcoming" {% if request.GET.status == 'upcoming' %}selected{% endif %}>📅 Sắp diễn ra</option>
+                        <option value="past" {% if request.GET.status == 'past' %}selected{% endif %}>✅ Đã kết thúc</option>
+                    </select>
+                </div>
+
+                <!-- Lọc Vai trò -->
+                <div class="col-md-3">
+                    <select name="role" class="form-select filter-select" onchange="this.form.submit()">
+                        <option value="">👥 Tất cả vai trò</option>
+                        <option value="host" {% if request.GET.role == 'host' %}selected{% endif %}>👑 Leader (Tôi tổ chức)</option>
+                        <option value="member" {% if request.GET.role == 'member' %}selected{% endif %}>🚶 Member (Tôi tham gia)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <a href="{% url 'trips:my_trips' %}" class="btn btn-light border w-100 fw-bold">
+                        <i class="fas fa-redo-alt me-2"></i>Làm mới
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. DANH SÁCH CHUYẾN ĐI -->
+    {% if trips %}
+        <div class="row g-4">
+            {% for trip in trips %}
+            <div class="col-md-6 col-lg-4 trip-col">
+                {# --- TẬN DỤNG CARD TỪ trip_card.html --- #}
+                {% include "trips/partials/trip_card.html" %} 
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Phân trang -->
+        {% if is_paginated %}
+        <div class="mt-5 d-flex justify-content-center">
+            {% include 'trips/partials/pagination.html' %}
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state text-center py-5 mt-4">
+            <div class="empty-state-icon mb-4">
+                <i class="far fa-folder-open text-muted" style="font-size: 5rem; opacity: 0.3;"></i>
+            </div>
+            <h4 class="fw-bold text-gradient mb-3">Chưa có chuyến đi nào</h4>
+            <p class="text-muted mb-4" style="max-width: 400px; margin: 0 auto;">
+                Bạn chưa tham gia chuyến đi nào hoặc bộ lọc không tìm thấy kết quả phù hợp.
+            </p>
+            <a href="{% url 'trips:trip_hub' %}" class="btn btn-primary shadow fw-bold rounded-pill px-4">
+                <i class="fas fa-compass me-2"></i>Khám phá ngay
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- 4. MODAL XÁC NHẬN (Cần thiết cho logic Hủy/Rời nhóm trong trip_card) -->
+<div class="modal fade modal-custom" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-xl">
+            <div class="modal-body text-center p-5">
+                <div class="modal-icon-warning">
+                    <i class="fas fa-exclamation-triangle text-warning" style="font-size: 2.5rem;"></i>
+                </div>
+                <h4 class="fw-bold mb-3">Xác nhận hành động</h4>
+                <p class="text-muted mb-4" id="deleteMsg" style="font-size: 1.05rem;">...</p>
+                
+                <form id="deleteForm" method="post" action="">
+                    {% csrf_token %}
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn btn-light border flex-fill fw-bold" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Hủy bỏ
+                        </button>
+                        <button type="submit" class="btn btn-danger flex-fill fw-bold shadow-sm">
+                            <i class="fas fa-check me-2"></i>Xác nhận
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{# Script confirmDelete đã được tích hợp sẵn trong trip_card.html nên không cần khai báo lại ở đây #}
+{% endblock %}

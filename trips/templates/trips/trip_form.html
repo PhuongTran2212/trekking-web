@@ -1,0 +1,1013 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<!-- Select2 & FontAwesome -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<!-- LEAFLET MAP & GEOCODER (MỚI) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+<!-- LIGHTGALLERY CSS (MỚI) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
+
+<style>
+    :root {
+        --primary-color: #3e9f5f;
+        --primary-dark:  #4D7111;
+        --text-main: #0f172a;
+        --text-sub: #64748b;
+        --border-color: #e2e8f0;
+        --input-bg: #ffffff;
+        --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        --radius-lg: 16px;
+        --radius-md: 10px;
+    }
+
+    body { background-color: #f1f5f9; color: var(--text-main); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .main-wrapper { padding: 2.5rem 0 140px; }
+    .main-content-wrapper { display: grid; grid-template-columns: 7fr 3fr; gap: 24px; align-items: start; }
+    
+    /* Header & General UI (Giữ nguyên) */
+    .page-header { margin-bottom: 2.5rem; }
+    .btn-back { display: inline-flex; align-items: center; gap: 8px; color: var(--text-sub); text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 8px 16px; background: white; border-radius: 50px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease; }
+    .btn-back:hover { color: var(--primary-color); transform: translateX(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .page-title { font-weight: 800; font-size: 2.25rem; color: var(--text-main); margin-top: 1rem; letter-spacing: -0.025em; line-height: 1.2; }
+    .subtitle { display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; margin-top: 0.75rem; }
+
+    /* Cards (Giữ nguyên) */
+    .card-modern { background: white; border: 1px solid white; border-radius: var(--radius-lg); margin-bottom: 1.5rem; box-shadow: var(--card-shadow); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+    .card-header-modern { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: white; }
+    .header-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+    .header-icon-box { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .card-body-modern { padding: 1.5rem; }
+
+    /* Icons Color */
+    .bg-icon-info { background: #e0e7ff; color: #4338ca; }
+    .bg-icon-map { background: #dcfce7; color: #15803d; }
+    .bg-icon-calendar { background: #ffedd5; color: #c2410c; }
+    .bg-icon-setting { background: #f1f5f9; color: #475569; }
+    .bg-icon-image { background: #fae8ff; color: #a21caf; }
+
+    /* Inputs Base */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label-modern { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 0.025em; }
+    .input-group-text { background-color: #f8fafc; border-color: var(--border-color); color: var(--text-sub); }
+
+    /* === [ĐÃ SỬA LẠI CSS FORM CONTROL] === */
+    
+    /* 1. Input thường và Select Single giữ chiều cao 48px */
+    .form-control, .form-select, .select2-container--bootstrap-5 .select2-selection--single { 
+        height: 48px !important; 
+        border-radius: var(--radius-md); 
+        border: 1px solid var(--border-color); 
+        padding: 0.6rem 1rem; 
+        font-size: 0.95rem; 
+        background-color: var(--input-bg); 
+        color: var(--text-main); 
+    }
+    
+    .form-control:focus, .form-select:focus { 
+        border-color: var(--primary-color); 
+        box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15); 
+        background-color: white; 
+    }
+
+    textarea.form-control { height: auto !important; min-height: 120px; resize: vertical; }
+
+    /* 2. [FIX QUAN TRỌNG] Select2 Multiple (Tags) - BẮT BUỘC giãn chiều cao */
+    .select2-container--bootstrap-5 .select2-selection--multiple {
+        min-height: 48px !important;
+        height: auto !important; /* Quan trọng: để nó tự giãn khi xuống dòng */
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        background-color: var(--input-bg);
+        padding: 4px 8px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap; /* Cho phép các tag rớt dòng */
+        overflow: visible !important; /* Đảm bảo không bị ẩn nội dung tràn */
+    }
+
+    /* Vùng chứa các tag bên trong */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        gap: 6px; /* Khoảng cách giữa các tag */
+    }
+
+    /* Style cho từng Tag (Chip) */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        font-size: 0.9rem;
+        margin: 0 !important; /* Reset margin mặc định gây lệch */
+        padding: 4px 8px;
+        background-color: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+    }
+
+    /* Nút xóa (x) trong tag */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+        margin-right: 6px;
+        border: none;
+        background: transparent;
+        color: #ef4444;
+        font-weight: bold;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    /* Ô input tìm kiếm (chỗ con trỏ nhấp nháy) */
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-search .select2-search__field {
+        height: 32px !important;
+        margin-top: 0 !important;
+        line-height: 1.5;
+        min-width: 150px; /* Đủ rộng để gõ */
+    }
+
+    /* === MAP STYLING (MỚI) === */
+    #map {
+        height: 350px;
+        width: 100%;
+        border-radius: var(--radius-md);
+        border: 2px solid var(--border-color);
+        margin-top: 10px;
+        z-index: 1; /* Để không che đè dropdown */
+    }
+    /* Tùy chỉnh thanh tìm kiếm của Leaflet cho đẹp hơn */
+    .leaflet-control-geocoder { z-index: 1000; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .leaflet-touch .leaflet-control-geocoder { min-width: 300px; }
+
+    /* === IMAGE UPLOAD PREVIEW (MỚI) === */
+    .upload-zone {
+        border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 2.5rem 1rem;
+        text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s;
+        position: relative; overflow: hidden;
+    }
+    .upload-zone:hover { border-color: var(--primary-color); background: #f0fdfa; }
+    .upload-zone:hover i { color: var(--primary-color); transform: scale(1.2); }
+    
+    .image-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .preview-item {
+        position: relative;
+        padding-top: 100%; /* Tạo hình vuông */
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .preview-item img {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+    
+    .btn-remove-img {
+        position: absolute; top: 2px; right: 2px;
+        width: 20px; height: 20px;
+        background: rgba(239, 68, 68, 0.9); color: white;
+        border-radius: 50%; font-size: 10px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; border: none; z-index: 10;
+        transition: transform 0.2s;
+    }
+    .btn-remove-img:hover { transform: scale(1.2); background: red; }
+    
+    .img-meta {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: rgba(0,0,0,0.6); color: white;
+        font-size: 9px; padding: 2px; text-align: center;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Timeline Styling (Giữ nguyên) */
+    .timeline-container { position: relative; padding: 1rem 0 0 0; }
+    .timeline-container::before { content: ''; position: absolute; left: 19px; top: 20px; bottom: 20px; width: 2px; background: #e2e8f0; z-index: 0; }
+    .timeline-item { position: relative; padding-left: 50px; margin-bottom: 2rem; }
+    .timeline-index-badge { position: absolute; left: 0; top: 0; width: 40px; height: 40px; background: white; border: 2px solid var(--primary-color); color: var(--primary-color); border-radius: 50%; font-size: 1rem; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s ease; }
+    .timeline-item:hover .timeline-index-badge { background: var(--primary-color); color: white; transform: scale(1.1); }
+    .timeline-card { background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; position: relative; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .timeline-card:hover { border-color: var(--primary-color); box-shadow: 0 10px 20px rgba(13, 148, 136, 0.1); transform: translateY(-2px); }
+    .timeline-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border-color); }
+    .timeline-title-label { font-weight: 700; color: var(--text-main); font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+    .btn-delete-row { color: #ef4444; background: white; border: 1px solid #fee2e2; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+    .btn-delete-row:hover { background: #ef4444; color: white; border-color: #ef4444; }
+    .hidden-checkbox { display: none !important; }
+
+    /* Settings & Footer (Giữ nguyên) */
+    .settings-list { display: flex; flex-direction: column; }
+    .setting-item { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px dashed #e2e8f0; transition: background-color 0.2s ease; }
+    .setting-item:last-child { border-bottom: none; }
+    .setting-item:hover { background-color: #f8fafc; }
+    .setting-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; margin-right: 0; transition: transform 0.2s; }
+    .setting-item:hover .setting-icon { transform: scale(1.1) rotate(5deg); }
+    .setting-icon.privacy-icon { background: #e0f2fe; color: #0284c7; }
+    .setting-icon.reason-icon { background: #fff7ed; color: #ea580c; }
+    .setting-content { flex: 1; margin: 0 16px; min-width: 0; }
+    .setting-label { font-weight: 700; color: var(--text-main); margin-bottom: 3px; display: block; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .setting-desc { font-size: 0.8rem; color: var(--text-sub); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .setting-action { flex-shrink: 0; display: flex; justify-content: flex-end; width: 160px; }
+    .setting-action select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; font-weight: 600; background-color: #fff; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .form-check.form-switch { display: flex; align-items: center; justify-content: flex-end; margin: 0; padding: 0; }
+    .form-check-input { width: 3em !important; height: 1.6em !important; cursor: pointer; background-color: #e2e8f0; border-color: #cbd5e1; margin-top: 0; margin-left: 0 !important; float: none; }
+    .form-check-input:checked { background-color: var(--primary-color); border-color: var(--primary-color); }
+
+    .sticky-footer { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 800px; background: #ffffff; padding: 10px 24px; border-radius: 50px; box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; z-index: 1000; animation: slideUp 0.3s ease-out; }
+    @keyframes slideUp { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+    .footer-status-wrapper { display: flex; align-items: center; gap: 12px; }
+    .status-icon { width: 32px; height: 32px; background-color: #f0fdfa; color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; border: 1px solid #ccfbf1; }
+    .status-text { display: flex; flex-direction: column; line-height: 1.25; }
+    .status-title { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+    .status-subtitle { font-size: 0.75rem; color: var(--text-sub); }
+    .footer-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-cancel { padding: 8px 20px; border-radius: 50px; color: var(--text-sub); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: all 0.2s; background: transparent; border: 1px solid transparent; }
+    .btn-cancel:hover { background-color: #f1f5f9; color: var(--text-main); border-color: #e2e8f0; }
+    .btn-save { padding: 8px 28px; border-radius: 50px; background-color: var(--primary-color); color: white; font-weight: 600; font-size: 0.9rem; border: none; box-shadow: 0 4px 6px rgba(62, 159, 95, 0.2); transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .btn-save:hover { background-color: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(62, 159, 95, 0.3); }
+
+    @media (max-width: 992px) {
+        .main-content-wrapper { grid-template-columns: 1fr; gap: 1.5rem; }
+        .timeline-container::before { left: 14px; }
+        .timeline-index-badge { width: 30px; height: 30px; font-size: 0.85rem; }
+        .timeline-item { padding-left: 40px; }
+    }
+
+    /* TINYMCE CUSTOM STYLE */
+    .tox-tinymce {
+        border-radius: var(--radius-md) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    .existing-media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 12px;
+        margin-top: 1rem;
+    }
+    
+    .media-item {
+        position: relative;
+        padding-top: 100%; /* Hình vuông */
+        border-radius: 8px;
+        overflow: hidden;
+        border: 3px solid transparent;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Hiệu ứng khi là ảnh bìa */
+    .media-item.is-cover {
+        border-color: #fbbf24; /* Màu vàng */
+        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
+    }
+    
+    .media-item img {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+    
+    .media-actions {
+        position: absolute; top: 5px; right: 5px; display: flex; gap: 5px; z-index: 10;
+    }
+    
+    .btn-media-action {
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        border: none;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; cursor: pointer;
+        transition: transform 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .btn-media-action:hover { transform: scale(1.15); }
+    
+    /* Nút Set Cover (Ngôi sao) */
+    .btn-set-cover { background: rgba(255, 255, 255, 0.9); color: #cbd5e1; }
+    .btn-set-cover.active, .btn-set-cover:hover { background: #fbbf24; color: white; }
+    
+    /* Nút Xóa */
+    .btn-delete-media { background: rgba(255, 255, 255, 0.9); color: #ef4444; }
+    .btn-delete-media:hover { background: #ef4444; color: white; }
+    
+    /* Badge chữ 'ẢNH BÌA' */
+    .cover-badge {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: rgba(251, 191, 36, 0.95); color: white;
+        font-size: 9px; padding: 3px; text-align: center; font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container main-wrapper">
+
+    <!-- Header -->
+<!-- Header -->
+    <div class="page-header">
+        <div class="d-flex flex-column align-items-start">
+            <a href="{% url 'treks:cung_duong_list' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+            <h1 class="page-title">{{ page_title }}</h1>
+            <div class="subtitle">
+                <i class="fas fa-map-marked-alt"></i> 
+                
+                <!-- SỬA ĐOẠN NÀY ĐỂ TRÁNH LỖI KHI EDIT -->
+                {% if is_edit %}
+                    {{ object.cung_duong.ten }}
+                {% else %}
+                    {{ cung_duong.ten }}
+                {% endif %}
+                <!-- KẾT THÚC SỬA -->
+                
+            </div>
+        </div>
+        {% if is_edit %}
+        <div class="position-absolute top-0 end-0 mt-5 me-5 d-none d-lg-block">
+            <a href="{{ object.get_absolute_url }}" class="btn btn-outline-dark rounded-pill px-4 fw-bold">
+                <i class="far fa-eye me-2"></i>Xem trước
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="tripForm">
+        {% csrf_token %}
+
+        {% if form.errors or timeline_formset.errors %}
+        <div class="alert alert-danger shadow-sm border-0 rounded-3 mb-4 p-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-white text-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-1">Có thông tin chưa hợp lệ</h6>
+                    <div class="small opacity-75">Vui lòng kiểm tra lại các trường được đánh dấu đỏ bên dưới.</div>
+                </div>
+            </div>
+            {% if form.non_field_errors %}
+            <div class="mt-2 small ps-5">{{ form.non_field_errors }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="main-content-wrapper">
+
+            <!-- CỘT TRÁI (7 PHẦN) -->
+            <div class="col-left">
+                
+                <!-- Card 1: Thông tin chung (CẬP NHẬT: THÊM MAP) -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title">
+                            <span class="header-icon-box bg-icon-info"><i class="fas fa-info"></i></span>
+                            Thông tin cơ bản
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="form-group">
+                            <label class="form-label-modern">Tên chuyến đi <span class="text-danger">*</span></label>
+                            {{ form.ten_chuyen_di }}
+                            {% if form.ten_chuyen_di.errors %}
+                            <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle me-1"></i>{{ form.ten_chuyen_di.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- SECTION ĐIỂM TẬP TRUNG + MAP -->
+                        <div class="form-group">
+                            <label class="form-label-modern"><i class="fas fa-map-marker-alt"></i> Điểm tập trung</label>
+                            <div class="input-group">
+                                <span class="input-group-text"></span>
+                                {{ form.dia_diem_tap_trung }}
+                            </div>
+                            
+                            <!-- Bản đồ Leaflet -->
+                            <div id="map"></div>
+                            <div class="small text-muted mt-2 fst-italic">
+                                <i class="fas fa-lightbulb text-warning"></i> Gõ tên địa điểm vào ô tìm kiếm trên bản đồ hoặc click trực tiếp lên bản đồ để ghim vị trí.
+                            </div>
+                            
+                            <!-- Input ẩn chứa JSON tọa độ (Backend cần form field: toa_do_tap_trung) -->
+                            {{ form.toa_do_tap_trung }} 
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label class="form-label-modern"><i class="fa-solid fa-tag"></i> Tags (Phân loại)</label>
+                            {{ form.tags }}
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <label class="form-label-modern">Mô tả & Ghi chú</label>
+                            {{ form.mo_ta }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Lịch trình (Timeline) (GIỮ NGUYÊN) -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title">
+                            <span class="header-icon-box bg-icon-map"><i class="fas fa-route"></i></span>
+                            Lịch trình chi tiết
+                        </div>
+                        <button type="button" id="add-timeline-btn" class="btn btn-primary rounded-pill fw-bold px-4 shadow-sm" style="background: var(--primary-color); border:none;">
+                            <i class="fas fa-plus me-2"></i>Thêm hoạt động
+                        </button>
+                    </div>
+                    <div class="card-body-modern bg-light bg-opacity-25">
+                        {{ timeline_formset.management_form }}
+                        
+                        <div id="timeline-container" class="timeline-container">
+                            {% for subform in timeline_formset %}
+                            <div class="timeline-item timeline-row" data-index="{{ forloop.counter }}">
+                                <div class="timeline-index-badge">{{ forloop.counter }}</div>
+                                
+                                <div class="timeline-card">
+                                    {% for hidden in subform.hidden_fields %}{{ hidden }}{% endfor %}
+                                    <div class="hidden-checkbox">{{ subform.DELETE }}</div>
+                                    <div class="timeline-header-row">
+                                        <div class="timeline-title-label">
+                                            <i class="fas fa-flag-checkered text-warning"></i>
+                                            Hoạt động #<span class="row-number">{{ forloop.counter }}</span>
+                                        </div>
+                                        <button type="button" class="btn-delete-row btn-delete">
+                                            <i class="far fa-trash-alt"></i> Xóa
+                                        </button>
+                                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-3 col-6">
+                                            <label class="form-label-modern small text-muted">Ngày thứ</label>
+                                            {{ subform.ngay }}
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                            <label class="form-label-modern small text-muted">Giờ (HH:MM)</label>
+                                            {{ subform.thoi_gian }}
+                                        </div>
+                                        <div class="col-md-6 col-12">
+                                            <label class="form-label-modern small text-muted">Tên hoạt động</label>
+                                            {{ subform.hoat_dong }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label-modern small text-muted">Chi tiết hoạt động</label>
+                                        {{ subform.mo_ta_chi_tiet }}
+                                    </div>
+                                    {% if subform.errors %}
+                                    <div class="alert alert-danger mt-2 py-2 small mb-0">{{ subform.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Empty Form Template -->
+                        <div id="empty-form-template" class="d-none">
+                            <div class="timeline-item timeline-row">
+                                <div class="timeline-index-badge"></div>
+                                <div class="timeline-card">
+                                    {% for hidden in timeline_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                    <div class="hidden-checkbox">{{ timeline_formset.empty_form.DELETE }}</div>
+                                    <div class="timeline-header-row">
+                                        <div class="timeline-title-label">
+                                            <i class="fas fa-flag-checkered text-warning"></i>
+                                            Hoạt động #<span class="row-number"></span>
+                                        </div>
+                                        <button type="button" class="btn-delete-row btn-delete"><i class="far fa-trash-alt"></i> Xóa</button>
+                                    </div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-3 col-6"><label class="form-label-modern small text-muted">Ngày thứ</label>{{ timeline_formset.empty_form.ngay }}</div>
+                                        <div class="col-md-3 col-6"><label class="form-label-modern small text-muted">Giờ (HH:MM)</label>{{ timeline_formset.empty_form.thoi_gian }}</div>
+                                        <div class="col-md-6 col-12"><label class="form-label-modern small text-muted">Tên hoạt động</label>{{ timeline_formset.empty_form.hoat_dong }}</div>
+                                    </div>
+                                    <div><label class="form-label-modern small text-muted">Chi tiết hoạt động</label>{{ timeline_formset.empty_form.mo_ta_chi_tiet }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT PHẢI (3 PHẦN) -->
+            <div class="col-right">
+                
+                <!-- Card: Kế hoạch (GIỮ NGUYÊN) -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title"><span class="header-icon-box bg-icon-calendar"><i class="far fa-calendar-alt"></i></span> Kế hoạch & Chi phí</div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="form-group"><label class="form-label-modern">Ngày bắt đầu</label><div class="input-group"><span class="input-group-text bg-white"></span>{{ form.ngay_bat_dau }}</div></div>
+                        <div class="form-group"><label class="form-label-modern">Ngày kết thúc</label><div class="input-group"><span class="input-group-text bg-white"></span>{{ form.ngay_ket_thuc }}</div></div>
+                        <div class="my-4 border-top border-dashed"></div>
+                        <div class="form-group"><label class="form-label-modern">Chi phí dự kiến (VND)</label><div class="input-group">{{ form.chi_phi_uoc_tinh }}</div></div>
+                        <div class="form-group mb-0"><label class="form-label-modern mb-2"><i class="fas fa-users"></i> Số lượng tối đa</label><div class="input-group">{{ form.so_luong_toi_da }}<span class="input-group-text"></span></div></div>
+                    </div>
+                </div>
+
+                <!-- Card: Cài đặt (GIỮ NGUYÊN) -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="header-title"><span class="header-icon-box bg-icon-setting"><i class="fas fa-cog"></i></span> Thiết lập</div>
+    </div>
+    <div class="card-body-modern p-0"> 
+        <div class="settings-list">
+            
+            <div class="setting-item">
+                <div class="setting-icon bg-light text-dark"><i class="fas fa-toggle-on"></i></div>
+                <div class="setting-content">
+                    <label class="setting-label">Trạng thái</label>
+                    <div class="setting-desc">Cập nhật tình trạng chuyến đi</div>
+                </div>
+                <div class="setting-action" style="width: 180px;">
+                    {{ form.trang_thai }}
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-icon privacy-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="setting-content">
+                    <label class="setting-label">Quyền riêng tư</label>
+                    <div class="setting-desc">Ai có thể xem chuyến đi này?</div>
+                </div>
+                <div class="setting-action">
+                    {{ form.che_do_rieng_tu }}
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-icon reason-icon"><i class="fas fa-clipboard-check"></i></div>
+                <div class="setting-content">
+                    <label class="setting-label">Yêu cầu lý do</label>
+                    <div class="setting-desc">Bắt buộc nhập lý do khi đăng ký</div>
+                </div>
+                <div class="setting-action">
+                    <div class="form-check form-switch m-0 p-0 d-flex justify-content-end">
+                        {{ form.yeu_cau_ly_do }}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+                
+                <!-- Card: Ảnh (CẬP NHẬT: LIGHTGALLERY STYLE + LOGIC XÓA/LIMIT) -->
+<!-- Card: Ảnh (CẬP NHẬT: QUẢN LÝ ẢNH CŨ + SET COVER) -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-title"><span class="header-icon-box bg-icon-image"><i class="far fa-images"></i></span> Thư viện ảnh</div>
+                        <span class="badge bg-light text-dark border"><span id="img-count">0</span>/10 mới</span>
+                    </div>
+                    <div class="card-body-modern">
+                        <!-- Vùng Upload Mới -->
+                        <div class="upload-zone" id="drop-zone">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-secondary"></i>
+                            <div class="fw-bold text-dark">Tải ảnh mới lên</div>
+                            <div class="small text-muted mt-1">Tối đa 10 ảnh, 20MB/ảnh</div>
+                            <input type="file" id="trip_media_files" name="trip_media_files" multiple hidden accept="image/*">
+                        </div>
+                        <div id="upload-error" class="text-danger small mt-2 fw-bold text-center"></div>
+                        <div id="upload-preview" class="image-preview-grid"></div>
+
+                        <!-- Vùng Hiển Thị Ảnh Cũ (CHỈ HIỆN KHI SỬA) -->
+                        {% if is_edit and object.media.exists %}
+                        <div class="mt-4 pt-3 border-top">
+                            <label class="form-label-modern text-muted mb-2 d-flex justify-content-between align-items-center">
+                                <span>Ảnh đã tải lên</span>
+                                <span class="badge bg-secondary rounded-pill">{{ object.media.count }} ảnh</span>
+                            </label>
+
+ <div class="existing-media-grid" id="existing-media-container">
+    {% for m in object.media.all %}
+    <div class="media-item {% if object.anh_bia_id == m.id %}is-cover{% endif %}" id="media-{{ m.id }}">
+        
+        <a href="{{ m.file.url }}" 
+           data-src="{{ m.file.url }}"
+           class="media-link d-block w-100 h-100" 
+           title="Nhấn để xem ảnh lớn">
+            <img src="{{ m.file.url }}" loading="lazy" alt="Trip Image">
+        </a>
+        
+        <div class="media-actions">
+<button 
+    type="button"
+    class="btn-media-action btn-set-cover"
+    data-url="{% url 'trips:set_trip_cover' object.pk m.id %}"
+    onclick="setTripCover(this.dataset.url, '{{ m.id }}')">
+    <i class="fas fa-star"></i>
+</button>
+            
+            <button type="button"
+                    class="btn-media-action btn-delete-media"
+                    data-url="{% url 'trips:delete_trip_media' m.id %}"
+                    onclick="deleteTripMedia(this.dataset.url, '{{ m.id }}')"
+                    title="Xóa ảnh này">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+
+        {% if object.anh_bia_id == m.id %}
+            <div class="cover-badge">ẢNH BÌA</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+<!-- Sticky Footer (CẬP NHẬT LOGIC TẠO/SỬA) -->
+        <div class="sticky-footer">
+            <div class="footer-status-wrapper">
+                {% if is_edit %}
+                    <!-- Trạng thái khi Đang Sửa -->
+                    <div class="status-icon" style="color: #f59e0b; border-color: #fcd34d; background: #fffbeb;">
+                        <i class="fas fa-pen"></i>
+                    </div>
+                    <div class="status-text">
+                        <span class="status-title">Chế độ chỉnh sửa</span>
+                        <span class="status-subtitle">Đang sửa: {{ object.ten_chuyen_di|truncatechars:30 }}</span>
+                    </div>
+                {% else %}
+                    <!-- Trạng thái khi Tạo Mới -->
+                    <div class="status-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="status-text">
+                        <span class="status-title">Tạo chuyến đi mới</span>
+                        <span class="status-subtitle">Hãy điền đầy đủ thông tin</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="footer-actions">
+                <!-- Nút Hủy: Nếu sửa thì về chi tiết, nếu tạo thì về Hub -->
+                <a href="{% if is_edit %}{{ object.get_absolute_url }}{% else %}{% url 'trips:trip_hub' %}{% endif %}" class="btn-cancel">
+                    Hủy bỏ
+                </a>
+                
+                <button type="submit" class="btn-save">
+                    {% if is_edit %}
+                        <i class="fas fa-save"></i> Lưu thay đổi
+                    {% else %}
+                        <i class="fas fa-paper-plane"></i> Hoàn tất tạo mới
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/zoom/lg-zoom.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        
+        // --- 1. CONFIG TINYMCE (Đã fix lỗi update) ---
+        if ($('#id_mo_ta').length) {
+            tinymce.init({
+                selector: '#id_mo_ta',
+                height: 350,
+                menubar: false,
+                branding: false,
+                statusbar: true,
+                plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+                toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link | removeformat',
+                content_style: 'body { font-family: "Inter", system-ui, -apple-system, sans-serif; font-size: 14px; color: #0f172a; }',
+                setup: function (editor) {
+                    editor.on('change keyup paste', function () {
+                        editor.save(); 
+                    });
+                }
+            });
+        }
+
+        // --- 2. CONFIG UI CHUNG ---
+        $('#id_tags').select2({ theme: 'bootstrap-5', width: '100%', placeholder: "Chọn từ khóa...", selectionCssClass: 'select2-custom-height' });
+        $('#tripForm input:not([type="checkbox"]):not([type="file"]), #tripForm select, #tripForm textarea').addClass('form-control');
+        $('#tripForm textarea:not(#id_mo_ta)').addClass('form-control');
+        $('#tripForm select').addClass('form-select');
+        $('#tripForm input[type="checkbox"]').addClass('form-check-input').css({'width': '3em', 'height': '1.5em', 'margin-left': '0'});
+        $('.input-group .form-control').css('border-left', 'none');
+
+        // --- 3. MAP LOGIC (Đã lược bớt cho gọn, giữ nguyên logic cũ của bạn) ---
+        const savedCoordsStr = $('#id_toa_do_tap_trung').val();
+        let initialLat = 10.8231, initialLng = 106.6297, zoomLevel = 10, hasSavedPoint = false;
+
+        try {
+            if (savedCoordsStr && savedCoordsStr !== '{}' && savedCoordsStr !== 'null') {
+                const parsed = JSON.parse(savedCoordsStr);
+                if (parsed.lat && parsed.lng) {
+                    initialLat = parseFloat(parsed.lat);
+                    initialLng = parseFloat(parsed.lng);
+                    zoomLevel = 16;
+                    hasSavedPoint = true;
+                }
+            }
+        } catch(e) {}
+
+        const map = L.map('map').setView([initialLat, initialLng], zoomLevel);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+        let marker = hasSavedPoint ? L.marker([initialLat, initialLng]).addTo(map) : null;
+
+        function updateHiddenCoords(lat, lng) { $('#id_toa_do_tap_trung').val(JSON.stringify({ lat: lat, lng: lng })); }
+
+        map.on('click', function(e) {
+            const { lat, lng } = e.latlng;
+            if (marker) marker.setLatLng(e.latlng); else marker = L.marker(e.latlng).addTo(map);
+            updateHiddenCoords(lat, lng);
+            const locationInput = $('#id_dia_diem_tap_trung');
+            locationInput.val("Đang lấy địa chỉ...").addClass('text-muted fst-italic');
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+                .then(res => res.json())
+                .then(data => locationInput.val(data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`).removeClass('text-muted fst-italic'))
+                .catch(() => locationInput.val(`${lat.toFixed(5)}, ${lng.toFixed(5)}`).removeClass('text-muted fst-italic'));
+        });
+
+        L.Control.geocoder({ defaultMarkGeocode: false, placeholder: "Tìm vị trí..." })
+        .on('markgeocode', function(e) {
+            const center = e.geocode.center;
+            map.fitBounds(e.geocode.bbox);
+            if (marker) marker.setLatLng(center); else marker = L.marker(center).addTo(map);
+            updateHiddenCoords(center.lat, center.lng);
+            $('#id_dia_diem_tap_trung').val(e.geocode.name);
+        }).addTo(map);
+
+        // =========================================================
+        // === 4. IMAGE UPLOAD PREVIEW (FIX: CLICK ĐỂ ZOOM) ===
+        // =========================================================
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('trip_media_files');
+        const previewContainer = document.getElementById('upload-preview');
+        const errorMsg = document.getElementById('upload-error');
+        const imgCountBadge = document.getElementById('img-count');
+        
+        const dt = new DataTransfer();
+        const MAX_FILES = 10;
+        const MAX_SIZE_MB = 10; 
+        
+        // Biến lưu instance LightGallery cho phần preview
+        let previewGallery = null;
+
+        if(dropZone && fileInput) {
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+        }
+
+        function handleFiles(files) {
+            errorMsg.textContent = '';
+            if (dt.items.length + files.length > MAX_FILES) {
+                errorMsg.textContent = `Chỉ được upload tối đa ${MAX_FILES} ảnh.`;
+                return;
+            }
+            Array.from(files).forEach(file => {
+                if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+                    errorMsg.textContent = `File ${file.name} quá lớn (>10MB).`;
+                    return;
+                }
+                if (!file.type.startsWith('image/')) {
+                    errorMsg.textContent = `File ${file.name} không phải ảnh.`;
+                    return;
+                }
+                dt.items.add(file);
+            });
+            fileInput.files = dt.files;
+            renderPreview();
+        }
+
+        function renderPreview() {
+            previewContainer.innerHTML = '';
+            imgCountBadge.textContent = dt.items.length;
+            
+            // Promise để đợi tất cả ảnh load xong mới init gallery
+            const readers = [];
+
+            Array.from(dt.files).forEach((file, index) => {
+                const reader = new FileReader();
+                const promise = new Promise((resolve) => {
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item animate__animated animate__fadeIn';
+                        
+                        // [QUAN TRỌNG] Thêm thẻ <a> bao quanh ảnh để LightGallery hoạt động
+                        // Nút xóa để bên ngoài thẻ <a> hoặc dùng z-index để không bị click nhầm
+                        div.innerHTML = `
+                            <a href="${e.target.result}" class="d-block w-100 h-100 glightbox">
+                                <img src="${e.target.result}" style="cursor: zoom-in;">
+                            </a>
+                            <div class="img-meta">${(file.size/1024/1024).toFixed(1)} MB</div>
+                            <button type="button" class="btn-remove-img" onclick="event.stopPropagation(); removeFile(${index})" title="Xóa ảnh"><i class="fas fa-times"></i></button>
+                        `;
+                        previewContainer.appendChild(div);
+                        resolve();
+                    };
+                });
+                readers.push(promise);
+                reader.readAsDataURL(file);
+            });
+
+            // Sau khi render xong HTML, khởi tạo LightGallery
+            Promise.all(readers).then(() => {
+                refreshLightGallery();
+            });
+        }
+
+        // Hàm khởi tạo/refresh LightGallery cho vùng preview
+        function refreshLightGallery() {
+            const el = document.getElementById('upload-preview');
+            // Hủy instance cũ nếu có
+            if (previewGallery) {
+                previewGallery.destroy(true); 
+                previewGallery = null;
+            }
+            // Tạo instance mới
+            if (el && el.querySelectorAll('a').length > 0) {
+                previewGallery = lightGallery(el, {
+                    selector: 'a', // Chỉ chọn các thẻ a
+                    plugins: [lgZoom, lgThumbnail],
+                    speed: 500,
+                });
+            }
+        }
+
+        // Khởi tạo LightGallery cho ảnh cũ (nếu có - khi edit)
+const existingMedia = document.getElementById('existing-media-container');
+if (existingMedia) {
+    lightGallery(existingMedia, {
+        selector: '.media-link', // Chọn đúng class trong thẻ A
+        plugins: [lgZoom, lgThumbnail], // Gọi plugin
+        speed: 500,
+        thumbnail: true,
+        allowMediaOverlap: true,
+        toggleThumb: true,
+        exThumbImage: 'data-src' // Bắt buộc lấy thumbnail từ data-src
+    });
+}
+
+        window.removeFile = function(index) {
+            dt.items.remove(index);
+            fileInput.files = dt.files;
+            renderPreview();
+        }
+
+        // --- 5. TIMELINE FORMSET (Giữ nguyên) ---
+        const container = $('#timeline-container');
+        const totalForms = $('#id_timeline-TOTAL_FORMS');
+        const template = $('#empty-form-template').html();
+        
+        function updateTimelineNumbers() {
+            container.find('.timeline-row:visible').each(function(index) {
+                $(this).find('.timeline-index-badge, .row-number').text(index + 1);
+                $(this).attr('data-index', index + 1);
+            });
+        }
+
+        $('#add-timeline-btn').click(function () {
+            if(!template) return;
+            let idx = parseInt(totalForms.val());
+            container.append(template.replace(/__prefix__/g, idx));
+            totalForms.val(idx + 1);
+            container.children().last().find('input, select, textarea').addClass('form-control');
+            updateTimelineNumbers();
+        });
+
+        container.on('click', '.btn-delete', function () {
+            const row = $(this).closest('.timeline-row');
+            if (row.find('input[name$="-DELETE"]').length) {
+                row.find('input[name$="-DELETE"]').prop('checked', true);
+                row.slideUp(300, updateTimelineNumbers);
+            } else {
+                row.remove();
+                updateTimelineNumbers();
+            }
+        });
+
+        if(document.getElementById('timeline-container')) {
+            new Sortable(document.getElementById('timeline-container'), {
+                animation: 150, handle: '.timeline-card', ghostClass: 'bg-light', onEnd: updateTimelineNumbers
+            });
+        }
+        updateTimelineNumbers();
+    });
+
+    // --- 6. AJAX FUNCTIONS (Giữ nguyên) ---
+ window.setTripCover = function(actionUrl, mediaId) {
+    // Ngăn chặn sự kiện click lan ra ngoài (nếu có)
+    if(event) event.stopPropagation();
+
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfInput) { console.error("Lỗi: Không tìm thấy CSRF Token"); return; }
+
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfInput.value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("HTTP Error " + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            // 1. Reset giao diện cũ (Bỏ vàng, bỏ badge)
+            document.querySelectorAll('.media-item').forEach(el => {
+                el.classList.remove('is-cover');
+                el.querySelector('.cover-badge')?.remove();
+                el.querySelector('.btn-set-cover').classList.remove('active');
+            });
+
+            // 2. Cập nhật giao diện cho ảnh mới được chọn
+            const activeItem = document.getElementById(`media-${mediaId}`);
+            if (activeItem) {
+                activeItem.classList.add('is-cover');
+                activeItem.querySelector('.btn-set-cover').classList.add('active');
+                // Thêm badge chữ "ẢNH BÌA"
+                if(!activeItem.querySelector('.cover-badge')) {
+                    activeItem.insertAdjacentHTML('beforeend', '<div class="cover-badge animate__animated animate__fadeInUp">ẢNH BÌA</div>');
+                }
+            }
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Không thể ghim ảnh. Vui lòng thử lại.");
+    });
+}
+
+// Hàm 2: Xóa ảnh
+// actionUrl: Đường dẫn do Django tạo (VD: /trips/media/5/delete/)
+window.deleteTripMedia = function(actionUrl, mediaId) {
+    if(event) event.stopPropagation();
+    if(!confirm("Bạn có chắc chắn muốn xóa ảnh này không?")) return;
+
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfInput.value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("HTTP Error " + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            const item = document.getElementById(`media-${mediaId}`);
+            if(item) { 
+                // Hiệu ứng thu nhỏ dần rồi biến mất
+                item.style.transition = "all 0.3s";
+                item.style.transform = "scale(0)"; 
+                setTimeout(() => item.remove(), 300); 
+            }
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Không thể xóa ảnh. Vui lòng thử lại.");
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1831 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ trek.ten }} - Chi tiết Cung đường{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/css/lightgallery-bundle.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+    :root {
+        --primary: #10b981;
+        --primary-dark: #059669;
+        --primary-light: #d1fae5;
+        --accent: #f59e0b;
+        --accent-dark: #d97706;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 2px 8px 0 rgb(0 0 0 / 0.08);
+        --shadow-md: 0 8px 16px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 16px 24px -4px rgb(0 0 0 / 0.12);
+        --shadow-xl: 0 20px 40px -8px rgb(0 0 0 / 0.15);
+        --radius-sm: 0.5rem;
+        --radius-md: 1rem;
+        --radius-lg: 1.5rem;
+        --radius-xl: 2rem;
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        color: var(--gray-900);
+        background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
+        line-height: 1.6;
+    }
+
+    .container {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    /* === HERO SECTION === */
+    .hero-section {
+        position: relative;
+        height: 70vh;
+        min-height: 550px;
+        margin-bottom: 4rem;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-xl);
+    }
+
+    .hero-image {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.7) 100%), url('{{ trek.anh_bia_url }}');
+        background-size: cover;
+        background-position: center;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Added zoom effect on hover */
+    .hero-section:hover .hero-image {
+        transform: scale(1.08);
+    }
+
+    .hero-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 4rem 2rem;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 40%, transparent 100%);
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.5rem;
+        background: rgba(16, 185, 129, 0.2);
+        backdrop-filter: blur(20px);
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #a7f3d0;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        animation: slideInUp 0.6s ease-out 0.2s both;
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 900;
+        color: white;
+        margin: 0;
+        text-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        animation: slideInUp 0.8s ease-out 0.4s both;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* === STATS GRID === */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.75rem;
+        margin: -5rem auto 4rem;
+        max-width: 1100px;
+        padding: 0 1.5rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    /* Enhanced stat card design */
+    .stat-card {
+        background: white;
+        padding: 2.25rem 1.75rem;
+        border-radius: var(--radius-lg);
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1.5px solid var(--gray-100);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.5s ease-out;
+    }
+
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-12px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-light);
+        background: linear-gradient(135deg, #f0fdf4 0%, white 100%);
+    }
+
+    .stat-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-light) 0%, #a7f3d0 100%);
+        border-radius: var(--radius-md);
+        color: var(--primary-dark);
+        font-size: 2rem;
+        transition: all 0.4s ease;
+    }
+
+    .stat-card:hover .stat-icon {
+        transform: scale(1.15) rotate(-5deg);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    /* === MAIN LAYOUT === */
+    .content-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 3rem;
+        margin-bottom: 5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .content-wrapper {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+    }
+
+    /* === CARD STYLES === */
+    .card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2.5rem;
+        overflow: hidden;
+        border: 1px solid var(--gray-100);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Added card elevation on hover */
+    .card:hover {
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+    }
+
+    .card-header {
+        padding: 2rem 2.25rem;
+        background: linear-gradient(135deg, #f8fafb 0%, #f0f4f8 100%);
+        border-bottom: 2px solid var(--gray-100);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-header h5 {
+        font-size: 1.375rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Removed before pseudo-element, using icon instead */
+    .card-header h5 i {
+        color: var(--primary);
+        font-size: 1.25rem;
+    }
+
+    .card-body {
+        padding: 2.25rem;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-title i {
+        color: var(--primary);
+        font-size: 1.25rem;
+    }
+
+    /* === MAP STYLES === */
+    #trek-map {
+        height: 550px;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }
+
+    #trek-map:hover {
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* === GALLERY === */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Improved gallery item design */
+    .gallery-grid a {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        display: block;
+        box-shadow: var(--shadow);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--gray-100);
+    }
+
+    .gallery-grid a::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 1;
+    }
+
+    .gallery-grid a:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .gallery-grid a:hover::before {
+        opacity: 1;
+    }
+
+    .gallery-grid img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+
+    .gallery-grid a:hover img {
+        transform: scale(1.12);
+    }
+
+    /* === RATING SUMMARY === */
+    .rating-summary {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 3rem;
+        padding: 2.5rem;
+        background: linear-gradient(135deg, #f0fdf4 0%, #f8fafb 100%);
+        border-radius: var(--radius-lg);
+        margin-bottom: 2.5rem;
+        border: 2px solid var(--primary-light);
+    }
+
+    .rating-overview {
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .average-score {
+        font-size: 3.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 0.75rem;
+    }
+
+    .average-stars {
+        display: flex;
+        justify-content: center;
+        gap: 0.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .average-stars .fa-star {
+        color: var(--accent);
+        font-size: 1.5rem;
+    }
+
+    .total-reviews {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        font-weight: 600;
+    }
+
+    .rating-breakdown {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .rating-bar-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .star-label {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--gray-700);
+        min-width: 55px;
+    }
+
+    .progress-bar-container {
+        flex: 1;
+        height: 12px;
+        background: var(--gray-200);
+        border-radius: 50px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+        border-radius: 50px;
+        transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .rating-count {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        min-width: 40px;
+        text-align: right;
+    }
+
+    /* === REVIEW ITEM === */
+    .review-item {
+        padding: 2rem;
+        background: white;
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+        border: 1.5px solid var(--gray-100);
+        transition: all 0.4s ease;
+    }
+
+    /* Improved review item hover effect */
+    .review-item:hover {
+        background: #fafbfc;
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+        transform: translateX(6px);
+    }
+
+    .review-header {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .review-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary-light);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .review-meta {
+        flex: 1;
+    }
+
+    .review-author {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: var(--gray-900);
+    }
+
+    .rating-stars {
+        display: inline-flex;
+        gap: 0.25rem;
+        margin-left: 0.5rem;
+    }
+
+    .rating-stars .fa-star {
+        font-size: 0.875rem;
+        color: var(--accent);
+    }
+
+    .rating-stars .fa-star.text-muted {
+        color: var(--gray-300) !important;
+    }
+
+    .review-date {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+
+    .review-content {
+        margin: 1rem 0 1rem 73px;
+        line-height: 1.7;
+        color: var(--gray-700);
+    }
+
+    .review-images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1.25rem;
+        margin-left: 73px;
+    }
+
+    .review-images a {
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .review-images a:hover {
+        transform: scale(1.08);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary);
+    }
+
+    .review-images img {
+        width: 110px;
+        height: 110px;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* === SIDEBAR === */
+    .sidebar {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 2.25rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.75rem;
+        border: 1px solid var(--gray-100);
+        transition: all 0.3s ease;
+    }
+
+    /* Added action card hover effect */
+    .action-card:hover {
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-light);
+    }
+
+    .creator-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1.75rem;
+        margin-bottom: 1.75rem;
+        border-bottom: 2px solid var(--gray-100);
+    }
+
+    .creator-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary-light);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .creator-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+    }
+
+    .creator-name {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: var(--gray-900);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .creator-name:hover {
+        color: var(--primary);
+    }
+
+    /* === BUTTONS === */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.625rem;
+        padding: 0.975rem 1.875rem;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: 0.9375rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Improved button gradients and hover states */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, #047857 100%);
+    }
+
+    .btn-secondary {
+        background: var(--gray-100);
+        color: var(--gray-900);
+        border: 1.5px solid var(--gray-200);
+    }
+
+    .btn-secondary:hover {
+        background: white;
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-3px);
+    }
+
+    .btn-block {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .btn-icon {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border-radius: 50%;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        border: 1.5px solid var(--gray-200);
+    }
+
+    .btn-icon:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: scale(1.12);
+    }
+
+    .share-section {
+        padding-top: 1.75rem;
+        margin-top: 1.75rem;
+        border-top: 2px solid var(--gray-100);
+        text-align: center;
+    }
+
+    .share-label {
+        color: var(--gray-600);
+        font-size: 0.875rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .share-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    /* === INFO LIST === */
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .info-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--gray-600);
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    .info-label i {
+        color: var(--primary);
+        font-size: 1.25rem;
+    }
+
+    .info-value {
+        font-weight: 800;
+        color: var(--gray-900);
+    }
+
+    /* === EQUIPMENT LIST === */
+    .equipment-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .equipment-item {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 1rem 0;
+        transition: all 0.2s ease;
+    }
+
+    .equipment-item:hover {
+        padding-left: 0.5rem;
+    }
+
+    .equipment-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--primary);
+    }
+
+    .equipment-name {
+        font-size: 0.9375rem;
+        color: var(--gray-700);
+        font-weight: 500;
+    }
+
+    /* === ALERTS === */
+    .alert {
+        padding: 1.25rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border: 1.5px solid;
+        animation: slideInUp 0.4s ease-out;
+    }
+
+    .alert-info {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        color: #1e40af;
+    }
+
+    .alert-warning {
+        background: #fef3c7;
+        border-color: #fcd34d;
+        color: #92400e;
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        border-color: #6ee7b7;
+        color: #065f46;
+    }
+
+    /* === EMPTY STATE === */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--gray-300);
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        font-size: 1.125rem;
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+        .hero-section {
+            height: 55vh;
+            min-height: 420px;
+        }
+
+        .hero-content {
+            padding: 2.5rem 1.5rem;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            margin-top: -3.5rem;
+            gap: 1.25rem;
+        }
+
+        .stat-card {
+            padding: 1.5rem 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+
+        .rating-summary {
+            grid-template-columns: 1fr;
+            gap: 1.75rem;
+        }
+
+        .review-content,
+        .review-images {
+            margin-left: 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .sidebar {
+            position: static;
+        }
+
+        .content-wrapper {
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            margin-top: -2.5rem;
+        }
+
+        .gallery-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .hero-title {
+            font-size: 1.75rem;
+        }
+
+        .stat-value {
+            font-size: 1.625rem;
+        }
+    }
+   /* === CSS MỚI CHO BỘ LỌC ĐÁNH GIÁ === */
+        .review-filter-btn {
+            background-color: white;
+            border: 1px solid var(--gray-300, #d1d5db);
+            color: var(--gray-600, #4b5563);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        .review-filter-btn:hover {
+            border-color: var(--primary, #10b981);
+            color: var(--primary, #10b981);
+        }
+        .review-filter-btn.active {
+            background-color: var(--primary, #10b981);
+            color: white;
+            border-color: var(--primary, #10b981);
+        }
+        /* Dòng này sẽ ẩn các đánh giá không khớp */
+        .review-item.hidden-by-filter {
+            display: none;
+        }
+               .review-item {
+            position: relative; /* Để định vị các nút con */
+        }
+        .review-actions {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            opacity: 0; /* Mặc định ẩn */
+            transition: opacity 0.2s ease-in-out;
+        }
+        .review-item:hover .review-actions {
+            opacity: 1; /* Hiện ra khi hover vào review-item */
+        }
+        .btn-action-delete:hover {
+        background-color: var(--danger, #EF4444) !important;
+        color: white !important;
+        border-color: var(--danger, #EF4444) !important;
+    }
+            /* === CSS MỚI CHO "XEM THÊM" VÀ ẢNH REVIEW === */
+        .review-content.truncated {
+            max-height: 90px; /* Chiều cao tương đương khoảng 3-4 dòng */
+            overflow: hidden;
+            position: relative;
+        }
+        .review-content.truncated::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to top, white, rgba(255,255,255,0));
+        }
+        .toggle-comment {
+            color: var(--primary, #10b981);
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .review-images-more {
+            width: 80px; height: 80px; border-radius: 0.5rem;
+            display: flex; align-items: center; justify-content: center;
+            background-color: var(--gray-100);
+            font-size: 1.5rem; font-weight: bold; color: var(--gray-600);
+        }
+            /* === CSS NÂNG CẤP CHO KHUNG THỐNG KÊ & BỘ LỌC === */
+    .review-stats-container {
+        background-color: #fffbf8;
+        border: 1px solid #fde4d0;
+        border-radius: 4px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        flex-wrap: wrap; /* Cho phép xuống dòng trên màn hình nhỏ */
+    }
+
+    .average-rating-box {
+        flex-shrink: 0;
+        text-align: center;
+        padding-right: 2rem;
+        border-right: 1px solid #eee;
+    }
+
+    .average-rating-box .score {
+        font-size: 1.8rem;
+        color: #ee4d2d;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    .average-rating-box .score span {
+        font-size: 3rem;
+    }
+
+    .average-rating-box .stars {
+        font-size: 1.2rem;
+        color: #ffb900;
+        margin-top: 0.25rem;
+    }
+
+    .review-filters-box {
+        flex-grow: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .review-filter-btn {
+        background-color: white;
+        border: 1px solid rgba(0,0,0,.09);
+        color: rgba(0,0,0,.8);
+        padding: 0.4rem 1rem;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 400;
+        font-size: 0.875rem;
+    }
+
+    .review-filter-btn:hover {
+        border-color: #ee4d2d;
+        color: #ee4d2d;
+    }
+
+    .review-filter-btn.active {
+        background-color: #ee4d2d;
+        color: white;
+        border-color: #ee4d2d;
+    }
+
+    @media (max-width: 768px) {
+        .review-stats-container {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1.5rem;
+        }
+        .average-rating-box {
+            border-right: none;
+            border-bottom: 1px solid #eee;
+            padding-right: 0;
+            padding-bottom: 1.5rem;
+        }
+    }
+        /* === CSS MỚI CHO FORM ĐÁNH GIÁ SAO === */
+    .rating-input-group {
+        display: inline-flex;
+        flex-direction: row-reverse; /* Để chọn sao từ phải qua trái */
+        justify-content: flex-end;
+    }
+    .rating-input-group input[type="radio"] {
+        display: none;
+    }
+    .rating-input-group label {
+        font-size: 2rem;
+        color: var(--gray-300, #d1d5db);
+        cursor: pointer;
+        transition: color 0.2s ease;
+        padding: 0 0.1em;
+    }
+    /* Khi hover vào một sao, nó và các sao bên trái (em nó) sẽ đổi màu */
+    .rating-input-group label:hover,
+    .rating-input-group label:hover ~ label {
+        color: var(--accent, #f59e0b);
+    }
+    /* Khi một nút radio được chọn, các sao bên trái (em nó) sẽ đổi màu */
+    .rating-input-group input[type="radio"]:checked ~ label {
+        color: var(--accent, #f59e0b);
+    }
+        .edit-review-image-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .edit-review-image-item {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+    .edit-review-image-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .delete-image-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 24px;
+        height: 24px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    .edit-review-image-item:hover .delete-image-btn {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<div class="hero-section">
+    <div class="hero-image"></div>
+    <div class="hero-content">
+        <div class="container">
+            <div class="hero-badge">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ trek.tinh_thanh.ten }}
+            </div>
+            <h1 class="hero-title">{{ trek.ten }}</h1>
+        </div>
+    </div>
+</div>
+
+<!-- STATS GRID -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-route"></i>
+        </div>
+        <div class="stat-value">{{ trek.do_dai_km }}</div>
+        <div class="stat-label">Độ dài (km)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="far fa-clock"></i>
+        </div>
+        <div class="stat-value">{{ trek.thoi_gian_uoc_tinh_gio }}</div>
+        <div class="stat-label">Thời gian (giờ)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-mountain"></i>
+        </div>
+        <div class="stat-value">{{ trek.tong_do_cao_leo_m }}</div>
+        <div class="stat-label">Độ cao leo (m)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <div class="stat-value">{{ trek.do_kho.ten }}</div>
+        <div class="stat-label">Độ khó</div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+    <div class="content-wrapper">
+        <!-- LEFT COLUMN -->
+        <main>
+            <!-- MÔ TẢ -->
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title"><i class="fas fa-book-open"></i>Giới thiệu hành trình</h4>
+                    <div style="line-height: 1.8; color: var(--gray-700); font-size: 1rem;">{{ trek.mo_ta|safe }}</div>
+                </div>
+            </div>
+
+            <!-- BẢN ĐỒ -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-map"></i>Bản đồ lộ trình</h5>
+                </div>
+                <div class="card-body">
+                    {% if trek.du_lieu_ban_do_geojson %}
+                        <div id="trek-map"></div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-map"></i>
+                            <p>Chưa có dữ liệu bản đồ</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- THƯ VIỆN HÌNH ẢNH -->
+            {% if trek.gallery_media %}
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-images"></i>Thư viện media</h5>
+                </div>
+                <div class="card-body">
+                    <div class="gallery-grid" id="trek-gallery-container">
+                        {% for media in trek.gallery_media %}
+                            <a href="{{ media.file.url }}" data-sub-html="<h4>{{ trek.ten }}</h4>">
+                                <img src="{{ media.file.url }}" alt="Hình ảnh {{ trek.ten }}" loading="lazy">
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- KHỐI ĐÁNH GIÁ -->
+ <div class="card" id="reviews">
+    <div class="card-header"><h5><i class="fas fa-star"></i>Đánh giá của cộng đồng</h5></div>
+    <div class="card-body">
+        
+        <!-- KHUNG THỐNG KÊ VÀ BỘ LỌC -->
+  {% if total_reviews > 0 %}
+<div class="review-stats-container mb-4">
+    <!-- CỘT BÊN TRÁI: ĐIỂM TRUNG BÌNH -->
+    <div class="average-rating-box">
+        <div class="score"><span>{{ average_rating|floatformat:1 }}</span> trên 5</div>
+        <div class="stars">
+            {% with avg_int=average_rating|floatformat:0 %}
+                {% for i in "12345"|make_list %}
+                    {% if i|add:0 <= avg_int|add:0 %}
+                        <i class="fas fa-star"></i>
+                    {% elif i|add:0 == avg_int|add:1 and average_rating|slice:"-1" >= "5" %}
+                        <i class="fas fa-star-half-alt"></i>
+                    {% else %}
+                        <i class="far fa-star"></i>
+                    {% endif %}
+                {% endfor %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <!-- CỘT BÊN PHẢI: CÁC NÚT LỌC -->
+    <div class="review-filters-box" id="review-filters">
+        <button class="review-filter-btn active" data-filter="all">Tất cả ({{ review_stats.total }})</button>
+        <button class="review-filter-btn" data-filter="5">5 Sao ({{ review_stats.stars.5 }})</button>
+        <button class="review-filter-btn" data-filter="4">4 Sao ({{ review_stats.stars.4 }})</button>
+        <button class="review-filter-btn" data-filter="3">3 Sao ({{ review_stats.stars.3 }})</button>
+        <button class="review-filter-btn" data-filter="2">2 Sao ({{ review_stats.stars.2 }})</button>
+        <button class="review-filter-btn" data-filter="1">1 Sao ({{ review_stats.stars.1 }})</button>
+        <button class="review-filter-btn" data-filter="media">Có Hình Ảnh ({{ review_stats.with_media }})</button>
+    </div>
+</div>
+{% endif %}
+        
+<!-- ========================================================== -->
+<!-- === FORM ĐÁNH GIÁ VÀ THÔNG BÁO (HOÀN CHỈNH) === -->
+<!-- ========================================================== -->
+{% if user.is_authenticated %}
+    {% if user_has_reviewed %}
+        <div class="alert alert-success mt-4">
+            <i class="fas fa-check-circle me-2"></i>Cảm ơn bạn đã đánh giá cung đường này.
+        </div>
+    {% else %}
+        <div class="card mt-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #f8fafb 100%);">
+            <div class="card-body">
+                <h5 style="margin-bottom: 1.5rem; color: var(--gray-900);">
+                    <i class="fas fa-pen-fancy me-2" style="color: var(--primary);"></i>
+                    Viết đánh giá của bạn
+                </h5>
+                <form method="post" enctype="multipart/form-data" action="{% url 'treks:cung_duong_detail' slug=trek.slug %}#reviews">
+                    {% csrf_token %}
+                    
+                    <!-- PHẦN CHỌN SAO -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-block">Chấm điểm của bạn:</label>
+                        <div class="rating-input-group">
+                            <!-- Django sẽ render các nút radio ở đây, được style bằng CSS -->
+                            {% for value, text in review_form.diem_danh_gia.field.choices %}
+                                <input type="radio" id="star{{ value }}" name="{{ review_form.diem_danh_gia.name }}" value="{{ value }}" {% if review_form.diem_danh_gia.value == value %}checked{% endif %} required>
+                                <label for="star{{ value }}" title="{{ text }}">★</label>
+                            {% endfor %}
+                        </div>
+                        {% if review_form.diem_danh_gia.errors %}
+                            <div class="text-danger small mt-1">{{ review_form.diem_danh_gia.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- PHẦN BÌNH LUẬN -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{{ review_form.binh_luan.label }}</label>
+                        {{ review_form.binh_luan }}
+                        {% if review_form.binh_luan.errors %}
+                            <div class="text-danger small mt-1">{{ review_form.binh_luan.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- PHẦN UPLOAD HÌNH ẢNH -->
+                    <div class="mb-3">
+                        <label for="id_hinh_anh" class="form-label fw-bold">Thêm hình ảnh (có thể chọn nhiều ảnh)</label>
+                        <input type="file" name="hinh_anh" id="id_hinh_anh" class="form-control" multiple accept="image/*">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Gửi đánh giá
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-warning mt-4">
+        <i class="fas fa-info-circle me-2"></i>
+        <a href="{% url 'accounts:dang-nhap' %}?next={{ request.path }}#reviews" class="fw-bold" style="color: inherit;">Đăng nhập</a> để gửi đánh giá.
+    </div>
+{% endif %}
+        <!-- DANH SÁCH ĐÁNH GIÁ -->
+        <div class="review-list mt-4">
+            {% for review in reviews_page.object_list %}
+            <div class="review-item" 
+                 data-rating="{{ review.diem_danh_gia }}" 
+                 data-has-comment="{% if review.binh_luan|striptags %}true{% else %}false{% endif %}" 
+                 data-has-media="{% if review.anh_danh_gia.all %}true{% else %}false{% endif %}">
+                
+                <div class="review-header">
+                    <img src="{{ review.user.taikhoanhoso.avatar_url }}" class="review-avatar" alt="{{ review.user.username }}">
+                    <div class="review-meta">
+                        <div>
+                            <strong class="review-author">{{ review.user.username|default:"Ẩn danh" }}</strong>
+                            <div class="rating-stars">
+                                {% for i in "12345"|make_list %}<i class="fas fa-star {% if i|add:0 > review.diem_danh_gia %}text-muted{% endif %}"></i>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="review-date">{{ review.ngay_danh_gia|timesince }} trước</div>
+                    </div>
+                </div>
+
+                            {% if review.user == user or user.is_staff %}
+                            <div class="review-actions">
+                                <button type="button" class="btn btn-sm btn-light edit-review-btn" data-review-id="{{ review.pk }}" data-bs-toggle="modal" data-bs-target="#editReviewModal" title="Sửa"><i class="fas fa-edit"></i></button>
+                                <form action="{% url 'treks:delete_review' review.pk %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa?');">
+                                    {% csrf_token %}<button type="submit" class="btn btn-sm btn-light btn-action-delete" title="Xóa"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                            {% endif %}
+
+                {% if review.binh_luan|striptags|wordcount > 50 %}
+                    <div class="review-content truncated">{{ review.binh_luan|linebreaks }}</div>
+                    <span class="toggle-comment">Xem thêm</span>
+                {% else %}
+                    <div class="review-content">{{ review.binh_luan|linebreaks }}</div>
+                {% endif %}
+                
+                {% with review_images=review.anh_danh_gia.all %}
+                {% if review_images %}
+                <div class="review-images" data-lightgallery-review-id="{{ review.pk }}">
+                    {% for anh in review_images|slice:":3" %}
+                    <a href="{{ anh.hinh_anh.url }}"><img src="{{ anh.hinh_anh.url }}" alt="Đánh giá hình ảnh"></a>
+                    {% endfor %}
+                    {% if review_images.count > 3 %}
+                        <a href="{{ review_images.3.hinh_anh.url }}" class="review-images-more">
+                            +{{ review_images.count|add:"-3" }}
+                        </a>
+                    {% endif %}
+                    <div style="display:none;">
+                        {% for anh in review_images|slice:"3:" %}
+                            <a href="{{ anh.hinh_anh.url }}"></a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+            {% empty %}
+            {% if not user.is_authenticated or user_has_reviewed %}
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <p>Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+                </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- PHÂN TRANG CHO BÌNH LUẬN -->
+        {% if reviews_page.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if reviews_page.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ reviews_page.previous_page_number }}#reviews">Trước</a></li>
+                {% endif %}
+                {% for i in reviews_page.paginator.page_range %}
+                    <li class="page-item {% if reviews_page.number == i %}active{% endif %}"><a class="page-link" href="?page={{ i }}#reviews">{{ i }}</a></li>
+                {% endfor %}
+                {% if reviews_page.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ reviews_page.next_page_number }}#reviews">Sau</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+    </div>
+</div>
+        </main>
+
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="sidebar">
+            <!-- ACTION CARD -->
+            <div class="action-card">
+                <!-- CREATOR INFO -->
+                {% if trek.nguoi_tao %}
+                <div class="creator-section">
+                    <img src="{{ trek.nguoi_tao.taikhoanhoso.avatar_url }}" class="creator-avatar" alt="{{ trek.nguoi_tao.username }}">
+                    <div>
+                        <div class="creator-label">Được tạo bởi</div>
+                        <a href="#" class="creator-name">{{ trek.nguoi_tao.get_full_name|default:trek.nguoi_tao.username }}</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ACTION BUTTONS -->
+                <a href="#" class="btn btn-primary btn-block">
+                    <i class="fas fa-compass"></i>Tìm chuyến đi
+                </a>
+                <a href="#" class="btn btn-secondary btn-block">
+                    <i class="fas fa-plus"></i>Tạo chuyến đi mới
+                </a>
+
+                <!-- SHARE SECTION -->
+                <div class="share-section">
+                    <span class="share-label">Chia sẻ cung đường</span>
+                    <div class="share-buttons">
+                        <button id="share-facebook" class="btn btn-icon" title="Chia sẻ lên Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </button>
+                        <button id="share-twitter" class="btn btn-icon" title="Chia sẻ lên X (Twitter)">
+                            <i class="fab fa-twitter"></i>
+                        </button>
+                        <button id="copy-link" class="btn btn-icon" title="Sao chép liên kết">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INFO CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i>Thông tin thêm</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="info-list">
+                        <li class="info-list-item">
+                            <span class="info-label">
+                                <i class="fas fa-cloud-sun-rain"></i>
+                                Mùa đẹp nhất
+                            </span>
+                            <strong class="info-value">{{ trek.mua_dep_nhat|default:"Chưa cập nhật" }}</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- EQUIPMENT CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-backpack"></i>Vật dụng gợi ý</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="equipment-list">
+                        {% for item in trek.vat_dung_goi_y.all %}
+                        <li class="equipment-item">
+                            <input type="checkbox" class="equipment-checkbox" id="item-{{ forloop.counter }}">
+                            <label for="item-{{ forloop.counter }}" class="equipment-name">{{ item.vat_dung.ten }}</label>
+                        </li>
+                        {% empty %}
+                        <li class="empty-state" style="padding: 2rem 0.5rem;">
+                            <i class="fas fa-backpack" style="font-size: 2.5rem;"></i>
+                            <p style="font-size: 0.9rem; margin-top: 0.75rem;">Chưa có gợi ý vật dụng.</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </aside>
+    </div>
+<div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editReviewModalLabel">Chỉnh sửa Đánh giá</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <!-- THÊM enctype="multipart/form-data" VÀO FORM -->
+            <form id="editReviewForm" method="post" action="{% url 'treks:cung_duong_detail' slug=trek.slug %}#reviews" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="review_id" id="edit-review-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chấm điểm của bạn:</label>
+                        <div class="rating-input-group" id="edit-rating-stars">
+                            <!-- Sao sẽ được tạo bằng JS -->
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-comment" class="form-label fw-bold">Bình luận của bạn:</label>
+                        <textarea name="binh_luan" id="edit-comment" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <!-- KHỐI MỚI ĐỂ HIỂN THỊ VÀ UPLOAD ẢNH -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Hình ảnh hiện tại:</label>
+                        <div id="current-images-container" class="edit-review-image-list">
+                            <!-- Ảnh hiện tại sẽ được JS chèn vào đây -->
+                        </div>
+                        <p id="no-images-text" class="text-muted small" style="display: none;">Không có hình ảnh nào.</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-hinh-anh-moi" class="form-label fw-bold">Thêm hình ảnh mới:</label>
+                        <input type="file" name="hinh_anh_moi" id="edit-hinh-anh-moi" class="form-control" multiple accept="image/*">
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+{{ trek.du_lieu_ban_do_geojson|json_script:"map-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/lightgallery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/thumbnail/lg-thumbnail.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.7.2/plugins/zoom/lg-zoom.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    
+    // === MAP INITIALIZATION ===
+    const mapElement = document.getElementById('trek-map');
+    const mapDataElement = document.getElementById('map-data');
+    
+    if (mapElement && mapDataElement && mapDataElement.textContent.trim() !== "") {
+        try {
+            const geojsonData = JSON.parse(mapDataElement.textContent);
+            
+            if (geojsonData && geojsonData.features && geojsonData.features.length > 0) {
+                const feature = geojsonData.features[0];
+                if (feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
+                    
+                    const map = L.map(mapElement, { 
+                        scrollWheelZoom: false, 
+                        dragging: true, 
+                        zoomControl: true 
+                    });
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    const routeLayer = L.geoJSON(geojsonData, { 
+                        style: { 
+                            color: "red", 
+                            weight: 4, 
+                            opacity: 0.8 
+                        } 
+                    }).addTo(map);
+
+                    const coords = feature.geometry.coordinates;
+                    const startLatLng = L.latLng(coords[0][1], coords[0][0]);
+                    const endLatLng = L.latLng(coords[coords.length - 1][1], coords[coords.length - 1][0]);
+                    
+                    const startIcon = L.icon({ 
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', 
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', 
+                        iconSize: [25, 41], 
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34]
+                    });
+                    
+                    const endIcon = L.icon({ 
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', 
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', 
+                        iconSize: [25, 41], 
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34]
+                    });
+
+                    L.marker(startLatLng, { icon: startIcon }).addTo(map).bindPopup('Điểm bắt đầu');
+                    L.marker(endLatLng, { icon: endIcon }).addTo(map).bindPopup('Điểm kết thúc');
+
+                    map.fitBounds(routeLayer.getBounds().pad(0.1));
+                }
+            }
+        } catch(e) {
+            console.error("Lỗi khi khởi tạo bản đồ:", e);
+            mapElement.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Không thể hiển thị bản đồ</p></div>';
+        }
+    }
+
+    // === LIGHTGALLERY INITIALIZATION ===
+    const galleryContainer = document.getElementById('trek-gallery-container');
+    if(galleryContainer) {
+        lightGallery(galleryContainer, { 
+            plugins: [lgZoom, lgThumbnail],
+            selector: 'a', 
+            download: true,
+            speed: 500,
+            licenseKey: 'your-license-key'
+        });
+    }
+
+    document.querySelectorAll('[data-lightgallery-review-id]').forEach(reviewEl => {
+        const reviewImages = reviewEl;
+        if(reviewImages) {
+            lightGallery(reviewImages, { 
+                selector: 'a', 
+                download: true,
+                speed: 500,
+                licenseKey: 'your-license-key'
+            });
+        }
+    });
+    
+    // === SHARE FUNCTIONALITY ===
+    const shareUrl = window.location.href;
+    const shareTitle = "{{ trek.ten|escapejs }}";
+
+    const facebookBtn = document.getElementById('share-facebook');
+    if (facebookBtn) {
+        facebookBtn.addEventListener('click', () => {
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+            window.open(fbUrl, 'facebook-share-dialog', 'width=800,height=600');
+        });
+    }
+
+    const twitterBtn = document.getElementById('share-twitter');
+    if (twitterBtn) {
+        twitterBtn.addEventListener('click', () => {
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`;
+            window.open(twitterUrl, 'twitter-share-dialog', 'width=800,height=600');
+        });
+    }
+
+    const copyLinkBtn = document.getElementById('copy-link');
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                const originalHTML = copyLinkBtn.innerHTML;
+                copyLinkBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyLinkBtn.style.background = 'var(--primary)';
+                copyLinkBtn.style.color = 'white';
+                
+                setTimeout(() => {
+                    copyLinkBtn.innerHTML = originalHTML;
+                    copyLinkBtn.style.background = '';
+                    copyLinkBtn.style.color = '';
+                }, 2000);
+            }).catch((err) => {
+                console.error('Không thể sao chép: ', err);
+                alert('Lỗi! Không thể sao chép liên kết.');
+            });
+        });
+    }
+    const filterContainer = document.getElementById('review-filters');
+    const reviewItems = document.querySelectorAll('.review-item');
+
+    if (filterContainer && reviewItems.length > 0) {
+        const filterButtons = filterContainer.querySelectorAll('.review-filter-btn');
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Xóa class 'active' khỏi tất cả các nút
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                // Thêm class 'active' cho nút vừa click
+                this.classList.add('active');
+
+                const filterValue = this.dataset.filter;
+
+                // Lặp qua tất cả các item đánh giá để ẩn/hiện
+                reviewItems.forEach(item => {
+                    let shouldShow = false;
+                    
+                    if (filterValue === 'all') {
+                        shouldShow = true;
+                    } else if (filterValue === 'comment') {
+                        shouldShow = item.dataset.hasComment === 'true';
+                    } else if (filterValue === 'media') {
+                        shouldShow = item.dataset.hasMedia === 'true';
+                    } else {
+                        // Lọc theo số sao
+                        shouldShow = item.dataset.rating === filterValue;
+                    }
+
+                    // Thêm/xóa class 'hidden-by-filter'
+                    if (shouldShow) {
+                        item.classList.remove('hidden-by-filter');
+                    } else {
+                        item.classList.add('hidden-by-filter');
+                    }
+                });
+            });
+        });
+    }
+  document.querySelectorAll('.toggle-comment').forEach(button => {
+        button.addEventListener('click', function() {
+            const content = this.previousElementSibling; // Lấy div.review-content
+            content.classList.remove('truncated');
+            this.style.display = 'none'; // Ẩn nút "Xem thêm"
+        });
+    });
+    /**
+     * ======================================================================
+     * === SCRIPT MỚI CHO MODAL SỬA ĐÁNH GIÁ ===
+     * ======================================================================
+     */
+    const editReviewModal = document.getElementById('editReviewModal');
+    
+    if (editReviewModal) {
+        // Lấy các element cần thiết từ DOM
+        const editReviewForm = document.getElementById('editReviewForm');
+        const editReviewIdInput = document.getElementById('edit-review-id');
+        const editCommentTextarea = document.getElementById('edit-comment');
+        const editRatingStarsContainer = document.getElementById('edit-rating-stars');
+        const currentImagesContainer = document.getElementById('current-images-container');
+        const noImagesText = document.getElementById('no-images-text');
+        const newImageInput = document.getElementById('edit-hinh-anh-moi');
+
+        // Biến này sẽ lưu danh sách các ID ảnh đang "chờ xóa"
+        // Dùng Set để tự động xử lý việc thêm/xóa các ID trùng lặp
+        let imagesToDelete = new Set();
+        
+        // Sự kiện được kích hoạt ngay khi modal bắt đầu được hiển thị
+        editReviewModal.addEventListener('show.bs.modal', function (event) {
+            
+            // 1. Reset trạng thái của form và danh sách chờ xóa
+            imagesToDelete.clear();
+            currentImagesContainer.innerHTML = '';
+            newImageInput.value = '';
+            noImagesText.style.display = 'none';
+            // Xóa input ẩn của lần submit trước (nếu có)
+            const oldHiddenInput = editReviewForm.querySelector('input[name="images_to_delete"]');
+            if (oldHiddenInput) {
+                oldHiddenInput.remove();
+            }
+
+            // 2. Lấy review ID và gọi API
+            const button = event.relatedTarget;
+            const reviewId = button.dataset.reviewId;
+            const apiUrl = `{% url 'treks:get_review_data' pk=999 %}`.replace('999', reviewId);
+            
+            // 3. Gọi API để lấy dữ liệu chi tiết của đánh giá
+            fetch(apiUrl)
+                .then(response => response.ok ? response.json() : Promise.reject(response))
+                .then(data => {
+                    if (data.error) { alert(data.error); return; }
+
+                    // 4. Điền dữ liệu đã có vào form
+                    editReviewIdInput.value = data.id;
+                    editCommentTextarea.value = data.comment || '';
+
+                    // 4.1. Tạo các nút chọn sao
+                    editRatingStarsContainer.innerHTML = '';
+                    for (let i = 5; i >= 1; i--) {
+                        const isChecked = (i === data.rating) ? 'checked' : '';
+                        const inputHTML = `<input type="radio" id="edit-star${i}" name="diem_danh_gia" value="${i}" ${isChecked} required>`;
+                        const labelHTML = `<label for="edit-star${i}" title="${i} sao">★</label>`;
+                        editRatingStarsContainer.insertAdjacentHTML('beforeend', inputHTML + labelHTML);
+                    }
+
+                    // 4.2. Hiển thị các ảnh hiện có
+                    if (data.images && data.images.length > 0) {
+                        data.images.forEach(img => {
+                            const imageHTML = `
+                                <div class="edit-review-image-item" id="review-image-${img.id}">
+                                    <img src="${img.url}" alt="Review image">
+                                    <button type="button" class="delete-image-btn" data-image-id="${img.id}" title="Đánh dấu để xóa">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `;
+                            currentImagesContainer.insertAdjacentHTML('beforeend', imageHTML);
+                        });
+                    } else {
+                        noImagesText.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi khi lấy dữ liệu đánh giá:", err);
+                    alert("Không thể tải dữ liệu để chỉnh sửa. Vui lòng thử lại.");
+                    bootstrap.Modal.getInstance(editReviewModal).hide();
+                });
+        });
+
+        // 5. Sự kiện "đánh dấu xóa" / "hoàn tác"
+        currentImagesContainer.addEventListener('click', function(event) {
+            const deleteBtn = event.target.closest('.delete-image-btn');
+            if (!deleteBtn) return;
+
+            const imageId = deleteBtn.dataset.imageId;
+            const imageItem = document.getElementById(`review-image-${imageId}`);
+            const imageElement = imageItem.querySelector('img');
+
+            // Kiểm tra xem ảnh đã được đánh dấu xóa chưa
+            if (imageItem.classList.contains('marked-for-deletion')) {
+                // Hoàn tác: Bỏ đánh dấu, hiện lại ảnh, đổi icon
+                imageItem.classList.remove('marked-for-deletion');
+                imageElement.style.opacity = '1';
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                deleteBtn.setAttribute('title', 'Đánh dấu để xóa');
+                imagesToDelete.delete(imageId); // Xóa ID khỏi danh sách chờ xóa
+            } else {
+                // Đánh dấu xóa: Làm mờ ảnh, đổi icon
+                imageItem.classList.add('marked-for-deletion');
+                imageElement.style.opacity = '0.3'; // Làm mờ ảnh
+                deleteBtn.innerHTML = '<i class="fas fa-undo"></i>';
+                deleteBtn.setAttribute('title', 'Hoàn tác');
+                imagesToDelete.add(imageId); // Thêm ID vào danh sách chờ xóa
+            }
+        });
+
+        // 6. Sự kiện khi submit form: Gắn danh sách ID cần xóa vào form
+        editReviewForm.addEventListener('submit', function(event) {
+            // Xóa input ẩn cũ để tránh bị trùng lặp
+            const oldHiddenInput = this.querySelector('input[name="images_to_delete"]');
+            if (oldHiddenInput) {
+                oldHiddenInput.remove();
+            }
+
+            // Nếu có ảnh đang chờ xóa, tạo input ẩn và thêm vào form
+            if (imagesToDelete.size > 0) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'images_to_delete';
+                hiddenInput.value = Array.from(imagesToDelete).join(',');
+                this.appendChild(hiddenInput);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

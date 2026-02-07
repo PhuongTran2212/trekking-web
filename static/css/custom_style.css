@@ -1,0 +1,213 @@
+/* --- VARIABLES & THEME --- */
+:root {
+    --primary-color: #2E7D32;
+    /* Xanh rừng */
+    --primary-light: #E8F5E9;
+    --secondary-color: #10b981;
+    /* Emerald Green (cho nút Booking/Action) */
+    --text-dark: #1A202C;
+    --text-gray: #718096;
+    --bg-light: #F7FAFC;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius-md: 12px;
+    --radius-lg: 20px;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    /* Font hiện đại */
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+}
+
+/* --- COMPONENTS: CARD --- */
+.card-modern {
+    background: white;
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card-modern:hover {
+    box-shadow: var(--card-hover-shadow);
+    transform: translateY(-2px);
+}
+
+.card-header-modern {
+    background: white;
+    border-bottom: 1px solid #edf2f7;
+    padding: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* --- COMPONENTS: BUTTONS --- */
+.btn-primary-modern {
+    background-color: var(--primary-color);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-primary-modern:hover {
+    background-color: #1B5E20;
+    transform: translateY(-1px);
+}
+
+.btn-action-modern {
+    background: linear-gradient(45deg, var(--secondary-color), #FF8F00);
+    color: white;
+    border: none;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(255, 111, 0, 0.3);
+}
+
+.btn-action-modern:hover {
+    color: white;
+    filter: brightness(110%);
+}
+
+/* --- HERO SECTION (DETAIL PAGE) --- */
+.trek-hero {
+    position: relative;
+    height: 60vh;
+    /* Chiều cao banner */
+    min-height: 400px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    overflow: hidden;
+}
+
+.trek-hero::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.8));
+}
+
+.trek-hero-content {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    width: 100%;
+    color: white;
+    z-index: 2;
+}
+
+/* --- TABS NAVIGATION --- */
+.nav-pills-modern .nav-link {
+    color: var(--text-gray);
+    font-weight: 600;
+    border-radius: 50px;
+    padding: 10px 25px;
+    margin-right: 10px;
+    transition: all 0.2s;
+}
+
+.nav-pills-modern .nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 6px rgba(46, 125, 50, 0.3);
+}
+
+/* --- PROGRESS BAR --- */
+.progress-modern {
+    height: 12px;
+    background-color: #E2E8F0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar-modern {
+    background: linear-gradient(90deg, var(--primary-color), #66BB6A);
+    border-radius: 10px;
+}
+
+/* --- TIMELINE --- */
+.timeline-item {
+    border-left: 2px solid #CBD5E0;
+    padding-left: 20px;
+    padding-bottom: 30px;
+    position: relative;
+}
+
+.timeline-item::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    position: absolute;
+    left: -7px;
+    top: 5px;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+/* --- CHAT WIDGET --- */
+.chat-card {
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background: #f8f9fa;
+}
+
+.chat-bubble {
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    max-width: 80%;
+}
+
+.chat-bubble.me {
+    background-color: var(--primary-color);
+    color: white;
+    align-self: flex-end;
+    margin-left: auto;
+    border-bottom-right-radius: 2px;
+}
+
+.chat-bubble.them {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+}
+
+/* --- RESPONSIVE FIXES --- */
+@media (max-width: 768px) {
+    .trek-hero {
+        height: 40vh;
+    }
+
+    .nav-pills-modern {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+
+    .sticky-booking {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+    }
+}

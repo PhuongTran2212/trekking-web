@@ -1,0 +1,202 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header & Nav -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">Thống kê Bài viết</h4>
+            <p class="text-muted small mb-0">Phân tích tương tác và xu hướng cộng đồng</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-white border shadow-sm" onclick="window.print()"><i class="fas fa-print me-2"></i>In
+                báo cáo</button>
+            <button class="btn btn-primary shadow-sm" onclick="window.location.reload()"><i
+                    class="fas fa-sync-alt me-2"></i>Làm mới</button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs (Giao diện mới) -->
+    <div class="card shadow-sm border-0 mb-4 rounded-3">
+        <div class="card-header bg-white p-2 border-bottom-0">
+            <ul class="nav nav-pills card-header-pills">
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics' %}">
+                        <i class="fas fa-chart-pie me-2"></i>Tổng quan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_users' %}">
+                        <i class="fas fa-users me-2"></i>Người dùng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_trips' %}">
+                        <i class="fas fa-suitcase-rolling me-2"></i>Chuyến đi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_treks' %}">
+                        <i class="fas fa-map-marked-alt me-2"></i>Cung đường
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active shadow-sm fw-bold px-3" href="#">
+                        <i class="fas fa-newspaper me-2"></i>Bài viết
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Row 1: Scorecards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-primary">
+                        <i class="fas fa-newspaper fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small fw-bold mb-1">TỔNG BÀI VIẾT</h6>
+                        <h3 class="fw-bold mb-0">{{ kpi.total_posts|intcomma }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success">
+                        <i class="fas fa-comments fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small fw-bold mb-1">TỔNG BÌNH LUẬN</h6>
+                        <h3 class="fw-bold mb-0">{{ kpi.total_comments|intcomma }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3 text-danger">
+                        <i class="fas fa-heart fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small fw-bold mb-1">TỔNG LƯỢT THÍCH</h6>
+                        <h3 class="fw-bold mb-0">{{ kpi.total_votes|intcomma }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Charts -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-chart-line me-2 text-primary"></i>Hoạt động Bài viết (6
+                        tháng)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="chartActivity"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-tags me-2 text-info"></i>Top Chủ đề (Tags)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="chartTags"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Top Posts -->
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 py-3">
+                    <h6 class="fw-bold m-0"><i class="fas fa-star me-2 text-warning"></i>Bài viết Nổi bật (Tương tác
+                        cao)</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Tiêu đề</th>
+                                <th>Tác giả</th>
+                                <th>Ngày đăng</th>
+                                <th class="text-center">Tương tác</th>
+                                <th class="text-end pe-4">Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for post in top_posts %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark" style="max-width: 300px;">
+                                    <div class="text-truncate">{{ post.tieu_de }}</div>
+                                </td>
+                                <td>{{ post.tac_gia.username }}</td>
+                                <td>{{ post.ngay_dang|date:"d/m/Y" }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border me-1"><i
+                                            class="fas fa-heart text-danger me-1"></i>{{ post.luot_binh_chon }}</span>
+                                    <span class="badge bg-light text-dark border"><i
+                                            class="fas fa-comment text-primary me-1"></i>{{ post.comment_count }}</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted fst-italic">Chưa có bài viết nào.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    // 1. Activity Chart (Line)
+    var activityData = {{ charts.activity| safe }};
+    var optionsActivity = {
+        series: [{ name: 'Bài viết mới', data: activityData.data }],
+        chart: { type: 'area', height: 300, toolbar: { show: false } },
+        stroke: { curve: 'smooth', width: 2 },
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3 } },
+        xaxis: { categories: activityData.labels },
+        colors: ['#0d6efd'],
+        dataLabels: { enabled: false }
+    };
+    new ApexCharts(document.querySelector("#chartActivity"), optionsActivity).render();
+
+    // 2. Tags Chart (Bar)
+    var tagData = {{ charts.tags| safe }};
+    var optionsTags = {
+        series: [{ name: 'Số bài viết', data: tagData.data }],
+        chart: { type: 'bar', height: 300, toolbar: { show: false } },
+        plotOptions: { bar: { borderRadius: 4, horizontal: true } },
+        xaxis: { categories: tagData.labels },
+        colors: ['#0dcaf0'],
+        dataLabels: { enabled: true, textAnchor: 'start', offsetX: 0, formatter: function (val, opt) { return val } }
+    };
+    new ApexCharts(document.querySelector("#chartTags"), optionsTags).render();
+</script>
+{% endblock %}

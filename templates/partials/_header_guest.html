@@ -1,0 +1,418 @@
+{% load static %}
+
+<style>
+    /* --- TREKVIET GUEST HEADER VARIABLES --- */
+    :root {
+        --th-bg: #ffffff;
+        --th-border: #e5e7eb;
+        --th-text: #374151;
+        --th-primary: #10b981;
+        --th-primary-hover: #059669;
+        --th-bg-hover: #f3f4f6;
+        --th-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --th-height: 70px;
+    }
+
+    /* --- LAYOUT HEADER --- */
+    .th-header {
+        background-color: var(--th-bg);
+        border-bottom: 1px solid var(--th-border);
+        height: var(--th-height);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .th-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 20px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* --- BRAND / LOGO --- */
+    .th-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: var(--th-primary);
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+
+    /* --- NAVIGATION --- */
+    .th-nav-list {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        gap: 24px;
+    }
+
+    .th-nav-link {
+        text-decoration: none;
+        color: var(--th-text);
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: color 0.2s;
+    }
+
+    .th-nav-link:hover {
+        color: var(--th-primary);
+    }
+
+    /* --- SEARCH BAR --- */
+    .th-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .th-search-form {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .th-search-input {
+        padding: 8px 12px 8px 36px;
+        border: 1px solid var(--th-border);
+        border-radius: 20px;
+        background-color: var(--th-bg-hover);
+        outline: none;
+        font-size: 0.9rem;
+        width: 180px;
+        transition: width 0.3s, border-color 0.3s, background 0.3s;
+    }
+
+    .th-search-input:focus {
+        width: 240px;
+        border-color: var(--th-primary);
+        background-color: #fff;
+    }
+
+    .th-search-btn {
+        position: absolute;
+        left: 10px;
+        background: none;
+        border: none;
+        padding: 0;
+        color: #9ca3af;
+        cursor: pointer;
+    }
+
+    /* --- AUTH BUTTONS --- */
+    .th-auth-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .th-btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        white-space: nowrap;
+        cursor: pointer;
+        border: 1px solid transparent;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .th-btn-ghost {
+        color: var(--th-text);
+        background: transparent;
+        border: 1px solid var(--th-border);
+    }
+
+    .th-btn-ghost:hover {
+        background-color: var(--th-bg-hover);
+        border-color: #d1d5db;
+        color: #000;
+    }
+
+    .th-btn-primary {
+        background-color: var(--th-primary);
+        color: #ffffff;
+        border-color: var(--th-primary);
+    }
+
+    .th-btn-primary:hover {
+        background-color: var(--th-primary-hover);
+    }
+
+    .th-btn-full {
+        width: 100%;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    /* --- MOBILE TOGGLE --- */
+    .th-mobile-toggle {
+        display: none;
+        background: none;
+        border: none;
+        flex-direction: column;
+        gap: 5px;
+        cursor: pointer;
+    }
+
+    .th-mobile-toggle span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        background-color: var(--th-text);
+        transition: 0.3s;
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 992px) {
+        .th-nav {
+            position: absolute;
+            top: var(--th-height);
+            left: 0;
+            width: 100%;
+            background: white;
+            border-bottom: 1px solid var(--th-border);
+            padding: 20px;
+            display: none;
+            box-shadow: var(--th-shadow);
+        }
+
+        .th-nav.active {
+            display: block;
+        }
+
+        .th-nav-list {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .th-mobile-toggle {
+            display: flex;
+        }
+
+        .th-search-form {
+            display: none;
+        }
+        
+        .th-auth-group {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .th-btn {
+            width: 100%;
+        }
+    }
+
+    /* --- MODAL --- */
+    .th-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s;
+    }
+
+    .th-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .th-modal-content {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        transform: translateY(20px);
+        transition: transform 0.3s;
+        overflow: hidden;
+    }
+
+    .th-modal-overlay.active .th-modal-content {
+        transform: translateY(0);
+    }
+
+    .th-modal-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--th-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .th-modal-title {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--th-text);
+    }
+
+    .th-modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #9ca3af;
+    }
+
+    .th-modal-body {
+        padding: 20px;
+        text-align: center;
+        color: #4b5563;
+    }
+
+    .th-modal-footer {
+        padding: 16px 20px;
+        background-color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .th-disabled-interaction {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+</style>
+
+<header class="th-header">
+    <div class="th-container">
+        
+        <a href="{% url 'home' %}" class="th-brand">
+            <svg viewBox="0 0 24 24" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#10b981" d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z" />
+            </svg>
+            <span class="th-brand-text">TrekViet</span>
+        </a>
+
+        <nav class="th-nav" id="th-nav-menu">
+            <ul class="th-nav-list">
+                <li class="th-nav-item">
+                    <a href="{% url 'treks:cung_duong_list' %}" class="th-nav-link">Cung đường</a>
+                </li>
+                <li class="th-nav-item">
+                    <a href="{% url 'trips:trip_hub' %}" class="th-nav-link">Chuyến đi</a>
+                </li>
+                <li class="th-nav-item">
+                    <a href="{% url 'community:danh-sach-bai-viet' %}" class="th-nav-link">Cộng đồng</a>
+                </li>
+                <li class="th-nav-item">
+                    <a href="{% url 'knowledge:list' %}" class="th-nav-link">Kiến thức</a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="th-actions">
+            
+            <form action="#" method="GET" class="th-search-form">
+                <button type="submit" class="th-search-btn">
+                    <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+                <input type="search" name="q" class="th-search-input" placeholder="Tìm kiếm...">
+            </form>
+
+            <div class="th-auth-group">
+                <a href="{% url 'accounts:dang-nhap' %}" class="th-btn th-btn-ghost">Đăng nhập</a>
+                <a href="{% url 'accounts:dang-ky' %}" class="th-btn th-btn-primary">Đăng ký ngay</a>
+            </div>
+        </div>
+
+        <button class="th-mobile-toggle" id="th-toggle-btn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+</header>
+
+<!-- Modal yêu cầu đăng nhập -->
+<div class="th-modal-overlay" id="th-login-modal">
+    <div class="th-modal-content">
+        <div class="th-modal-header">
+            <h3 class="th-modal-title">Yêu cầu đăng nhập</h3>
+            <button class="th-modal-close" id="th-close-modal">&times;</button>
+        </div>
+        <div class="th-modal-body">
+            <p>Bạn cần đăng nhập để thực hiện hành động này.</p>
+        </div>
+        <div class="th-modal-footer">
+            <a href="{% url 'accounts:dang-nhap' %}" class="th-btn th-btn-primary th-btn-full">Đăng nhập</a>
+            <a href="{% url 'accounts:dang-ky' %}" class="th-btn th-btn-ghost th-btn-full">Tạo tài khoản mới</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile Menu Toggle
+    const toggleBtn = document.getElementById('th-toggle-btn');
+    const navMenu = document.getElementById('th-nav-menu');
+
+    if (toggleBtn && navMenu) {
+        toggleBtn.addEventListener('click', function() {
+            navMenu.classList.toggle('active');
+        });
+    }
+
+    // Modal Logic
+    const modal = document.getElementById('th-login-modal');
+    const closeModalBtn = document.getElementById('th-close-modal');
+
+    // Hàm mở modal (có thể gọi từ ngoài: showLoginModal())
+    window.showLoginModal = function() {
+        if (modal) modal.classList.add('active');
+    };
+
+    // Đóng modal bằng nút X
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', function() {
+            modal.classList.remove('active');
+        });
+    }
+
+    // Đóng modal khi click overlay
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    }
+
+    // === HELPER: Chặn tương tác của guest ===
+    window.requireAuth = function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        showLoginModal();
+        return false;
+    };
+
+    // Tự động bind cho tất cả elements có attribute data-require-auth
+    document.querySelectorAll('[data-require-auth]').forEach(function(element) {
+        element.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showLoginModal();
+        });
+    });
+});
+</script>

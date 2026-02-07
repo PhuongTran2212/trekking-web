@@ -1,0 +1,47 @@
+<li class="comment" id="comment-{{ comment.id }}">
+    <div class="comment-avatar">
+        <!-- Thay bằng avatar thật nếu có -->
+        {{ comment.user.username|first|upper }}
+    </div>
+    <div class="comment-body">
+        <div class="comment-header">
+            <span class="comment-author">{{ comment.user.username }}</span>
+            <span class="comment-date">{{ comment.ngay_binh_luan|timesince }} trước</span>
+        </div>
+        <div class="comment-content">
+            <p class="mb-0">{{ comment.noi_dung|linebreaksbr }}</p>
+        </div>
+        <div class="comment-actions">
+            {% if user.is_authenticated %}
+                <button class="btn-reply" data-comment-id="{{ comment.id }}">Trả lời</button>
+            {% endif %}
+            {% if request.user == comment.user or request.user.is_staff %}
+                <form action="{% url 'community:xoa-binh-luan' comment.id %}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa bình luận này?');">
+                    {% csrf_token %}
+                    <button type="submit" class="text-danger">Xóa</button>
+                </form>
+            {% endif %}
+        </div>
+
+        <!-- Reply form (hidden by default) -->
+        <div class="reply-form" id="reply-form-{{ comment.id }}">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="tra_loi_binh_luan_id" value="{{ comment.id }}">
+                <div class="form-group">
+                    <textarea name="noi_dung" class="form-control" rows="3" placeholder="Viết trả lời cho {{ comment.user.username }}..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Gửi</button>
+            </form>
+        </div>
+
+        <!-- Render replies recursively -->
+        {% if comment.cac_tra_loi.all %}
+            <ul class="comment-replies">
+                {% for reply in comment.cac_tra_loi.all %}
+                    {% include 'community/partials/comment.html' with comment=reply %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</li>

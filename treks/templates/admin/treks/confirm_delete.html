@@ -1,0 +1,21 @@
+{% extends 'admin_base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">{{ page_title }}</h4>
+    </div>
+    <div class="card-body">
+        <p>Bạn có chắc chắn muốn xóa vĩnh viễn cung đường "<strong>{{ object.ten }}</strong>"?</p>
+        <p class="text-danger">Hành động này sẽ xóa tất cả media, đánh giá và các dữ liệu liên quan. Hành động này không thể hoàn tác.</p>
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <a href="{% url 'treks_admin:cung_duong_list' %}" class="btn btn-secondary me-2">
+    <i class="fas fa-times"></i> Hủy
+</a>
+            <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,606 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% load user_admin_tags %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #10b981;
+        --primary-light: #ecfdf5;
+        --primary-soft: #d1fae5;
+        --text-main: #111827;
+        --text-sub: #6b7280;
+        --bg-body: #f8fafc;
+        --card-bg: #ffffff;
+        --border-color: #e5e7eb;
+        
+        --radius-xl: 16px;
+        --radius-lg: 12px;
+        
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+
+    body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; }
+
+    /* --- Back Button --- */
+    .btn-back {
+        background: white; border: 1px solid var(--border-color); color: var(--text-sub);
+        padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; display: inline-flex;
+        align-items: center; gap: 8px; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-back:hover { border-color: var(--primary); color: var(--primary); transform: translateX(-2px); }
+
+    /* --- Card Container --- */
+    .card-box {
+        background: var(--card-bg); border-radius: var(--radius-xl);
+        border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);
+        overflow: hidden; position: relative;
+    }
+
+    /* --- Profile Sidebar --- */
+    .profile-banner { height: 130px; background: linear-gradient(120deg, #10b981, #059669); }
+    .profile-avatar-wrapper { display: flex; justify-content: center; margin-top: -65px; position: relative; z-index: 2; }
+    .profile-avatar { width: 130px; height: 130px; border-radius: 50%; border: 4px solid white; object-fit: cover; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .profile-body { padding: 1rem 1.5rem 2rem; text-align: center; }
+    .user-handle { background: #f3f4f6; color: var(--text-sub); padding: 2px 10px; border-radius: 12px; font-size: 0.85rem; display: inline-block; margin-top: 5px; }
+    
+    .info-list { margin-top: 2rem; text-align: left; }
+    .info-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
+    .info-item:last-child { border-bottom: none; }
+    .info-icon { width: 32px; height: 32px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; font-size: 0.9rem; }
+
+    /* --- Stats Boxes --- */
+    .stat-box {
+        background: white; border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+        padding: 1.25rem; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;
+        box-shadow: var(--shadow-sm);
+    }
+    .stat-box:hover { transform: translateY(-3px); border-color: var(--primary); }
+    .stat-icon-wrapper { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+    .stat-green { background: #ecfdf5; color: #10b981; }
+    .stat-blue { background: #eff6ff; color: #3b82f6; }
+    .stat-orange { background: #fff7ed; color: #f97316; }
+    .stat-purple { background: #faf5ff; color: #a855f7; }
+
+    /* --- Custom Tabs --- */
+    .nav-tabs-custom { border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
+    .nav-tabs-custom .nav-link {
+        border: none; color: var(--text-sub); font-weight: 600; padding: 0.8rem 0; margin-right: 1.5rem;
+        background: transparent; border-bottom: 2px solid transparent; transition: all 0.2s;
+    }
+    .nav-tabs-custom .nav-link:hover, .nav-tabs-custom .nav-link.active { color: var(--primary); }
+    .nav-tabs-custom .nav-link.active { border-bottom-color: var(--primary); }
+
+    /* --- Trip Cards --- */
+    .trip-card {
+        border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; background: white; position: relative;
+    }
+    .trip-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
+    .trip-img-wrap { height: 170px; width: 100%; position: relative; overflow: hidden; }
+    .trip-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+    .trip-card:hover .trip-img { transform: scale(1.08); }
+    .trip-body { padding: 1rem; }
+    .trip-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .badge-status { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.65); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; backdrop-filter: blur(4px); }
+    .badge-sub { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; background: #f3f4f6; color: var(--text-sub); }
+    .badge-sub.primary { background: var(--primary-light); color: #047857; }
+
+    /* --- Empty State --- */
+    .empty-state-box {
+        border: 2px dashed var(--border-color); border-radius: var(--radius-lg); background: #fdfdfd;
+        padding: 2.5rem; text-align: center; color: var(--text-sub); display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+    }
+    .empty-state-icon { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.75rem; }
+
+    /* --- Show More Card --- */
+    .card-more {
+        background: #f8fafc; border: 2px dashed var(--border-color); display: flex; flex-direction: column;
+        align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; min-height: 270px;
+    }
+    .card-more:hover { border-color: var(--primary); background: var(--primary-light); }
+    .card-more:hover .text-primary { transform: scale(1.1); }
+
+    /* --- Modal Custom --- */
+    @media (min-width: 1200px) { .modal-wider { max-width: 1250px; } }
+    @media (min-width: 1600px) { .modal-wider { max-width: 90%; } }
+    .modal-content { border: none; border-radius: 16px; overflow: hidden; }
+    .modal-header { background: #fff; border-bottom: 1px solid #f1f5f9; padding: 1.25rem; }
+    .modal-body { background: #f8fafc; padding: 1.5rem; }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'user_admin:user_list' %}" class="btn-back"><i class="fas fa-arrow-left"></i> Quay lại</a>
+            <div>
+                <h4 class="fw-bold m-0 text-dark">Hồ sơ người dùng</h4>
+                <div class="text-muted small mt-1">Chi tiết tài khoản <span class="fw-bold">@{{ user_obj.username }}</span></div>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            {% if not user_obj.is_superuser %}
+            <form method="post" action="{% url 'user_admin:user_toggle_status' user_obj.id %}" onsubmit="return confirm('Xác nhận?');">
+                {% csrf_token %}
+                {% if user_obj.is_active %}
+                <button class="btn btn-white border text-warning fw-bold shadow-sm bg-white"><i class="fas fa-lock me-2"></i> Khóa TK</button>
+                {% else %}
+                <button class="btn btn-white border text-success fw-bold shadow-sm bg-white"><i class="fas fa-unlock me-2"></i> Mở khóa</button>
+                {% endif %}
+            </form>
+            <form method="post" action="{% url 'user_admin:user_delete' user_obj.id %}" onsubmit="return confirm('Xóa vĩnh viễn?');">
+                {% csrf_token %}
+                <button class="btn btn-white border text-danger fw-bold shadow-sm bg-white"><i class="fas fa-trash-alt me-2"></i> Xóa</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Profile Column -->
+        <div class="col-lg-4 col-xl-3">
+            <div class="card-box">
+                <div class="profile-banner"></div>
+                <div class="profile-avatar-wrapper">
+                    {% if user_obj|has_profile and user_obj.taikhoanhoso.avatar_url %}
+                        <img src="{{ user_obj.taikhoanhoso.avatar_url }}" class="profile-avatar">
+                    {% else %}
+                        <img src="{% static 'images/default_avatar.png' %}" class="profile-avatar">
+                    {% endif %}
+                </div>
+                <div class="profile-body">
+                    <h5 class="fw-bold text-dark mb-1">{{ user_obj.get_full_name|default:user_obj.username }}</h5>
+                    <div class="user-handle">@{{ user_obj.username }}</div>
+                    
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        {% if user_obj.is_staff %}<span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-2">Quản trị viên</span>{% endif %}
+                        {% if user_obj.is_active %}
+                            <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success-subtle px-3 py-2">Hoạt động</span>
+                        {% else %}
+                            <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger-subtle px-3 py-2">Đã khóa</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="info-list">
+                        <div class="info-item">
+                            <div class="info-icon"><i class="far fa-envelope"></i></div>
+                            <div class="text-break small">{{ user_obj.email }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
+                            <div class="small">{{ user_obj.taikhoanhoso.sdt|default:"--" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                            <div>{{ user_obj.taikhoanhoso.tinh_thanh.ten|default:"---" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon"><i class="far fa-calendar-check"></i></div>
+                            <div class="small">Tham gia: {{ user_obj.date_joined|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Column -->
+        <div class="col-lg-8 col-xl-9">
+            <!-- Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-icon-wrapper stat-green"><i class="fas fa-flag"></i></div>
+                        <div><h4 class="mb-0 fw-bold">{{ stats.trips_hosted_count }}</h4><small class="text-muted">Đã tổ chức</small></div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-icon-wrapper stat-blue"><i class="fas fa-hiking"></i></div>
+                        <div><h4 class="mb-0 fw-bold">{{ stats.trips_joined_count }}</h4><small class="text-muted">Đã tham gia</small></div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-icon-wrapper stat-orange"><i class="fas fa-map-marked-alt"></i></div>
+                        <div><h4 class="mb-0 fw-bold">{{ stats.treks_count }}</h4><small class="text-muted">Cung đường</small></div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-icon-wrapper stat-purple"><i class="fas fa-feather-alt"></i></div>
+                        <div><h4 class="mb-0 fw-bold">{{ stats.posts_count }}</h4><small class="text-muted">Bài viết</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Content -->
+            <div class="card-box p-4">
+                <ul class="nav nav-tabs nav-tabs-custom" id="userTabs" role="tablist">
+                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#intro"><i class="fas fa-info-circle"></i>Giới thiệu</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#trips"><i class="fas fa-suitcase"></i>Chuyến đi</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#treks"><i class="fas fa-route"></i>Cung đường</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#posts"><i class="far fa-newspaper"></i>Bài viết</button></li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- Tab: Giới thiệu -->
+                    <div class="tab-pane fade show active" id="intro">
+                        <div class="row g-4">
+                            <!-- Giới thiệu & Sở thích -->
+                            <div class="col-md-12">
+                                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="fas fa-user-tag text-primary me-2"></i>Giới thiệu bản thân</h6>
+                                <div class="bg-light p-3 rounded-3 mb-4">
+                                    {% if user_obj.taikhoanhoso.gioi_thieu %}
+                                        <p class="mb-0 text-dark">{{ user_obj.taikhoanhoso.gioi_thieu|linebreaksbr }}</p>
+                                    {% else %}
+                                        <p class="mb-0 text-muted fst-italic">Chưa có thông tin giới thiệu.</p>
+                                    {% endif %}
+                                </div>
+
+                                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="fas fa-heart text-danger me-2"></i>Sở thích</h6>
+                                <div class="d-flex flex-wrap gap-2 mb-4">
+                                    {% for interest in user_interests %}
+                                        <span class="badge bg-white border text-dark py-2 px-3 rounded-pill">
+                                            {{ interest.the.ten }}
+                                        </span>
+                                    {% empty %}
+                                        <span class="text-muted fst-italic">Chưa cập nhật sở thích.</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Đồ dùng -->
+                            <div class="col-md-12">
+                                <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="fas fa-tools text-warning me-2"></i>Đồ dùng đã có</h6>
+                                {% if user_gear %}
+                                <div class="row g-3">
+                                    {% for gear in user_gear %}
+                                    <div class="col-sm-6 col-md-4 col-lg-3">
+                                        <div class="d-flex align-items-center p-3 border rounded-3 bg-white h-100">
+                                            <div class="flex-shrink-0 me-3">
+                                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-campground text-secondary"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-dark">{{ gear.vat_dung.ten }}</h6>
+                                                <small class="text-muted">{{ gear.vat_dung.loai_vat_dung.ten }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                    <p class="text-muted fst-italic">Chưa có thông tin đồ dùng.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Chuyến đi -->
+                    <div class="tab-pane fade" id="trips">
+                        <!-- Hosted -->
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="fas fa-crown text-warning me-2"></i>Đã tổ chức ({{ stats.trips_hosted_count }})</h6>
+                        <div class="row g-3 mb-5">
+                            {% for trip in trips_hosted|slice:":6" %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="trip-card">
+                                    <div class="trip-img-wrap">
+                                        <img src="{{ trip.cover_url }}" class="trip-img">
+                                        <span class="badge-status">{{ trip.status_name }}</span>
+                                    </div>
+                                    <div class="trip-body">
+                                        <div class="trip-title">{{ trip.ten_chuyen_di }}</div>
+                                        <!-- FIX: Thêm hiển thị địa điểm -->
+                                        <div class="small text-muted mb-2 text-truncate">
+                                            <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                            {{ trip.cung_duong.tinh_thanh.ten_tinh_thanh|default:"Đang cập nhật" }}
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-2 border-top pt-2">
+                                            <span class="text-muted small"><i class="far fa-calendar-alt me-1 text-primary"></i>{{ trip.ngay_bat_dau|date:"d/m/y" }}</span>
+                                            <span class="badge-sub primary">Host</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="empty-state-box">
+                                    <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                                    <p class="mb-0 fw-medium">Chưa tổ chức chuyến đi nào.</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if trips_hosted.count > 6 %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="trip-card card-more" data-bs-toggle="modal" data-bs-target="#modalTripsHosted">
+                                    <div class="text-primary fs-1 mb-2 transition-transform"><i class="fas fa-plus-circle"></i></div>
+                                    <h6 class="fw-bold text-muted">Xem thêm {{ trips_hosted.count|add:"-6" }} chuyến</h6>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Joined -->
+                        <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="fas fa-hiking text-info me-2"></i>Đã tham gia ({{ stats.trips_joined_count }})</h6>
+                        <div class="row g-3">
+                            {% for trip in trips_joined|slice:":6" %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="trip-card">
+                                    <div class="trip-img-wrap">
+                                        <img src="{{ trip.cover_url }}" class="trip-img">
+                                    </div>
+                                    <div class="trip-body">
+                                        <div class="trip-title">{{ trip.ten_chuyen_di }}</div>
+                                        <!-- FIX: Thêm hiển thị địa điểm -->
+                                        <div class="small text-muted mb-2 text-truncate">
+                                            <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                            {{ trip.cung_duong.tinh_thanh.ten_tinh_thanh|default:"Đang cập nhật" }}
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-2 border-top pt-2">
+                                            <span class="text-muted small"><i class="far fa-calendar-alt me-1 text-primary"></i>{{ trip.ngay_bat_dau|date:"d/m/y" }}</span>
+                                            <span class="badge-sub">Member</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="empty-state-box">
+                                    <div class="empty-state-icon"><i class="fas fa-hiking"></i></div>
+                                    <p class="mb-0 fw-medium">Chưa tham gia chuyến đi nào.</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            {% if trips_joined.count > 6 %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="trip-card card-more" data-bs-toggle="modal" data-bs-target="#modalTripsJoined">
+                                    <div class="text-primary fs-1 mb-2 transition-transform"><i class="fas fa-plus-circle"></i></div>
+                                    <h6 class="fw-bold text-muted">Xem thêm {{ trips_joined.count|add:"-6" }} chuyến</h6>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Tab: Cung đường -->
+                    <div class="tab-pane fade" id="treks">
+                        <div class="row g-3">
+                            {% for trek in treks_created|slice:":6" %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="trip-card">
+                                    <div class="trip-img-wrap">
+                                        <img src="{{ trek.anh_bia_url }}" class="trip-img">
+                                        <span class="badge-status bg-warning text-dark"><i class="fas fa-star me-1"></i>{{ trek.danh_gia_trung_binh|default:"Mới" }}</span>
+                                    </div>
+                                    <div class="trip-body">
+                                        <div class="trip-title">{{ trek.ten }}</div>
+                                        <div class="small text-muted mb-3"><i class="fas fa-map-marker-alt text-danger me-1"></i>{{ trek.tinh_thanh.ten_tinh_thanh }}</div>
+                                        <div class="d-flex gap-2">
+                                            <span class="badge-sub border">{{ trek.do_dai_km }}km</span>
+                                            <span class="badge-sub border">{{ trek.do_kho.ten }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="empty-state-box">
+                                    <div class="empty-state-icon"><i class="fas fa-route"></i></div>
+                                    <p class="mb-0 fw-medium">Chưa tạo cung đường nào.</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if treks_created.count > 6 %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="trip-card card-more" data-bs-toggle="modal" data-bs-target="#modalTreks">
+                                    <div class="text-primary fs-1 mb-2 transition-transform"><i class="fas fa-plus-circle"></i></div>
+                                    <h6 class="fw-bold text-muted">Xem thêm {{ treks_created.count|add:"-6" }} cung đường</h6>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Tab: Bài viết -->
+                    <div class="tab-pane fade" id="posts">
+                        <div class="row g-3">
+                            {% for post in posts_created|slice:":6" %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="trip-card">
+                                    {% if post.media.first %}
+                                    <div class="trip-img-wrap"><img src="{{ post.media.first.duong_dan_file.url }}" class="trip-img"></div>
+                                    {% else %}
+                                    <div class="trip-img-wrap bg-light d-flex align-items-center justify-content-center"><i class="fas fa-image text-muted fa-2x"></i></div>
+                                    {% endif %}
+                                    <div class="trip-body">
+                                        <div class="trip-title">{{ post.tieu_de }}</div>
+                                        <div class="small text-muted mb-2">{{ post.ngay_dang|date:"d/m/Y" }}</div>
+                                        <div class="d-flex gap-3 small text-sub border-top pt-2 mt-2">
+                                            <span><i class="far fa-thumbs-up me-1"></i>{{ post.luot_binh_chon }}</span>
+                                            <span><i class="far fa-comment me-1"></i>{{ post.binh_luan.count }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="empty-state-box">
+                                    <div class="empty-state-icon"><i class="far fa-newspaper"></i></div>
+                                    <p class="mb-0 fw-medium">Chưa có bài viết nào.</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if posts_created.count > 6 %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="trip-card card-more" data-bs-toggle="modal" data-bs-target="#modalPosts">
+                                    <div class="text-primary fs-1 mb-2 transition-transform"><i class="fas fa-plus-circle"></i></div>
+                                    <h6 class="fw-bold text-muted">Xem thêm {{ posts_created.count|add:"-6" }} bài viết</h6>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Modal: Hosted -->
+<div class="modal fade" id="modalTripsHosted" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-wider modal-dialog-scrollable"> 
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary">Danh sách chuyến đi đã tổ chức</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    {% for trip in trips_hosted %}
+                    <div class="col-md-6 col-lg-4 col-xl-3">
+                        <div class="trip-card">
+                            <div class="trip-img-wrap">
+                                <img src="{{ trip.cover_url }}" class="trip-img">
+                                <span class="badge-status">{{ trip.status_name }}</span>
+                            </div>
+                            <div class="trip-body">
+                                <div class="trip-title">{{ trip.ten_chuyen_di }}</div>
+                                <!-- FIX: Thêm địa điểm vào Modal -->
+                                <div class="small text-muted mb-2 text-truncate">
+                                    <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                    {{ trip.cung_duong.tinh_thanh.ten_tinh_thanh|default:"Đang cập nhật" }}
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2 border-top pt-2">
+                                    <span class="text-muted small"><i class="far fa-calendar-alt me-1 text-primary"></i>{{ trip.ngay_bat_dau|date:"d/m/y" }}</span>
+                                    <span class="badge-sub primary">Host</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Joined -->
+<div class="modal fade" id="modalTripsJoined" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-wider modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary">Danh sách chuyến đi đã tham gia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    {% for trip in trips_joined %}
+                    <div class="col-md-6 col-lg-4 col-xl-3">
+                        <div class="trip-card">
+                            <div class="trip-img-wrap">
+                                <img src="{{ trip.cover_url }}" class="trip-img">
+                            </div>
+                            <div class="trip-body">
+                                <div class="trip-title">{{ trip.ten_chuyen_di }}</div>
+                                <!-- FIX: Thêm địa điểm vào Modal -->
+                                <div class="small text-muted mb-2 text-truncate">
+                                    <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                    {{ trip.cung_duong.tinh_thanh.ten_tinh_thanh|default:"Đang cập nhật" }}
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2 border-top pt-2">
+                                    <span class="text-muted small"><i class="far fa-calendar-alt me-1 text-primary"></i>{{ trip.ngay_bat_dau|date:"d/m/y" }}</span>
+                                    <span class="badge-sub">Member</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Treks -->
+<div class="modal fade" id="modalTreks" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-wider modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary">Danh sách cung đường</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    {% for trek in treks_created %}
+                    <div class="col-md-6 col-lg-4 col-xl-3">
+                        <div class="trip-card">
+                            <div class="trip-img-wrap">
+                                <img src="{{ trek.anh_bia_url }}" class="trip-img">
+                                <span class="badge-status bg-warning text-dark">{{ trek.danh_gia_trung_binh }}</span>
+                            </div>
+                            <div class="trip-body">
+                                <div class="trip-title">{{ trek.ten }}</div>
+                                <div class="small text-muted mb-2">{{ trek.tinh_thanh.ten_tinh_thanh }}</div>
+                                <div class="d-flex gap-2">
+                                    <span class="badge-sub border">{{ trek.do_dai_km }}km</span>
+                                    <span class="badge-sub border">{{ trek.do_kho.ten }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Posts -->
+<div class="modal fade" id="modalPosts" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-wider modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary">Danh sách bài viết</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    {% for post in posts_created %}
+                    <div class="col-md-6 col-lg-4 col-xl-3">
+                        <div class="trip-card">
+                            {% if post.media.first %}
+                            <div class="trip-img-wrap"><img src="{{ post.media.first.duong_dan_file.url }}" class="trip-img"></div>
+                            {% endif %}
+                            <div class="trip-body">
+                                <div class="trip-title">{{ post.tieu_de }}</div>
+                                <div class="small text-muted mb-2">{{ post.ngay_dang|date:"d/m/Y" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modalEl) { new bootstrap.Modal(modalEl); });
+    });
+</script>
+{% endblock %}

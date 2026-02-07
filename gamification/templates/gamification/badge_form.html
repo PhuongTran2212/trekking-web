@@ -1,0 +1,238 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* CSS hỗ trợ giao diện */
+    .img-upload-wrapper {
+        position: relative; width: 120px; height: 120px;
+        border: 2px dashed #dee2e6; border-radius: 12px;
+        overflow: hidden; background: #f8f9fa;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto;
+    }
+    .img-preview { max-width: 100%; max-height: 100%; object-fit: contain; }
+    
+    /* Hiệu ứng dropdown */
+    .selector-box {
+        background-color: #f0f9ff;
+        padding: 10px;
+        border: 1px solid #bae6fd;
+        border-radius: 6px;
+        animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        {% if form.instance.pk %}
+                            <i class="fa-solid fa-pen-to-square"></i> Cập nhật Huy Hiệu
+                        {% else %}
+                            <i class="fa-solid fa-plus-circle"></i> Tạo Huy Hiệu Mới
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Hiển thị lỗi form -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                Vui lòng kiểm tra lại thông tin nhập liệu bên dưới.
+                            </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <!-- 1. THÔNG TIN CƠ BẢN -->
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Tên huy hiệu <span class="text-danger">*</span></label>
+                                    {{ form.ten }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Mô tả ngắn</label>
+                                    {{ form.mo_ta }}
+                                </div>
+                            </div>
+
+                            <!-- 2. UPLOAD ẢNH -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-center w-100">Ảnh Huy Hiệu</label>
+                                <div class="card bg-light border-0 p-3 text-center">
+                                    <div class="mb-2">
+                                        <div class="img-upload-wrapper">
+                                            {% if form.instance.pk and form.instance.anh_huy_hieu %}
+                                                <img id="previewImg" src="{{ form.instance.anh_huy_hieu.url }}" class="img-preview">
+                                            {% else %}
+                                                <img id="previewImg" src="" class="img-preview" style="display:none;">
+                                                <div id="placeholderIcon" class="text-muted"><small>Chọn ảnh</small></div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {{ form.anh_huy_hieu }}
+                                </div>
+                            </div>
+
+                            <!-- 3. CẤU HÌNH LOGIC (QUAN TRỌNG) -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-primary fw-bold text-uppercase border-bottom pb-2">Thiết lập điều kiện</h6>
+                                
+                                <div class="row g-3 mt-1">
+                                    <!-- A. Loại điều kiện -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Loại điều kiện</label>
+                                        {{ form.loai_dieu_kien }}
+                                    </div>
+                                    
+                                    <!-- B. Mục tiêu -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Giá trị mục tiêu (>=)</label>
+                                        {{ form.gia_tri_muc_tieu }}
+                                    </div>
+
+                                    <!-- C. BIẾN SỐ PHỤ (ẨN MẶC ĐỊNH) -->
+                                    <!-- Chỉ hiện khi chọn Hashtag hoặc Độ khó -->
+                                    <div class="col-12" id="container-bien-so-phu" style="display: none;">
+                                        <label class="form-label fw-semibold">
+                                            Thông số phụ <span class="text-danger">*</span>
+                                        </label>
+                                        
+                                        <!-- Input Gốc (Luôn ẩn hoặc hiện tùy logic - ít dùng) -->
+                                        <div id="wrapper-input-text">
+                                            {{ form.bien_so_phu }}
+                                            <div class="form-text text-muted">Nhập mã slug hoặc thông số.</div>
+                                        </div>
+
+                                        <!-- Dropdown Hashtag -->
+                                        <div id="wrapper-select-tag" style="display: none;" class="selector-box">
+                                            <label class="small fw-bold text-success mb-1">Chọn Hashtag (Tag):</label>
+                                            <select class="form-select" onchange="syncToRealInput(this)">
+                                                <option value="">-- Chọn một thẻ Tag --</option>
+                                                {% for tag in list_tags %}
+                                                    <option value="{{ tag.slug }}">{{ tag.ten }} (Slug: {{ tag.slug }})</option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="form-text text-success">Đã lấy danh sách Tag từ hệ thống.</div>
+                                        </div>
+
+                                        <!-- Dropdown Độ khó -->
+                                        <div id="wrapper-select-dokho" style="display: none;" class="selector-box">
+                                            <label class="small fw-bold text-info mb-1">Chọn Độ khó:</label>
+                                            <select class="form-select" onchange="syncToRealInput(this)">
+                                                <option value="">-- Chọn mức độ --</option>
+                                                {% for dk in list_dokho %}
+                                                    <option value="{{ dk.ten }}">{{ dk.ten }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="form-text text-info">Đã lấy danh sách Độ khó từ hệ thống.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- D. Kích hoạt -->
+                                    <div class="col-12">
+                                        <div class="form-check form-switch mt-2">
+                                            {{ form.is_active }}
+                                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Đang kích hoạt</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{% url 'gamification:badge_list' %}" class="btn btn-secondary">Hủy</a>
+                            <button type="submit" class="btn btn-primary px-4">Lưu lại</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // 1. Upload Ảnh Preview
+        const fileIn = document.querySelector('input[type="file"]');
+        if(fileIn) {
+            fileIn.addEventListener('change', function(e) {
+                if(e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        document.getElementById('previewImg').src = ev.target.result;
+                        document.getElementById('previewImg').style.display = 'block';
+                        document.getElementById('placeholderIcon').style.display = 'none';
+                    }
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+        }
+
+        // 2. Logic Hiển thị Biến số phụ (QUAN TRỌNG)
+        const selectCondition = document.getElementById('id_loai_dieu_kien');
+        const realInput = document.getElementById('id_bien_so_phu');
+        
+        // Vùng chứa lớn nhất (Bao gồm cả Label "Thông số phụ")
+        const containerParam = document.getElementById('container-bien-so-phu');
+        
+        // Các vùng con
+        const wrapText = document.getElementById('wrapper-input-text');
+        const wrapTag = document.getElementById('wrapper-select-tag');
+        const wrapDoKho = document.getElementById('wrapper-select-dokho');
+
+        function updateUI() {
+            const val = selectCondition.value;
+            
+            // MẶC ĐỊNH: Ẩn tất cả (Container lớn ẩn đi -> Label cũng ẩn theo)
+            containerParam.style.display = 'none';
+            wrapText.style.display = 'none';
+            wrapTag.style.display = 'none';
+            wrapDoKho.style.display = 'none';
+            
+            // Reset input về text để tránh lỗi type hidden không nhập được
+            realInput.type = 'text';
+
+            // TRƯỜNG HỢP 1: HASHTAG
+            if (val === 'HAS_TAG_COUNT') {
+                containerParam.style.display = 'block'; // Hiện khung lớn
+                wrapTag.style.display = 'block';        // Hiện dropdown Tag
+                realInput.type = 'hidden';              // Ẩn input text thật
+                
+                // Đồng bộ giá trị cũ (Edit mode)
+                const tagSelect = wrapTag.querySelector('select');
+                if(realInput.value) tagSelect.value = realInput.value;
+            } 
+            // TRƯỜNG HỢP 2: ĐỘ KHÓ
+            else if (val === 'DIFFICULTY_LEVEL') {
+                containerParam.style.display = 'block'; // Hiện khung lớn
+                wrapDoKho.style.display = 'block';      // Hiện dropdown Độ khó
+                realInput.type = 'hidden';              // Ẩn input text thật
+                
+                const dkSelect = wrapDoKho.querySelector('select');
+                if(realInput.value) dkSelect.value = realInput.value;
+            }
+            
+            // CÁC TRƯỜNG HỢP KHÁC:
+            // Code sẽ chạy vào "MẶC ĐỊNH" ở trên -> Ẩn sạch sẽ.
+        }
+
+        selectCondition.addEventListener('change', updateUI);
+        
+        // Chạy ngay khi load trang
+        setTimeout(updateUI, 50); 
+    });
+
+    function syncToRealInput(sel) {
+        document.getElementById('id_bien_so_phu').value = sel.value;
+    }
+</script>
+{% endblock %}

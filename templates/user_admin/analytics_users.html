@@ -1,0 +1,268 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- 1. Header & Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1 text-dark">Thống kê Người dùng</h4>
+            <p class="text-muted small mb-0">Phân tích tăng trưởng và chất lượng thành viên</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-white border shadow-sm fw-medium" onclick="window.print()">
+                <i class="fas fa-print me-2 text-secondary"></i>In báo cáo
+            </button>
+            <button class="btn btn-primary shadow-sm fw-medium" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt me-2"></i>Làm mới
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. Navigation Tabs (Giao diện mới) -->
+    <div class="card shadow-sm border-0 mb-4 rounded-3">
+        <div class="card-header bg-white p-2 border-bottom-0">
+            <ul class="nav nav-pills card-header-pills">
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics' %}">
+                        <i class="fas fa-chart-pie me-2"></i>Tổng quan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active shadow-sm fw-bold px-3" href="#">
+                        <i class="fas fa-users me-2"></i>Người dùng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_trips' %}">
+                        <i class="fas fa-suitcase-rolling me-2"></i>Chuyến đi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_treks' %}">
+                        <i class="fas fa-map-marked-alt me-2"></i>Cung đường
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-muted fw-bold px-3" href="{% url 'user_admin:analytics_content' %}">
+                        <i class="fas fa-newspaper me-2"></i>Bài viết
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 3. KPI Scorecards -->
+    <div class="row g-3 mb-4">
+        <!-- Total Users -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 rounded-3">
+                <div class="card-body d-flex align-items-center p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-primary d-flex align-items-center justify-content-center"
+                        style="width: 64px; height: 64px;">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-uppercase text-muted small fw-bold mb-1">Tổng thành viên</h6>
+                        <h3 class="fw-bold mb-0 text-dark">{{ kpi.total_users|intcomma }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Hosts -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 rounded-3">
+                <div class="card-body d-flex align-items-center p-4">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success d-flex align-items-center justify-content-center"
+                        style="width: 64px; height: 64px;">
+                        <i class="fas fa-user-tie fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-uppercase text-muted small fw-bold mb-1">Số Host (Tổ chức)</h6>
+                        <h3 class="fw-bold mb-0 text-dark">{{ kpi.hosts_count|intcomma }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- New Users -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 rounded-3">
+                <div class="card-body d-flex align-items-center p-4">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3 text-info d-flex align-items-center justify-content-center"
+                        style="width: 64px; height: 64px;">
+                        <i class="fas fa-user-plus fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-uppercase text-muted small fw-bold mb-1">Thành viên mới (Tháng)</h6>
+                        <h3 class="fw-bold mb-0 text-dark">{{ kpi.new_users_month|intcomma }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Charts Section -->
+    <div class="row g-3 mb-4">
+        <!-- Line Chart: Growth -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100 rounded-3">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h6 class="fw-bold m-0 text-dark"><i class="fas fa-chart-line me-2 text-primary"></i>Tăng trưởng
+                        thành viên mới (6 tháng)</h6>
+                </div>
+                <div class="card-body pt-0">
+                    <div id="chartGrowth" style="min-height: 320px;"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Donut Chart: Ratio -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100 rounded-3">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h6 class="fw-bold m-0 text-dark"><i class="fas fa-chart-pie me-2 text-warning"></i>Tỷ lệ Host /
+                        Member</h6>
+                </div>
+                <div class="card-body pt-0 d-flex align-items-center justify-content-center">
+                    <div id="chartRatio" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Top Hosts Table -->
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold m-0 text-dark"><i class="fas fa-crown me-2 text-warning"></i>Top 10 Host Tích Cực
+                        Nhất</h6>
+                    <button class="btn btn-sm btn-light text-muted border">Xem tất cả</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-muted text-uppercase small">
+                            <tr>
+                                <th class="ps-4 py-3" style="width: 40%;">Thành viên</th>
+                                <th class="py-3">Email</th>
+                                <th class="text-center py-3">Số chuyến đã tạo</th>
+                                <th class="text-end pe-4 py-3">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for host in top_hosts %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <!-- Logic hiển thị ảnh avatar an toàn -->
+                                        <div class="position-relative">
+                                            <img src="{% if host.taikhoanhoso.anh_dai_dien %}/media/{{ host.taikhoanhoso.anh_dai_dien }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}"
+                                                class="rounded-circle border" width="45" height="45"
+                                                style="object-fit: cover;">
+                                            <span
+                                                class="position-absolute bottom-0 start-100 translate-middle p-1 bg-success border border-light rounded-circle"></span>
+                                        </div>
+                                        <div class="ms-3">
+                                            <div class="fw-bold text-dark">{{ host.username }}</div>
+                                            <!-- Logic hiển thị ngày tham gia an toàn -->
+                                            <small class="text-muted" style="font-size: 0.8rem;">
+                                                Tham gia: {{ host.date_joined|date:"d/m/Y"|default:"--" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-muted">{{ host.email }}</td>
+                                <td class="text-center">
+                                    <span
+                                        class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold">
+                                        {{ host.trip_count }} chuyến
+                                    </span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'user_admin:user_detail' host.id %}"
+                                        class="btn btn-sm btn-white border shadow-sm" title="Xem chi tiết">
+                                        <i class="fas fa-eye text-secondary"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                                    <p class="mb-0">Chưa có dữ liệu Host nào.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    // --- 1. Growth Chart (Line) ---
+    var growthData = {{ charts.growth| safe }};
+    var optionsGrowth = {
+        series: [{ name: 'Thành viên mới', data: growthData.data }],
+        chart: {
+            type: 'area',
+            height: 320,
+            fontFamily: 'Inter, sans-serif',
+            toolbar: { show: false },
+            zoom: { enabled: false }
+        },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 3 },
+        xaxis: {
+            categories: growthData.labels,
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: { show: true },
+        grid: { borderColor: '#f1f1f1', strokeDashArray: 4 },
+        colors: ['#0d6efd'],
+        fill: {
+            type: 'gradient',
+            gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] }
+        },
+        markers: { size: 0, hover: { size: 6 } },
+        tooltip: { theme: 'light' }
+    };
+    new ApexCharts(document.querySelector("#chartGrowth"), optionsGrowth).render();
+
+    // --- 2. Ratio Chart (Donut) ---
+    var ratioData = {{ charts.ratio| safe }};
+    var optionsRatio = {
+        series: ratioData.data,
+        labels: ratioData.labels,
+        chart: { type: 'donut', height: 320, fontFamily: 'Inter, sans-serif' },
+        colors: ['#198754', '#adb5bd'], // Xanh cho Host, Xám cho Member
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '70%',
+                    labels: {
+                        show: true,
+                        total: {
+                            show: true,
+                            label: 'Tổng số',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: '#6c757d'
+                        }
+                    }
+                }
+            }
+        },
+        dataLabels: { enabled: false },
+        legend: { position: 'bottom', markers: { radius: 12 } },
+        tooltip: { theme: 'light' }
+    };
+    new ApexCharts(document.querySelector("#chartRatio"), optionsRatio).render();
+</script>
+{% endblock %}

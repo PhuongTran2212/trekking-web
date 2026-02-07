@@ -1,0 +1,962 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - TrekViet Admin{% endblock title %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #4F46E5;
+        --primary-dark: #4338CA;
+        --primary-light: #818CF8;
+        --text-main: #111827;
+        --text-light: #6B7280;
+        --gray-50: #F9FAFB;
+        --gray-100: #F3F4F6;
+        --gray-200: #E5E7EB;
+        --gray-500: #6B7280;
+        --gray-700: #374151;
+        --gray-800: #1F2937;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-full: 9999px;
+        --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        --transition-fast: all 0.2s ease-out;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Smooth animations */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: var(--spacing-lg);
+        animation: fadeInDown 0.6s ease-out;
+    }
+
+    /* Back Button */
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: var(--spacing-lg);
+        padding: 0.75rem 1.25rem;
+        background-color: var(--gray-100);
+        color: var(--gray-700);
+        text-decoration: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        transition: var(--transition-fast);
+        animation: fadeInUp 0.5s ease-out 0.1s both;
+    }
+
+    .back-button:hover {
+        background-color: var(--gray-200);
+        transform: translateX(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Detail container with smooth transitions */
+    .detail-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: var(--spacing-xl);
+        align-items: start;
+    }
+
+    .main-content-column {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .sidebar-column {
+        position: sticky;
+        top: calc(var(--admin-header-height, 80px) + var(--spacing-lg));
+    }
+
+    /* Card */
+    .card {
+        background-color: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        padding: var(--spacing-lg);
+        transition: var(--transition-fast);
+        animation: fadeInUp 0.5s ease-out both;
+    }
+
+    .card:nth-of-type(1) { animation-delay: 0.15s; }
+    .card:nth-of-type(2) { animation-delay: 0.2s; }
+    .card:nth-of-type(3) { animation-delay: 0.25s; }
+    .card:nth-of-type(4) { animation-delay: 0.3s; }
+    .card:nth-of-type(5) { animation-delay: 0.35s; }
+
+    .card:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-4px);
+    }
+
+    /* Post Header */
+    .post-header {
+        border-left: 4px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .post-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.05), transparent);
+        transition: right 0.6s ease-out;
+    }
+
+    .post-header:hover::before {
+        right: 100%;
+    }
+
+    .post-title {
+        font-size: 2rem;
+        line-height: 1.3;
+        color: var(--gray-800);
+        margin-bottom: var(--spacing-md);
+        font-weight: 700;
+        animation: fadeInDown 0.5s ease-out 0.2s both;
+    }
+
+    .post-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        color: var(--gray-500);
+        font-size: 0.95rem;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        animation: slideIn 0.4s ease-out both;
+    }
+
+    .meta-item:nth-child(1) { animation-delay: 0.3s; }
+    .meta-item:nth-child(2) { animation-delay: 0.35s; }
+    .meta-item:nth-child(3) { animation-delay: 0.4s; }
+    .meta-item:nth-child(4) { animation-delay: 0.45s; }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Post Content */
+    .post-content {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--gray-700);
+        word-break: break-word;
+        animation: fadeInUp 0.6s ease-out 0.25s both;
+    }
+
+    .post-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-md);
+        margin: 1rem 0;
+        display: block;
+        transition: var(--transition-fast);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .post-content img:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .post-content p { margin-bottom: 1rem; }
+    .post-content ul, .post-content ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    .post-content blockquote {
+        border-left: 4px solid var(--primary-light);
+        margin-left: 0;
+        padding-left: 1rem;
+        font-style: italic;
+        color: #555;
+        transition: var(--transition-fast);
+    }
+
+    .post-content blockquote:hover {
+        border-left-color: var(--primary);
+        background: rgba(79, 70, 229, 0.02);
+        padding-left: 1.25rem;
+    }
+
+    /* Section Title */
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--gray-800);
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-md);
+        border-bottom: 2px solid var(--gray-200);
+        transition: var(--transition-fast);
+    }
+
+    .section-title:hover {
+        border-bottom-color: var(--primary);
+        color: var(--primary);
+    }
+
+    /* Media gallery with smooth animations */
+    .media-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        animation: fadeInUp 0.6s ease-out 0.3s both;
+    }
+
+    .media-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--gray-100);
+        cursor: pointer;
+        border: 1px solid var(--gray-200);
+        transition: var(--transition-fast);
+        animation: scaleIn 0.4s ease-out both;
+    }
+
+    .media-item:nth-child(1) { animation-delay: 0.35s; }
+    .media-item:nth-child(2) { animation-delay: 0.4s; }
+    .media-item:nth-child(3) { animation-delay: 0.45s; }
+    .media-item:nth-child(4) { animation-delay: 0.5s; }
+    .media-item:nth-child(5) { animation-delay: 0.55s; }
+    .media-item:nth-child(6) { animation-delay: 0.6s; }
+
+    .media-item:hover {
+        transform: scale(1.08);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        border-color: var(--primary-light);
+    }
+
+    .media-item img, .media-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition-fast);
+    }
+
+    .media-item:hover img, .media-item:hover video {
+        transform: scale(1.1);
+    }
+
+    .video-indicator {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(79, 70, 229, 0.8);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        pointer-events: none;
+        font-size: 18px;
+        transition: var(--transition-fast);
+    }
+
+    .media-item:hover .video-indicator {
+        background: rgba(79, 70, 229, 1);
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+
+    /* Lightbox Modal */
+    .lightbox-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.95);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .lightbox-content-wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    #lightbox-media-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 85vh;
+        margin-bottom: 10px;
+    }
+
+    .lightbox-content {
+        max-width: 90vw;
+        max-height: 85vh;
+        object-fit: contain;
+        display: block;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+        z-index: 10000;
+        animation: zoomIn 0.3s ease-out;
+    }
+
+    @keyframes zoomIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: #fff;
+        font-size: 40px;
+        cursor: pointer;
+        z-index: 10002;
+        line-height: 1;
+        transition: var(--transition-fast);
+    }
+
+    .lightbox-close:hover {
+        color: #ff4444;
+        transform: scale(1.2) rotate(90deg);
+    }
+
+    .lightbox-prev, .lightbox-next {
+        cursor: pointer;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 16px;
+        color: white;
+        font-size: 30px;
+        z-index: 10001;
+        background: rgba(79, 70, 229, 0.4);
+        border-radius: 8px;
+        user-select: none;
+        transition: var(--transition-fast);
+    }
+
+    .lightbox-next { right: 20px; }
+    .lightbox-prev { left: 20px; }
+
+    .lightbox-prev:hover, .lightbox-next:hover {
+        background: rgba(79, 70, 229, 0.9);
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .lightbox-counter {
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        z-index: 10002;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .hidden { display: none !important; }
+
+    /* Comments */
+    .comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        animation: fadeInUp 0.6s ease-out 0.4s both;
+    }
+
+    .comment-item {
+        padding: var(--spacing-md);
+        background-color: var(--gray-50);
+        border-radius: var(--radius-md);
+        border-left: 3px solid var(--primary-light);
+        transition: var(--transition-fast);
+        animation: slideIn 0.4s ease-out both;
+    }
+
+    .comment-item:nth-child(1) { animation-delay: 0.45s; }
+    .comment-item:nth-child(2) { animation-delay: 0.5s; }
+    .comment-item:nth-child(3) { animation-delay: 0.55s; }
+
+    .comment-item:hover {
+        background-color: white;
+        border-left-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+        transform: translateX(4px);
+    }
+
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-sm);
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+
+    .comment-author {
+        font-weight: 700;
+        color: var(--gray-800);
+    }
+
+    .comment-date {
+        font-size: 0.85rem;
+        color: var(--gray-500);
+    }
+
+    .comment-content {
+        color: var(--gray-700);
+        line-height: 1.6;
+    }
+
+    .empty-comments {
+        text-align: center;
+        padding: var(--spacing-lg);
+        color: var(--gray-500);
+        animation: fadeInUp 0.5s ease-out 0.4s both;
+    }
+
+    /* Info List */
+    .info-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--gray-200);
+        transition: var(--transition-fast);
+    }
+
+    .info-item:hover {
+        padding-right: 8px;
+        color: var(--primary);
+    }
+
+    .info-label {
+        font-size: 0.9rem;
+        color: var(--gray-500);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-weight: 700;
+        color: var(--gray-800);
+    }
+
+    /* Badge */
+    .badge {
+        display: inline-block;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border-radius: var(--radius-full);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: var(--transition-fast);
+        animation: scaleIn 0.3s ease-out both;
+    }
+
+    .badge:hover {
+        transform: scale(1.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .badge-pending {
+        background-color: #FEF3C7;
+        color: #92400E;
+        border: 1px solid #FDE68A;
+    }
+
+    .badge-approved {
+        background-color: #D1FAE5;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
+    }
+
+    .badge-rejected {
+        background-color: #FEE2E2;
+        color: #991B1B;
+        border: 1px solid #FECACA;
+    }
+
+    /* Tags */
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        animation: fadeInUp 0.5s ease-out 0.25s both;
+    }
+
+    .tag {
+        background-color: rgba(79, 70, 229, 0.1);
+        color: var(--primary-dark);
+        padding: 0.35rem 0.75rem;
+        border-radius: var(--radius-full);
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: var(--transition-fast);
+        animation: scaleIn 0.3s ease-out both;
+    }
+
+    .tag:hover {
+        background-color: var(--primary);
+        color: white;
+        transform: scale(1.05) translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        animation: fadeInUp 0.6s ease-out 0.3s both;
+    }
+
+    .action-btn {
+        width: 100%;
+        padding: 0.9rem;
+        border: 2px solid;
+        border-radius: var(--radius-md);
+        background: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: var(--transition-fast);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        transition: left 0.3s ease-out;
+        z-index: -1;
+    }
+
+    .btn-approve {
+        color: #10B981;
+        border-color: #10B981;
+    }
+
+    .btn-approve::before {
+        background-color: #10B981;
+    }
+
+    .btn-approve:hover {
+        color: white;
+        left: 0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-reject {
+        color: #F59E0B;
+        border-color: #F59E0B;
+    }
+
+    .btn-reject::before {
+        background-color: #F59E0B;
+    }
+
+    .btn-reject:hover {
+        color: white;
+        left: 0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-delete {
+        color: #EF4444;
+        border-color: #EF4444;
+    }
+
+    .btn-delete::before {
+        background-color: #EF4444;
+    }
+
+    .btn-delete:hover {
+        color: white;
+        left: 0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .detail-container { grid-template-columns: 1fr; }
+        .sidebar-column { position: static; }
+    }
+
+    @media (max-width: 768px) {
+        .container { padding: var(--spacing-md); }
+        .post-title { font-size: 1.5rem; }
+        .media-gallery { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+    }
+</style>
+
+<div class="container">
+    <a href="{% url 'post_admin:post_list' %}" class="back-button">← Quay lại danh sách</a>
+
+    <div class="detail-container">
+        <!-- Main Content -->
+        <div class="main-content-column">
+            <!-- Post Header -->
+            <div class="card post-header">
+                <h1 class="post-title">{{ post.tieu_de }}</h1>
+                <div class="post-meta">
+                    <div class="meta-item"><span>👤</span><span><strong>@{{ post.tac_gia.username }}</strong></span></div>
+                    <div class="meta-item"><span>📅</span><span>{{ post.ngay_dang|date:"H:i, d/m/Y" }}</span></div>
+                    <div class="meta-item"><span>👍</span><span>{{ post.luot_binh_chon }} bình chọn</span></div>
+                    <div class="meta-item"><span>💬</span><span>{{ post.binh_luan.count }} bình luận</span></div>
+                </div>
+            </div>
+
+            <!-- Post Content -->
+            <div class="card">
+                <div class="post-content">
+                    {{ post.noi_dung|safe }}
+                </div>
+            </div>
+
+            <!-- Media Gallery -->
+            {% if post.media.all %}
+            <div class="card">
+                <h3 class="section-title">📸 Media ({{ post.media.count }})</h3>
+                <div class="media-gallery" id="admin-media-gallery">
+                    {% for media_item in post.media.all %}
+                    <div class="media-item" onclick="openAdminLightbox({{ forloop.counter0 }})">
+                        {% if media_item.loai_media == 'video' %}
+                            <video src="{{ media_item.duong_dan_file.url }}" muted></video>
+                            <div class="video-indicator">▶</div>
+                        {% else %}
+                            <img src="{{ media_item.duong_dan_file.url }}" alt="Media">
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Comments Section -->
+            <div class="card">
+                <h3 class="section-title">💬 Bình luận ({{ post.binh_luan.count }})</h3>
+                {% if post.binh_luan.all %}
+                <div class="comments-list">
+                    {% for comment in post.binh_luan.all %}
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <span class="comment-author">@{{ comment.user.username }}</span>
+                            <span class="comment-date">{{ comment.ngay_binh_luan|date:"H:i, d/m/Y" }}</span>
+                        </div>
+                        <div class="comment-content">{{ comment.noi_dung }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-comments"><p>Chưa có bình luận nào.</p></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar-column">
+            <!-- Info Card -->
+            <div class="card">
+                <h3 class="section-title">ℹ️ Thông tin</h3>
+                <ul class="info-list">
+                    <li class="info-item">
+                        <span class="info-label">Trạng thái</span>
+                        <span>
+                            {% if post.trang_thai == 'cho_duyet' %}<span class="badge badge-pending">Chờ duyệt</span>
+                            {% elif post.trang_thai == 'da_duyet' %}<span class="badge badge-approved">Đã duyệt</span>
+                            {% elif post.trang_thai == 'tu_choi' %}<span class="badge badge-rejected">Từ chối</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="info-item"><span class="info-label">Tác giả</span><span class="info-value">@{{ post.tac_gia.username }}</span></li>
+                    <li class="info-item"><span class="info-label">Ngày đăng</span><span class="info-value">{{ post.ngay_dang|date:"d/m/Y" }}</span></li>
+                    {% if post.chuyen_di %}
+                    <li class="info-item"><span class="info-label">Chuyến đi</span><span class="info-value">{{ post.chuyen_di.ten_chuyen_di }}</span></li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <!-- Tags Card -->
+            {% if post.tags.all %}
+            <div class="card">
+                <h3 class="section-title">🏷️ Thẻ</h3>
+                <div class="tag-list">
+                    {% for tag in post.tags.all %}
+                    <span class="tag">{{ tag.ten }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions Card -->
+            <div class="card">
+                <h3 class="section-title">⚙️ Hành động</h3>
+                <div class="action-buttons">
+                    {% if post.trang_thai == 'cho_duyet' %}
+                    <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'da_duyet' %}" onsubmit="return confirm('Duyệt bài viết?');">
+                        {% csrf_token %}
+                        <button type="submit" class="action-btn btn-approve">✓ Duyệt bài viết</button>
+                    </form>
+                    <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'tu_choi' %}" onsubmit="return confirm('Từ chối bài viết?');">
+                        {% csrf_token %}
+                        <button type="submit" class="action-btn btn-reject">✕ Từ chối bài viết</button>
+                    </form>
+                    {% endif %}
+                    <form method="POST" action="{% url 'post_admin:post_delete' post.id %}" onsubmit="return confirm('XÓA VĨNH VIỄN bài viết này?');">
+                        {% csrf_token %}
+                        <button type="submit" class="action-btn btn-delete">🗑️ Xóa vĩnh viễn</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" class="lightbox-modal">
+    <span class="lightbox-close">&times;</span>
+    <a class="lightbox-prev">&#10094;</a>
+    <a class="lightbox-next">&#10095;</a>
+
+    <div class="lightbox-content-wrapper">
+        <div id="lightbox-media-container"></div>
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+    </div>
+</div>
+
+<!-- Media Data -->
+<script type="application/json" id="admin-media-data">
+  [
+    {% for media in post.media.all %}
+    {
+      "url": "{{ media.duong_dan_file.url }}",
+      "type": "{{ media.loai_media }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    class AdminMediaViewer {
+        constructor(modalEl, mediaData) {
+            this.modalEl = modalEl;
+            this.items = mediaData;
+            this.currentIndex = 0;
+
+            this.mediaContainer = this.modalEl.querySelector('#lightbox-media-container');
+            this.prevBtn = this.modalEl.querySelector('.lightbox-prev');
+            this.nextBtn = this.modalEl.querySelector('.lightbox-next');
+            this.counterEl = this.modalEl.querySelector('.lightbox-counter');
+            this.closeBtn = this.modalEl.querySelector('.lightbox-close');
+
+            this.handleKeydown = this.handleKeydown.bind(this);
+            this.closeModal = this.closeModal.bind(this);
+        }
+
+        bindEvents() {
+            this.closeBtn.onclick = this.closeModal;
+            this.modalEl.onclick = (e) => {
+                if (e.target === this.modalEl || e.target.classList.contains('lightbox-content-wrapper') || e.target.id === 'lightbox-media-container') {
+                    this.closeModal();
+                }
+            };
+            this.prevBtn.onclick = (e) => { e.stopPropagation(); this.changeSlide(-1); };
+            this.nextBtn.onclick = (e) => { e.stopPropagation(); this.changeSlide(1); };
+            document.addEventListener('keydown', this.handleKeydown);
+        }
+
+        unbindEvents() {
+            this.prevBtn.onclick = null;
+            this.nextBtn.onclick = null;
+            this.closeBtn.onclick = null;
+            this.modalEl.onclick = null;
+            document.removeEventListener('keydown', this.handleKeydown);
+        }
+
+        handleKeydown(e) {
+            if (this.modalEl.style.display === "block") {
+                if (e.key === 'ArrowLeft') this.changeSlide(-1);
+                if (e.key === 'ArrowRight') this.changeSlide(1);
+                if (e.key === 'Escape') this.closeModal();
+            }
+        }
+
+        open(index) {
+            if (this.items.length === 0) return;
+            this.currentIndex = index;
+            this.updateSlide();
+            this.modalEl.style.display = "block";
+            document.body.style.overflow = "hidden";
+            this.bindEvents();
+        }
+
+        closeModal() {
+            this.modalEl.style.display = "none";
+            this.mediaContainer.innerHTML = '';
+            document.body.style.overflow = "auto";
+            this.unbindEvents();
+        }
+
+        changeSlide(dir) {
+            this.currentIndex += dir;
+            if (this.currentIndex < 0) this.currentIndex = this.items.length - 1;
+            if (this.currentIndex >= this.items.length) this.currentIndex = 0;
+            this.updateSlide();
+        }
+
+        updateSlide() {
+            const item = this.items[this.currentIndex];
+            this.mediaContainer.innerHTML = '';
+
+            let element;
+            const isVideo = item.type === 'video' || item.url.match(/\.(mp4|mov|avi)$/i);
+
+            if (isVideo) {
+                element = document.createElement('video');
+                element.src = item.url;
+                element.controls = true;
+                element.autoplay = true;
+                element.playsInline = true;
+                element.classList.add('lightbox-content');
+            } else {
+                element = document.createElement('img');
+                element.src = item.url;
+                element.classList.add('lightbox-content');
+            }
+
+            this.mediaContainer.appendChild(element);
+            this.counterEl.innerText = `${this.currentIndex + 1} / ${this.items.length}`;
+
+            if (this.items.length <= 1) {
+                this.prevBtn.classList.add('hidden');
+                this.nextBtn.classList.add('hidden');
+            } else {
+                this.prevBtn.classList.remove('hidden');
+                this.nextBtn.classList.remove('hidden');
+            }
+        }
+    }
+
+    const modal = document.getElementById('lightbox-modal');
+    let mediaData = [];
+    try {
+        mediaData = JSON.parse(document.getElementById('admin-media-data').textContent);
+    } catch(e) { console.error("Error parsing media data", e); }
+
+    const viewer = new AdminMediaViewer(modal, mediaData);
+
+    window.openAdminLightbox = function(index) {
+        viewer.open(index);
+    };
+});
+</script>
+{% endblock content %}

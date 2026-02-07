@@ -1,0 +1,16 @@
+<script>
+// Đoạn script nhỏ này để tự động thêm class "form-control" vào các thẻ input, select, textarea
+document.addEventListener("DOMContentLoaded", function() {
+    const applyClass = (form, className) => {
+        if (!form) return;
+        ['input', 'select', 'textarea'].forEach(tag => {
+            form.querySelectorAll(tag).forEach(el => {
+                if (el.type !== 'checkbox' && el.type !== 'radio' && el.type !== 'hidden') {
+                    el.classList.add(className);
+                }
+            });
+        });
+    };
+    document.querySelectorAll('form').forEach(form => applyClass(form, 'form-control'));
+});
+</script>

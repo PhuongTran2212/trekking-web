@@ -1,0 +1,874 @@
+{% extends 'admin_base.html' %}
+{% block title %}{{ title }}{% endblock title %}
+{% block content %}
+
+<style>
+    :root {
+        --primary: #4F46E5;
+        --primary-light: #6366F1;
+        --primary-dark: #4338CA;
+        --bg-body: #F3F4F6;
+        --bg-card: #FFFFFF;
+        --text-main: #111827;
+        --text-light: #6B7280;
+        --border: #E5E7EB;
+        --radius: 0.75rem;
+        --shadow: 0 1px 3px rgba(0,0,0,0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+        animation-duration: 0.3s;
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* Layout Dashboard */
+    .dashboard-wrapper {
+        padding: 2rem;
+        font-family: 'Inter', system-ui, sans-serif;
+        color: var(--text-main);
+        background: var(--bg-body);
+        min-height: 100vh;
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        animation: slideInLeft 0.4s ease-out;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #1F2937;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        transition: var(--transition);
+        animation: fadeInUp 0.5s ease-out backwards;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: var(--transition);
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary);
+    }
+
+    .stat-card:hover::before {
+        left: 100%;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+
+    .stat-card:hover .stat-icon {
+        transform: scale(1.15) rotate(5deg);
+    }
+
+    /* Icon Colors */
+    .icon-total { background: #E0E7FF; color: #4338ca; }
+    .icon-pending { background: #FEF3C7; color: #B45309; }
+    .icon-approved { background: #D1FAE5; color: #047857; }
+    .icon-rejected { background: #FEE2E2; color: #B91C1C; }
+
+    .stat-info h3 {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-info .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1;
+        transition: var(--transition);
+    }
+
+    .stat-card:hover .stat-info .value {
+        color: var(--primary);
+    }
+
+    /* Toolbar */
+    .toolbar-card {
+        background: var(--bg-card);
+        padding: 1rem;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: center;
+        animation: fadeInUp 0.5s ease-out 0.1s backwards;
+        border: 1px solid var(--border);
+        transition: var(--transition);
+    }
+
+    .toolbar-card:hover {
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        border-color: var(--primary-light);
+    }
+
+    .filter-tabs {
+        display: flex;
+        background: #F9FAFB;
+        padding: 4px;
+        border-radius: 8px;
+        gap: 2px;
+    }
+
+    .tab-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-light);
+        text-decoration: none;
+        border-radius: 6px;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .tab-link:hover {
+        color: var(--text-main);
+        background: rgba(79, 70, 229, 0.05);
+    }
+
+    .tab-link.active {
+        background: white;
+        color: var(--primary);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        animation: scaleIn 0.2s ease-out;
+    }
+
+    .tab-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary);
+        border-radius: 1px;
+        animation: slideInLeft 0.3s ease-out;
+    }
+
+    .search-box {
+        display: flex;
+        gap: 0.5rem;
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 0.6rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        outline: none;
+        transition: var(--transition);
+        font-size: 0.9rem;
+    }
+
+    .search-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        background: rgba(79, 70, 229, 0.02);
+    }
+
+    .search-input::placeholder {
+        color: #9CA3AF;
+    }
+
+    .btn-search {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0 1.2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 0.9rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-search::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255,255,255,0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.4s, height 0.4s;
+    }
+
+    .btn-search:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-search:active::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    /* Table Container */
+    .table-container {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        animation: fadeInUp 0.5s ease-out 0.2s backwards;
+        transition: var(--transition);
+    }
+
+    .table-container:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+        border-bottom: 2px solid var(--border);
+    }
+
+    th {
+        padding: 1rem 1.5rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-light);
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        transition: var(--transition);
+    }
+
+    th:hover {
+        color: var(--primary);
+    }
+
+    td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        color: var(--text-main);
+        transition: var(--transition);
+    }
+
+    tbody tr {
+        transition: var(--transition);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr:hover {
+        background: rgba(79, 70, 229, 0.03);
+        transform: scale(1.01);
+        transform-origin: center;
+    }
+
+    tbody tr:hover td {
+        color: var(--text-main);
+    }
+
+    /* Links in table */
+    a[href*="post_detail"] {
+        font-weight: 600;
+        color: #111827;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 4px;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    a[href*="post_detail"]::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary);
+        transition: var(--transition);
+    }
+
+    a[href*="post_detail"]:hover {
+        color: var(--primary);
+    }
+
+    a[href*="post_detail"]:hover::after {
+        width: 100%;
+    }
+
+    /* Badges */
+    .badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: var(--transition);
+        animation: scaleIn 0.3s ease-out;
+    }
+
+    .bg-pending {
+        background: #FFFBEB;
+        color: #B45309;
+        border: 1px solid #FDE68A;
+    }
+
+    .bg-pending:hover {
+        background: #FEF3C7;
+        box-shadow: 0 0 12px rgba(180, 83, 9, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .bg-approved {
+        background: #ECFDF5;
+        color: #047857;
+        border: 1px solid #A7F3D0;
+    }
+
+    .bg-approved:hover {
+        background: #D1FAE5;
+        box-shadow: 0 0 12px rgba(4, 120, 87, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .bg-rejected {
+        background: #FEF2F2;
+        color: #B91C1C;
+        border: 1px solid #FECACA;
+    }
+
+    .bg-rejected:hover {
+        background: #FEE2E2;
+        box-shadow: 0 0 12px rgba(185, 28, 28, 0.2);
+        transform: translateY(-2px);
+    }
+
+    /* Action Buttons */
+    .action-group {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .btn-icon {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        background: transparent;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-icon::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255,255,255,0.4);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+    }
+
+    .btn-icon:active::before {
+        width: 100px;
+        height: 100px;
+    }
+
+    .btn-approve {
+        color: #059669;
+        background: #ECFDF5;
+        border-color: #A7F3D0;
+    }
+
+    .btn-approve:hover {
+        background: #059669;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        border-color: #059669;
+    }
+
+    .btn-reject {
+        color: #D97706;
+        background: #FFFBEB;
+        border-color: #FDE68A;
+    }
+
+    .btn-reject:hover {
+        background: #D97706;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+        border-color: #D97706;
+    }
+
+    .btn-delete {
+        color: #EF4444;
+        background: transparent;
+        border-color: transparent;
+    }
+
+    .btn-delete:hover {
+        background: #FEE2E2;
+        color: #DC2626;
+        border-color: #FECACA;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+
+    /* Alert Boxes */
+    .alert-box {
+        margin-bottom: 1.5rem;
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        border-left: 4px solid;
+        animation: slideInLeft 0.3s ease-out;
+        transition: var(--transition);
+    }
+
+    .alert:hover {
+        transform: translateX(4px);
+    }
+
+    .alert-success {
+        background: #ECFDF5;
+        color: #065F46;
+        border-bottom: 1px solid #A7F3D0;
+        border-left-color: #10B981;
+    }
+
+    .alert-warning {
+        background: #FFFBEB;
+        color: #92400E;
+        border-bottom: 1px solid #FDE68A;
+        border-left-color: #F59E0B;
+    }
+
+    .alert-error {
+        background: #FEF2F2;
+        color: #991B1B;
+        border-bottom: 1px solid #FECACA;
+        border-left-color: #EF4444;
+    }
+
+    /* Pagination */
+    .pagination {
+        padding: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+        border-top: 1px solid var(--border);
+        flex-wrap: wrap;
+    }
+
+    .page-btn {
+        padding: 0.4rem 0.8rem;
+        border: 1px solid var(--border);
+        background: white;
+        text-decoration: none;
+        color: var(--text-light);
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .page-btn:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(79, 70, 229, 0.2);
+    }
+
+    .page-btn.current {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        animation: scaleIn 0.2s ease-out;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #9CA3AF;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .empty-state svg {
+        animation: pulse 2s ease-in-out infinite;
+        margin: 0 auto;
+        opacity: 0.6;
+    }
+
+    .empty-state p {
+        margin-top: 1rem;
+        font-weight: 500;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-wrapper {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .toolbar-card {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-tabs {
+            width: 100%;
+            justify-content: space-around;
+        }
+
+        .search-box {
+            max-width: 100%;
+        }
+
+        table {
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+        }
+
+        .action-group {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+    }
+
+    /* Focus States for Accessibility */
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+
+    /* Smooth Page Transitions */
+    .dashboard-wrapper * {
+        scroll-behavior: smooth;
+    }
+</style>
+
+<div class="dashboard-wrapper">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">{{ title }}</h1>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-total">📊</div>
+            <div class="stat-info">
+                <h3>Tổng bài viết</h3>
+                <div class="value">{{ total_posts|default:"0" }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-pending">⏳</div>
+            <div class="stat-info">
+                <h3>Chờ duyệt</h3>
+                <div class="value">{{ pending_count|default:"0" }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-approved">✅</div>
+            <div class="stat-info">
+                <h3>Đã duyệt</h3>
+                <div class="value">{{ approved_count|default:"0" }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-rejected">🚫</div>
+            <div class="stat-info">
+                <h3>Từ chối</h3>
+                <div class="value">{{ rejected_count|default:"0" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages/Alerts -->
+    {% if messages %}
+    <div class="alert-box">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Toolbar -->
+    <div class="toolbar-card">
+        <div class="filter-tabs">
+            <a href="?" class="tab-link {% if not status_filter %}active{% endif %}">Tất cả</a>
+            <a href="?status=cho_duyet" class="tab-link {% if status_filter == 'cho_duyet' %}active{% endif %}">Chờ duyệt</a>
+            <a href="?status=da_duyet" class="tab-link {% if status_filter == 'da_duyet' %}active{% endif %}">Đã duyệt</a>
+            <a href="?status=tu_choi" class="tab-link {% if status_filter == 'tu_choi' %}active{% endif %}">Từ chối</a>
+        </div>
+        <form method="GET" class="search-box">
+            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+            <input type="text" name="q" value="{{ search_query }}" class="search-input" placeholder="Tìm tiêu đề, tác giả...">
+            <button type="submit" class="btn-search">Tìm</button>
+        </form>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40%">Tiêu đề bài viết</th>
+                    <th style="width: 20%">Tác giả</th>
+                    <th style="width: 15%">Thời gian</th>
+                    <th style="width: 10%; text-align: center;">Trạng thái</th>
+                    <th style="width: 15%; text-align: right;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>
+                        <a href="{% url 'post_admin:post_detail' post.id %}">
+                            {{ post.tieu_de|truncatechars:60 }}
+                        </a>
+                        <small style="color: #6B7280;">ID: #{{ post.id }}</small>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 28px; height: 28px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: white; transition: var(--transition);">
+                                {{ post.tac_gia.username|slice:":1"|upper }}
+                            </div>
+                            <span>{{ post.tac_gia.username }}</span>
+                        </div>
+                    </td>
+                    <td style="font-size: 0.9rem; color: #4B5563;">
+                        {{ post.ngay_dang|date:"d/m/Y" }}<br>
+                        <small>{{ post.ngay_dang|date:"H:i" }}</small>
+                    </td>
+                    <td style="text-align: center;">
+                        {% if post.trang_thai == 'cho_duyet' %}
+                            <span class="badge bg-pending">Chờ duyệt</span>
+                        {% elif post.trang_thai == 'da_duyet' %}
+                            <span class="badge bg-approved">Đã duyệt</span>
+                        {% elif post.trang_thai == 'tu_choi' %}
+                            <span class="badge bg-rejected">Từ chối</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            {% if post.trang_thai == 'cho_duyet' %}
+                                <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'da_duyet' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-icon btn-approve" title="Duyệt bài" onclick="return confirm('Duyệt bài viết này?');">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{% url 'post_admin:post_update_status' post.id 'tu_choi' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-icon btn-reject" title="Từ chối" onclick="return confirm('Từ chối bài viết này?');">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                </form>
+                            {% endif %}
+                            <form method="POST" action="{% url 'post_admin:post_delete' post.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-icon btn-delete" title="Xóa vĩnh viễn" onclick="return confirm('CẢNH BÁO: Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa?');">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <p>Không tìm thấy dữ liệu phù hợp.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&status={{ status_filter }}" class="page-btn">← Trước</a>
+            {% endif %}
+            <span style="font-size: 0.9rem; color: #6B7280; padding: 0.4rem 0;">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&status={{ status_filter }}" class="page-btn">Sau →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock content %}

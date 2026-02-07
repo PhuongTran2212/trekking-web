@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Hồ sơ của {{ profile_user.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* =========================================================
+       1. CSS GỐC CỦA BẠN (GIỮ NGUYÊN)
+       ========================================================= */
+    :root {
+        --primary-50: #f0fdf4; --primary-100: #dcfce7; --primary-200: #bbf7d0; --primary-300: #86efac; --primary-400: #4ade80; --primary-500: #22c55e; --primary-600: #16a34a; --primary-700: #15803d; --primary-800: #166534; --primary-900: #14532d;
+        --neutral-50: #fafafa; --neutral-100: #f5f5f5; --neutral-200: #e5e5e5; --neutral-300: #d4d4d4; --neutral-400: #a3a3a3; --neutral-500: #737373; --neutral-600: #525252; --neutral-700: #404040; --neutral-800: #262626; --neutral-900: #171717;
+        --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6;
+        --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+        --font-heading: 'Montserrat', system-ui, -apple-system, sans-serif;
+        --spacing-xs: 0.25rem; --spacing-sm: 0.5rem; --spacing-md: 1rem; --spacing-lg: 1.5rem; --spacing-xl: 2rem; --spacing-2xl: 3rem;
+        --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.75rem; --radius-xl: 1rem;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05); --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    body { font-family: var(--font-sans); background: linear-gradient(135deg, var(--primary-50) 0%, var(--neutral-50) 100%); min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: var(--spacing-lg); }
+    .profile-grid { display: grid; grid-template-columns: 320px 1fr; gap: var(--spacing-xl); margin-top: var(--spacing-lg); }
+    @media (max-width: 768px) { .profile-grid { grid-template-columns: 1fr; gap: var(--spacing-lg); } .container { padding: var(--spacing-md); } }
+
+    .card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); overflow: hidden; transition: all 0.3s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-xl); }
+    .card-body { padding: var(--spacing-xl); }
+
+    .profile-sidebar .card-body { text-align: center; }
+    .profile-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto var(--spacing-md); border: 3px solid var(--primary-200); box-shadow: var(--shadow-md); transition: all 0.3s ease; }
+    .profile-avatar:hover { transform: scale(1.05); border-color: var(--primary-400); }
+    .profile-name { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--neutral-800); margin-bottom: var(--spacing-xs); }
+    .profile-username { color: var(--neutral-500); font-size: 0.875rem; margin-bottom: var(--spacing-md); }
+    .profile-location, .profile-phone { display: flex; align-items: center; justify-content: center; gap: var(--spacing-xs); font-size: 0.8125rem; color: var(--neutral-600); margin-bottom: var(--spacing-sm); }
+    .profile-location + .profile-location { margin-top: 0.25rem; }
+    .profile-bio { font-size: 0.875rem; color: var(--neutral-600); margin-bottom: var(--spacing-lg); line-height: 1.6; padding: var(--spacing-md); background: var(--neutral-50); border-radius: var(--radius-md); border-left: 3px solid var(--primary-400); text-align: left; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1.25rem; font-size: 0.875rem; font-weight: 600; border-radius: var(--radius-md); text-decoration: none; transition: all 0.2s ease; border: none; cursor: pointer; gap: var(--spacing-xs); }
+    .btn-outline { background: transparent; color: var(--primary-600); border: 1.5px solid var(--primary-300); }
+    .btn-outline:hover { background: var(--primary-50); border-color: var(--primary-400); transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary-500), var(--primary-600)); color: white; border: 1.5px solid transparent; }
+    .btn-primary:hover { background: linear-gradient(135deg, var(--primary-600), var(--primary-700)); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+    .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-md); border-top: 1px solid var(--neutral-200); padding-top: var(--spacing-lg); margin-top: var(--spacing-lg); }
+    .stat-item { text-align: center; padding: var(--spacing-sm); border-radius: var(--radius-md); background: var(--neutral-50); transition: all 0.2s ease; }
+    .stat-item:hover { background: var(--primary-50); transform: translateY(-1px); }
+    .stat-item .value { font-size: 1.125rem; font-weight: 700; color: var(--primary-700); display: block; }
+    .stat-item .label { font-size: 0.6875rem; color: var(--neutral-500); text-transform: uppercase; letter-spacing: 0.05em; margin-top: var(--spacing-xs); }
+
+    .profile-tabs { display: flex; border-bottom: 2px solid var(--neutral-100); margin-bottom: var(--spacing-lg); flex-wrap: wrap; gap: var(--spacing-xs); }
+    .tab-link { padding: 0.75rem 1rem; font-weight: 600; font-size: 0.875rem; color: var(--neutral-500); cursor: pointer; border-bottom: 2px solid transparent; border-radius: var(--radius-sm) var(--radius-sm) 0 0; transition: all 0.2s ease; position: relative; }
+    .tab-link:hover { color: var(--primary-600); background: var(--primary-50); }
+    .tab-link.active { color: var(--primary-700); border-bottom-color: var(--primary-500); background: var(--primary-50); }
+    .tab-content { display: none; animation: fadeInUp 0.4s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .section-title { font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; color: var(--neutral-800); margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-sm); border-bottom: 2px solid var(--primary-200); position: relative; }
+    .section-title::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 40px; height: 2px; background: var(--primary-500); }
+    .sub-section-title { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 600; color: var(--neutral-700); margin-top: 1.25rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--neutral-200); text-align: left; }
+
+    .equipment-list { display: grid; gap: var(--spacing-sm); }
+    .equipment-list .item { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md); background: var(--neutral-50); border-radius: var(--radius-md); border-left: 3px solid var(--primary-400); transition: all 0.2s ease; }
+    .equipment-list .item:hover { background: var(--primary-50); transform: translateX(4px); }
+    .equipment-list .item-name { font-weight: 600; color: var(--neutral-800); }
+    .equipment-list .item-note { font-size: 0.8125rem; color: var(--neutral-500); font-style: italic; }
+
+    .interests-list { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); }
+    .badge { display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 600; border-radius: var(--radius-md); text-transform: uppercase; letter-spacing: 0.025em; transition: all 0.2s ease; }
+    .badge-success { background: linear-gradient(135deg, var(--primary-100), var(--primary-200)); color: var(--primary-800); border: 1px solid var(--primary-300); }
+    .badge-success:hover { background: linear-gradient(135deg, var(--primary-200), var(--primary-300)); transform: translateY(-1px); }
+    .badge-primary { background: linear-gradient(135deg, var(--info), #1d4ed8); color: white; font-size: 0.6875rem; padding: 0.25rem 0.5rem; margin-left: var(--spacing-xs); }
+
+    .activity-list { display: grid; gap: var(--spacing-md); }
+    .activity-item { padding: var(--spacing-md); background: var(--neutral-50); border-radius: var(--radius-md); border-left: 3px solid var(--primary-400); transition: all 0.2s ease; }
+    .activity-item:hover { background: var(--primary-50); transform: translateX(4px); }
+    .activity-item h5 { margin-bottom: var(--spacing-xs); font-weight: 600; }
+    .activity-item h5 a { color: var(--neutral-800); text-decoration: none; transition: color 0.2s ease; }
+    .activity-item h5 a:hover { color: var(--primary-600); }
+
+    .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--spacing-md); }
+    .badge-item { text-align: center; padding: var(--spacing-md); background: var(--neutral-50); border-radius: var(--radius-lg); border: 1px solid var(--neutral-200); transition: all 0.2s ease; }
+    .badge-item:hover { background: var(--primary-50); border-color: var(--primary-300); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .badge-item img { width: 60px; height: 60px; margin-bottom: var(--spacing-sm); border-radius: 50%; object-fit: cover; }
+    .badge-item .name { font-weight: 600; font-size: 0.8125rem; color: var(--neutral-800); margin-bottom: var(--spacing-xs); }
+    .badge-item .date { font-size: 0.6875rem; color: var(--neutral-500); }
+
+    .text-muted { color: var(--neutral-500); }
+    .text-sm { font-size: 0.8125rem; }
+    .text-center { text-align: center; }
+    .text-primary { color: var(--primary-600); }
+    .font-bold { font-weight: 700; }
+    .text-xl { font-size: 1.25rem; }
+    .my-4 { margin-top: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
+    .py-5 { padding-top: var(--spacing-2xl); padding-bottom: var(--spacing-2xl); }
+    .mb-1 { margin-bottom: var(--spacing-xs); }
+    .mb-0 { margin-bottom: 0; }
+    .mt-2 { margin-top: var(--spacing-sm); }
+    hr { border: none; height: 1px; background: linear-gradient(90deg, transparent, var(--neutral-300), transparent); margin: var(--spacing-lg) 0; }
+    @media (max-width: 640px) {
+        .profile-tabs { flex-direction: column; }
+        .tab-link { text-align: center; border-radius: var(--radius-md); border-bottom: none; margin-bottom: var(--spacing-xs); }
+        .tab-link.active { background: var(--primary-100); border: 1px solid var(--primary-300); }
+        .badge-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+        .profile-stats { grid-template-columns: 1fr; gap: var(--spacing-sm); }
+    }
+
+    /* =========================================================
+       2. CSS TIMELINE CHUYẾN ĐI
+       ========================================================= */
+    .activity-timeline { position: relative; padding-left: 20px; }
+    .timeline-item { position: relative; padding-left: 30px; margin-bottom: 24px; }
+    .timeline-item:last-child { margin-bottom: 0; }
+    .timeline-marker { position: absolute; left: 0; top: 0; bottom: 0; width: 20px; display: flex; flex-direction: column; align-items: center; }
+    .marker-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--primary-500); border: 2px solid white; box-shadow: 0 0 0 2px var(--primary-200); z-index: 2; margin-top: 15px; }
+    .marker-line { width: 2px; background: var(--neutral-200); flex-grow: 1; margin-top: 4px; }
+    .timeline-item:last-child .marker-line { display: none; }
+
+    .rich-trip-card {
+        display: flex; flex-direction: row; 
+        background: #fff; border: 1px solid var(--neutral-200); 
+        border-radius: var(--radius-lg); overflow: hidden; 
+        transition: all 0.2s ease; box-shadow: var(--shadow-sm);
+    }
+    .rich-trip-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary-400); }
+    .rt-img-col { width: 140px; min-width: 140px; }
+    .rt-img { width: 100%; height: 100%; object-fit: cover; }
+    .rt-content-col { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+    .rt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+    .rt-title { font-size: 1rem; font-weight: 700; color: var(--neutral-800); text-decoration: none; line-height: 1.3; }
+    .rt-title:hover { color: var(--primary-600); }
+    .rt-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--neutral-600); }
+    .rt-meta-item { display: flex; align-items: center; gap: 4px; }
+    .rt-meta-item svg { width: 14px; height: 14px; color: var(--neutral-500); }
+
+    .bg-role-leader { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;}
+    .bg-role-member { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;}
+    .bg-st-success { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+    .bg-st-secondary { background: #f3f4f6; color: #4b5563; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+    .bg-st-danger { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+    .bg-st-primary { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+
+    @media (max-width: 576px) {
+        .rich-trip-card { flex-direction: column; }
+        .rt-img-col { width: 100%; height: 120px; }
+    }
+    
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    .pulse-animation { animation: pulse-green 2s infinite; }
+
+    /* =========================================================
+       3. CSS MỚI CHO THẺ BÀI VIẾT (RICH POST CARD) - BẠN CẦN CÁI NÀY
+       ========================================================= */
+    .rich-post-card {
+        background: #fff;
+        border: 1px solid var(--neutral-200);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+        border-left: 4px solid var(--primary-500); /* Viền trái màu xanh nổi bật */
+    }
+    .rich-post-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary-300);
+    }
+    .post-meta-stats {
+        display: flex;
+        gap: 15px;
+        font-size: 0.8rem;
+        color: var(--neutral-500);
+        margin-top: 8px;
+    }
+    .post-stat { display: flex; align-items: center; gap: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-grid">
+        <aside class="profile-sidebar">
+            <div class="card">
+                <div class="card-body">
+                    <img src="{{ profile_user.taikhoanhoso.avatar_url }}" alt="Avatar of {{ profile_user.username }}"
+                        class="profile-avatar">
+
+                    <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+                    <p class="profile-username">@{{ profile_user.username }}</p>
+
+                    {% if profile_user.taikhoanhoso.ngay_sinh %}
+                    <div class="profile-location">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 14px; height: 14px;">
+                            <path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zM3.5 8.25v7A1.25 1.25 0 004.75 16.5h10.5A1.25 1.25 0 0016.5 15.25v-7h-13z" clip-rule="evenodd" />
+                        </svg>
+                        {{ profile_user.taikhoanhoso.ngay_sinh|date:"d/m/Y" }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile_user.taikhoanhoso.get_gioi_tinh_display %}
+                    <div class="profile-location" style="display: flex; align-items: center; gap: 4px; font-size: 0.85rem;">
+                        {% if profile_user.taikhoanhoso.gioi_tinh == "M" %}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px; opacity: 0.85; color: #2563eb;">
+                            <circle cx="11" cy="11" r="6" />
+                            <path d="M21 3h-6m6 0v6m0-6l-9 9" />
+                        </svg>
+                        {% elif profile_user.taikhoanhoso.gioi_tinh == "F" %}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px; opacity: 0.85; color: #db2777;">
+                            <circle cx="12" cy="8" r="5" />
+                            <path d="M12 13v7m-3-3h6" />
+                        </svg>
+                        {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px; opacity: 0.85; color: #9333ea;">
+                            <circle cx="12" cy="12" r="5" />
+                            <path d="M12 7v10M7 12h10" />
+                        </svg>
+                        {% endif %}
+                        <span>{{ profile_user.taikhoanhoso.get_gioi_tinh_display }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile_user.taikhoanhoso.tinh_thanh %}
+                    <div class="profile-location">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 14px; height: 14px;">
+                            <path fill-rule="evenodd"
+                                d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.1.4-.223.654-.369.254-.145.532-.3.81-.468.277-.17.566-.35.85-.546l.122-.087a35.33 35.33 0 001.291-1.011c.424-.38.815-.792 1.158-1.245.343-.453.64-1. .886-1.465A9.416 9.416 0 0015 8.5a5 5 0 00-10 0c0 .98.22 1.923.622 2.774.246.465.543.912.886 1.465.343.453.734.865 1.158 1.245a35.33 35.33 0 001.291 1.011l.122.087c.285.196.573.375.85.546.278.168.556.323.81.468.254.146.468.269.654.369a5.741 5.741 0 00.28.14l.019.008.006.003zM10 11.25a2.75 2.75 0 100-5.5 2.75 2.75 0 000 5.5z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        {{ profile_user.taikhoanhoso.tinh_thanh.ten }}
+                    </div>
+                    {% endif %}
+
+                    {% if is_own_profile and profile_user.taikhoanhoso.sdt %}
+                    <div class="profile-phone">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            style="width: 14px; height: 14px;">
+                            <path
+                                d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5h-1.5A13.5 13.5 0 012 3.5z" />
+                        </svg>
+                        {{ profile_user.taikhoanhoso.sdt }}
+                    </div>
+                    {% endif %}
+                    <p class="profile-bio">{{ profile_user.taikhoanhoso.gioi_thieu|default:"Chưa có giới thiệu."|linebreaksbr }}</p>
+
+                    {% if is_own_profile %}
+                    <a href="{% url 'accounts:profile-update' %}" class="btn btn-outline" style="width: 100%;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            style="width: 16px; height: 16px;">
+                            <path
+                                d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                        </svg>
+                        Chỉnh sửa hồ sơ
+                    </a>
+                    {% else %}
+                    <a href="#" class="btn btn-primary" style="width: 100%;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            style="width: 16px; height: 16px;">
+                            <path
+                                d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 011.118 0L19 7.162V6a2 2 0 002-2H3z" />
+                            <path
+                                d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
+                        </svg>
+                        Nhắn tin
+                    </a>
+                    {% endif %}
+
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="value">{{ trips_joined.count }}</span>
+                            <div class="label">Chuyến đi</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="value">{{ badges_earned.count }}</span>
+                            <div class="label">Huy hiệu</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="value">{{ posts_created.count }}</span>
+                            <div class="label">Bài viết</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="profile-main">
+            <div class="card">
+                <div class="card-body">
+                    <nav class="profile-tabs">
+                        <div class="tab-link active" data-tab="cv">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                style="width: 16px; height: 16px; margin-right: 4px;">
+                                <path
+                                    d="M15.5 2A1.5 1.5 0 0014 3.5v13a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0016.5 2h-1zM9.5 6A1.5 1.5 0 008 7.5v9A1.5 1.5 0 009.5 18h1a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0010.5 6h-1zM3.5 10A1.5 1.5 0 002 11.5v5A1.5 1.5 0 003.5 18h1A1.5 1.5 0 006 16.5v-5A1.5 1.5 0 004.5 10h-1z" />
+                            </svg>
+                            Thiết bị & Sở thích
+                        </div>
+                        <div class="tab-link" data-tab="trips">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                style="width: 16px; height: 16px; margin-right: 4px;">
+                                <path fill-rule="evenodd"
+                                    d="M6.5 2.5A1.5 1.5 0 018 1h4a1.5 1.5 0 011.5 1.5v1.25h2.25A1.5 1.5 0 0117.25 5v11.25A1.5 1.5 0 0115.75 17.75H4.25A1.5 1.5 0 012.75 16.25V5A1.5 1.5 0 014.25 3.75H6.5V2.5zM8.5 2.5v1.25h3V2.5h-3z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            Lịch sử Chuyến đi
+                        </div>
+                        <div class="tab-link" data-tab="posts">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                style="width: 16px; height: 16px; margin-right: 4px;">
+                                <path fill-rule="evenodd"
+                                    d="M4.25 2A2.25 2.25 0 002 4.25v11.5A2.25 2.25 0 004.25 18h11.5A2.25 2.25 0 0018 15.75V4.25A2.25 2.25 0 0015.75 2H4.25zm4.03 6.28a.75.75 0 00-1.06-1.06L4.97 9.47a.75.75 0 000 1.06l2.25 2.25a.75.75 0 001.06-1.06L6.56 10l1.72-1.72zm4.5-1.06a.75.75 0 10-1.06 1.06L13.44 10l-1.72 1.72a.75.75 0 101.06 1.06l2.25-2.25a.75.75 0 000-1.06l-2.25-2.25z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            Bài viết đã đăng
+                        </div>
+                        <div class="tab-link" data-tab="badges">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                style="width: 16px; height: 16px; margin-right: 4px;">
+                                <path fill-rule="evenodd"
+                                    d="M10 1l3 6 6 .75-4.5 4.25L15.5 18 10 15l-5.5 3 1-6.75L1 7.75 7 7l3-6z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            Huy hiệu & Thành tích
+                        </div>
+                    </nav>
+
+                    <div id="cv" class="tab-content active">
+                        
+                        <h4 class="section-title">Thiết bị cá nhân</h4>
+                        {% if grouped_equipment %}
+                            {% for category, items_in_category in grouped_equipment.items %}
+                                <h5 class="sub-section-title">{{ category.ten }}</h5>
+                                <div class="equipment-list">
+                                    {% for item in items_in_category %}
+                                    <div class="item">
+                                        <div class="item-name">
+                                            {{ item.vat_dung.ten }}
+                                            {% if item.so_luong > 1 %}
+                                            <span class="badge badge-primary">x{{ item.so_luong }}</span>
+                                            {% endif %}
+                                        </div>
+                                        {% if item.ghi_chu %}
+                                        <div class="item-note">{{ item.ghi_chu }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">Chưa cập nhật danh sách thiết bị.</p>
+                        {% endif %}
+                        <hr class="my-4">
+
+                        <h4 class="section-title">Sở thích</h4>
+                        {% if user_interests %}
+                        <div class="interests-list">
+                            {% for interest in user_interests %}
+                            <span class="badge badge-success">{{ interest.the.ten }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">Chưa cập nhật sở thích.</p>
+                        {% endif %}
+                    </div>
+
+                    <div id="trips" class="tab-content">
+                        {% if trips_joined %}
+                            <div class="activity-timeline">
+                                {% for membership in trips_joined %}
+                                    {% with trip=membership.chuyen_di %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker">
+                                            <div class="marker-dot"></div>
+                                            <div class="marker-line"></div>
+                                        </div>
+
+                                        <div class="rich-trip-card">
+                                            <div class="rt-img-col">
+                                                <a href="{% url 'trips:trip_detail' pk=trip.pk slug=trip.slug|default:'trip' %}">
+                                                    <img src="{{ trip.cover_url }}" alt="{{ trip.ten_chuyen_di }}" class="rt-img">
+                                                </a>
+                                            </div>
+
+                                            <div class="rt-content-col">
+                                                <div class="rt-header">
+                                                    <a href="{% url 'trips:trip_detail' pk=trip.pk slug=trip.slug|default:'trip' %}" class="rt-title">
+                                                        {{ trip.ten_chuyen_di }}
+                                                    </a>
+                                                    
+                                                    <div style="flex-shrink:0; margin-left:10px;">
+                                                        {% if trip.trang_thai == 'DA_HUY' %}
+                                                            <span class="bg-st-danger">Đã hủy</span>
+                                                        {% elif trip.ngay_ket_thuc < now %}
+                                                            <span class="bg-st-secondary">Hoàn thành</span>
+                                                        {% elif trip.ngay_bat_dau <= now and trip.ngay_ket_thuc >= now %}
+                                                            <span class="bg-st-success pulse-animation">Đang diễn ra</span>
+                                                        {% else %}
+                                                            <span class="bg-st-primary">Sắp tới</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+
+                                                <div class="rt-meta">
+                                                    <div class="rt-meta-item">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                        <span>{{ trip.ngay_bat_dau|date:"d/m/Y" }}</span>
+                                                    </div>
+                                                    
+                                                    <div class="rt-meta-item">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                        <span>{{ trip.cung_duong.tinh_thanh.ten|default:"Chưa xác định" }}</span>
+                                                    </div>
+
+                                                    {% if trip.chi_phi_uoc_tinh %}
+                                                    <div class="rt-meta-item" style="color: #059669; font-weight:600;">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                        {{ trip.chi_phi_uoc_tinh|intcomma }}₫
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div style="margin-top:0.6rem;">
+                                                    {% if membership.vai_tro == 'TRUONG_DOAN' %}
+                                                        <span class="bg-role-leader">👑 Trưởng đoàn</span>
+                                                    {% else %}
+                                                        <span class="bg-role-member">Thành viên</span>
+                                                    {% endif %}
+                                                    <span style="font-size:0.75rem; color:#9ca3af; margin-left:8px;">{{ trip.thoi_gian_display|default:"" }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <div style="width:60px; height:60px; background:#f3f4f6; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                </div>
+                                <h6 class="text-muted">Chưa tham gia chuyến đi nào.</h6>
+                                {% if is_own_profile %}
+                                <a href="{% url 'treks:cung_duong_list' %}" class="btn btn-primary" style="width:auto; margin-top:1rem;">Khám phá ngay</a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div id="posts" class="tab-content">
+                        <div class="activity-list">
+                            {% for post in posts_created %}
+                            <div class="activity-item rich-post-card">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <h5 class="card-title mb-1">
+                                        <a href="{% url 'community:chi-tiet-bai-viet' bai_viet_id=post.pk %}">{{ post.tieu_de }}</a>
+                                    </h5>
+                                    <span class="badge 
+                                        {% if post.trang_thai == 'da_duyet' %}badge-success
+                                        {% elif post.trang_thai == 'tu_choi' %}badge-danger
+                                        {% else %}badge-primary{% endif %}" style="font-size:0.65rem;">
+                                        {{ post.get_trang_thai_display }}
+                                    </span>
+                                </div>
+                                
+                                <p class="text-sm text-muted mb-2">
+                                    {{ post.noi_dung|striptags|truncatewords:25 }}
+                                </p>
+                                
+                                <div class="post-meta-stats">
+                                    <span class="post-stat" title="Ngày đăng">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        {{ post.ngay_dang|date:"d/m/Y" }}
+                                    </span>
+                                    <span class="post-stat" title="Lượt bình chọn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                                        {{ post.luot_binh_chon }}
+                                    </span>
+                                    <span class="post-stat" title="Bình luận">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                        {{ post.so_luong_binh_luan|default:"0" }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-5">
+                                <h6 class="text-muted">Chưa đăng bài viết nào.</h6>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div id="badges" class="tab-content">
+                        <div class="badge-grid">
+                            {% for user_badge in badges_earned %}
+                            <div class="badge-item">
+                                <img src="{{ user_badge.huy_hieu.anh_huy_hieu|default:'/static/images/default_badge.png' }}"
+                                    alt="{{ user_badge.huy_hieu.ten }}">
+                                <div class="name">{{ user_badge.huy_hieu.ten }}</div>
+                                <div class="date">{{ user_badge.ngay_dat_duoc|date:"d/m/Y" }}</div>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted text-center py-5" style="grid-column: 1 / -1;">
+                                Chưa đạt được huy hiệu nào.
+                            </p>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="text-center">
+                            Điểm thưởng:
+                            <span class="text-primary font-bold text-xl">
+                                {{ profile_user.taikhoanhoso.diem_thuong }}
+                            </span>
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.tab-link').forEach(link => {
+            link.addEventListener('click', () => {
+                const tabId = link.getAttribute('data-tab');
+                document.querySelectorAll('.tab-link').forEach(item => item.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(item => item.classList.remove('active'));
+                link.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Kích hoạt tab đầu tiên khi tải trang
+        const firstTab = document.querySelector('.tab-link');
+        if(firstTab) {
+            firstTab.click();
+        }
+    });
+</script>
+{% endblock %}

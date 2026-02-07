@@ -1,0 +1,1866 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Chat: {{ trip.ten_chuyen_di }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.8.0/css/lightgallery-bundle.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --primary: #10b981;
+        --primary-hover: #059669;
+        --primary-light: #ecfdf5;
+        --primary-dark: #047857;
+        --bg-chat: #ffffff;
+        --bg-sidebar: #fafafa;
+        --bg-hover: #f5f5f5;
+        --border-color: #e5e7eb;
+        --text-main: #1f2937;
+        --text-sub: #6b7280;
+        --bubble-me: #10b981;
+        --bubble-other: #f3f4f6;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
+        
+        --sb-left-w: 300px;
+        --sb-right-w: 300px;
+    }
+
+    body { overflow: hidden; height: 100vh; background: #fafafa; }
+    
+    /* ==================================================
+       LAYOUT CHÍNH
+       ================================================== */
+    .chat-layout {
+        display: flex;
+        height: calc(100vh - 65px);
+        background: white;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* ==================================================
+       1. CỘT TRÁI - DANH SÁCH NHÓM
+       ================================================== */
+    .left-sidebar {
+        width: var(--sb-left-w);
+        background: white;
+        border-right: 1px solid var(--border-color);
+        display: flex; 
+        flex-direction: column;
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        flex-shrink: 0;
+        z-index: 20;
+    }
+    
+    .left-sidebar.collapsed {
+        margin-left: calc(var(--sb-left-w) * -1);
+    }
+
+    .ls-header {
+        height: 70px;
+        padding: 0 20px;
+        display: flex; 
+        align-items: center;
+        gap: 10px;
+        font-weight: 700; 
+        font-size: 1.1rem; 
+        color: var(--text-main);
+        border-bottom: 1px solid var(--border-color);
+        background: white;
+    }
+    
+    .ls-header i {
+        color: var(--primary);
+        font-size: 1.2rem;
+    }
+
+    .group-list { 
+        flex: 1; 
+        overflow-y: auto; 
+        padding: 12px;
+        background: white;
+    }
+    
+    .group-list::-webkit-scrollbar { width: 6px; }
+    .group-list::-webkit-scrollbar-track { background: transparent; }
+    .group-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    
+    .group-item {
+        display: flex; 
+        align-items: center; 
+        padding: 12px;
+        border-radius: 10px; 
+        text-decoration: none; 
+        color: inherit;
+        transition: all 0.2s;
+        margin-bottom: 6px;
+        background: white;
+        border: 1px solid transparent;
+    }
+    
+    .group-item:hover { 
+        background: var(--bg-hover);
+    }
+    
+    .group-item.active {
+        background: var(--primary-light);
+        border-color: var(--primary);
+    }
+    
+    .group-avatar { 
+        width: 44px; 
+        height: 44px; 
+        border-radius: 10px; 
+        object-fit: cover; 
+        margin-right: 12px;
+    }
+    
+    .group-info { flex: 1; overflow: hidden; }
+    
+    .group-name { 
+        font-weight: 600; 
+        font-size: 0.9rem; 
+        color: var(--text-main); 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis;
+        margin-bottom: 4px;
+    }
+    
+    .group-status { 
+        font-size: 0.8rem; 
+        color: var(--text-sub);
+        font-weight: 500;
+    }
+    
+    .group-status .text-primary {
+        color: var(--primary) !important;
+        font-weight: 700;
+    }
+
+    /* ==================================================
+       2. CỘT GIỮA - CHAT CHÍNH
+       ================================================== */
+    .chat-center {
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+        min-width: 0;
+        background: var(--bg-chat);
+        position: relative;
+    }
+
+    /* Header */
+    .chat-header {
+        height: 70px; 
+        padding: 0 20px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between;
+        background: white;
+        z-index: 10;
+    }
+
+    .header-left { 
+        display: flex; 
+        align-items: center; 
+        gap: 15px;
+        flex: 1;
+    }
+    
+    /* Toggle Button */
+    .toggle-sidebar-btn {
+        width: 38px; 
+        height: 38px; 
+        border-radius: 8px;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        cursor: pointer; 
+        color: var(--text-sub); 
+        transition: all 0.2s;
+        background: white;
+        border: 1px solid var(--border-color);
+        font-size: 1rem;
+    }
+    
+    .toggle-sidebar-btn:hover { 
+        background: var(--bg-hover);
+        color: var(--primary);
+    }
+
+    .header-info { 
+        display: flex; 
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .header-info img { 
+        width: 40px; 
+        height: 40px; 
+        border-radius: 50%; 
+        object-fit: cover; 
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .header-text { line-height: 1.3; }
+    
+    .header-title { 
+        font-weight: 700; 
+        color: var(--text-main); 
+        font-size: 1rem;
+        margin-bottom: 2px;
+    }
+    
+    .header-status { 
+        font-size: 0.8rem; 
+        color: var(--primary); 
+        font-weight: 600;
+        display: flex; 
+        align-items: center; 
+        gap: 6px;
+    }
+    
+    .header-status i {
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* Messages Area */
+    .chat-messages {
+        flex: 1; 
+        padding: 20px; 
+        overflow-y: auto;
+        display: flex; 
+        flex-direction: column; 
+        gap: 4px;
+        background: #fafafa;
+    }
+    
+    .chat-messages::-webkit-scrollbar { width: 8px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { 
+        background: #d1d5db; 
+        border-radius: 10px; 
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        gap: 1rem;
+    }
+    
+    .spinner-border {
+        border-color: var(--primary-light);
+        border-right-color: var(--primary);
+    }
+
+    /* --- Date Divider --- */
+    .date-divider { 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        margin: 20px 0; 
+    }
+    .date-divider span { 
+        background-color: #e5e7eb; 
+        color: var(--text-sub); 
+        padding: 4px 12px; 
+        border-radius: 12px; 
+        font-size: 0.75rem; 
+        font-weight: 600; 
+    }
+
+    /* Message Bubbles */
+    .msg-row { 
+        display: flex; 
+        margin-bottom: 12px; 
+        align-items: flex-end; 
+        animation: fadeInUp 0.2s ease;
+        gap: 10px;
+    }
+    
+    .msg-row.me { 
+        justify-content: flex-end; 
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .msg-avatar { 
+        width: 32px; 
+        height: 32px; 
+        border-radius: 50%; 
+        object-fit: cover; 
+        flex-shrink: 0;
+    }
+    
+    .msg-content { 
+        max-width: 75%; /* Tăng chiều rộng tối đa lên 75% */
+        display: flex; 
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0; /* Quan trọng: giúp flex item co lại đúng cách khi nội dung quá dài */
+    }
+    
+    .msg-row.me .msg-content { 
+        align-items: flex-end; 
+    }
+
+    .msg-name { 
+        font-size: 0.75rem; 
+        color: var(--text-sub); 
+        margin-left: 12px; 
+        font-weight: 600;
+    }
+    
+    .msg-row.me .msg-name { 
+        display: none; 
+    }
+
+    .msg-bubble {
+        padding: 10px 14px; 
+        font-size: 0.95rem; 
+        line-height: 1.5;
+        position: relative; 
+        
+        /* Cấu hình xuống dòng cho text dài */
+        overflow-wrap: break-word;
+        word-wrap: break-word; 
+        word-break: break-word; /* Hỗ trợ ngắt từ tốt hơn */
+        
+        max-width: 100%; /* Đảm bảo không tràn khỏi container cha */
+    }
+    
+    /* Bubble của người khác */
+    .msg-row:not(.me) .msg-bubble {
+        background: var(--bubble-other);
+        color: var(--text-main);
+        border-radius: 16px 16px 16px 4px;
+    }
+    
+    /* Bubble của mình */
+    .msg-row.me .msg-bubble {
+        background: var(--bubble-me);
+        color: white;
+        border-radius: 16px 16px 4px 16px;
+    }
+
+    /* --- FEATURE: Messenger-style Reply Bubble --- */
+    .msg-reply-bubble { 
+        background: rgba(0,0,0,0.06); 
+        border-radius: 8px; 
+        padding: 8px 12px; 
+        margin-bottom: 8px; 
+        font-size: 0.8rem; 
+        border-left: 3px solid var(--primary); 
+        cursor: pointer; 
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .msg-row.me .msg-reply-bubble { 
+        background: rgba(0,0,0,0.15); /* Nền tối hơn chút trên nền xanh */
+        border-left-color: rgba(255,255,255,0.7); 
+        color: white; 
+    }
+
+    /* FEATURE MỚI: Cắt ngắn nội dung reply bằng CSS Height + JS Truncate */
+    .reply-content-truncate {
+        display: block; /* Bỏ -webkit-box */
+        line-height: 1.4em; /* Chiều cao 1 dòng */
+        max-height: 2.8em; /* Giới hạn đúng 2 dòng (1.4 * 2) */
+        overflow: hidden; /* Ẩn phần dư nếu JS cắt chưa chuẩn */
+        word-wrap: break-word;
+    }
+    
+    /* --- FEATURE: Message Time --- */
+    .msg-time {
+        font-size: 0.65rem;
+        margin-top: 4px;
+        text-align: right;
+        opacity: 0.7;
+        font-weight: 500;
+    }
+    .msg-row.me .msg-time {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    .msg-row:not(.me) .msg-time {
+        color: var(--text-sub);
+    }
+
+    /* --- FEATURE MỚI: Highlight tìm kiếm --- */
+    .highlight-text {
+        background-color: #fde047; /* Vàng */
+        color: #000;
+        font-weight: bold;
+        border-radius: 2px;
+        padding: 0 2px;
+    }
+
+    /* --- Nút Reply Action --- */
+/* === CẬP NHẬT: NÚT ACTION LUÔN HIỆN (KHÔNG CẦN HOVER) === */
+    
+    .msg-actions {
+        /* Luôn hiển thị */
+        opacity: 1; 
+        visibility: visible;
+        
+        /* Căn chỉnh vị trí */
+        display: flex;
+        align-items: center;
+        gap: 6px; /* Khoảng cách giữa các nút */
+        padding: 0 8px;
+        height: 100%;
+        
+        /* Căn chỉnh nút nằm ngang hàng với dòng cuối của bong bóng chat */
+        align-self: center; 
+    }
+
+    /* Xóa bỏ đoạn CSS hover cũ đi (hoặc ghi đè như này) */
+    .msg-row:hover .msg-actions { 
+        opacity: 1; 
+    }
+
+    /* Style cho nút bấm tròn đẹp hơn (Giống Messenger) */
+    .btn-reply-action, .btn-delete-msg, .reaction-trigger-btn {
+        width: 30px; 
+        height: 30px; 
+        border-radius: 50%;
+        background-color: #f0f2f5; /* Nền xám nhẹ */
+        border: none;
+        color: #65676b; /* Màu icon xám đậm */
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-size: 0.85rem;
+    }
+
+    /* Hiệu ứng khi di chuột vào nút */
+    .btn-reply-action:hover, .btn-delete-msg:hover, .reaction-trigger-btn:hover {
+        background-color: #e4e6eb; /* Đậm hơn khi hover */
+        color: var(--text-main);
+    }
+
+    /* Riêng tin nhắn của mình (Me) thì nút xóa màu đỏ nhạt cho dễ nhận biết */
+    .msg-row.me .btn-delete-msg {
+        color: #ef4444;
+        background-color: #fef2f2;
+    }
+    .msg-row.me .btn-delete-msg:hover {
+        background-color: #fee2e2;
+    }
+    .btn-reply-action:hover { 
+        background: #e5e7eb; 
+        color: var(--primary); 
+    }
+
+    /* --- Reply Context Bar (Thanh hiển thị đang trả lời) --- */
+    #reply-context-bar { 
+        display: none; 
+        align-items: center; 
+        justify-content: space-between; 
+        padding: 8px 20px; 
+        background-color: #fff; 
+        border-top: 1px solid var(--border-color); 
+        border-left: 4px solid var(--primary); 
+        animation: slideUp 0.3s ease; 
+    }
+    #reply-context-bar.show { display: flex; }
+    .reply-to-label { font-weight: 700; color: var(--primary); font-size: 0.8rem; }
+    .reply-preview-text { 
+        color: var(--text-sub); 
+        font-size: 0.85rem; 
+        max-width: 300px; 
+        /* Cắt ngắn ở thanh input */
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+    }
+
+    @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Footer Input */
+    .chat-footer {
+        padding: 16px 20px;
+        border-top: 1px solid var(--border-color);
+        background: white;
+        display: flex; 
+        flex-direction: column; /* Đổi thành column để chứa preview box */
+        gap: 10px;
+    }
+
+    .footer-tools {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        width: 100%;
+    }
+
+    /* --- Preview Box --- */
+    #preview-box { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 0px; }
+    .preview-img-wrap { position: relative; width: 60px; height: 60px; flex-shrink: 0; }
+    .preview-img-wrap img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color); }
+    .btn-remove-preview { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; }
+
+    .input-wrapper {
+        flex: 1; 
+        background: var(--bg-sidebar);
+        border-radius: 20px;
+        padding: 10px 16px; 
+        display: flex; 
+        align-items: center;
+        gap: 10px;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+    }
+    
+    .input-wrapper:focus-within { 
+        background: white;
+        border-color: var(--primary);
+    }
+    
+    .chat-input {
+        width: 100%; 
+        border: none; 
+        background: transparent;
+        outline: none; 
+        resize: none; 
+        max-height: 100px;
+        font-family: inherit; 
+        font-size: 0.95rem;
+        color: var(--text-main);
+    }
+    
+    .chat-input::placeholder {
+        color: var(--text-sub);
+    }
+
+    .btn-action {
+        width: 40px; 
+        height: 40px; 
+        border-radius: 50%;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        border: none; 
+        background: white;
+        color: var(--primary);
+        font-size: 1.1rem; 
+        cursor: pointer; 
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    
+    .btn-action:hover { 
+        background: var(--bg-hover);
+    }
+    
+    .btn-send { 
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-send:hover { 
+        background: var(--primary-hover);
+    }
+
+    /* ==================================================
+       3. CỘT PHẢI - THÔNG TIN
+       ================================================== */
+    .right-sidebar {
+        width: var(--sb-right-w);
+        background: white;
+        border-left: 1px solid var(--border-color);
+        display: flex; 
+        flex-direction: column;
+        transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        flex-shrink: 0;
+    }
+
+    .right-sidebar.collapsed {
+        margin-right: calc(var(--sb-right-w) * -1);
+    }
+
+    .rs-content { 
+        flex: 1; 
+        overflow-y: auto;
+        background: white;
+    }
+    
+    .rs-content::-webkit-scrollbar { width: 6px; }
+    .rs-content::-webkit-scrollbar-track { background: transparent; }
+    .rs-content::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    
+    .rs-section { 
+        padding: 16px; 
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .rs-header { 
+        text-align: center; 
+        padding: 24px 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .rs-header img { 
+        width: 80px; 
+        height: 80px; 
+        border-radius: 50%; 
+        object-fit: cover; 
+        margin-bottom: 12px;
+    }
+    
+    .rs-header h5 {
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 8px;
+        font-size: 1rem;
+    }
+    
+    .rs-header a {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .rs-btn {
+        width: 100%; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        background: none; 
+        border: none; 
+        padding: 10px 4px;
+        font-weight: 600;
+        color: var(--text-main);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-radius: 6px;
+    }
+    
+    .rs-btn:hover { 
+        color: var(--primary);
+        background: var(--bg-hover);
+    }
+
+    /* Search Box */
+    .search-box {
+        background: var(--bg-sidebar);
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: none;
+        align-items: center;
+        margin-top: 10px;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+    }
+    
+    .search-box.active { 
+        display: flex;
+    }
+    
+    .search-box:focus-within {
+        border-color: var(--primary);
+    }
+    
+    .search-box input { 
+        border: none;
+        background: transparent;
+        width: 100%;
+        outline: none;
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+
+    /* Member List */
+    .member-row { 
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 4px;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+    
+    .member-row:hover {
+        background: var(--bg-hover);
+    }
+    
+    .member-row img { 
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .member-row .fw-bold {
+        color: var(--text-main);
+        font-size: 0.9rem;
+    }
+
+    /* Media Grid */
+    .media-grid { 
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 10px 0;
+    }
+    
+    .media-item { 
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+    }
+    
+    .media-item:hover {
+        border-color: var(--primary);
+    }
+    
+    .media-item img { 
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.2s;
+    }
+    
+    .media-item:hover img { 
+        transform: scale(1.05);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .left-sidebar { 
+            position: absolute;
+            height: 100%;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.15);
+            margin-left: calc(var(--sb-left-w) * -1);
+        }
+        .left-sidebar.show { 
+            margin-left: 0;
+        }
+        
+        .right-sidebar { 
+            position: absolute;
+            right: 0;
+            height: 100%;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.15);
+            margin-right: calc(var(--sb-right-w) * -1);
+        }
+        .right-sidebar.show { 
+            margin-right: 0;
+        }
+    }
+        .msg-content { position: relative; } /* Để đặt vị trí nút reaction */
+    
+/* --- REACTION STYLE (Mới) --- */
+    .msg-reactions {
+        display: flex; gap: 4px;
+        margin-top: 2px;
+        opacity: 0; /* Mặc định ẩn */
+        transition: opacity 0.2s;
+    }
+    
+    /* Hiện khi hover vào tin nhắn HOẶC khi đã có người like/dislike */
+    .msg-row:hover .msg-reactions,
+    .msg-reactions.has-reacts { 
+        opacity: 1; 
+    }
+
+    .reaction-btn {
+        cursor: pointer; 
+        padding: 2px 6px; 
+        border-radius: 12px;
+        font-size: 0.75rem;
+        background-color: rgba(255,255,255,0.5); /* Nền mờ */
+        transition: transform 0.2s;
+        user-select: none;
+    }
+    .reaction-btn:hover { transform: scale(1.2); background-color: rgba(255,255,255,0.8); }
+    
+    /* Màu chữ cho reaction */
+    .msg-row.me .reaction-btn { color: white; } 
+    .msg-row:not(.me) .reaction-btn { color: var(--text-sub); }
+
+    /* Nút Thùng Rác (Ẩn, hiện khi hover) */
+    .btn-delete-msg {
+        background: none; border: none; color: #ef4444; 
+        font-size: 0.85rem; cursor: pointer; padding: 4px;
+        opacity: 0.6; transition: 0.2s;
+    }
+    .btn-delete-msg:hover { opacity: 1; transform: scale(1.1); }
+
+    /* Tin nhắn đã thu hồi */
+    .msg-deleted {
+        font-style: italic; color: var(--text-sub); 
+        border: 1px dashed var(--border-color) !important;
+        background: #fff !important;
+    }
+    /* --- MEDIA GRID FIX (Gọn gàng) --- */
+   /* --- SMART PHOTO GRID (Facebook Style) --- */
+.msg-media-grid {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    max-width: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 6px;
+    position: relative;
+}
+
+.msg-thumb-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+
+.msg-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.msg-thumb-link:hover .msg-thumb {
+    transform: scale(1.05);
+}
+
+/* Logic chia lưới ảnh thông minh */
+/* 1 ảnh */
+.msg-media-grid:has(> a:nth-last-child(1):first-child) { grid-template-columns: 1fr; }
+/* 2 ảnh */
+.msg-media-grid:has(> a:nth-last-child(2):first-child) { grid-template-columns: 1fr 1fr; aspect-ratio: 2/1; }
+/* 3 ảnh */
+.msg-media-grid:has(> a:nth-last-child(3):first-child) { grid-template-columns: 1fr 1fr; aspect-ratio: 1/1; }
+.msg-media-grid:has(> a:nth-last-child(3):first-child) > a:first-child { grid-column: span 2; aspect-ratio: 2/1; }
+/* 4 ảnh trở lên */
+.msg-media-grid:has(> a:nth-last-child(n+4):first-child) { grid-template-columns: 1fr 1fr; aspect-ratio: 1/1; }
+
+/* Ẩn các ảnh từ thứ 5 trở đi khỏi giao diện nhưng vẫn giữ trong HTML */
+.hidden-thumb {
+    display: none !important;
+}
+
+/* Lớp phủ hiển thị số lượng ảnh dư (+5) */
+.more-images-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    pointer-events: none; /* Cho phép click xuyên qua vào thẻ a bên dưới */
+    z-index: 10;
+}
+       .msg-time { 
+        font-size: 0.65rem; 
+        margin-top: 2px; 
+        text-align: right; 
+        font-weight: 500;
+        /* Mặc định màu xám đậm để hiện rõ trên nền trắng */
+        color: var(--text-sub); 
+        padding-right: 4px;
+    }
+
+    /* Tin của mình (Me) */
+    .msg-row.me .msg-time { 
+        /* Vẫn giữ màu xám đậm vì nó nằm ngoài bong bóng xanh */
+        color: var(--text-sub); 
+        text-align: right; 
+        margin-right: 2px;
+    }
+
+    /* Tin người khác (Other) */
+    .msg-row:not(.me) .msg-time { 
+        color: var(--text-sub); 
+        text-align: left;
+        margin-left: 2px;
+    }
+    /* --- 1. CSS CHO THANH TÌM KIẾM & LỌC Ở SIDEBAR --- */
+.ls-search-filter {
+    padding: 10px 15px;
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+.search-input-wrapper i {
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-sub);
+    font-size: 0.8rem;
+}
+.ls-search-input {
+    width: 100%;
+    padding: 8px 10px 8px 30px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+.ls-search-input:focus {
+    background: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.ls-filter-select {
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    cursor: pointer;
+    outline: none;
+}
+
+/* --- 2. CSS FIX LỖI ẢNH (SMART GRID) --- */
+/* Thay thế class .msg-media-grid cũ bằng đoạn này */
+.msg-media-grid {
+    display: grid;
+    gap: 4px;
+    margin-top: 6px;
+    width: 100%;
+    max-width: 320px; /* Giới hạn chiều rộng tối đa của khối ảnh */
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Mặc định cho ảnh thumb */
+.msg-thumb-link {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.msg-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Quan trọng: Cắt ảnh vừa khung, không méo */
+    display: block;
+    transition: transform 0.3s ease;
+}
+.msg-thumb:hover { transform: scale(1.05); }
+
+/* --- QUY TẮC LƯỚI THÔNG MINH --- */
+
+/* Trường hợp 1 ảnh: Hiển thị to, bo góc */
+.msg-media-grid:has(> a:nth-last-child(1):first-child) {
+    grid-template-columns: 1fr;
+}
+.msg-media-grid:has(> a:nth-last-child(1):first-child) .msg-thumb {
+    height: auto;
+    max-height: 300px;
+    border-radius: 12px;
+}
+
+/* Trường hợp 2 ảnh: Chia đôi 50-50 */
+.msg-media-grid:has(> a:nth-last-child(2):first-child) {
+    grid-template-columns: 1fr 1fr;
+    aspect-ratio: 2/1; /* Tỉ lệ khung hình chữ nhật ngang */
+}
+
+/* Trường hợp 3 ảnh trở lên: Lưới đều hoặc style Facebook */
+.msg-media-grid:has(> a:nth-last-child(n+3):first-child) {
+    grid-template-columns: repeat(2, 1fr); /* 2 Cột */
+    aspect-ratio: 1/1; /* Khung hình vuông */
+}
+
+/* Nếu có 3 ảnh: Ảnh đầu tiên full width (mẹo CSS) */
+.msg-media-grid:has(> a:nth-last-child(3):first-child) > a:first-child {
+    grid-column: span 2;
+    aspect-ratio: 2/1;
+}
+
+/* Giới hạn hiển thị tối đa 4 ảnh (ẩn các ảnh thừa nếu muốn - optional) */
+.msg-media-grid > a:nth-child(n+5) {
+    display: none; /* Chỉ hiện 4 ảnh đầu, ảnh sau ẩn đi */
+    
+}
+.msg-thumb-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.more-images-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Màu đen mờ 50% */
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    border-radius: 12px;
+    z-index: 2;
+    pointer-events: none; /* Để vẫn click xuyên qua vào thẻ A bên dưới */
+}
+
+/* Ẩn các ảnh từ thứ 5 trở đi nhưng vẫn để trong DOM để LightGallery đọc */
+.hidden-thumb {
+    display: none !important;
+}
+/* --- 1. SIDEBAR ANIMATION (Fix lỗi đơ) --- */
+.left-sidebar, .right-sidebar {
+    transition: all 0.3s ease-in-out; /* Hiệu ứng trượt mượt mà */
+    z-index: 1000; /* Đảm bảo nổi lên trên */
+}
+
+/* Desktop: Ẩn bằng cách margin âm */
+.left-sidebar.collapsed { margin-left: -300px !important; }
+.right-sidebar.collapsed { margin-right: -300px !important; }
+
+/* Mobile: Mặc định ẩn, hiện bằng class .show */
+@media (max-width: 992px) {
+    .left-sidebar { margin-left: -300px; position: absolute; height: 100%; }
+    .left-sidebar.show { margin-left: 0 !important; box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+    
+    .right-sidebar { margin-right: -300px; position: absolute; height: 100%; right: 0; }
+    .right-sidebar.show { margin-right: 0 !important; box-shadow: -5px 0 15px rgba(0,0,0,0.2); }
+}
+
+/* --- 2. SMART PHOTO GRID (Facebook Style) --- */
+.msg-media-grid {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    max-width: 280px; /* Giới hạn chiều rộng khung ảnh */
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.msg-thumb-link {
+    position: relative;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.msg-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+}
+.msg-thumb-link:hover .msg-thumb { transform: scale(1.05); }
+
+/* Logic chia lưới: */
+/* 1 ảnh */
+.msg-media-grid:has(> a:nth-last-child(1):first-child) { grid-template-columns: 1fr; }
+.msg-media-grid:has(> a:nth-last-child(1):first-child) .msg-thumb { height: auto; max-height: 300px; }
+
+/* 2 ảnh */
+.msg-media-grid:has(> a:nth-last-child(2):first-child) { grid-template-columns: 1fr 1fr; aspect-ratio: 2/1; }
+
+/* 3 ảnh trở lên (Lưới 2x2) */
+.msg-media-grid:has(> a:nth-last-child(n+3):first-child) { grid-template-columns: 1fr 1fr; aspect-ratio: 1/1; }
+
+/* Nếu 3 ảnh: Ảnh 1 full ngang */
+.msg-media-grid:has(> a:nth-last-child(3):first-child) > a:first-child { grid-column: span 2; aspect-ratio: 2/1; }
+
+/* Ẩn ảnh thứ 5 trở đi (để LightGallery đọc ngầm) */
+.hidden-thumb { display: none !important; }
+
+/* Overlay số lượng (+5) */
+.more-images-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: bold;
+    pointer-events: none; /* Click xuyên qua */
+}
+/* --- 1. CSS CHO TÌM KIẾM (Highlight) --- */
+.search-highlight {
+    background-color: #ffeb3b;
+    color: #000;
+    font-weight: bold;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+.search-match-active { /* Kết quả đang được focus */
+    background-color: #ff9800; 
+    color: white;
+}
+
+/* --- 2. CSS CHO MEDIA SIDEBAR (+N ảnh) --- */
+/* Ẩn các ảnh thừa đi */
+.media-grid .media-item.hidden-thumb-sidebar {
+    display: none;
+}
+
+/* Tạo lớp phủ cho ảnh thứ 9 (nếu có hơn 9 ảnh) */
+.media-item.more-overlay-wrapper {
+    position: relative;
+    display: block;
+}
+.media-item.more-overlay-wrapper::after {
+    content: attr(data-more-count); /* Lấy số lượng từ attribute */
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    pointer-events: none; /* Để vẫn click được vào ảnh */
+}
+
+/* --- 3. CSS CHO THÀNH VIÊN (+N người) --- */
+.member-more-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background: #f3f4f6;
+    color: var(--text-sub);
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 5px;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.member-more-btn:hover {
+    background: #e5e7eb;
+    color: var(--primary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+    
+<aside class="left-sidebar" id="left-sidebar">
+    <div class="ls-header">
+        <i class="fas fa-comments"></i>
+        <span>Nhóm của bạn</span>
+    </div>
+    
+    <div class="ls-search-filter">
+        <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="group-search-input" class="ls-search-input" placeholder="Tìm nhóm...">
+        </div>
+        <select id="group-filter-route" class="ls-filter-select">
+            <option value="all">-- Tất cả cung đường --</option>
+            {% for route in available_routes %}
+                <option value="{{ route.cung_duong__id }}">{{ route.cung_duong__ten }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="group-list" id="group-list-container">
+        {% for my_trip in my_trips %}
+        <a href="{{ my_trip.get_chat_url }}" 
+           class="group-item {% if my_trip.pk == trip.pk %}active{% endif %}"
+           id="group-{{ my_trip.pk }}"
+           data-name="{{ my_trip.ten_chuyen_di|lower }}"
+           data-route="{{ my_trip.cung_duong.id }}">
+           
+            <img src="{{ my_trip.cover_url }}" class="group-avatar">
+            <div class="group-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="group-name">{{ my_trip.ten_chuyen_di }}</div>
+                    <span class="last-msg-time">
+                        {% if my_trip.last_activity %}{{ my_trip.last_activity|date:"H:i" }}{% endif %}
+                    </span>
+                </div>
+                <div class="group-status text-truncate" style="max-width: 180px;">
+                    {% if my_trip.preview_content %}
+                        {{ my_trip.preview_content }}
+                    {% else %}
+                        <span class="text-muted fst-italic">Chưa có tin nhắn...</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+        
+        <div id="no-group-found" class="text-center text-muted small py-4 d-none">
+            Không tìm thấy nhóm phù hợp.
+        </div>
+    </div>
+</aside>
+
+    <!-- 2. CỘT GIỮA: CHAT -->
+    <main class="chat-center">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="header-left">
+                <button class="toggle-sidebar-btn" onclick="toggleLeftSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="header-info">
+                    <img src="{{ trip.cover_url }}">
+                    <div class="header-text">
+                        <div class="header-title">{{ trip.ten_chuyen_di }}</div>
+                        <div class="header-status">
+                            <i class="fas fa-circle" style="font-size: 8px;"></i> 
+                            Đang hoạt động
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="toggle-sidebar-btn" onclick="toggleRightSidebar()" title="Thông tin hội thoại">
+                <i class="fas fa-info-circle"></i>
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-messages" id="chat-box">
+            <div class="loading-spinner">
+                <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                <p class="text-muted small fw-bold">Đang tải tin nhắn...</p>
+            </div>
+        </div>
+
+        <!-- FEATURE BỔ SUNG: Thanh Reply Context -->
+        <div id="reply-context-bar">
+            <div class="reply-info">
+                <span class="reply-to-label">
+                    <i class="fas fa-reply me-1"></i>Đang trả lời <span id="reply-to-user">...</span>
+                </span>
+                <span class="reply-preview-text" id="reply-to-content">...</span>
+            </div>
+            <button type="button" class="btn-close ms-3 small" onclick="cancelReply()"></button>
+        </div>
+
+        <!-- Footer -->
+        <form id="chat-form" class="chat-footer" method="POST" action="javascript:void(0);">
+            {% csrf_token %}
+            <!-- FEATURE BỔ SUNG: Hidden Input cho Reply và Preview Box -->
+            <input type="hidden" id="reply-id-input" name="reply_to_id" value="">
+            <div id="preview-box"></div>
+
+            <div class="footer-tools">
+                <label for="file-input" class="btn-action" title="Gửi ảnh/video">
+                    <i class="fas fa-image"></i>
+                </label>
+                <input type="file" id="file-input" name="files" multiple hidden accept="image/*,video/*">
+                
+                <div class="input-wrapper">
+                    <textarea id="msg-input" name="message" class="chat-input" rows="1" placeholder="Nhập tin nhắn..."></textarea>
+                    <i class="fas fa-smile text-muted cursor-pointer" style="font-size: 1.3rem;"></i>
+                </div>
+                
+                <button type="submit" class="btn-action btn-send">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- 3. CỘT PHẢI: THÔNG TIN -->
+<aside class="right-sidebar" id="right-sidebar">
+    <div class="rs-content">
+        <div class="rs-header">
+            <img src="{{ trip.cover_url }}">
+            <h5>{{ trip.ten_chuyen_di }}</h5>
+            <a href="{{ trip.get_absolute_url }}" class="text-decoration-none text-primary">
+                <i class="fas fa-external-link-alt me-1"></i>Xem chi tiết
+            </a>
+        </div>
+
+        <!-- 1. TÌM KIẾM TIN NHẮN (Đã sửa ID và logic) -->
+        <div class="rs-section">
+            <button class="rs-btn" onclick="toggleSearch()">
+                <span><i class="fas fa-search me-2"></i>Tìm kiếm tin nhắn</span>
+                <i class="fas fa-chevron-right text-muted"></i>
+            </button>
+            <div class="search-box" id="search-container">
+                <i class="fas fa-search text-muted me-2"></i>
+                <!-- Thêm onkeyup để kích hoạt tìm kiếm -->
+                <input type="text" id="chat-search-input" placeholder="Nhập từ khóa..." onkeyup="handleChatSearch(this.value)">
+                <!-- Hiển thị kết quả -->
+                <span id="search-result-count" class="ms-2 small text-muted" style="display:none">0/0</span>
+                <div class="ms-auto d-flex gap-1" id="search-nav-btns" style="display:none">
+                    <button class="btn btn-sm btn-light" onclick="navSearch('up')"><i class="fas fa-chevron-up"></i></button>
+                    <button class="btn btn-sm btn-light" onclick="navSearch('down')"><i class="fas fa-chevron-down"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. THÀNH VIÊN (Giới hạn hiển thị 5 người) -->
+        <div class="rs-section">
+            <button class="rs-btn" data-bs-toggle="collapse" data-bs-target="#collapseMembers">
+                <span><i class="fas fa-users me-2"></i>Thành viên ({{ members.count }})</span>
+                <i class="fas fa-chevron-down text-muted"></i>
+            </button>
+            <div class="collapse show" id="collapseMembers">
+                <div class="mt-2">
+                    <!-- Luôn hiện Trưởng đoàn -->
+                    <div class="member-row">
+                        <img src="{{ trip.nguoi_to_chuc.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}">
+                        <div>
+                            <div class="fw-bold">{{ trip.nguoi_to_chuc.get_full_name|default:trip.nguoi_to_chuc.username }}</div>
+                            <small class="text-warning fw-bold" style="font-size: 0.7rem;">
+                                <i class="fas fa-crown me-1"></i>Trưởng đoàn
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Hiển thị 4 thành viên tiếp theo -->
+                    {% for member in members %}
+                        {% if member.user != trip.nguoi_to_chuc %}
+                            {% if forloop.counter <= 5 %} 
+                            <div class="member-row">
+                                <img src="{{ member.user.taikhoanhoso.avatar_url|default:'/static/images/default-avatar.png' }}">
+                                <div class="fw-bold">{{ member.user.get_full_name|default:member.user.username }}</div>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Nếu > 5 người (Trừ trưởng đoàn và 4 người kia) thì hiện nút xem thêm -->
+                    {% if members.count > 5 %}
+                    <div class="member-more-btn" title="Xem danh sách đầy đủ">
+                        + {{ members.count|add:"-5" }} thành viên khác
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. KHO ẢNH & VIDEO (Giới hạn hiển thị 9 ảnh, cái thứ 9 hiện overlay) -->
+        <div class="rs-section">
+            <button class="rs-btn" data-bs-toggle="collapse" data-bs-target="#collapseMedia">
+                <span><i class="fas fa-images me-2"></i>Kho Ảnh & Video ({{ chat_media_files|length }})</span>
+                <i class="fas fa-chevron-down text-muted"></i>
+            </button>
+            <div class="collapse show" id="collapseMedia">
+                <div id="light-gallery-sidebar" class="media-grid">
+                    {% for media in chat_media_files %}
+                        {% if media.loai_media == 'ANH' %}
+                            <!-- Logic: 
+                                - Index < 9: Hiện bình thường
+                                - Index == 9: Hiện với overlay +N
+                                - Index > 9: Ẩn (nhưng vẫn để trong DOM cho LightGallery đọc) 
+                            -->
+                            {% if forloop.counter < 9 %}
+                                <a href="{{ media.duong_dan_file.url }}" class="media-item media-msg-{{ media.tin_nhan.id }}">
+                                    <img src="{{ media.duong_dan_file.url }}">
+                                </a>
+                            {% elif forloop.counter == 9 %}
+                                {% with remaining=chat_media_files|length|add:"-8" %}
+                                <a href="{{ media.duong_dan_file.url }}" 
+                                   class="media-item media-msg-{{ media.tin_nhan.id }} more-overlay-wrapper"
+                                   data-more-count="+{{ remaining }}">
+                                    <img src="{{ media.duong_dan_file.url }}">
+                                </a>
+                                {% endwith %}
+                            {% else %}
+                                <a href="{{ media.duong_dan_file.url }}" class="media-item media-msg-{{ media.tin_nhan.id }} hidden-thumb-sidebar">
+                                    <img src="{{ media.duong_dan_file.url }}">
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    {% empty %}
+                        <p id="no-media-text" class="text-muted small text-center w-100 py-3">Chưa có ảnh nào.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</aside>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.0/lightgallery.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.0/plugins/zoom/lg-zoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.8.0/plugins/thumbnail/lg-thumbnail.min.js"></script>
+
+<script>
+    // =================================================
+    // 2. CẤU HÌNH AN TOÀN
+    // =================================================
+    
+    // Tự động tắt loading sau 3s dù có lỗi gì xảy ra
+    setTimeout(() => {
+        const spinner = document.querySelector('.loading-spinner');
+        if (spinner) spinner.remove();
+    }, 3000);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- KHAI BÁO BIẾN ---
+        let lastMsgId = 0;
+        let lastRenderedDate = null;
+        let pendingFiles = []; 
+        let isSending = false; 
+        let isFetching = false;
+
+        const urlSend = "{% url 'trips:chat_send' trip.pk %}";
+        const urlGet = "{% url 'trips:chat_get_messages' trip.pk %}";
+        const currentTripId = "{{ trip.pk }}"; 
+        const csrfToken = '{{ csrf_token }}';
+
+        // DOM Elements
+        const chatBox = document.getElementById('chat-box');
+        const chatForm = document.getElementById('chat-form');
+        const msgInput = document.getElementById('msg-input');
+        const fileInput = document.getElementById('file-input');
+        const previewBox = document.getElementById('preview-box');
+
+        // Init Gallery cho Sidebar phải (An toàn)
+        const sbGal = document.getElementById('light-gallery-sidebar');
+        if(sbGal && window.lightGallery) { 
+            try { 
+                window.sbGalleryPlugin = lightGallery(sbGal, { selector: '.media-item', plugins: [lgZoom, lgThumbnail], speed: 300, download: false }); 
+            } catch(e){ console.warn("Lỗi init Sidebar Gallery:", e); } 
+        }
+
+        // =================================================
+        // 3. CORE: RENDER TIN NHẮN & GALLERY
+        // =================================================
+        function appendMessage(msg) {
+            if (document.getElementById(`msg-${msg.id}`)) return; 
+            
+            // Render ngày tháng
+            if (msg.full_date) checkAndAddDateDivider(msg.full_date);
+
+            // Cập nhật Sidebar Realtime (Bọc try-catch để không chết code nếu lỗi)
+            try { updateLeftSidebar(msg); addToRightSidebar(msg); } catch(e) { console.warn(e); }
+
+            const isMe = msg.is_me;
+            
+            // --- XỬ LÝ LƯỚI ẢNH (GRID) ---
+            let mediaHtml = '';
+            if(msg.media && msg.media.length > 0) {
+                const galleryId = `gal-${msg.id}`;
+                mediaHtml = `<div class="msg-media-grid" id="${galleryId}">`;
+                const total = msg.media.length;
+                
+                msg.media.forEach((m, index) => {
+                    if(m.type === 'ANH') {
+                        if (index < 3 || total <= 4) {
+                            mediaHtml += `<a href="${m.url}" class="msg-thumb-link"><img src="${m.url}" class="msg-thumb"></a>`;
+                        } else if (index === 3 && total > 4) {
+                            mediaHtml += `<a href="${m.url}" class="msg-thumb-link" style="position: relative; display: block;">
+                                <img src="${m.url}" class="msg-thumb"><div class="more-images-overlay">+${total - 3}</div></a>`;
+                        } else {
+                            mediaHtml += `<a href="${m.url}" class="msg-thumb-link hidden-thumb"><img src="${m.url}" class="msg-thumb"></a>`;
+                        }
+                    }
+                });
+                mediaHtml += '</div>';
+            }
+
+            // HTML Các thành phần khác
+            let replyHtml = msg.reply ? `<div class="msg-reply-bubble" onclick="document.getElementById('msg-${msg.reply.id}')?.scrollIntoView({behavior: 'smooth', block: 'center'})"><div class="fw-bold mb-1 small" style="color: ${isMe ? '#e6f4ea' : 'var(--primary)'}">${msg.reply.username}</div><div class="text-truncate small">${msg.reply.content}</div></div>` : '';
+            
+            let reactionHtml = '';
+            if (!msg.is_deleted) {
+                const likes = msg.reactions?.likes_count || 0;
+                const dislikes = msg.reactions?.dislikes_count || 0;
+                const hasReacts = (likes > 0 || dislikes > 0) ? 'has-reacts' : '';
+                const styleOpacity = (likes > 0 || dislikes > 0) ? 'opacity: 1;' : '';
+                reactionHtml = `<div class="msg-reactions ${hasReacts}" style="${styleOpacity}">
+                        <span class="reaction-btn ${msg.reactions?.user_liked ? 'active' : ''}" onclick="reactMessage(${msg.id}, 'like')">👍 <span id="like-count-${msg.id}">${likes > 0 ? likes : ''}</span></span>
+                        <span class="reaction-btn ${msg.reactions?.user_disliked ? 'active' : ''}" onclick="reactMessage(${msg.id}, 'dislike')">👎 <span id="dislike-count-${msg.id}">${dislikes > 0 ? dislikes : ''}</span></span>
+                    </div>`;
+            }
+
+            const safeContent = (msg.content || "").replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
+            let actionHtml = `<div class="msg-actions"><button class="btn-reply-action" onclick="startReply(${msg.id}, '${msg.username}', '${safeContent}')"><i class="fas fa-reply"></i></button>`;
+            if(isMe && !msg.is_deleted) actionHtml += `<button class="btn-delete-msg ms-1" onclick="deleteMessage(${msg.id})"><i class="fas fa-trash"></i></button>`;
+            actionHtml += `</div>`;
+
+            // HTML Tổng
+            const html = `
+                <div class="msg-row ${isMe ? 'me' : ''}" id="msg-${msg.id}">
+                    ${!isMe ? `<img src="${msg.avatar}" class="msg-avatar" title="${msg.username}">` : actionHtml} 
+                    <div class="msg-content">
+                        ${!isMe ? `<div class="msg-name">${msg.username}</div>` : ''}
+                        <div class="msg-bubble">
+                            ${replyHtml}<div>${msg.is_deleted ? '<span class="text-muted fst-italic small"><i class="fas fa-ban me-1"></i> Tin nhắn đã bị thu hồi</span>' : msg.content}</div>
+                            ${mediaHtml}${reactionHtml}
+                        </div>
+                        <div class="msg-time">${msg.timestamp}</div>
+                    </div>
+                    ${isMe ? '' : actionHtml} 
+                </div>`;
+            
+            chatBox.insertAdjacentHTML('beforeend', html);
+
+            // --- INIT GALLERY (QUAN TRỌNG: PHẢI CÓ TRY CATCH) ---
+            if(msg.media && msg.media.length > 0 && window.lightGallery) {
+                // Dùng setTimeout 0 để đảm bảo HTML đã được render xong
+                setTimeout(() => {
+                    const galleryEl = document.getElementById(`gal-${msg.id}`);
+                    if(galleryEl) {
+                        try {
+                            lightGallery(galleryEl, { 
+                                selector: '.msg-thumb-link', 
+                                plugins: [lgZoom, lgThumbnail], 
+                                speed: 300, 
+                                download: false 
+                            });
+                        } catch(e) { console.error("Lỗi init gallery tin nhắn:", e); }
+                    }
+                }, 0);
+            }
+        }
+
+        // =================================================
+        // 4. LOAD MESSAGES (POLLING)
+        // =================================================
+        function loadMessages() {
+            if (isFetching) return;
+            isFetching = true;
+
+            fetch(`${urlGet}?last_id=${lastMsgId}`)
+                .then(res => { if (!res.ok) throw new Error("Server Error"); return res.json(); })
+                .then(data => {
+                    // Tin nhắn mới
+                    if(data.messages && data.messages.length > 0) {
+                        let shouldScroll = (chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 150) || lastMsgId === 0;
+                        data.messages.forEach(msg => {
+                            // Bọc try-catch từng tin nhắn để 1 tin lỗi không làm chết cả đám
+                            try { appendMessage(msg); } catch(e){ console.error("Lỗi render msg:", e); }
+                            if (msg.id > lastMsgId) lastMsgId = msg.id;
+                        });
+                        if(shouldScroll) chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+                    // Cập nhật tin cũ
+                    if(data.updates && data.updates.length > 0) {
+                        data.updates.forEach(msg => {
+                            if(msg.is_deleted) markMessageDeleted(msg.id);
+                            else updateReactionUI(msg.id, {
+                                likes: msg.reactions.likes_count,
+                                dislikes: msg.reactions.dislikes_count,
+                                user_liked: msg.reactions.user_liked,
+                                user_disliked: msg.reactions.user_disliked
+                            });
+                        });
+                    }
+                })
+                .catch(err => console.error("API Error:", err))
+                .finally(() => {
+                    // LUÔN LUÔN TẮT LOADING
+                    document.querySelector('.loading-spinner')?.remove();
+                    isFetching = false;
+                    setTimeout(loadMessages, 3000);
+                });
+        }
+        loadMessages(); // Gọi lần đầu
+
+        // =================================================
+        // 5. CÁC HÀM TIỆN ÍCH (FULL CODE)
+        // =================================================
+        function showToast(msg, type = 'error') {
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            toast.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${msg}`;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        // --- Gửi tin nhắn ---
+        function handleSendMessage() {
+            if (isSending) return; 
+            const text = msgInput.value.trim();
+            if(!text && pendingFiles.length === 0) return;
+            const fd = new FormData(chatForm); 
+            pendingFiles.forEach(file => fd.append('files', file));
+            
+            isSending = true; 
+            const btn = document.querySelector('.btn-send');
+            const oldIcon = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            fetch(urlSend, { method: 'POST', body: fd, headers: { 'X-CSRFToken': csrfToken } })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    msgInput.value = ''; msgInput.style.height = 'auto'; 
+                    clearAllFiles(); cancelReply(); 
+                    loadMessages(); // Load ngay
+                } else { showToast(data.message); }
+            })
+            .catch(() => showToast("Lỗi gửi tin"))
+            .finally(() => { isSending = false; btn.innerHTML = oldIcon; btn.disabled = false; msgInput.focus(); });
+        }
+        chatForm.addEventListener('submit', (e) => { e.preventDefault(); handleSendMessage(); });
+        msgInput.addEventListener('keydown', (e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } });
+        msgInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
+
+        // --- Sidebar Logic ---
+        function updateLeftSidebar(msg) {
+            const groupItem = document.getElementById(`group-${currentTripId}`);
+            if (groupItem) {
+                const statusEl = groupItem.querySelector('.group-status');
+                const timeEl = groupItem.querySelector('.last-msg-time');
+                let previewText = msg.is_me ? `Bạn: ${msg.content}` : `${msg.username}: ${msg.content}`;
+                if ((!msg.content) && msg.media.length > 0) previewText = msg.is_me ? "Bạn đã gửi file" : `${msg.username} đã gửi file`;
+                if (msg.is_deleted) previewText = "Tin nhắn đã thu hồi";
+                if(statusEl) statusEl.innerText = previewText;
+                if(timeEl) timeEl.innerText = msg.timestamp; 
+                if(groupItem.parentElement.firstElementChild !== groupItem) {
+                    groupItem.parentElement.prepend(groupItem);
+                    groupItem.style.backgroundColor = '#ecfdf5';
+                    setTimeout(() => groupItem.style.backgroundColor = '', 500);
+                }
+            }
+        }
+        function addToRightSidebar(msg) {
+            if (!msg.media || msg.media.length === 0) return;
+            const mediaContainer = document.getElementById('light-gallery-sidebar');
+            document.getElementById('no-media-text')?.setAttribute('style', 'display:none');
+            let newHtml = '';
+            msg.media.forEach(m => {
+                if (m.type === 'ANH') newHtml += `<a href="${m.url}" class="media-item media-msg-${msg.id}" data-sub-html="Gửi bởi ${msg.username}"><img src="${m.url}"></a>`;
+            });
+            if (newHtml && mediaContainer) {
+                mediaContainer.insertAdjacentHTML('afterbegin', newHtml);
+                if(window.sbGalleryPlugin) window.sbGalleryPlugin.refresh();
+            }
+        }
+        function removeFromRightSidebar(msgId) {
+            document.querySelectorAll(`.media-msg-${msgId}`).forEach(el => el.remove());
+            const c = document.getElementById('light-gallery-sidebar');
+            if (c && c.children.length === 0) document.getElementById('no-media-text').style.display = 'block';
+        }
+
+        // --- Toggle Sidebar (SỬA LỖI ĐƠ) ---
+        window.toggleSidebar = function(side) { 
+            const id = side === 'left' ? 'left-sidebar' : 'right-sidebar';
+            const el = document.getElementById(id);
+            if(el) {
+                if(window.innerWidth <= 992) el.classList.toggle('show');
+                else el.classList.toggle('collapsed');
+            }
+        };
+        window.toggleSearch = function() { document.getElementById('search-container')?.classList.toggle('active'); document.getElementById('chat-search')?.focus(); }
+        
+        // --- Reply / React / Delete / File ---
+        window.startReply = (id,u,c) => { document.getElementById('reply-id-input').value = id; document.getElementById('reply-to-user').innerText = u; document.getElementById('reply-to-content').innerText = c; document.getElementById('reply-context-bar').classList.add('show'); document.getElementById('msg-input').focus(); };
+        window.cancelReply = () => { document.getElementById('reply-id-input').value = ''; document.getElementById('reply-context-bar').classList.remove('show'); };
+        window.removeFile = (el,name) => { el.parentElement.remove(); pendingFiles = pendingFiles.filter(f=>f.name!==name); if(!pendingFiles.length) fileInput.value=''; };
+        window.clearAllFiles = () => { pendingFiles=[]; previewBox.innerHTML=''; fileInput.value=''; };
+        
+        window.reactMessage = (id,action) => { fetch(`/chuyen-di/chat/react/${id}/`, {method:'POST', headers:{'X-CSRFToken':csrfToken, 'Content-Type':'application/x-www-form-urlencoded'}, body:`action=${action}`}).then(r=>r.json()).then(d=>{if(d.status==='success') updateReactionUI(id,d)}); };
+        function updateReactionUI(msgId, data) {
+            const container = document.querySelector(`#msg-${msgId} .msg-reactions`); if(!container) return;
+            document.getElementById(`like-count-${msgId}`).innerText = data.likes||'';
+            document.getElementById(`dislike-count-${msgId}`).innerText = data.dislikes||'';
+            const bl = container.querySelector('.reaction-btn:first-child'); if(bl) data.user_liked ? bl.classList.add('active') : bl.classList.remove('active');
+            const bd = container.querySelector('.reaction-btn:last-child'); if(bd) data.user_disliked ? bd.classList.add('active') : bd.classList.remove('active');
+            container.classList.toggle('has-reacts', data.likes>0||data.dislikes>0);
+            container.style.opacity = (data.likes>0||data.dislikes>0)?'1':'';
+        }
+
+        window.deleteMessage = (id) => { if(confirm("Thu hồi?")) fetch(`/chuyen-di/chat/delete/${id}/`, {method:'POST', headers:{'X-CSRFToken':csrfToken}}).then(r=>r.json()).then(d=>{if(d.status==='success') markMessageDeleted(id)}); };
+        function markMessageDeleted(id) { 
+            const row=document.getElementById(`msg-${id}`); 
+            if(row && !row.innerHTML.includes('đã bị thu hồi')) { 
+                row.querySelector('.msg-bubble').innerHTML = '<span class="text-muted fst-italic small"><i class="fas fa-ban me-1"></i> Tin nhắn đã bị thu hồi</span>'; 
+                row.querySelector('.msg-actions')?.remove(); 
+                row.querySelector('.msg-reactions')?.remove(); 
+                removeFromRightSidebar(id);
+            } 
+        }
+
+        function checkAndAddDateDivider(iso) { 
+            if(!iso) return;
+            const k = new Date(iso).toDateString(); 
+            if (lastRenderedDate !== k) { 
+                const d = new Date(iso);
+                const txt = `${['CN','T2','T3','T4','T5','T6','T7'][d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}`;
+                document.getElementById('chat-box').insertAdjacentHTML('beforeend', `<div class="date-divider"><span>${txt}</span></div>`); 
+                lastRenderedDate = k; 
+            } 
+        }
+
+        // Filter
+        const searchInput = document.getElementById('group-search-input');
+        const routeSelect = document.getElementById('group-filter-route');
+        const groupItems = document.querySelectorAll('.group-item');
+        function filterGroups() {
+            const s = searchInput.value.toLowerCase().trim(); const r = routeSelect.value;
+            let c = 0;
+            groupItems.forEach(i => {
+                const n = i.getAttribute('data-name'); const rt = i.getAttribute('data-route');
+                const m = (n && n.includes(s)) && (r === 'all' || rt === r);
+                i.style.display = m ? 'flex' : 'none'; if(m) c++;
+            });
+            const nm = document.getElementById('no-group-found'); if(nm) nm.style.display = c===0?'block':'none';
+        }
+        if(searchInput) searchInput.addEventListener('input', filterGroups);
+        if(routeSelect) routeSelect.addEventListener('change', filterGroups);
+
+        fileInput.addEventListener('change', () => { if(fileInput.files.length) Array.from(fileInput.files).forEach(f=>{ pendingFiles.push(f); const r=new FileReader(); r.onload=e=>{ previewBox.innerHTML+=`<div class="preview-img-wrap"><img src="${e.target.result}"><div class="btn-remove-preview" onclick="removeFile(this,'${f.name}')">×</div></div>`; }; r.readAsDataURL(f); }); fileInput.value=''; });
+    });
+    /* ==========================================
+   LOGIC TÌM KIẾM TIN NHẮN (Highlight & Scroll)
+   ========================================== */
+let searchMatches = []; // Lưu các vị trí tìm thấy
+let currentMatchIndex = -1;
+
+function handleChatSearch(keyword) {
+    keyword = keyword.trim().toLowerCase();
+    const chatBox = document.getElementById('chat-box');
+    const bubbles = chatBox.querySelectorAll('.msg-bubble');
+    
+    // 1. Reset highlight cũ
+    bubbles.forEach(bubble => {
+        // Khôi phục HTML gốc (xóa thẻ span highlight)
+        if (bubble.dataset.originalHtml) {
+            bubble.innerHTML = bubble.dataset.originalHtml;
+        }
+    });
+    searchMatches = [];
+    currentMatchIndex = -1;
+    document.getElementById('search-result-count').style.display = 'none';
+    document.getElementById('search-nav-btns').style.display = 'none';
+
+    if (!keyword) return;
+
+    // 2. Tìm và Highlight
+    let count = 0;
+    bubbles.forEach((bubble, index) => {
+        const text = bubble.innerText;
+        if (text.toLowerCase().includes(keyword)) {
+            // Lưu HTML gốc để restore sau này
+            if (!bubble.dataset.originalHtml) {
+                bubble.dataset.originalHtml = bubble.innerHTML;
+            }
+            
+            // Highlight text (Dùng regex replace an toàn)
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            // Lưu ý: Replace trực tiếp innerHTML có thể làm hỏng event listener của nút con, 
+            // nhưng với cấu trúc chat hiện tại thì tạm ổn.
+            // Cách an toàn hơn là chỉ traverse textNodes, nhưng phức tạp.
+            // Ở đây ta replace text đơn giản.
+            
+            // Tìm tất cả text node để thay thế (tránh thay thế attribute trong thẻ HTML)
+            highlightTextInNode(bubble, regex);
+
+            // Lưu phần tử vào mảng matches
+            // Tìm các span vừa tạo
+            const highlights = bubble.querySelectorAll('.search-highlight');
+            highlights.forEach(hl => {
+                hl.id = `search-match-${count}`;
+                searchMatches.push(hl);
+                count++;
+            });
+        }
+    });
+
+    // 3. Cập nhật UI điều hướng
+    if (count > 0) {
+        document.getElementById('search-result-count').innerText = `1/${count}`;
+        document.getElementById('search-result-count').style.display = 'inline';
+        document.getElementById('search-nav-btns').style.display = 'flex';
+        
+        // Nhảy đến kết quả mới nhất (cuối cùng)
+        currentMatchIndex = count - 1;
+        scrollToMatch(currentMatchIndex);
+    } else {
+        document.getElementById('search-result-count').innerText = `0/0`;
+        document.getElementById('search-result-count').style.display = 'inline';
+    }
+}
+
+// Hàm đệ quy để highlight text mà không làm hỏng thẻ HTML (img, button...)
+function highlightTextInNode(node, regex) {
+    if (node.nodeType === 3) { // Text node
+        const match = node.data.match(regex);
+        if (match) {
+            const span = document.createElement('span');
+            span.innerHTML = node.data.replace(regex, '<span class="search-highlight">$1</span>');
+            node.parentNode.replaceChild(span, node);
+        }
+    } else if (node.nodeType === 1 && node.childNodes && !/(script|style|button|textarea)/i.test(node.tagName)) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+            highlightTextInNode(node.childNodes[i], regex);
+        }
+    }
+}
+
+function navSearch(direction) {
+    if (searchMatches.length === 0) return;
+
+    if (direction === 'up') {
+        currentMatchIndex--;
+        if (currentMatchIndex < 0) currentMatchIndex = searchMatches.length - 1;
+    } else {
+        currentMatchIndex++;
+        if (currentMatchIndex >= searchMatches.length) currentMatchIndex = 0;
+    }
+    scrollToMatch(currentMatchIndex);
+}
+
+function scrollToMatch(index) {
+    // Xóa class active cũ
+    document.querySelectorAll('.search-match-active').forEach(el => el.classList.remove('search-match-active'));
+    
+    const el = searchMatches[index];
+    if (el) {
+        el.classList.add('search-match-active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('search-result-count').innerText = `${index + 1}/${searchMatches.length}`;
+    }
+}
+</script>
+{% endblock %}

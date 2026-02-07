@@ -1,0 +1,293 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head_extra %}
+    <!-- 1. Leaflet Core -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- 2. Plugin Định tuyến (Routing Machine) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
+    <style>
+        #map { height: 450px; border-radius: 8px; cursor: crosshair; }
+        .leaflet-routing-container { display: none; }
+        .search-results-wrapper { position: relative; }
+        .search-results-dropdown {
+            position: absolute; width: 100%; top: 100%; z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 250px; overflow-y: auto;
+        }
+        #route-info-panel {
+            background-color: #f8f9fa; border: 1px solid #dee2e6;
+            border-radius: 8px; padding: 1rem; margin-top: 1.5rem;
+        }
+        .waypoint-info p { margin-bottom: 0.25rem; font-size: 0.9rem; word-break: break-all; }
+        .waypoint-info .coord { font-family: monospace; color: #555; }
+        .length-info { font-weight: bold; font-size: 1.1rem; color: var(--primary-dark, #15803D); }
+        .leaflet-context-menu {
+            background-color: white; border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 5px 0; list-style: none; margin: 0; z-index: 1001;
+        }
+        .leaflet-context-menu-item { padding: 8px 12px; cursor: pointer; font-size: 0.9rem; }
+        .leaflet-context-menu-item:hover { background-color: #f0f0f0; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header"><h4 class="mb-0">{{ page_title }}</h4></div>
+    <form method="post" id="map-form">
+        {% csrf_token %}
+        <div class="card-body p-4">
+            <p><strong>Hướng dẫn:</strong> Dùng ô tìm kiếm để đến nhanh một khu vực. Sau đó, <strong>click chuột phải</strong> lên bản đồ để đặt điểm Bắt đầu và Kết thúc.</p>
+            
+            <div class="form-group search-results-wrapper mb-3">
+                <label for="general-search-input" class="form-label">Tìm khu vực nhanh</label>
+                <div class="input-group">
+                    <input type="text" id="general-search-input" class="form-control" placeholder="Ví dụ: Sa Pa, Vườn quốc gia Ba Vì...">
+                    <button type="button" id="general-search-btn" class="btn btn-outline-secondary">Đi đến</button>
+                </div>
+                <div id="general-search-results" class="search-results-dropdown list-group"></div>
+            </div>
+            
+            <div id="map"></div>
+
+            <div id="route-info-panel">
+                <div class="row">
+                    <div class="col-md-6 border-end">
+                        <div id="start-point-info" class="waypoint-info">
+                            <h6 class="mb-2">📍 Điểm Bắt đầu</h6>
+                            <p class="text-muted">Click chuột phải lên bản đồ</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="end-point-info" class="waypoint-info">
+                            <h6 class="mb-2">🏁 Điểm Kết thúc</h6>
+                            <p class="text-muted">Chưa đặt điểm</p>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <h6>Thông tin Cung đường</h6>
+                <p><strong>Độ dài ước tính (khứ hồi):</strong> 
+                    <span id="length-display" class="length-info">0.00 km</span>
+                </p>
+            </div>
+
+            {{ form.du_lieu_ban_do_geojson }}
+            <input type="hidden" id="id_do_dai_km_calculated" name="do_dai_km_calculated">
+        </div>
+        <div class="card-footer text-end">
+            <button type="button" id="reset-route-btn" class="btn btn-warning">Đặt lại</button>
+            <a href="{% url 'treks_admin:cung_duong_update' pk=object.pk %}" class="btn btn-secondary">Quay lại</a>
+            <button type="submit" class="btn btn-primary">Lưu</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
+    const map = L.map('map').setView([21.0285, 105.8542], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    setTimeout(() => map.invalidateSize(), 150);
+
+    const geojsonInput = document.getElementById('id_du_lieu_ban_do_geojson');
+    const lengthDisplay = document.getElementById('length-display');
+    const doDaiKmInput = document.getElementById('id_do_dai_km_calculated');
+    const resetButton = document.getElementById('reset-route-btn');
+    const startInfoDiv = document.getElementById('start-point-info');
+    const endInfoDiv = document.getElementById('end-point-info');
+    const generalSearchInput = document.getElementById('general-search-input');
+    const generalSearchBtn = document.getElementById('general-search-btn');
+    const generalSearchResults = document.getElementById('general-search-results');
+    
+    let routingControl = null;
+    let startMarker = null;
+    let endMarker = null;
+    let contextMenu = null;
+
+    // --- CÁC HÀM TIỆN ÍCH ---
+    function updateRoute() {
+        if (!startMarker || !endMarker) return;
+        const waypoints = [startMarker.getLatLng(), endMarker.getLatLng()];
+
+        const handleRoutesFound = function(e) {
+            console.log("Sự kiện routesfound đã được kích hoạt!"); // Để kiểm tra
+            const route = e.routes[0];
+            if (!route) return;
+            const coordinates = route.coordinates.map(coord => [coord.lng, coord.lat]);
+            const feature = { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coordinates } };
+            const featureCollection = { type: "FeatureCollection", features: [feature] };
+            geojsonInput.value = JSON.stringify(featureCollection);
+            const roundTripLength = (route.summary.totalDistance / 1000) * 2;
+            lengthDisplay.textContent = `${roundTripLength.toFixed(2)} km`;
+            if (doDaiKmInput) doDaiKmInput.value = roundTripLength.toFixed(2);
+        };
+
+        if (routingControl) {
+            routingControl.setWaypoints(waypoints);
+        } else {
+            routingControl = L.Routing.control({
+                waypoints: waypoints,
+                routeWhileDragging: true, show: false, addWaypoints: false,
+                router: L.Routing.osrmv1({ serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1', profile: 'foot'}),
+                lineOptions: { styles: [{color: '#EF4444', opacity: 1, weight: 5}] },
+                createMarker: () => null
+            }).addTo(map);
+            routingControl.on('routesfound', handleRoutesFound);
+        }
+    }
+
+    function createDraggableMarker(latLng, isStart) {
+        const iconUrl = isStart ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png' : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+        const marker = L.marker(latLng, {
+            draggable: true,
+            icon: L.icon({
+                iconUrl: iconUrl, shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41], iconAnchor: [12, 41]
+            })
+        }).bindPopup(isStart ? 'Điểm bắt đầu' : 'Điểm kết thúc');
+        marker.on('dragend', function() {
+            updateRoute();
+            reverseGeocode(this.getLatLng(), isStart ? startInfoDiv : endInfoDiv);
+        });
+        return marker;
+    }
+
+    function reverseGeocode(latLng, infoDiv) {
+        infoDiv.innerHTML = `<h6 class="mb-2">${infoDiv.id === 'start-point-info' ? '📍' : '🏁'} Điểm ${infoDiv.id === 'start-point-info' ? 'Bắt đầu' : 'Kết thúc'}</h6><p class="text-muted">Đang tìm địa chỉ...</p><p class="coord">${latLng.lat.toFixed(6)}, ${latLng.lng.toFixed(6)}</p>`;
+        const apiUrl = `{% url 'treks_admin:nominatim_proxy' %}?lat=${latLng.lat}&lon=${latLng.lng}`;
+        fetch(apiUrl).then(res => res.json()).then(data => {
+            let name = "Không xác định";
+            if (data && data.length > 0 && data[0].display_name) name = data[0].display_name;
+            infoDiv.innerHTML = `<h6 class="mb-2">${infoDiv.id === 'start-point-info' ? '📍' : '🏁'} Điểm ${infoDiv.id === 'start-point-info' ? 'Bắt đầu' : 'Kết thúc'}</h6><p><strong>Vị trí:</strong> ${name}</p><p><strong>Tọa độ:</strong> <span class="coord">${latLng.lat.toFixed(6)}, ${latLng.lng.toFixed(6)}</span></p>`;
+        });
+    }
+
+    function setStartPoint(latlng) {
+        if (startMarker) startMarker.setLatLng(latlng);
+        else startMarker = createDraggableMarker(latlng, true).addTo(map);
+        reverseGeocode(latlng, startInfoDiv);
+        updateRoute();
+    }
+    
+    function setEndPoint(latlng) {
+        if (endMarker) endMarker.setLatLng(latlng);
+        else endMarker = createDraggableMarker(latlng, false).addTo(map);
+        reverseGeocode(latlng, endInfoDiv);
+        updateRoute();
+    }
+
+    function searchGeneralLocation() {
+        const query = generalSearchInput.value.trim();
+        if (query.length < 2) { generalSearchResults.innerHTML = ''; return; }
+        generalSearchBtn.disabled = true;
+        generalSearchBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        const apiUrl = `{% url 'treks_admin:nominatim_proxy' %}?q=${encodeURIComponent(query)}`;
+        fetch(apiUrl).then(res => res.json()).then(data => {
+            generalSearchResults.innerHTML = '';
+            if (data && data.length > 0) {
+                data.slice(0, 5).forEach(place => {
+                    const item = document.createElement('a');
+                    item.className = 'list-group-item list-group-item-action p-2';
+                    item.href = '#';
+                    item.innerHTML = `<small>${place.display_name}</small>`;
+                    item.onclick = (e) => {
+                        e.preventDefault();
+                        map.setView(L.latLng(place.lat, place.lon), 12);
+                        generalSearchResults.innerHTML = '';
+                        generalSearchInput.value = place.display_name;
+                    };
+                    generalSearchResults.appendChild(item);
+                });
+            } else { generalSearchResults.innerHTML = '<div class="list-group-item">Không tìm thấy</div>'; }
+        }).finally(() => {
+            generalSearchBtn.disabled = false;
+            generalSearchBtn.textContent = 'Đi đến';
+        });
+    }
+
+    function resetAll() {
+        if (routingControl) routingControl.setWaypoints([]);
+        if (startMarker) map.removeLayer(startMarker);
+        if (endMarker) map.removeLayer(endMarker);
+        startMarker = null; endMarker = null;
+        lengthDisplay.textContent = '0.00 km';
+        startInfoDiv.innerHTML = `<h6 class="mb-2">📍 Điểm Bắt đầu</h6><p class="text-muted">Click chuột phải lên bản đồ</p>`;
+        endInfoDiv.innerHTML = `<h6 class="mb-2">🏁 Điểm Kết thúc</h6><p class="text-muted">Chưa đặt điểm</p>`;
+        if (doDaiKmInput) doDaiKmInput.value = '0';
+        geojsonInput.value = '';
+    }
+    
+    // --- GÁN CÁC SỰ KIỆN ---
+    map.on('contextmenu', function(e) {
+        const menuItems = document.createElement('ul');
+        menuItems.className = 'leaflet-context-menu';
+        const setStart = document.createElement('li');
+        setStart.className = 'leaflet-context-menu-item';
+        setStart.innerHTML = '📍 Đặt làm điểm bắt đầu';
+        setStart.onclick = () => { setStartPoint(e.latlng); if(contextMenu) map.closePopup(contextMenu); };
+        const setEnd = document.createElement('li');
+        setEnd.className = 'leaflet-context-menu-item';
+        setEnd.innerHTML = '🏁 Đặt làm điểm kết thúc';
+        setEnd.onclick = () => { setEndPoint(e.latlng); if(contextMenu) map.closePopup(contextMenu); };
+        menuItems.appendChild(setStart);
+        menuItems.appendChild(setEnd);
+        contextMenu = L.popup({ closeButton: true, minWidth: 150 }).setLatLng(e.latlng).setContent(menuItems).openOn(map);
+    });
+
+    resetButton.addEventListener('click', resetAll);
+    generalSearchBtn.addEventListener('click', searchGeneralLocation);
+    generalSearchInput.addEventListener('keydown', e => { if(e.key === 'Enter') { e.preventDefault(); searchGeneralLocation(); } });
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-results-wrapper')) {
+            generalSearchResults.innerHTML = '';
+        }
+    });
+
+    // --- TẢI DỮ LIỆU CŨ ---
+    if (geojsonInput.value) {
+    try {
+        const geojsonData = JSON.parse(geojsonInput.value);
+        if(geojsonData && geojsonData.features.length > 0) {
+            const feature = geojsonData.features[0];
+            if(feature.geometry && feature.geometry.type === 'LineString' && feature.geometry.coordinates.length > 1) {
+                const coords = feature.geometry.coordinates;
+                const startLatLng = L.latLng(coords[0][1], coords[0][0]);
+                const endLatLng = L.latLng(coords[coords.length - 1][1], coords[coords.length - 1][0]);
+
+                setStartPoint(startLatLng);
+                setEndPoint(endLatLng);
+                
+                // ==========================================================
+                // === PHẦN CODE ĐÃ ĐƯỢC SỬA LỖI `this` ===
+                // ==========================================================
+                if (routingControl) {
+                    // Định nghĩa một hàm để dễ dàng gỡ bỏ sự kiện sau khi chạy
+                    const onInitialRouteFound = function() {
+                        setTimeout(() => {
+                            // Sử dụng biến `routingControl` thay vì `this`
+                            map.fitBounds(routingControl.getBounds());
+                        }, 200);
+                        // Gỡ bỏ chính sự kiện này để nó không chạy lại khi kéo thả
+                        routingControl.off('routesfound', onInitialRouteFound);
+                    };
+                    
+                    // Gán sự kiện
+                    routingControl.on('routesfound', onInitialRouteFound);
+                }
+            }
+        }
+    } catch (e) { 
+        console.error("Lỗi khi tải dữ liệu:", e); 
+    }
+}
+});
+</script>
+{% endblock %}

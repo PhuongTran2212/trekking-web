@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tạo chuyến đi thành công{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+    
+    <div class="card text-center animate-fadeInUp" style="max-width: 600px; width: 100%;">
+        <div class="card-body p-5">
+            
+            <div class="mb-4 d-flex justify-content-center">
+                <div style="
+                    width: 100px; 
+                    height: 100px; 
+                    background-color: var(--primary-lightest); 
+                    color: var(--success);
+                    border-radius: var(--radius-full); 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    box-shadow: var(--shadow-sm);">
+                    <i class="fas fa-check animate-pulse" style="font-size: 3rem;"></i>
+                </div>
+            </div>
+            
+            <h2 class="mb-3" style="color: var(--primary-darkest);">Tạo chuyến đi thành công!</h2>
+            <p class="text-muted mb-4">
+                Chuyến đi <strong style="color: var(--primary-dark);">"{{ trip.ten_chuyen_di }}"</strong> đã sẵn sàng chào đón các thành viên mới.
+            </p>
+            
+            <div class="alert alert-info d-flex flex-column align-items-center justify-content-center mb-4" 
+                 style="background-color: var(--gray-50); border: 2px dashed var(--primary-light); position: relative;">
+                
+                <span class="text-uppercase" style="font-size: 0.75rem; color: var(--gray-500); letter-spacing: 1px; font-weight: 600;">
+                    Mã chuyến đi
+                </span>
+                
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <h3 class="mb-0" id="tripCodeText" style="color: var(--primary-dark); letter-spacing: 2px; font-weight: 800;">
+                        {{ trip.ma_moi|default:trip.pk }}
+                    </h3>
+                    
+                    <button type="button" 
+                            class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center" 
+                            style="width: 36px; height: 36px; background: white; border: 1px solid var(--gray-300); color: var(--gray-600); transition: all 0.2s;"
+                            onclick="copyToClipboard('{{ trip.ma_moi|default:trip.pk }}', this)"
+                            title="Sao chép mã">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+                <div class="small text-success mt-1 d-none" id="copySuccessMsg" style="font-weight: 600;">Đã sao chép!</div>
+            </div>
+
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a href="{% url 'trips:trip_hub' %}" class="btn btn-outline btn-lg rounded-pill">
+                    <i class="fas fa-home me-2"></i>Về trang chủ
+                </a>
+                
+                <a href="{{ trip.get_absolute_url }}" class="btn btn-primary btn-lg rounded-pill shadow-md">
+                    Xem chi tiết <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyToClipboard(text, btnElement) {
+        navigator.clipboard.writeText(text).then(() => {
+            // 1. Đổi icon thành dấu tích
+            const icon = btnElement.querySelector('i');
+            const originalIconClass = icon.className;
+            
+            icon.className = 'fas fa-check text-success';
+            btnElement.style.borderColor = 'var(--success)';
+            btnElement.style.backgroundColor = '#ecfdf5'; // Màu nền xanh nhạt
+
+            // 2. Hiện dòng chữ thông báo nhỏ
+            const msg = document.getElementById('copySuccessMsg');
+            msg.classList.remove('d-none');
+            msg.classList.add('animate-fadeInUp');
+
+            // 3. Reset lại sau 2 giây
+            setTimeout(() => {
+                icon.className = 'far fa-copy';
+                btnElement.style.borderColor = 'var(--gray-300)';
+                btnElement.style.backgroundColor = 'white';
+                
+                msg.classList.add('d-none');
+                msg.classList.remove('animate-fadeInUp');
+            }, 2000);
+        }).catch(err => {
+            console.error('Lỗi khi copy: ', err);
+            alert('Không thể sao chép mã. Vui lòng copy thủ công.');
+        });
+    }
+</script>
+{% endblock %}

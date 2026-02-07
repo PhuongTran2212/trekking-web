@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tạo bài viết mới{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/community.css' %}">
+<style>
+  /* === 1. CSS GIAO DIỆN FORM (GIỮ NGUYÊN) === */
+  .create-post-container { max-width: 900px; margin: 2rem auto; }
+  .create-post-card { background: var(--surface-primary, #fff); border-radius: var(--radius-lg, 12px); box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1)); overflow: hidden; }
+  .create-post-header { background: linear-gradient(135deg, var(--primary-dark, #4D7111) 0%, var(--primary-medium, #C3E956) 100%); padding: 1.5rem 2rem; color: white; }
+  .create-post-header h1 { margin: 0; font-size: 1.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; }
+  .create-post-body { padding: 2rem; }
+  .form-group { margin-bottom: 1.5rem; }
+  .form-label { display: block; font-weight: 600; color: var(--text-primary, #1a1a1a); margin-bottom: 0.5rem; font-size: 0.95rem; }
+  .form-control { width: 100%; padding: 0.75rem 1rem; border: 2px solid var(--border-light, #e0e0e0); border-radius: var(--radius-md, 8px); font-size: 1rem; transition: all 0.2s ease; background: var(--surface-primary, #fff); }
+  
+  /* Tags */
+  .tag-checkbox-container { background: var(--surface-secondary, #f8f9fa); border: 2px solid var(--border-light, #e0e0e0); border-radius: var(--radius-md, 8px); padding: 1.5rem; max-height: 300px; overflow-y: auto; }
+  .tag-checkbox-container ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+  .tag-checkbox-container li { display: flex; align-items: center; }
+  .tag-checkbox-container input[type="checkbox"] { width: 18px; height: 18px; margin-right: 0.5rem; cursor: pointer; accent-color: var(--primary-medium, #C3E956); }
+  
+  /* Media Thumbnails (Preview trên trang) */
+  .post-media-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 1rem; }
+  .media-item { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--surface-secondary, #f0f2f5); cursor: pointer; border: 1px solid #ddd; }
+  .media-item:hover { transform: scale(1.02); transition: transform 0.2s; }
+  .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; }
+  
+  .delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.95); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .delete-btn:hover { background: #ff4444; color: white; transform: scale(1.1); }
+  .media-item-more { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 700; pointer-events: none; }
+  
+  /* === 2. CSS LIGHTBOX (SLIDESHOW CÓ MŨI TÊN) === */
+  .lightbox-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); }
+  .lightbox-content-wrapper { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; position: relative; }
+  #lightbox-media-container { display: flex; justify-content: center; align-items: center; width: 100%; height: 85vh; margin-bottom: 10px; }
+  .lightbox-content { max-width: 90vw; max-height: 85vh; object-fit: contain; display: block; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 10000; }
+  
+  .lightbox-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; cursor: pointer; z-index: 10002; line-height: 1; }
+  .lightbox-close:hover { color: #ff4444; }
+  
+  /* Mũi tên điều hướng */
+  .lightbox-prev, .lightbox-next { cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); padding: 16px; color: white; font-size: 30px; z-index: 10001; background: rgba(77, 113, 17, 0.4); border-radius: 8px; user-select: none; transition: background 0.3s; }
+  .lightbox-next { right: 20px; } 
+  .lightbox-prev { left: 20px; }
+  .lightbox-prev:hover, .lightbox-next:hover { background: rgba(77, 113, 17, 0.9); }
+  
+  .lightbox-counter { color: #fff; font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; z-index: 10002; }
+  .hidden { display: none !important; }
+
+  /* Info Box */
+  .info-alert { background: linear-gradient(135deg, rgba(195, 233, 86, 0.1) 0%, rgba(77, 113, 17, 0.05) 100%); border-left: 4px solid var(--primary-medium, #C3E956); padding: 1rem 1.25rem; border-radius: var(--radius-md, 8px); margin-top: 1.5rem; }
+  
+  /* Buttons */
+  .form-actions { display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--border-light, #e0e0e0); }
+  .btn { padding: 0.75rem 1.5rem; border-radius: var(--radius-md, 8px); font-weight: 600; font-size: 1rem; border: none; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+  .btn-primary { background: var(--primary-dark, #4D7111); color: white; }
+  .btn-secondary { background: var(--surface-secondary, #f0f0f0); color: var(--text-primary, #1a1a1a); }
+  .error-text { color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-post-container">
+  <div class="create-post-card">
+    <div class="create-post-header">
+      <h1>
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Tạo bài viết mới
+      </h1>
+    </div>
+    
+    <div class="create-post-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="{{ form.tieu_de.id_for_label }}" class="form-label">{{ form.tieu_de.label }}</label>
+          {{ form.tieu_de }}
+          {% if form.tieu_de.errors %}
+            <div class="error-text">{{ form.tieu_de.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.chuyen_di.id_for_label }}" class="form-label">{{ form.chuyen_di.label }}</label>
+          {{ form.chuyen_di }}
+          {% if form.chuyen_di.errors %}
+            <div class="error-text">{{ form.chuyen_di.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ form.tags.label }}</label>
+          <div class="tag-checkbox-container">
+            {{ form.tags }}
+          </div>
+          {% if form.tags.errors %}
+            <div class="error-text">{{ form.tags.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.noi_dung.id_for_label }}" class="form-label">{{ form.noi_dung.label }}</label>
+          {{ form.noi_dung }}
+          {% if form.noi_dung.errors %}
+            <div class="error-text">{{ form.noi_dung.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <!-- UPLOAD MEDIA -->
+        <div class="form-group">
+          <label for="media_files" class="form-label">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            Tải lên Album ảnh/Video
+          </label>
+          <input type="file" class="form-control" id="media_files" name="media_files" multiple accept="image/*,video/*"/>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">Bạn có thể chọn nhiều file để tạo album ảnh đính kèm.</div>
+        </div>
+
+        <div id="preview-container" class="post-media-gallery"></div>
+
+        <div class="info-alert">
+          <strong>Lưu ý:</strong> Bài viết của bạn sẽ được gửi đến quản trị viên để duyệt trước khi hiển thị công khai.
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Đăng bài</button>
+          <a href="{% url 'community:danh-sach-bai-viet' %}" class="btn btn-secondary">Hủy</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- === MODAL SLIDESHOW (LIGHTBOX) === -->
+<div id="lightbox-modal" class="lightbox-modal">
+    <span class="lightbox-close">&times;</span>
+    <a class="lightbox-prev">&#10094;</a>
+    <a class="lightbox-next">&#10095;</a>
+    
+    <div class="lightbox-content-wrapper">
+        <div id="lightbox-media-container"></div>
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. CONFIG TINYMCE
+    if (typeof tinymce !== 'undefined') {
+        tinymce.init({
+            selector: 'textarea[name="noi_dung"]',
+            height: 500,
+            menubar: false,
+            plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+            toolbar: 'undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; }',
+            setup: function (editor) { editor.on('change', function () { editor.save(); }); }
+        });
+    }
+
+    // 2. MEDIA MANAGER (SLIDESHOW LOGIC)
+    const MAX_PREVIEWS = 4;
+
+    class MediaManager {
+        constructor() {
+            this.files = []; // Lưu danh sách các file gốc
+            this.currentIndex = 0;
+
+            // DOM Elements
+            this.fileInput = document.getElementById("media_files");
+            this.previewContainer = document.getElementById("preview-container");
+            this.modalEl = document.getElementById("lightbox-modal");
+            this.mediaContainer = document.getElementById('lightbox-media-container');
+            this.prevBtn = document.querySelector('.lightbox-prev');
+            this.nextBtn = document.querySelector('.lightbox-next');
+            this.counterEl = document.getElementById('lightbox-counter');
+            this.closeBtn = document.querySelector('.lightbox-close');
+
+            // Bind Methods
+            this.handleKeydown = this.handleKeydown.bind(this);
+            
+            // Event Listener cho Input File
+            this.fileInput.addEventListener("change", (e) => {
+                Array.from(e.target.files).forEach(file => this.addItem(file));
+            });
+        }
+
+        addItem(file) {
+            this.files.push(file);
+            this.updateFileInput(); // Cập nhật lại input để khi submit form có dữ liệu
+            this.render();
+        }
+
+        removeItem(index) {
+            this.files.splice(index, 1);
+            this.updateFileInput();
+            this.render();
+            // Nếu đang mở modal mà xóa thì đóng hoặc cập nhật
+            if (this.modalEl.style.display === "block") {
+                if (this.files.length === 0) {
+                    this.closeModal();
+                } else {
+                    this.changeSlide(0); // Reset về slide đầu hoặc tính toán lại
+                }
+            }
+        }
+
+        updateFileInput() {
+            const dt = new DataTransfer();
+            this.files.forEach(file => dt.items.add(file));
+            this.fileInput.files = dt.files;
+        }
+
+        // Render thumbnails trên trang
+        render() {
+            this.previewContainer.innerHTML = "";
+            this.files.forEach((file, index) => {
+                if (index >= MAX_PREVIEWS) return;
+
+                const mediaWrapper = document.createElement("div");
+                mediaWrapper.classList.add("media-item");
+                
+                // Click vào ảnh nhỏ -> Mở Modal
+                mediaWrapper.onclick = () => this.openModal(index);
+
+                const isVideo = file.type.startsWith("video/");
+                const mediaElement = document.createElement(isVideo ? 'video' : 'img');
+                mediaElement.src = URL.createObjectURL(file);
+                if (isVideo) {
+                    mediaElement.muted = true;
+                    mediaElement.preload = "metadata";
+                }
+                
+                mediaWrapper.appendChild(mediaElement);
+
+                // Nút Xóa
+                const deleteBtn = document.createElement("button");
+                deleteBtn.innerHTML = "&times;";
+                deleteBtn.type = "button";
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.onclick = (e) => { e.stopPropagation(); this.removeItem(index); };
+                mediaWrapper.appendChild(deleteBtn);
+
+                // Hiển thị số lượng còn lại (+3)
+                if (index === MAX_PREVIEWS - 1 && this.files.length > MAX_PREVIEWS) {
+                    const moreOverlay = document.createElement("div");
+                    moreOverlay.classList.add("media-item-more");
+                    moreOverlay.textContent = `+${this.files.length - MAX_PREVIEWS}`;
+                    mediaWrapper.appendChild(moreOverlay);
+                }
+
+                this.previewContainer.appendChild(mediaWrapper);
+            });
+        }
+
+        // --- LIGHTBOX LOGIC ---
+        
+        bindModalEvents() {
+            this.closeBtn.onclick = () => this.closeModal();
+            this.modalEl.onclick = (e) => { 
+                if (e.target === this.modalEl || e.target.classList.contains('lightbox-content-wrapper') || e.target.id === 'lightbox-media-container') {
+                    this.closeModal();
+                }
+            };
+            this.prevBtn.onclick = (e) => { e.stopPropagation(); this.changeSlide(-1); };
+            this.nextBtn.onclick = (e) => { e.stopPropagation(); this.changeSlide(1); };
+            document.addEventListener('keydown', this.handleKeydown);
+        }
+
+        unbindModalEvents() {
+            this.prevBtn.onclick = null;
+            this.nextBtn.onclick = null;
+            this.closeBtn.onclick = null;
+            this.modalEl.onclick = null;
+            document.removeEventListener('keydown', this.handleKeydown);
+        }
+
+        handleKeydown(e) {
+            if (this.modalEl.style.display === "block") {
+                if (e.key === 'ArrowLeft') this.changeSlide(-1);
+                if (e.key === 'ArrowRight') this.changeSlide(1);
+                if (e.key === 'Escape') this.closeModal();
+            }
+        }
+
+        openModal(startIndex) {
+            if (this.files.length === 0) return;
+            this.currentIndex = startIndex;
+            this.updateSlide();
+            this.modalEl.style.display = "block";
+            document.body.style.overflow = "hidden"; // Chặn cuộn trang
+            this.bindModalEvents();
+        }
+
+        closeModal() {
+            this.modalEl.style.display = "none";
+            this.mediaContainer.innerHTML = ''; 
+            document.body.style.overflow = "auto"; 
+            this.unbindModalEvents();
+        }
+
+        changeSlide(dir) {
+            this.currentIndex += dir;
+            if (this.currentIndex < 0) this.currentIndex = this.files.length - 1;
+            if (this.currentIndex >= this.files.length) this.currentIndex = 0;
+            this.updateSlide();
+        }
+
+        updateSlide() {
+            if (!this.files[this.currentIndex]) return;
+            const file = this.files[this.currentIndex];
+            this.mediaContainer.innerHTML = ''; 
+
+            const isVideo = file.type.startsWith("video/");
+            const src = URL.createObjectURL(file);
+            let element;
+
+            if (isVideo) {
+                element = document.createElement('video');
+                element.src = src;
+                element.controls = true; 
+                element.autoplay = true; 
+                element.playsInline = true; 
+                element.classList.add('lightbox-content');
+            } else {
+                element = document.createElement('img');
+                element.src = src;
+                element.classList.add('lightbox-content');
+            }
+
+            this.mediaContainer.appendChild(element);
+            this.counterEl.innerText = `${this.currentIndex + 1} / ${this.files.length}`;
+
+            // Ẩn nút nếu chỉ có 1 ảnh
+            if (this.files.length <= 1) {
+                this.prevBtn.classList.add('hidden');
+                this.nextBtn.classList.add('hidden');
+            } else {
+                this.prevBtn.classList.remove('hidden');
+                this.nextBtn.classList.remove('hidden');
+            }
+        }
+    }
+
+    // INIT
+    new MediaManager();
+});
+</script>
+{% endblock %}
