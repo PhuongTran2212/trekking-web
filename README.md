@@ -79,7 +79,30 @@ A specialized module for managing professional hiking expertise and survival gui
 > ![Content Moderation](picture/so17.1.png)
 > ![Content Moderation](picture/so17.2.png)
 
+### 5. Route Management
 
+A dedicated administrative interface for managing trekking routes.
+
+* **Route Control:** Admins can add, edit, verify, or remove trekking routes to maintain data accuracy.
+* **Safety Review:** Ensure all published routes meet safety and quality standards.
+
+> ![Route Management](picture/so18.png)
+> ![Route Management](picture/so18.1.png)
+> ![Route Management](picture/so18.2.png)
+
+---
+
+### 6. Statistics & Reporting
+
+Analytical tools that provide insights into system usage and trekking activity.
+
+* **Usage Analytics:** Monitor user activity, trip frequency, and route popularity.
+* **Reports Dashboard:** Visual summaries to support decision-making and system improvements.
+
+> ![Statistics & Reports](picture/so19.png)
+> ![Statistics & Reports](picture/so19.1.png)
+
+---
 
 ### 4. User Safety & Security
 *   **Report Handling:** Efficiently process user reports regarding harassment or inappropriate behavior.
