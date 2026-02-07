@@ -4,6 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="f2e3068f-13a0-47e7-8b30-abb98854a037" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.11/site-packages/_distutils_hack/__init__.py" beforeDir="false" />
@@ -593,17 +594,26 @@
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.11/site-packages/setuptools/wheel.py" beforeDir="false" afterPath="$PROJECT_DIR$/venv/lib/python3.11/site-packages/setuptools/wheel.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/venv/lib/python3.11/site-packages/setuptools/windows_support.py" beforeDir="false" afterPath="$PROJECT_DIR$/venv/lib/python3.11/site-packages/setuptools/windows_support.py" afterDir="false" />
     </list>
+=======
+    <list default="true" id="f2e3068f-13a0-47e7-8b30-abb98854a037" name="Changes" comment="" />
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+<<<<<<< HEAD
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
+=======
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 5
+}]]></component>
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
   <component name="ProjectId" id="32o8KMM8E9P8b4fB6rf2wvsA1gC" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -616,8 +626,11 @@
     "Python.tests.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+<<<<<<< HEAD
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "v2.2",
+=======
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     "last_opened_file_path": "/Users/nguyenthanhhuyen/Pictures/tai_lieu/trekking_web"
   }
 }]]></component>

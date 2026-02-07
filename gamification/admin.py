@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # gamification/admin.py
 
 from django.contrib import admin
@@ -78,3 +79,8 @@ class GameHuyHieuNguoiDungAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         # Tối ưu SQL (tránh N+1 query)
         return super().get_queryset(request).select_related('user', 'huy_hieu')
+=======
+from django.contrib import admin
+
+# Register your models here.
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

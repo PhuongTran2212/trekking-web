@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🏔️ TrekViet - Trekking Route & Expedition Management Platform
 
 **TrekViet** is a professional full-stack platform designed for the trekking and hiking community in Vietnam. It enables users to discover new trails, organize group expeditions with detailed logistics, and share survival expertise.
@@ -136,3 +137,7 @@ python manage.py createsuperuser # Create your Admin account
 
 # Start the server
 python manage.py runserver
+=======
+# trekking-web
+Dự án website quản lý cung đường trekking bằng Django.
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

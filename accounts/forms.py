@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db import transaction
+<<<<<<< HEAD
 
 from .models import TaiKhoanHoSo, TaiKhoanThietBiCaNhan, GioiTinh
 from core.models import The, LoaiVatDung, VatDung
@@ -16,15 +17,26 @@ class DangKyForm(UserCreationForm):
     Form tùy chỉnh để đăng ký người dùng mới, bao gồm các thông tin
     mở rộng cho hồ sơ (TaiKhoanHoSo) ngay từ đầu.
     """
+=======
+from .models import TaiKhoanHoSo
+
+class DangKyForm(UserCreationForm):
+    # Định nghĩa lại thứ tự các trường sẽ hiển thị trên form
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     email = forms.EmailField(
         required=True,
         help_text='Bắt buộc. Dùng để xác thực và khôi phục tài khoản.'
     )
+<<<<<<< HEAD
+=======
+    # <-- Di chuyển trường sdt lên đây, ngay sau email
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     sdt = forms.CharField(
         label='Số điện thoại',
         max_length=15,
         required=True
     )
+<<<<<<< HEAD
     ngay_sinh = forms.DateField(
         label='Ngày sinh',
         required=False,
@@ -40,11 +52,21 @@ class DangKyForm(UserCreationForm):
         label='Tên',
         max_length=150,
         required=True
+=======
+    first_name = forms.CharField(
+        label='Tên',
+        max_length=150,
+        required=False
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     )
     last_name = forms.CharField(
         label='Họ',
         max_length=150,
+<<<<<<< HEAD
         required=True
+=======
+        required=False
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     )
 
     class Meta(UserCreationForm.Meta):
@@ -53,14 +75,23 @@ class DangKyForm(UserCreationForm):
 
     def clean_sdt(self):
         sdt_data = self.cleaned_data.get('sdt')
+<<<<<<< HEAD
         if sdt_data and TaiKhoanHoSo.objects.filter(sdt=sdt_data).exists():
             raise forms.ValidationError("Số điện thoại này đã được sử dụng.")
+=======
+        if TaiKhoanHoSo.objects.filter(sdt=sdt_data).exists():
+            raise forms.ValidationError("Số điện thoại này đã được sử dụng bởi một tài khoản khác.")
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
         return sdt_data
 
     def clean_email(self):
         email_data = self.cleaned_data.get('email')
         if User.objects.filter(email=email_data).exists():
+<<<<<<< HEAD
             raise forms.ValidationError("Địa chỉ email này đã được sử dụng.")
+=======
+            raise forms.ValidationError("Địa chỉ email này đã được sử dụng bởi một tài khoản khác.")
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
         return email_data
 
     @transaction.atomic
@@ -72,6 +103,7 @@ class DangKyForm(UserCreationForm):
         
         if commit:
             user.save()
+<<<<<<< HEAD
             profile = user.taikhoanhoso
             profile.sdt = self.cleaned_data.get('sdt')
             profile.ngay_sinh = self.cleaned_data.get('ngay_sinh')
@@ -157,3 +189,13 @@ class EquipmentEditForm(forms.ModelForm):
             'so_luong': 'Số lượng mới',
             'ghi_chu': 'Ghi chú mới'
         }
+=======
+
+        sdt = self.cleaned_data.get('sdt')
+        if sdt:
+            user.taikhoanhoso.sdt = sdt
+            user.taikhoanhoso.save()
+
+        return user
+  
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

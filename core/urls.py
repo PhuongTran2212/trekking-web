@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+<<<<<<< HEAD
     # ... các url khác ...
     path('system-configuration/', views.system_config_view, name='system_config'),
     
@@ -14,4 +15,8 @@ urlpatterns = [
     
     # URL Cập nhật (Dùng pk - CHÚ Ý DÒNG NÀY)
     path('system-configuration/save/<str:model_type>/<int:pk>/', views.save_master_data, name='edit_master_data'),
+=======
+    # Khi truy cập trang gốc, gọi hàm demo_view
+    path('', views.demo_view, name='demo'),
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
 ]

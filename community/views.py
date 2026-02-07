@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
@@ -324,3 +325,8 @@ def bao_cao_bai_viet(request, bai_viet_id):
         'form': form,
         'bai_viet': bai_viet
     })
+=======
+from django.shortcuts import render
+
+# Create your views here.
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

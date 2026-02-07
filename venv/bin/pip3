@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/Users/nguyenthanhhuyen/Pictures/tai_lieu/trekking_web/venv/bin/python
+=======
+#!/Users/nguyenthanhhuyen/Pictures/tai_lieu/trekking_web/venv/bin/python3.11
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
 # -*- coding: utf-8 -*-
 import re
 import sys

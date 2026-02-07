@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # gamification/views.py
 
 from django.shortcuts import render
@@ -111,3 +112,8 @@ class BadgeDeleteView(StaffRequiredMixin, DeleteView):
     model = GameHuyHieu
     template_name = 'gamification/badge_confirm_delete.html'
     success_url = reverse_lazy('gamification:badge_list')
+=======
+from django.shortcuts import render
+
+# Create your views here.
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

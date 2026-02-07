@@ -1,5 +1,6 @@
 # accounts/views.py
 
+<<<<<<< HEAD
 import json
 from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
@@ -112,6 +113,23 @@ def dang_ky_view(request):
     if request.user.is_authenticated:
         return redirect('home')
     
+=======
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.views import LoginView
+from .forms import DangKyForm
+from django.urls import reverse_lazy
+
+# Thêm một view cho trang chủ
+def home_view(request):
+    return render(request, 'home.html')
+
+def dang_ky_view(request):
+    if request.user.is_authenticated:
+        return redirect('home') # Nếu đã đăng nhập, về trang chủ
+
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
     if request.method == 'POST':
         form = DangKyForm(request.POST)
         if form.is_valid():
@@ -126,6 +144,7 @@ def dang_ky_view(request):
     return render(request, 'accounts/dang_ky.html', {'form': form})
 
 class CustomLoginView(LoginView):
+<<<<<<< HEAD
     """View xử lý việc đăng nhập."""
     template_name = 'accounts/dang_nhap.html'
     redirect_authenticated_user = True
@@ -359,3 +378,24 @@ def get_equipment_by_category(request):
         except (ValueError, TypeError):
             return JsonResponse([], safe=False)
     return JsonResponse([], safe=False)
+=======
+    template_name = 'accounts/dang_nhap.html'
+    redirect_authenticated_user = True
+
+   
+    def get_success_url(self):
+        user = self.request.user
+        messages.success(self.request, f"Đăng nhập thành công! Chào mừng trở lại, {user.username}.")
+
+        # Nếu user là staff/admin, chuyển hướng đến trang Dashboard
+        if user.is_staff:
+            return reverse_lazy('admin_dashboard')
+        
+        # THAY ĐỔI TẠI ĐÂY: Nếu là người dùng thường, chuyển hướng về trang chủ
+        else:
+            return reverse_lazy('home')
+        
+    def form_invalid(self, form):
+        messages.error(self.request, "Tên đăng nhập hoặc mật khẩu không đúng.")
+        return super().form_invalid(form)
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

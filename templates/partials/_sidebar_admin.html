@@ -1,4 +1,5 @@
 {% load static %}
+<<<<<<< HEAD
 
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -10,20 +11,42 @@
         </a>
         <button class="sidebar-toggle btn btn-link text-white p-0" id="sidebar-toggle">
             <i class="fas fa-bars fs-5"></i>
+=======
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="logo">
+            <svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-top: -5px;">
+    <path fill="white" d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z"/>
+  </svg>
+            <span style="margin-left: 1px;">TrekViet </span>
+        </a>
+        <button class="sidebar-toggle" id="sidebar-toggle">
+            <span></span><span></span><span></span>
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
         </button>
     </div>
 
     <nav class="sidebar-nav">
+<<<<<<< HEAD
         
         <div class="nav-label text-uppercase text-secondary fw-bold px-3 mt-3 mb-2" style="font-size: 0.7rem;">Tổng quan</div>
         
         <div class="nav-item">
             <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
                 <i class="fas fa-th-large"></i>
+=======
+        <!-- Dashboard -->
+        <div class="nav-item">
+            <a href="#" class="nav-link active">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                </svg>
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
                 <span class="nav-link-text">Dashboard</span>
             </a>
         </div>
 
+<<<<<<< HEAD
         <div class="nav-item">
             <a href="{% url 'user_admin:analytics' %}" class="nav-link {% if 'analytics' in request.path %}active{% endif %}">
                 <i class="fas fa-chart-line"></i>
@@ -52,10 +75,19 @@
         <div class="nav-item">
             <a href="{% url 'user_admin:user_list' %}" class="nav-link {% if 'users' in request.path and 'analytics' not in request.path %}active{% endif %}">
                 <i class="fas fa-users-cog"></i>
+=======
+        <!-- Quản lý Users -->
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
                 <span class="nav-link-text">Quản lý Users</span>
             </a>
         </div>
 
+<<<<<<< HEAD
         <div class="nav-item">
             <a href="#submenu-community" data-bs-toggle="collapse" class="nav-link d-flex justify-content-between align-items-center {% if 'posts' in request.path or 'reports' in request.path %}active{% endif %}">
                 <div>
@@ -124,3 +156,86 @@
         });
     });
 </script>
+=======
+        <!-- Quản lý Chuyến đi -->
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/>
+                </svg>
+                <span class="nav-link-text">Quản lý Chuyến đi</span>
+            </a>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- === THAY ĐỔI QUAN TRỌNG NHẤT NẰM Ở ĐÂY === -->
+        <!-- Quản lý Cung đường -->
+        <div class="nav-item">
+            <!-- 
+              URL pattern: 'admin:<tên_app>_<tên_model>_changelist'
+              - admin: Namespace của trang admin Django
+              - treks: Tên app của bạn (trong apps.py)
+              - cungduongtrek: Tên model CungDuongTrek viết thường
+              - _changelist: Hậu tố để trỏ đến trang danh sách
+            -->
+            <a href="{% url 'treks_admin:cung_duong_list' %}" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                </svg>
+                <span class="nav-link-text">Quản lý Cung đường</span>
+            </a>
+        </div>
+        <!-- ================================================================= -->
+        <!-- Quản lý Cộng đồng -->
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+                </svg>
+                <span class="nav-link-text">Quản lý Cộng đồng</span>
+            </a>
+        </div>
+
+        <!-- Quản lý Báo cáo -->
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>
+                </svg>
+                <span class="nav-link-text">Quản lý Báo cáo</span>
+            </a>
+        </div>
+
+        <!-- Danh mục Hệ thống -->
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M3.75 9.75h16.5M3.75 14.25h16.5M3.75 18.75h16.5" />
+                </svg>
+                <span class="nav-link-text">Danh mục Hệ thống</span>
+            </a>
+        </div>
+
+        <!-- Quản lý Kiến thức -->
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+                <span class="nav-link-text">Quản lý Kiến thức</span>
+            </a>
+        </div>
+
+        <!-- Hệ thống -->
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0 .55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="nav-link-text">Hệ thống</span>
+            </a>
+        </div>
+    </nav>
+</aside>
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

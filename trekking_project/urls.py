@@ -6,6 +6,7 @@ from core import views as core_views
 from accounts.views import home_view
 
 urlpatterns = [
+<<<<<<< HEAD
     # --- PHẦN CHUNG (SYSTEM) ---
     path('admin/', admin.site.urls),
     path('tai-khoan/', include(('accounts.urls', 'accounts'), namespace='accounts')),
@@ -48,6 +49,20 @@ urlpatterns = [
 
     # 6. User Admin: Của bạn (Mới)
     path('dashboard/users/', include('user_admin.urls', namespace='user_admin')),
+=======
+    path('admin/', admin.site.urls),
+
+    # URL cho app accounts
+    path('tai-khoan/', include(('accounts.urls', 'accounts'), namespace='accounts')),
+
+    # Trang chủ
+    path('', home_view, name='home'),
+     # URL cho trang dashboard của admin
+    path('dashboard/', core_views.admin_dashboard_view, name='admin_dashboard'),
+        # --- DÒNG MỚI ---
+    # Bất kỳ URL nào bắt đầu bằng 'cung-duong/' sẽ được chuyển đến file treks/urls.py
+    path('dashboard/cung-duong/', include('treks.urls', namespace='treks_admin')),
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
 ]
 
 # Chỉ dùng khi DEBUG=True để phục vụ media trong dev

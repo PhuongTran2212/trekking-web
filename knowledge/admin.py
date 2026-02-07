@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # knowledge/admin.py
 from django.contrib import admin
 from .models import KienThucBaiHuongDan
@@ -32,3 +33,8 @@ class KienThucAdmin(admin.ModelAdmin):
         if not obj.tac_gia:
             obj.tac_gia = request.user
         super().save_model(request, obj, form, change)
+=======
+from django.contrib import admin
+
+# Register your models here.
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

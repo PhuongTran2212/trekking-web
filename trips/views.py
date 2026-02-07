@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # trips/views.py
 from django.db.models import Case, When # Thêm vào đầu file views.py
 import datetime
@@ -1760,3 +1761,8 @@ class TripAdminUpdateView(AdminRequiredMixin, UpdateView):
         else:
             return self.render_to_response(self.get_context_data(form=form))
     
+=======
+from django.shortcuts import render
+
+# Create your views here.
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43

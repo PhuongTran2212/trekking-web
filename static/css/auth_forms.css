@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 :root{
             /* === NEW: Thêm biến màu cho giới tính === */
     --gender-male: #2563eb;       /* Xanh dương */
@@ -7,6 +8,10 @@
     --gender-male-bg: #dbeafe;
     --gender-female-bg: #fce7f3;
     --gender-other-bg: #ede9fe;}
+=======
+
+       
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
        /* Main Container */
         .auth-container {
             width: 100%;
@@ -458,6 +463,7 @@
     border: solid white; /* Màu của dấu tích */
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
+<<<<<<< HEAD
 }
 
 /* === PHẦN GIỚI TÍNH - PHIÊN BẢN ĐƠN GIẢN HÓA (MỘT MÀU DUY NHẤT) === */
@@ -525,4 +531,6 @@
     border-color: var(--primary-dark);
     box-shadow: var(--shadow-md);
     transform: translateY(-1px);
+=======
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
 }

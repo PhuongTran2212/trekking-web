@@ -2,6 +2,7 @@
 
 from django.urls import path
 from django.contrib.auth import views as auth_views
+<<<<<<< HEAD
 
 # Import các view với tên cũ
 from .views import (
@@ -13,10 +14,14 @@ from .views import (
     edit_equipment_view,
     get_equipment_by_category  # Import view mới
 )
+=======
+from .views import dang_ky_view, CustomLoginView
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
 
 app_name = 'accounts'
 
 urlpatterns = [
+<<<<<<< HEAD
     # URLs xác thực
     path('dang-ky/', dang_ky_view, name='dang-ky'),
     path('dang-nhap/', CustomLoginView.as_view(), name='dang-nhap'),
@@ -32,4 +37,9 @@ urlpatterns = [
     
     # === THÊM MỚI: URL cho API để lấy danh sách thiết bị ===
     path('api/get-equipment-by-category/', get_equipment_by_category, name='api_get_equipment_by_category'),
+=======
+    path('dang-ky/', dang_ky_view, name='dang-ky'),
+    path('dang-nhap/', CustomLoginView.as_view(), name='dang-nhap'),
+    path('dang-xuat/', auth_views.LogoutView.as_view(next_page='/'), name='dang-xuat'),
+>>>>>>> 2a3c570e2a74a83ea4beae6f32f15af4df86cb43
 ]
